@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 export * from '../types/ThemeTypes';
 import { BackgroundLuminance, Density, Theme } from '../types/ThemeTypes';
 
-interface ThemeContextType {
+export interface ThemeContextType {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     activeBackgroundId: string;
