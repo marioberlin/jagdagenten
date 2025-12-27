@@ -1,0 +1,634 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        /* Enables SF Pro Display vs Text auto-switching where supported */
+        font-optical-sizing: auto;
+        /* Apple uses subpixel antialiasing for crisp text */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        /* Semantic Colors */
+        --bg-primary: #ffffff;
+        --text-primary: #000000;
+        --vibrant-blend: multiply;
+
+        /* Label Colors (Light Mode) */
+        --label-primary: rgba(0, 0, 0, 0.95);
+        --label-secondary: rgba(0, 0, 0, 0.60);
+        --label-tertiary: rgba(0, 0, 0, 0.46);
+        --label-quaternary: rgba(0, 0, 0, 0.15);
+
+        /* Glass-Aware Label Colors (Light Mode) */
+        --label-on-glass-primary: rgba(0, 0, 0, 0.90);
+        --label-on-glass-secondary: rgba(0, 0, 0, 0.60);
+        --label-on-glass-tertiary: rgba(0, 0, 0, 0.50);
+
+        /* Text Shadow Defaults (Light Mode) */
+        --text-shadow-base: 0 1px 2px rgba(0, 0, 0, 0.1);
+        --text-shadow-strong: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    html.dark {
+        --bg-primary: #000000;
+        --text-primary: #ffffff;
+        --vibrant-blend: overlay;
+
+        /* Label Colors (Dark Mode) */
+        --label-primary: rgba(255, 255, 255, 0.95);
+        --label-secondary: rgba(255, 255, 255, 0.60);
+        --label-tertiary: rgba(255, 255, 255, 0.46);
+        --label-quaternary: rgba(255, 255, 255, 0.15);
+
+        /* Glass-Aware Label Colors (Dark Mode) */
+        --label-on-glass-primary: rgba(255, 255, 255, 0.95);
+        --label-on-glass-secondary: rgba(255, 255, 255, 0.65);
+        --label-on-glass-tertiary: rgba(255, 255, 255, 0.55);
+
+        /* Text Shadow Defaults (Dark Mode) */
+        --text-shadow-base: 0 1px 3px rgba(0, 0, 0, 0.35);
+        --text-shadow-strong: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Tinted Mode - Accessibility: Higher contrast for busy backgrounds */
+    html.tinted-mode {
+        --label-on-glass-primary: rgba(255, 255, 255, 1);
+        --label-on-glass-secondary: rgba(255, 255, 255, 0.85);
+        --label-on-glass-tertiary: rgba(255, 255, 255, 0.60);
+    }
+
+    html.tinted-mode:not(.dark) {
+        --label-on-glass-primary: rgba(0, 0, 0, 1);
+        --label-on-glass-secondary: rgba(0, 0, 0, 0.80);
+        --label-on-glass-tertiary: rgba(0, 0, 0, 0.50);
+    }
+
+    /* ==========================================================================
+       APPLE LIQUID GLASS CONFIGURATION
+       
+       Following Apple HIG:
+       - Dark Mode = ALWAYS tinted glass with white text
+       - Light Mode = ALWAYS frosted glass with dark text
+       
+       Background luminance only affects glass OPACITY, not the fundamental style.
+       ========================================================================== */
+
+    /* ==========================================================================
+       DARK MODE - Always Tinted Glass
+       Translucent dark overlay that preserves background vibrancy
+       ========================================================================== */
+
+    /* DARK MODE DEFAULT - Fallback tinted glass (assumes dark background) */
+    html.dark {
+        --glass-bg-thin: rgba(0, 0, 0, 0.25);
+        --glass-bg-regular: rgba(0, 0, 0, 0.35);
+        --glass-bg-thick: rgba(0, 0, 0, 0.50);
+        /* Clear variant: For media overlays - highly translucent */
+        --glass-bg-clear: rgba(0, 0, 0, 0.15);
+        --glass-border-clear: rgba(255, 255, 255, 0.08);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        --glass-surface: rgba(255, 255, 255, 0.05);
+        --glass-surface-hover: rgba(255, 255, 255, 0.10);
+        --glass-surface-active: rgba(255, 255, 255, 0.15);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+        --glass-text-primary: rgba(255, 255, 255, 0.98);
+        --glass-text-secondary: rgba(255, 255, 255, 0.70);
+        --glass-text-tertiary: rgba(255, 255, 255, 0.50);
+        --hero-text: #ffffff;
+        --hero-text-secondary: rgba(255, 255, 255, 0.85);
+    }
+
+    /* DARK MODE + DARK BACKGROUND = Dark Tinted Glass */
+    html.dark.dark-bg {
+        --glass-bg-thin: rgba(0, 0, 0, 0.25);
+        --glass-bg-regular: rgba(0, 0, 0, 0.35);
+        --glass-bg-thick: rgba(0, 0, 0, 0.50);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        --glass-surface: rgba(255, 255, 255, 0.05);
+        --glass-surface-hover: rgba(255, 255, 255, 0.10);
+        --glass-surface-active: rgba(255, 255, 255, 0.15);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+        --glass-text-primary: rgba(255, 255, 255, 0.98);
+        --glass-text-secondary: rgba(255, 255, 255, 0.70);
+        --glass-text-tertiary: rgba(255, 255, 255, 0.50);
+        --hero-text: #ffffff;
+        --hero-text-secondary: rgba(255, 255, 255, 0.85);
+    }
+
+    /* DARK MODE + LIGHT BACKGROUND = Heavier Tinted Glass (more contrast) */
+    html.dark.light-bg {
+        --glass-bg-thin: rgba(0, 0, 0, 0.25);
+        --glass-bg-regular: rgba(0, 0, 0, 0.40);
+        --glass-bg-thick: rgba(0, 0, 0, 0.55);
+        --glass-border: rgba(255, 255, 255, 0.22);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        --glass-surface: rgba(255, 255, 255, 0.08);
+        --glass-surface-hover: rgba(255, 255, 255, 0.15);
+        --glass-surface-active: rgba(255, 255, 255, 0.22);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+        --glass-text-primary: rgba(255, 255, 255, 0.98);
+        --glass-text-secondary: rgba(255, 255, 255, 0.75);
+        --glass-text-tertiary: rgba(255, 255, 255, 0.55);
+        --hero-text: #ffffff;
+        --hero-text-secondary: rgba(255, 255, 255, 0.85);
+    }
+
+    /* ==========================================================================
+       LIGHT MODE - Always Frosted Glass
+       High-opacity white acrylic for legibility
+       ========================================================================== */
+
+    /* LIGHT MODE DEFAULT - Fallback frosted glass (assumes light background) */
+    html:not(.dark) {
+        --glass-bg-thin: rgba(255, 255, 255, 0.65);
+        --glass-bg-regular: rgba(255, 255, 255, 0.80);
+        --glass-bg-thick: rgba(255, 255, 255, 0.92);
+        /* Clear variant: For media overlays - highly translucent */
+        --glass-bg-clear: rgba(0, 0, 0, 0.08);
+        --glass-border-clear: rgba(0, 0, 0, 0.08);
+        --glass-border: rgba(0, 0, 0, 0.12);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+        --glass-surface: rgba(0, 0, 0, 0.03);
+        --glass-surface-hover: rgba(0, 0, 0, 0.06);
+        --glass-surface-active: rgba(0, 0, 0, 0.10);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+        --glass-text-primary: rgba(0, 0, 0, 0.92);
+        --glass-text-secondary: rgba(0, 0, 0, 0.65);
+        --glass-text-tertiary: rgba(0, 0, 0, 0.45);
+        --hero-text: rgba(0, 0, 0, 0.92);
+        --hero-text-secondary: rgba(0, 0, 0, 0.70);
+    }
+
+    /* LIGHT MODE + LIGHT BACKGROUND = Standard Frosted Glass */
+    html:not(.dark).light-bg {
+        --glass-bg-thin: rgba(255, 255, 255, 0.65);
+        --glass-bg-regular: rgba(255, 255, 255, 0.80);
+        --glass-bg-thick: rgba(255, 255, 255, 0.92);
+        --glass-border: rgba(0, 0, 0, 0.12);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+        --glass-surface: rgba(0, 0, 0, 0.03);
+        --glass-surface-hover: rgba(0, 0, 0, 0.06);
+        --glass-surface-active: rgba(0, 0, 0, 0.10);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+        --glass-text-primary: rgba(0, 0, 0, 0.92);
+        --glass-text-secondary: rgba(0, 0, 0, 0.65);
+        --glass-text-tertiary: rgba(0, 0, 0, 0.45);
+        --hero-text: rgba(0, 0, 0, 0.92);
+        --hero-text-secondary: rgba(0, 0, 0, 0.70);
+    }
+
+    /* LIGHT MODE + DARK BACKGROUND = Brighter Frosted Glass (more separation) */
+    html:not(.dark).dark-bg {
+        --glass-bg-thin: rgba(255, 255, 255, 0.70);
+        --glass-bg-regular: rgba(255, 255, 255, 0.85);
+        --glass-bg-thick: rgba(255, 255, 255, 0.95);
+        --glass-border: rgba(0, 0, 0, 0.15);
+        --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.20);
+        --glass-surface: rgba(0, 0, 0, 0.04);
+        --glass-surface-hover: rgba(0, 0, 0, 0.08);
+        --glass-surface-active: rgba(0, 0, 0, 0.12);
+        --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+        --glass-text-primary: rgba(0, 0, 0, 0.92);
+        --glass-text-secondary: rgba(0, 0, 0, 0.68);
+        --glass-text-tertiary: rgba(0, 0, 0, 0.48);
+        --hero-text: rgba(0, 0, 0, 0.92);
+        --hero-text-secondary: rgba(0, 0, 0, 0.70);
+    }
+
+    /* ==========================================================================
+       APPLE SEMANTIC ACCENT COLORS
+       Following Apple HIG color system
+       ========================================================================== */
+
+    :root {
+        /* System Colors - Dynamic, adapt to mode */
+        --system-blue: #007AFF;
+        --system-green: #34C759;
+        --system-indigo: #5856D6;
+        --system-orange: #FF9500;
+        --system-pink: #FF2D55;
+        --system-purple: #AF52DE;
+        --system-red: #FF3B30;
+        --system-teal: #5AC8FA;
+        --system-yellow: #FFCC00;
+
+        /* Semantic Intent Colors */
+        --color-success: var(--system-green);
+        --color-warning: var(--system-orange);
+        --color-error: var(--system-red);
+        --color-info: var(--system-blue);
+        --color-accent: var(--system-blue);
+
+        /* Destructive action (delete, remove) */
+        --color-destructive: var(--system-red);
+
+        /* Link color */
+        --color-link: var(--system-blue);
+
+        /* Muted variants for backgrounds (Light Mode) */
+        --color-accent-muted: rgba(0, 122, 255, 0.15);
+        --color-accent-hover: rgba(0, 122, 255, 0.25);
+        --color-destructive-muted: rgba(255, 59, 48, 0.15);
+        --color-success-muted: rgba(52, 199, 89, 0.15);
+        --color-warning-muted: rgba(255, 149, 0, 0.15);
+    }
+
+    /* Dark mode accent color adjustments for vibrancy */
+    html.dark {
+        --system-blue: #0A84FF;
+        --system-green: #30D158;
+        --system-indigo: #5E5CE6;
+        --system-orange: #FF9F0A;
+        --system-pink: #FF375F;
+        --system-purple: #BF5AF2;
+        --system-red: #FF453A;
+        --system-teal: #64D2FF;
+        --system-yellow: #FFD60A;
+
+        /* Muted variants for backgrounds (Dark Mode - higher opacity for visibility) */
+        --color-accent-muted: rgba(10, 132, 255, 0.20);
+        --color-accent-hover: rgba(10, 132, 255, 0.30);
+        --color-destructive-muted: rgba(255, 69, 58, 0.20);
+        --color-success-muted: rgba(48, 209, 88, 0.20);
+        --color-warning-muted: rgba(255, 159, 10, 0.20);
+    }
+
+    /* ==========================================================================
+       SYNTAX HIGHLIGHTING
+       Theme-aware code syntax colors for GlassCode component
+       ========================================================================== */
+
+    /* Light Mode / Frosted Glass - Use dark, saturated colors for contrast */
+    .syntax-keyword {
+        color: #AD3DA4;
+        font-weight: 600;
+    }
+
+    .syntax-string {
+        color: #D12F1B;
+    }
+
+    .syntax-number {
+        color: #1C00CF;
+    }
+
+    .syntax-comment {
+        color: #6C7986;
+        font-style: italic;
+    }
+
+    .syntax-property {
+        color: #0F68A0;
+    }
+
+    /* Dark Mode / Tinted Glass - Use vibrant, light colors */
+    html.dark .syntax-keyword {
+        color: #FF7AB2;
+        font-weight: 600;
+    }
+
+    html.dark .syntax-string {
+        color: #FF8170;
+    }
+
+    html.dark .syntax-number {
+        color: #D0BF69;
+    }
+
+    html.dark .syntax-comment {
+        color: #7F8C98;
+        font-style: italic;
+    }
+
+    html.dark .syntax-property {
+        color: #6BDFFF;
+    }
+
+
+    /* HIG Guideline: Tighten tracking for large headers */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        /* @apply tracking-tight; - Removed to defer to system font optical sizing */
+    }
+
+    /* HIG Guideline: Loosen tracking for captions/labels */
+    .caption,
+    .text-xs,
+    .text-sm {
+        @apply tracking-wide;
+    }
+
+    /* ==========================================================================
+       TEXT ON GLASS UTILITIES
+       Subtle text-shadow for improved legibility on translucent surfaces
+       ========================================================================== */
+
+    .text-on-glass {
+        text-shadow: var(--text-shadow-on-glass, var(--text-shadow-base));
+    }
+
+    html.dark .text-on-glass {
+        text-shadow: var(--text-shadow-on-glass, var(--text-shadow-base));
+    }
+
+    /* Stronger variant for critical text */
+    .text-on-glass-strong {
+        text-shadow: var(--text-shadow-on-glass, var(--text-shadow-strong));
+    }
+
+    html.dark .text-on-glass-strong {
+        text-shadow: var(--text-shadow-on-glass, var(--text-shadow-strong));
+    }
+}
+
+/* ==========================================================================
+   FONT WEIGHT UTILITIES FOR GLASS
+   
+   Apple HIG recommends medium (500) as minimum weight on translucent surfaces
+   for optimal legibility. These utilities ensure text remains readable.
+   ========================================================================== */
+
+/* Enforce minimum font-weight on glass surfaces */
+.font-glass {
+    font-weight: 500;
+}
+
+.font-glass-heading {
+    font-weight: 600;
+}
+
+.font-glass-bold {
+    font-weight: 700;
+}
+
+/* Auto-apply minimum weight to common text elements on glass */
+.glass-typography h1,
+.glass-typography h2,
+.glass-typography h3,
+.glass-typography h4,
+.glass-typography h5,
+.glass-typography h6 {
+    font-weight: 600;
+}
+
+.glass-typography p,
+.glass-typography span,
+.glass-typography label {
+    font-weight: 500;
+}
+
+.glass-typography small,
+.glass-typography .caption {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    /* Slight tracking for small text legibility */
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+
+    .backdrop-blur-ultra-thin,
+    .backdrop-blur-thin,
+    .backdrop-blur-regular,
+    .backdrop-blur-thick,
+    .backdrop-blur-ultra-thick {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background-color: rgb(30, 30, 30) !important;
+    }
+
+    html:not(.dark) .backdrop-blur-ultra-thin,
+    html:not(.dark) .backdrop-blur-thin,
+    html:not(.dark) .backdrop-blur-regular,
+    html:not(.dark) .backdrop-blur-thick,
+    html:not(.dark) .backdrop-blur-ultra-thick {
+        background-color: rgb(245, 245, 245) !important;
+    }
+}
+
+/* ============================================
+   @supports Fallback for Unsupported Browsers
+   Firefox < 103 and older browsers without backdrop-filter
+   ============================================ */
+
+@supports not (backdrop-filter: blur(1px)) {
+    html {
+        --glass-bg-thin: rgba(255, 255, 255, 0.92);
+        --glass-bg-regular: rgba(255, 255, 255, 0.95);
+        --glass-bg-thick: rgba(255, 255, 255, 0.98);
+    }
+
+    html.dark {
+        --glass-bg-thin: rgba(30, 30, 40, 0.92);
+        --glass-bg-regular: rgba(30, 30, 40, 0.95);
+        --glass-bg-thick: rgba(30, 30, 40, 0.98);
+    }
+}
+
+/* ============================================
+   High Contrast Mode Support (WCAG AAA)
+   Provides maximum legibility for users who need it
+   ============================================ */
+
+@media (prefers-contrast: more) {
+    html {
+        --glass-bg-thin: rgba(255, 255, 255, 0.92);
+        --glass-bg-regular: rgba(255, 255, 255, 0.96);
+        --glass-bg-thick: #ffffff;
+        --glass-border: rgba(0, 0, 0, 0.25);
+        --glass-text-primary: rgba(0, 0, 0, 1);
+        --glass-text-secondary: rgba(0, 0, 0, 0.85);
+        --glass-text-tertiary: rgba(0, 0, 0, 0.70);
+        --label-primary: rgba(0, 0, 0, 1);
+        --label-secondary: rgba(0, 0, 0, 0.85);
+        --label-tertiary: rgba(0, 0, 0, 0.70);
+    }
+
+    html.dark {
+        --glass-bg-thin: rgba(0, 0, 0, 0.92);
+        --glass-bg-regular: rgba(0, 0, 0, 0.96);
+        --glass-bg-thick: #000000;
+        --glass-border: rgba(255, 255, 255, 0.35);
+        --glass-text-primary: rgba(255, 255, 255, 1);
+        --glass-text-secondary: rgba(255, 255, 255, 0.90);
+        --glass-text-tertiary: rgba(255, 255, 255, 0.75);
+        --label-primary: rgba(255, 255, 255, 1);
+        --label-secondary: rgba(255, 255, 255, 0.90);
+        --label-tertiary: rgba(255, 255, 255, 0.75);
+    }
+}
+
+/* ============================================
+   Density Modes
+   ============================================ */
+
+/* Default: Comfortable - spacious, breathable design */
+html.density-comfortable {
+    --density-padding-xs: 0.5rem;
+    --density-padding-sm: 0.75rem;
+    --density-padding-md: 1rem;
+    --density-padding-lg: 1.5rem;
+    --density-padding-xl: 2rem;
+    --density-gap: 1rem;
+    --density-font-scale: 1;
+}
+
+/* Compact: Tighter spacing for power users */
+html.density-compact {
+    --density-padding-xs: 0.25rem;
+    --density-padding-sm: 0.5rem;
+    --density-padding-md: 0.75rem;
+    --density-padding-lg: 1rem;
+    --density-padding-xl: 1.5rem;
+    --density-gap: 0.5rem;
+    --density-font-scale: 0.95;
+}
+
+/* Apply compact scaling to common elements */
+html.density-compact .p-4 {
+    padding: 0.75rem;
+}
+
+html.density-compact .p-6 {
+    padding: 1rem;
+}
+
+html.density-compact .p-8 {
+    padding: 1.5rem;
+}
+
+html.density-compact .gap-4 {
+    gap: 0.5rem;
+}
+
+html.density-compact .gap-6 {
+    gap: 0.75rem;
+}
+
+html.density-compact .gap-8 {
+    gap: 1rem;
+}
+
+html.density-compact .text-sm {
+    font-size: 0.8125rem;
+}
+
+html.density-compact .text-base {
+    font-size: 0.875rem;
+}
+
+/* ============================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   Reduce glass complexity for better battery life and 60fps scroll
+   ============================================ */
+
+@media (max-width: 768px) {
+
+    /* Reduce blur radius on mobile for performance */
+    html {
+        --glass-blur-mobile: 12px;
+    }
+
+    /* Simplify glass effects during touch/scroll */
+    .glass-performance-mode {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+}
+
+/* Touch devices: Disable heavy filters during active scroll */
+@media (pointer: coarse) {
+
+    /* GPU optimization hint for glass containers */
+    .backdrop-blur-thin,
+    .backdrop-blur-regular,
+    .backdrop-blur-thick {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+}
+
+/* Low-power mode hint (when battery saver is active) */
+@media (prefers-reduced-data: reduce) {
+    html {
+        --glass-bg-thin: rgba(255, 255, 255, 0.85);
+        --glass-bg-regular: rgba(255, 255, 255, 0.92);
+        --glass-bg-thick: rgba(255, 255, 255, 0.98);
+    }
+
+    html.dark {
+        --glass-bg-thin: rgba(30, 30, 40, 0.85);
+        --glass-bg-regular: rgba(30, 30, 40, 0.92);
+        --glass-bg-thick: rgba(30, 30, 40, 0.98);
+    }
+}
+
+/* ==========================================================================
+   GLASS NOISE/GRAIN TEXTURE
+   
+   Adds subtle film grain to glass surfaces for a realistic frosted effect.
+   Controlled by --glass-noise-opacity CSS variable (0-1).
+   ========================================================================== */
+
+/* Global noise overlay - applied to glass containers when noise > 0 */
+.glass-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: var(--glass-noise-opacity, 0);
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+    /* SVG noise pattern - performant and resolution-independent */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
+
+/* Apply noise to all glass containers globally when noise is enabled */
+html:not([style*="--glass-noise-opacity: 0"]) .backdrop-blur-thin,
+html:not([style*="--glass-noise-opacity: 0"]) .backdrop-blur-regular,
+html:not([style*="--glass-noise-opacity: 0"]) .backdrop-blur-thick {
+    position: relative;
+}
+
+/* Utility class for explicit noise application */
+.glass-with-noise {
+    position: relative;
+}
+
+.glass-with-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: var(--glass-noise-opacity, 0);
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
