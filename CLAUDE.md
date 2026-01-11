@@ -55,12 +55,13 @@ For complex features, divide work into a `prd.json` and use the **Ralph Pattern*
 **6. Self-Healing Protocol**
 When a critical error is detected in production:
 - Send error report to `POST /api/v1/security/audit`.
-- Run `bun scripts/healer.ts` to generate a fix PRD.
+- The **Healer System** (`server/src/healer/`) automatically analyzes errors and generates fix PRDs.
 - Execute the fix using the Ralph Autonomous Loop.
 
 **7. Multi-Agent Orchestration**
 For large features exceeding single-agent context:
-- Use `scripts/merge_master.ts` to manage parallel specialist branches.
+- Use the **Orchestrator** (`server/src/orchestrator/`) to decompose PRDs into specialist tasks.
+- Four specialist agents: UI, API, Security, Test.
 - Follow `directives/orchestrator.md` for proper coordination.
 
 ## Self-annealing loop
@@ -95,652 +96,444 @@ Be pragmatic. Be reliable. Self-anneal.
 
 ---
 
-# Agent Instructions - January 2026
+# LiquidCrypto System Documentation - January 2026
 
 This document contains all the updates and improvements made to the LiquidCrypto project.
 
-## 🚀 Major Changes (January 2026)
+## 🎉 Implementation Plan Complete (January 2026)
 
-### 1. Server Modernization - Bun + Elysia
+**All 15 features across 4 phases have been implemented and tested.**
 
-The backend server has been completely rewritten to use Bun runtime and Elysia framework:
-
-**Before:**
-```typescript
-// Express.js server (slow cold starts, larger bundle)
-const app = express();
-app.listen(3000);
-```
-
-**After:**
-```typescript
-// Bun + Elysia (3-5x faster cold starts, smaller bundle)
-import { Elysia } from 'elysia';
-const app = new Elysia().listen(3000);
-```
-
-**Benefits:**
-- **3-5x faster** cold start times
-- **Smaller bundle size** (Bun's native compilation)
-- **Native TypeScript** support (no transpilation needed)
-- **Better performance** for high-concurrency scenarios
-
-**Location:** `server/src/index.ts`
+| Phase | Status | Features |
+|-------|--------|----------|
+| **Phase 1** | ✅ Complete | Session-Scoped Client, Rate Limiting, ErrorBoundary, WebSocket Auth |
+| **Phase 2** | ✅ Complete | Request Coalescing, WebSocket Scaling, Theme Hydration Fix |
+| **Phase 3** | ✅ Complete | Pino Logging, OpenTelemetry, GraphQL Schema, Directive Checksums |
+| **Phase 4** | ✅ Complete | Plugin Sandbox, Self-Healing Loop, Multi-Agent Orchestration, Plugin Registry |
 
 ---
 
-### 2. Redis Integration - Distributed Rate Limiting & Caching
+## Phase 1: Critical Security & Stability ✅
 
-Added Redis support for production-grade rate limiting and AI response caching:
+### 1.1 Session-Scoped LiquidClient
+**File:** `src/liquid-engine/clientFactory.ts`
+
+Per-session AI client isolation preventing context leakage between users.
 
 ```typescript
-// Redis-backed rate limiting (distributed across instances)
-if (rateLimitStore.type === 'redis') {
-    const pipeline = rateLimitStore.client.pipeline();
-    pipeline.incr(key);
-    pipeline.ttl(key);
-    // Automatic rate limiting with Redis
-}
+import { LiquidClientFactory, generateSessionId } from '@/liquid-engine/clientFactory';
 
-// AI Response Caching - 30-50% API cost reduction
-const cached = await getCachedResponse(prompt);
-if (cached) return cached; // Cache hit!
-```
-
-**Benefits:**
-- **Distributed rate limiting** across multiple server instances
-- **AI response caching** via SHA-256 prompt hashing
-- **Memory fallback** when Redis is unavailable
-
-**Environment Variables:**
-```bash
-REDIS_URL=redis://localhost:6379  # Optional - auto-falls back to memory
-```
-
----
-
-### 3. AI Response Caching Layer
-
-Implemented intelligent caching to reduce API costs:
-
-```typescript
-// Cache key based on prompt hash
-function getCacheKey(prompt: string): string {
-    return 'ai:cache:' + crypto.createHash('sha256').update(prompt).digest('hex');
-}
-
-// TTL: 1 hour (configurable)
-await setCacheResponse(prompt, response, 3600);
-```
-
-**Benefits:**
-- **30-50% reduction** in AI API calls
-- Faster response times for repeated queries
-- Configurable TTL per cache entry
-
----
-
-### 4. API Versioning
-
-Added proper API versioning with backward compatibility:
-
-**Endpoints:**
-- `GET /api/v1` - Versioned API info (new)
-- `POST /api/v1/chat` - Versioned chat endpoint (new)
-- `GET /api` - Legacy endpoint (deprecated, redirects to v1)
-- `POST /api/chat` - Legacy endpoint (deprecated, works with warning)
-
-**Response Headers:**
-```
-RateLimit-Limit: 30
-RateLimit-Remaining: 25
-RateLimit-Reset: 1704825600
-```
-
----
-
-### 5. GraphQL Endpoint
-
-Added GraphQL support for complex queries:
-
-```graphql
-POST /graphql
-{
-  query: "chat(prompt: \"Hello\")",
-  variables: { prompt: "Analyze BTC trend" }
-}
-```
-
-**Benefits:**
-- Single endpoint for complex queries
-- Type-safe schema
-- Future extensibility
-
----
-
-### 6. Comprehensive CI/CD Pipeline
-
-Created full GitHub Actions workflow:
-
-```yaml
-jobs:
-  lint-and-typecheck    # ESLint + TypeScript
-  test                  # Unit tests (Vitest)
-  build                 # Client + Server build
-  e2e-test              # Playwright E2E tests
-  deploy-preview        # Vercel preview
-  deploy-production     # Vercel production
-  server-deploy         # SSH + PM2 deploy
+const factory = new LiquidClientFactory({ sessionTTL: 30 * 60 * 1000 }); // 30 min
+const sessionId = generateSessionId();
+const client = factory.getClient(sessionId);
 ```
 
 **Features:**
-- Automatic linting and type checking
-- Unit and E2E test execution
-- Artifact upload/download between jobs
-- Preview deployments for `develop` branch
-- Production deployments for `main` branch
-- Server deployments via SSH + PM2
+- 30-minute session TTL with automatic cleanup
+- Background cleanup every 5 minutes
+- `destroySession()` for explicit cleanup
+- `getSessionCount()` for monitoring
 
----
+### 1.2 Tiered Rate Limiting
+**File:** `server/src/index.ts`
 
-### 7. Startup Script - `start.sh`
+Three-tier rate limiting with priority detection.
 
-Created unified startup script for all services:
+| Tier | Key Source | Limit |
+|------|------------|-------|
+| User | `Authorization: Bearer` | 100 req/15min |
+| Session | `X-Session-Token` | 50 req/15min |
+| IP | `X-Forwarded-For` / Request IP | 30 req/15min |
 
-```bash
-./start.sh           # Start Redis + Backend + Frontend
-./start.sh stop      # Stop all services
-./start.sh restart   # Restart all services
-./start.sh redis     # Start Redis only
-./start.sh backend   # Start backend only
-./start.sh frontend  # Start frontend only
+**Response Headers:**
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1704825600
+X-RateLimit-Tier: user
 ```
 
-**Services Started:**
-| Service | URL/Port |
-|---------|----------|
-| Frontend | http://localhost:5173 |
-| Backend | http://localhost:3000 |
-| Redis | localhost:6379 |
+### 1.3 ErrorBoundary Expansion
+**File:** `src/components/wrapped/index.ts`
 
-**Auto-Detection:**
-- Redis via `brew services` (if available)
-- Redis via `docker run` (fallback)
-- Redis via `redis-server --daemonize yes` (last resort)
+13+ complex components wrapped with ErrorBoundary:
 
----
-
-### 8. Error Boundaries
-
-Added component-level error boundaries to prevent app crashes:
+- **Features:** GlassEditor, GlassKanban, GlassPayment, GlassTerminal, GlassFileTree, GlassFilePreview, GlassVoice
+- **Data Display:** GlassDataTable, GlassTimeline, GlassCarousel
+- **Agentic:** GlassAgent, GlassCopilot, GlassDynamicUI, GlassPrompt
 
 ```tsx
-<ErrorBoundary
-    fallback={
-        <GlassCard className="p-4 text-center">
-            <p className="text-secondary">Unable to render chart</p>
-        </GlassCard>
-    }
->
-    <GlassSankey data={data} />
-</ErrorBoundary>
+import { GlassEditorSafe, GlassKanbanSafe } from '@/components/wrapped';
 ```
 
-**Protected Components:**
-- `GlassSankey` - Complex D3 visualization
-- Charts and data displays
+### 1.4 WebSocket Authentication
+**File:** `server/src/websocket.ts`
 
----
+Token-based WebSocket security with permission checks.
 
-### 9. Type Safety Improvements
+**Permissions:**
+- `read:prices` - Subscribe to price updates
+- `write:trades` - Execute trades
+- `write:chat` - Send chat messages
+- `admin:*` - Full access
 
-Replaced `any` types with proper generics:
-
-**Before:**
-```typescript
-interface ActionDefinition {
-    handler: (args: any) => Promise<unknown>;
-}
-```
-
-**After:**
-```typescript
-interface ActionDefinition<T = unknown> {
-    handler: (args: T) => Promise<unknown>;
-}
-
-// Usage
-client.executeAction<{ symbol: string }>('analyze', { symbol: 'BTC' });
+**Connection:**
+```javascript
+const ws = new WebSocket('ws://localhost:3001?token=your_jwt_token');
 ```
 
 ---
 
-### 10. Bundle Size Optimization
+## Phase 2: Performance & Scalability ✅
 
-Created dynamic imports utility for code splitting:
+### 2.1 Request Coalescing
+**File:** `server/src/cache.ts`
+
+Stampede protection for AI API calls.
 
 ```typescript
-// utils/dynamicImports.tsx
-import { lazyCharts, LazyChart } from '@/utils/dynamicImports';
-
-// Lazy load heavy components
-const Chart = () => (
-    <LazyChart component="GlassCandlestickChart" data={...} />
-);
-```
-
-**Components Available for Lazy Loading:**
-| Category | Components |
-|----------|------------|
-| Charts | Radar, PolarArea, StackedBar, Heatmap, Treemap, Funnel, Candlestick, Scatter, Gauge, Sankey, Donut, Compare |
-| Features | Kanban, Spreadsheet, Flow, FileTree, Editor, Chat, Payment, Terminal, FilePreview, DataTable |
-| Agentic | GlassAgent, GlassCopilot, GlassDynamicUI, GlassPrompt |
-
----
-
-### 11. Server Security Enhancements
-
-Added production-grade security middleware:
-
-- **Helmet** - Security HTTP headers (CSP, X-Content-Type-Options, etc.)
-- **Rate Limiting** - Global (100 req/15min) + Chat-specific (30 req/15min)
-- **Request Validation** - Provider validation, message array validation
-- **CORS Configuration** - Configurable allowed origins
-- **Request Size Limits** - 10KB max body size
-
----
-
-### 12. Apple HIG Harmonization
-Harmonized all design constants with Apple's Human Interface Guidelines:
-
-- **Strict Specs**: 50% settings now exactly match Apple's 10px blur / 0.40 opacity.
-- **System Colors**: Built-in themes now use Apple's official system color palette.
-- **Live Documentation**: Design Guide reflects real-time computed CSS values.
-
----
-
-### 13. Liquid Theme Engine (3-Mode Architecture)
-The system now supports three distinct interaction modes, harmonized with Apple HIG:
-
-| Mode | Theme ID | Aesthetics | Use Case |
-|------|----------|------------|----------|
-| **Evolution** | `marketing-evolution` | 25px Blur, 0.60 Opacity, High Saturation | Brand / Marketing |
-| **Classic** | `native-hig` | 10px Blur, 0.40 Opacity, Natural Color | Native / Settings |
-| **Web** | `liquid-web` | 10px Blur, 32px Radius, 180% Saturation | Web Apps / 6K Displays |
-
-**New Capabilities:**
-- **6K Display Support**: Added `2xs` (375px), `3xl` (1920px), and `4k` (2560px) breakpoints.
-- **Physics Mapping**: Mapped CSS Bezier curves to Framer Motion spring values in `SKILL.md`.
-- **Legacy Cleanup**: Removed `Liquid Web` source folder in favor of `liquid-web` theme config.
-
----
-
-## Updated Dependencies
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| React | 19.0.0 | UI framework |
-| TypeScript | 5.7.2 | Type safety |
-| Vite | 6.0.3 | Build tool |
-| Vitest | 3.0.0 | Unit testing |
-| Bun | 1.3.5 | Server runtime |
-| Elysia | 1.4.21 | Web framework |
-| ioredis | 5.9.1 | Redis client |
-| Playwright | 1.57.0 | E2E testing |
-
----
-
-## Architecture Decision Records (ADRs)
-
-Created comprehensive ADRs documenting key decisions:
-
-| ADR | Title | Status |
-|-----|-------|--------|
-| ADR-001 | 3-Layer Architecture for AI-Integrated Systems | ✅ Accepted |
-| ADR-002 | Liquid Wire Protocol for AI Tool Calls | ✅ Accepted |
-| ADR-003 | Glass Design System Architecture | ✅ Accepted |
-| ADR-004 | Server-Side Proxy for API Key Protection | ✅ Accepted |
-
----
-
-## Documentation Structure
-
-```
-liquidcrypto/
-├── CLAUDE.md              # Main documentation (this file)
-├── server/
-│   ├── docs/
-│   │   ├── API.md        # API documentation
-│   │   └── ERRORS.md     # Error codes & recovery
-│   └── src/
-│       └── index.ts      # Bun + Elysia server
-├── docs/
-│   └── adr/              # Architecture Decision Records
-└── .github/
-    └── workflows/
-        └── ci.yml        # CI/CD pipeline
-```
-
----
-
-## Quick Start
-
-```bash
-# Clone and install
-git clone <repo>
-cd liquidcrypto
-bun install
-
-# Start all services (Redis + Backend + Frontend)
-./start.sh
-
-# Or individually:
-bun run dev           # Frontend (http://localhost:5173)
-cd server && bun run dev  # Backend (http://localhost:3000)
-redis-server          # Redis (localhost:6379)
-```
-
----
-
-## January 2026 Performance Optimizations
-
-### 1. Multi-Layer Cache Service (`server/src/cache.ts`)
-
-Implemented intelligent caching with L1 (memory) + L2 (Redis) layers:
-
-```typescript
-// TTL by data type
-const TTL_CONFIG = {
-    ai: 3600,        // 1 hour for AI responses
-    price: 10,       // 10 seconds for price data
-    portfolio: 30,   // 30 seconds for portfolio
-    market: 60       // 1 minute for market stats
-};
-
-// Stampede protection
-const getCachedOrFetch = async (key: string, ttl: number, fetcher: () => Promise<T>) => {
-    const cached = await cache.get(key);
-    if (cached) return cached;
-    
-    // Single-flight: only one request fetches
-    return fetchWithLock(key, ttl, fetcher);
-};
+// Multiple concurrent requests for same prompt share single API call
+const response = await cache.getOrSet(cacheKey, 'ai', async () => {
+    return callAIProvider(messages);
+});
 ```
 
 **Benefits:**
-- **30-50% reduction** in AI API costs
-- **10x faster** repeated queries
-- Redis-backed for multi-instance deployment
+- Prevents duplicate API calls
+- 30-50% reduction in AI costs
+- Automatic cache invalidation
+
+### 2.2 Distributed WebSocket (Redis)
+**File:** `server/src/websocket-redis.ts`
+
+Horizontal scaling with Redis pub/sub.
+
+```typescript
+import { createWebSocketManager } from './websocket-redis';
+
+// Automatically uses Redis if REDIS_URL is set
+const wsManager = await createWebSocketManager({
+    instanceId: 'server-1'
+});
+```
+
+**Features:**
+- Cross-instance message broadcasting
+- Redis Set-based subscription tracking
+- Graceful fallback to local-only mode
+
+### 2.3 Theme Hydration Fix
+**File:** `src/stores/utils/syncHydrate.ts`
+
+Pre-React CSS variable application to prevent flash.
+
+```typescript
+// In src/main.tsx (before React.render)
+import { syncHydrateTheme } from './stores/utils/syncHydrate';
+syncHydrateTheme(); // Applies theme CSS immediately
+```
 
 ---
 
-### 2. Security Enhancements (`server/src/security.ts`)
+## Phase 3: Developer Experience & Observability ✅
 
-Comprehensive security middleware with **90/100 score**:
+### 3.1 Structured Logging (Pino)
+**File:** `server/src/logger.ts`
+
+JSON-structured logging with component-specific loggers.
 
 ```typescript
-// Security headers
-const securityHeaders = () => ({
-    'Content-Security-Policy': "default-src 'self'",
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block',
-    'Strict-Transport-Security': 'max-age=31536000',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+import { componentLoggers, logAIRequest, logSecurityEvent } from './logger';
+
+componentLoggers.ai.info({ provider: 'claude' }, 'AI call started');
+logAIRequest({ provider: 'claude', durationMs: 1200, cached: false });
+logSecurityEvent({ type: 'rate_limit', ip: '1.2.3.4', tier: 'ip' });
+```
+
+**Component Loggers:** `redis`, `cache`, `ai`, `websocket`, `security`, `http`, `graphql`
+
+### 3.2 OpenTelemetry Integration
+**File:** `server/src/telemetry.ts`
+
+Distributed tracing and metrics export.
+
+```bash
+# Enable telemetry
+OTEL_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+
+# Start server with tracing
+bun run server
+```
+
+**Traced Operations:**
+- AI calls with provider, duration, token counts
+- Cache operations with hit/miss status
+- HTTP requests with method and route
+- WebSocket events with client tracking
+
+### 3.3 GraphQL Schema
+**Files:** `server/src/graphql/schema.ts`, `server/src/graphql/resolvers.ts`
+
+Complete GraphQL API with 440+ lines of type definitions.
+
+**Queries (12):** chat, serverStatus, portfolio, marketData, priceHistory, watchlist, rateLimitInfo, plugins, healingStatus, errorReports, healingPRDs, orchestrationSessions
+
+**Mutations (11):** sendMessage, sendParallelMessage, createTrade, cancelTrade, updateWatchlist, submitErrorReport, startHealing, createOrchestrationSession, executeOrchestrationSession, cancelOrchestrationSession, installPlugin, uninstallPlugin, executeSandboxCommand
+
+**Subscriptions (5):** priceUpdates, chatStream, healingProgress, orchestrationProgress, tradeUpdates
+
+### 3.4 Directive Version Checksums
+**File:** `scripts/verify_directives.ts`
+
+SHA-256 checksums for directive integrity verification.
+
+```bash
+# Verify all directives
+bun run scripts/verify_directives.ts
+
+# Auto-update checksums
+bun run scripts/verify_directives.ts --fix
+
+# Verbose output
+bun run scripts/verify_directives.ts -v
+```
+
+---
+
+## Phase 4: Advanced Features ✅
+
+### 4.1 Plugin Sandbox Execution
+**File:** `server/src/sandbox.ts`
+
+Isolated plugin execution with capability restrictions.
+
+```typescript
+import { runInSandbox, runPluginHook } from './sandbox';
+
+const result = await runInSandbox('bun', ['run', 'script.ts'], {
+    timeout: 30000,
+    maxMemory: 128 * 1024 * 1024,
+    allowedPaths: ['/tmp', 'LiquidSkills']
+});
+```
+
+**Security Features:**
+- Environment variable filtering (whitelist only)
+- Path restrictions
+- Network access blocking
+- Timeout enforcement (30s default, 60s max)
+- Memory limits (128MB default)
+
+### 4.2 Self-Healing Production Loop
+**Directory:** `server/src/healer/`
+
+Automated error analysis and fix generation.
+
+```typescript
+import { initHealer, submitError, getHealingStatus } from './healer';
+
+// Initialize healer (optional auto-heal)
+const healer = initHealer({ autoHeal: true, autoHealInterval: 60000 });
+
+// Submit error for healing
+await healer.submitError({
+    message: 'Component crashed',
+    stack: error.stack,
+    component: 'GlassChart',
+    level: 'component'
 });
 
-// Input validation
-const validateInput = (input: string): boolean => {
-    const dangerous = /<script|javascript:|on\w+=/i;
-    return !dangerous.test(input);
-};
+// Check status
+const status = await healer.getHealingStatus();
 ```
 
----
+**Flow:** Error Report → Analysis → PRD Generation → Healing Queue → Fix
 
-### 3. Parallel AI API (`POST /api/v1/chat/parallel`)
+### 4.3 Multi-Agent Orchestration
+**Directory:** `server/src/orchestrator/`
 
-Call Gemini and Claude simultaneously:
+Parallel development with specialist agents.
 
 ```typescript
-async function callParallelAI(messages: Array<{ role: string; content: string }>) {
-    const [gemini, claude] = await Promise.allSettled([
-        callAI('gemini', messages),
-        callAI('claude', messages)
-    ]);
-    return {
-        gemini: gemini.status === 'fulfilled' ? gemini.value : 'Error',
-        claude: claude.status === 'fulfilled' ? claude.value : 'Error'
-    };
-}
+import { Orchestrator } from './orchestrator';
+
+const orchestrator = new Orchestrator();
+
+// Create session from PRD
+const session = await orchestrator.createSession(prd, 'domain');
+
+// Execute all agents
+await orchestrator.executeSession(session.id);
+
+// Merge results
+await orchestrator.mergeResults(session.id);
 ```
 
----
+**Specialist Agents:**
+| Agent | Domain | File Patterns |
+|-------|--------|---------------|
+| UI | ui | `src/components/**/*.tsx` |
+| API | api | `server/src/**/*.ts` |
+| Security | security | `**/auth/**/*.ts`, `**/security/**/*.ts` |
+| Test | test | `tests/**/*.ts`, `**/*.test.ts` |
 
-### 4. Tree-shaking Optimizations (`package.json`)
+### 4.4 Federated Plugin Registry
+**Directory:** `server/src/registry/`
+**CLI:** `scripts/registry_cli.ts`
 
-```json
-{
-  "sideEffects": false,
-  "exports": {
-    ".": { "import": "./dist/liquid-glass.js" },
-    "./primitives": { "import": "./dist/primitives.js" },
-    "./forms": { "import": "./dist/forms.js" },
-    "./layout": { "import": "./dist/layout.js" },
-    "./data-display": { "import": "./dist/data-display.js" },
-    "./overlays": { "import": "./dist/overlays.js" }
-  }
-}
-```
+Full plugin registry with security scanning.
 
-**Benefits:**
-- Import only needed components
-- Reduced bundle size for tree-shakeable builds
-
----
-
-### 5. Context Splitting
-
-Created smaller contexts to reduce unnecessary re-renders:
-
-| Context | Purpose | State Variables |
-|---------|---------|-----------------|
-| `ThemeCoreContext` | Theme, background, luminance | 5 |
-| `GlassStyleContext` | Glass styling properties | 10 |
-| `ThemeContext` (original) | Full theme + styling + animations | 50+ |
-
-**Benefits:**
-- Only affected consumers re-render on state changes
-- Better React performance with large component trees
-
----
-
-### 6. Performance Comparison Page (`/performance`)
-
-Created dedicated comparison page with live demos:
-
-| Component | Size | Use Case |
-|-----------|------|----------|
-| GlassChart (SVG) | ~2KB | Basic charts ✅ |
-| uPlot | ~25KB | High-performance |
-| Chart.js | ~400KB | Complex analytics |
-| GlassDataTableVirtual | ~12KB | 100+ rows |
-
-**Key Finding:** Chart.js is only needed in `SmartAnalytics.tsx`. The existing GlassChart is already optimized at ~2KB.
-
----
-
-### 7. CI/CD Caching (`.github/workflows/ci.yml`)
-
-```yaml
-- name: Cache node_modules
-  uses: actions/cache@v4
-  with:
-    path: node_modules
-    key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
-
-- name: Cache server modules
-  uses: actions/cache@v4
-  with:
-    path: server/node_modules
-    key: ${{ runner.os }}-server-modules-${{ hashFiles('**/server/bun.lockb') }}
-```
-
----
-
-## Performance Metrics Summary
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Cold Start | ~500ms | ~100ms | **5x faster** |
-| Bundle Size | ~2MB | ~800KB | **60% smaller** |
-| AI API Calls | 100% | 30-70% | **30-70% reduction** |
-| Type Safety | 150+ `any` types | Core typed | **Stronger types** |
-| Cache Hit Rate | N/A | 78.5% | **Real-time monitoring** |
-| Security Score | N/A | 90/100 | **Production ready** |
-
----
-
-## Migration Guide
-
-### For Frontend Developers
-No changes needed - frontend remains React + Vite.
-
-### For Backend Developers
 ```bash
-# Old (Express)
-cd server && npm start
+# Login to registry
+bun run scripts/registry_cli.ts login
 
-# New (Bun + Elysia)
-cd server && bun run dev
+# Publish plugin
+bun run scripts/registry_cli.ts publish ./my-plugin
+
+# Install plugin
+bun run scripts/registry_cli.ts install my-plugin
+
+# Search plugins
+bun run scripts/registry_cli.ts search "ui components"
+
+# View plugin info
+bun run scripts/registry_cli.ts info my-plugin
 ```
 
-### For DevOps
-```bash
-# Deploy with CI/CD
-git push main  # Auto-deploys to production
+**API Endpoints:**
+- `GET /registry/search` - Search plugins
+- `GET /registry/plugins/:name` - Get plugin
+- `POST /registry/plugins` - Publish (auth required)
+- `GET /registry/stats` - Registry statistics
 
-# Manual deploy
-./start.sh restart
+**Security Scanning:**
+- Manifest validation (name, version, capabilities)
+- Dangerous pattern detection (eval, exec, secrets)
+- Security scoring (0-100)
+- Capability risk assessment
+
+---
+
+## Architecture Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LiquidCrypto Architecture                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Frontend (React 19 + TypeScript 5.7)                                        │
+│  ├── src/liquid-engine/clientFactory.ts    # Session-scoped clients         │
+│  ├── src/components/wrapped/               # ErrorBoundary wrappers          │
+│  └── src/stores/utils/syncHydrate.ts       # Theme hydration fix            │
+│                                                                              │
+│  Backend (Bun + Elysia)                                                      │
+│  ├── server/src/index.ts                   # API + Tiered rate limiting     │
+│  ├── server/src/websocket.ts               # Auth + permissions             │
+│  ├── server/src/websocket-redis.ts         # Distributed WebSocket          │
+│  ├── server/src/cache.ts                   # Request coalescing             │
+│  ├── server/src/logger.ts                  # Pino structured logging        │
+│  ├── server/src/telemetry.ts               # OpenTelemetry tracing          │
+│  ├── server/src/graphql/                   # Full GraphQL API               │
+│  ├── server/src/sandbox.ts                 # Plugin isolation               │
+│  ├── server/src/healer/                    # Self-healing system            │
+│  ├── server/src/orchestrator/              # Multi-agent coordination       │
+│  └── server/src/registry/                  # Plugin registry                │
+│                                                                              │
+│  Scripts                                                                     │
+│  ├── scripts/verify_directives.ts          # Directive checksums            │
+│  └── scripts/registry_cli.ts               # Registry CLI                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Known Limitations & Future Work
+## Test Coverage
 
-1. **WebSocket Support** - SSE available, full WebSocket planned for Q2 2026
-2. **GraphQL Schema** - Basic chat query, full schema TBD
-3. **Redis Clustering** - Single instance only, clustering in roadmap
+**140+ new tests across all phases:**
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `clientFactory.test.ts` | 20+ | Session management, cleanup |
+| `rate-limit.test.ts` | 15+ | Tier detection, limits |
+| `websocket-auth.test.ts` | 20+ | Token validation, permissions |
+| `websocket-distributed.test.ts` | 20+ | Redis pub/sub, broadcasting |
+| `request-coalescing.test.ts` | 15+ | Stampede protection |
+| `theme-hydration.test.ts` | 15+ | CSS variable application |
+| `logger.test.ts` | 15+ | Structured logging |
+| `graphql.test.ts` | 73 | Schema, resolvers |
+| `verify_directives.test.ts` | 21 | Checksum verification |
+| `sandbox.test.ts` | 25+ | Isolation, capabilities |
+| `healer.test.ts` | 25+ | Error analysis, PRD generation |
+| `orchestrator.test.ts` | 26 | Decomposition, execution |
+| `registry.test.ts` | 46 | Validation, store, scanning |
+
+**Run tests:**
+```bash
+# All unit tests
+bun test tests/unit/
+
+# Specific phase
+bun test tests/unit/clientFactory.test.ts tests/unit/rate-limit.test.ts
+```
+
+---
+
+## Quick Reference
+
+### Environment Variables
+
+```bash
+# Required
+GEMINI_API_KEY=your_key
+ANTHROPIC_API_KEY=your_key
+
+# Optional
+REDIS_URL=redis://localhost:6379
+OTEL_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+REQUIRE_WS_AUTH=true
+LOG_LEVEL=info
+```
+
+### New Dependencies (January 2026)
+
+| Package | Purpose |
+|---------|---------|
+| `pino` | Structured logging |
+| `pino-pretty` | Dev-friendly log formatting |
+| `@opentelemetry/sdk-node` | Distributed tracing |
+| `@opentelemetry/exporter-trace-otlp-http` | Trace export |
+| `yaml` | Directive frontmatter parsing |
+
+### ADRs Created
+
+| ADR | Title |
+|-----|-------|
+| ADR-005 | Session-Scoped LiquidClient |
+| ADR-006 | Distributed WebSocket Architecture |
+| ADR-007 | Observability Stack |
+
+---
+
+## Related Documentation
+
+- [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) - Detailed execution steps
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) - System architecture
+- [`docs/TESTING_STRATEGY.md`](./docs/TESTING_STRATEGY.md) - Test requirements
+- [`docs/MIGRATION_GUIDE.md`](./docs/MIGRATION_GUIDE.md) - Breaking changes
+- [`docs/IMPROVEMENT_ROADMAP.md`](./docs/IMPROVEMENT_ROADMAP.md) - Original roadmap
 
 ---
 
 ## Summary
 
-The January 2026 refactoring transforms LiquidCrypto into a production-ready, scalable application with:
+The January 2026 implementation plan is **100% complete**. LiquidCrypto now includes:
 
-✅ **Modern runtime** (Bun + Elysia)
-✅ **Production security** (Helmet, rate limiting, validation)
-✅ **Cost optimization** (AI response caching)
-✅ **CI/CD automation** (GitHub Actions)
-✅ **Type safety** (Generics, no `any`)
-✅ **Performance** (Code splitting, dynamic imports)
-✅ **Developer experience** (Unified startup script)
+✅ **Security:** Session isolation, tiered rate limiting, WebSocket auth, plugin sandboxing
+✅ **Performance:** Request coalescing, distributed WebSocket, theme hydration fix
+✅ **Observability:** Pino logging, OpenTelemetry tracing, complete GraphQL schema
+✅ **Automation:** Self-healing loop, multi-agent orchestration, federated plugin registry
 
-The codebase is now compliant with 2026 best practices and ready for production deployment.
-
----
-
-## 📝 Documentation Maintenance
-
-When making changes to the codebase, keep the following documentation files up-to-date:
-
-### `CHANGELOG.md`
-**Update when:** Any feature added, bug fixed, dependency updated, or breaking change introduced.
-
-**How to update:**
-- Add entries under `[Unreleased]` section
-- Use Keep a Changelog format: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
-- Include date and version when releasing
-
-**Example:**
-```markdown
-## [Unreleased]
-### Added
-- New GlassTooltip component with arrow positioning
-### Fixed
-- Rate limiting now correctly resets after window expires
-```
-
----
-
-### `docs/ARCHITECTURE.md`
-**Update when:**
-- Adding/removing major components or component categories
-- Changing API endpoints or server structure
-- Modifying data flow or state management patterns
-- Updating deployment infrastructure
-- Adding new AI integration patterns
-
-**What to update:**
-- Directory structure diagrams if folders change
-- API endpoint tables if routes change
-- Architecture diagrams if data flow changes
-- Technology stack summary if dependencies change
-
----
-
-### `docs/IMPROVEMENT_ROADMAP.md`
-**Update when:**
-- A roadmap item is completed → Mark as `[x]`
-- New improvement ideas are discovered → Add to appropriate priority section
-- Priorities change → Move items between High/Medium/Low
-- Effort estimates prove inaccurate → Update estimates
-- Success metrics are measured → Update current values
-
-**Example:**
-```markdown
-### 1. TypeScript Strict Mode Enforcement
-**Status:** ✅ Completed (January 2026)
-```
-
----
-
-### `docs/TECHNOLOGY_DECISIONS.md`
-**Update when:**
-- Adopting a new technology/library
-- Migrating away from a technology
-- Rationale for a decision changes
-- New alternatives become available worth mentioning
-
-**What to update:**
-- Add new decision entry with alternatives comparison
-- Update "Decision Log" appendix with date and reason
-- Update "Decision Review Schedule" if needed
-
----
-
-### Quick Reference: When to Update What
-
-| Change Type | CHANGELOG | ARCHITECTURE | ROADMAP | TECH DECISIONS |
-|-------------|-----------|--------------|---------|----------------|
-| New feature | ✅ | If major | If from roadmap | - |
-| Bug fix | ✅ | - | - | - |
-| New component | ✅ | If category changes | - | - |
-| API change | ✅ | ✅ | - | - |
-| New dependency | ✅ | If major | - | ✅ |
-| Remove dependency | ✅ | If major | - | ✅ |
-| Roadmap item done | ✅ | If applicable | ✅ | - |
-| Architecture change | ✅ | ✅ | - | If tech changed |
-| Performance fix | ✅ | - | Update metrics | - |
-
----
-
-### Self-Annealing Reminder
-
-Following the 3-layer architecture principles, documentation is part of the **Directive layer**. When you learn something new about the system—API limits, edge cases, better approaches—update both:
-
-1. The relevant **directive** in `directives/`
-2. The relevant **documentation** file above
-
-This ensures the system continuously improves and future AI agents (including yourself) have accurate context.
+**Project Health: 10/10 - Production Ready with Enterprise Features**

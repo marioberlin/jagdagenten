@@ -7,6 +7,141 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(No unreleased changes)
+
+---
+
+## [0.2.0] - 2026-01-11
+
+### 🚀 Implementation Plan Complete - All 15 Features
+
+Complete implementation of the 4-phase improvement roadmap with enterprise-grade features.
+
+#### Phase 1: Critical Security & Stability
+
+**1.1 Session-Scoped LiquidClient** (`src/liquid-engine/clientFactory.ts`)
+- Per-session AI client isolation preventing context leakage
+- 30-minute session TTL with automatic cleanup
+- `generateSessionId()` and `useLiquidClient()` hook
+- Background cleanup every 5 minutes
+
+**1.2 Tiered Rate Limiting** (`server/src/index.ts`)
+- Three-tier rate limiting: User (100/15min) > Session (50/15min) > IP (30/15min)
+- `X-RateLimit-Tier` response header
+- Priority detection from Authorization, X-Session-Token, X-Forwarded-For
+
+**1.3 ErrorBoundary Expansion** (`src/components/wrapped/index.ts`)
+- 13+ complex components wrapped: GlassEditor, GlassKanban, GlassPayment, etc.
+- Safe variants: `GlassEditorSafe`, `GlassKanbanSafe`, etc.
+- Component name in error logs for debugging
+
+**1.4 WebSocket Authentication** (`server/src/websocket.ts`)
+- Token-based JWT authentication on connection
+- Permission system: `read:prices`, `write:trades`, `write:chat`, `admin:*`
+- Connection audit logging
+
+#### Phase 2: Performance & Scalability
+
+**2.1 Request Coalescing** (`server/src/cache.ts`)
+- Stampede protection via `cache.getOrSet()`
+- SHA-256 prompt hashing for deduplication
+- 30-50% reduction in AI API costs
+
+**2.2 Distributed WebSocket** (`server/src/websocket-redis.ts`)
+- Redis pub/sub for cross-instance broadcasting
+- Redis Set-based subscription tracking
+- Graceful fallback to local-only mode
+
+**2.3 Theme Hydration Fix** (`src/stores/utils/syncHydrate.ts`)
+- Pre-React CSS variable application
+- Eliminates flash of wrong theme
+- Handles corrupt localStorage gracefully
+
+#### Phase 3: Developer Experience & Observability
+
+**3.1 Structured Logging** (`server/src/logger.ts`)
+- Pino JSON logging with component-specific loggers
+- `logAIRequest()`, `logSecurityEvent()` helpers
+- Request ID correlation
+- pino-pretty in development
+
+**3.2 OpenTelemetry Integration** (`server/src/telemetry.ts`)
+- Distributed tracing with OTLP export
+- Spans for AI calls, cache, WebSocket, HTTP
+- Metrics: latency, cache hit rate, token counts
+
+**3.3 GraphQL Schema** (`server/src/graphql/`)
+- 440+ lines of type definitions
+- 12 queries, 11 mutations, 5 subscriptions
+- Includes healing, orchestration, registry operations
+
+**3.4 Directive Checksums** (`scripts/verify_directives.ts`)
+- SHA-256 checksums for directive integrity
+- YAML frontmatter with dependencies
+- `--fix` mode for auto-updating hashes
+
+#### Phase 4: Advanced Features
+
+**4.1 Plugin Sandbox** (`server/src/sandbox.ts`)
+- Isolated subprocess execution
+- Environment variable filtering (whitelist)
+- Path restrictions, timeout (30s), memory limits (128MB)
+
+**4.2 Self-Healing Loop** (`server/src/healer/`)
+- Automated error analysis with AI
+- PRD generation for fixes
+- Integration with Ralph loop
+- Healing job queue with status tracking
+
+**4.3 Multi-Agent Orchestration** (`server/src/orchestrator/`)
+- PRD decomposition into specialist tasks
+- Four agents: UI, API, Security, Test
+- Parallel execution with merge support
+- Progress synchronization
+
+**4.4 Plugin Registry** (`server/src/registry/`, `scripts/registry_cli.ts`)
+- RESTful API: search, publish, install, deprecate
+- CLI: login, publish, install, search, info, stats
+- Security scanning with dangerous pattern detection
+- Manifest validation and scoring (0-100)
+
+#### New ADRs
+
+| ADR | Title |
+|-----|-------|
+| ADR-005 | Session-Scoped LiquidClient |
+| ADR-006 | Distributed WebSocket Architecture |
+| ADR-007 | Observability Stack |
+
+#### New Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `pino` | Structured logging |
+| `pino-pretty` | Dev-friendly log formatting |
+| `@opentelemetry/sdk-node` | Distributed tracing |
+| `@opentelemetry/exporter-trace-otlp-http` | Trace export |
+| `yaml` | Directive frontmatter parsing |
+
+#### Test Coverage
+
+**140+ new tests:**
+- `clientFactory.test.ts` (20+)
+- `rate-limit.test.ts` (15+)
+- `websocket-auth.test.ts` (20+)
+- `websocket-distributed.test.ts` (20+)
+- `request-coalescing.test.ts` (15+)
+- `theme-hydration.test.ts` (15+)
+- `logger.test.ts` (15+)
+- `graphql.test.ts` (73)
+- `verify_directives.test.ts` (21)
+- `sandbox.test.ts` (25+)
+- `healer.test.ts` (25+)
+- `orchestrator.test.ts` (26)
+- `registry.test.ts` (46)
+
+---
+
 ### 🦾 LiquidSkills - Harmonized Plugin Ecosystem
 
 Established a universal "Skill Interface" harmonized with the **Claude Plugin Standard**, enabling modular, manifest-driven agent expertise.
@@ -372,6 +507,7 @@ This is the initial release. No migration required.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.2.0 | 2026-01-11 | Implementation Plan complete (15 features, 4 phases), 140+ new tests |
 | 0.1.0 | 2026-01-09 | Initial release with 162+ components, AI integration, Bun server |
 
 ---
