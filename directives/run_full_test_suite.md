@@ -1,3 +1,9 @@
+---
+"name": "run_full_test_suite"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Run Full Test Suite
 
 ## Goal

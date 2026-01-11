@@ -1,3 +1,9 @@
+---
+"name": "code_simplifier"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Code Simplifier Directive
 
 > [!NOTE]

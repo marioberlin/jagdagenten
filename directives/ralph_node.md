@@ -1,3 +1,9 @@
+---
+"name": "ralph_node"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Ralph Iteration Directive
 
 > [!NOTE]

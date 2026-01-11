@@ -1,0 +1,143 @@
+{
+  "name": "Phase 1: Critical Security & Stability",
+  "version": "1.0.0",
+  "created": "2026-01-11",
+  "priority": "P0-Critical",
+  "stories": [
+    {
+      "id": "1.1",
+      "title": "Session-Scoped LiquidClient",
+      "description": "Create a factory pattern for LiquidClient that isolates state per user session to prevent context leakage in multi-tenant scenarios.",
+      "acceptance_criteria": [
+        "Each browser session receives a unique LiquidClient instance",
+        "Sessions are automatically cleaned up after 30 minutes of inactivity",
+        "No cross-session data leakage (verified by test)",
+        "Memory usage remains stable over 1000+ session creations",
+        "Backward compatible - existing singleton usage still works"
+      ],
+      "files_to_create": [
+        "src/liquid-engine/clientFactory.ts",
+        "src/hooks/useLiquidClient.ts",
+        "tests/unit/clientFactory.test.ts"
+      ],
+      "files_to_modify": [
+        "src/liquid-engine/client.ts",
+        "src/liquid-engine/index.ts",
+        "src/context/AgentConfigContext.tsx",
+        "src/App.tsx"
+      ],
+      "technical_notes": [
+        "Use crypto.randomUUID() for session ID generation",
+        "Store session ID in React context, not localStorage (security)",
+        "Add reset() method to LiquidClient for cleanup",
+        "Cleanup interval should be configurable via environment variable"
+      ],
+      "passes": false
+    },
+    {
+      "id": "1.2",
+      "title": "Rate Limit Key Enhancement",
+      "description": "Improve rate limiting to use tiered keys (user ID > session token > IP) with different limits per tier.",
+      "acceptance_criteria": [
+        "Authenticated users get 100 req/15min limit",
+        "Session-tracked users get 50 req/15min limit",
+        "Anonymous IP users get 30 req/15min limit",
+        "X-RateLimit-Tier header present in all responses",
+        "Graceful handling when no identifier available"
+      ],
+      "files_to_create": [],
+      "files_to_modify": [
+        "server/src/index.ts",
+        "server/src/types.ts"
+      ],
+      "technical_notes": [
+        "Extract IP from X-Forwarded-For first element (proxy support)",
+        "Session token comes from X-Session-Token header",
+        "User ID extracted from Authorization Bearer token",
+        "Rate limit key format: ratelimit:{tier}:{identifier}"
+      ],
+      "passes": false
+    },
+    {
+      "id": "1.3",
+      "title": "ErrorBoundary Expansion",
+      "description": "Wrap all complex/crash-prone components with ErrorBoundary using the existing withErrorBoundary HOC.",
+      "acceptance_criteria": [
+        "All 25+ identified components wrapped with ErrorBoundary",
+        "Each wrapped component reports its name in error logs",
+        "Error UI renders correctly for each component category",
+        "No regression in normal component operation",
+        "Storybook stories updated to show error states"
+      ],
+      "files_to_create": [
+        "tests/unit/ErrorBoundaryComponents.test.tsx"
+      ],
+      "files_to_modify": [
+        "src/components/data-display/GlassFlow.tsx",
+        "src/components/data-display/GlassRadarChart.tsx",
+        "src/components/data-display/GlassPolarAreaChart.tsx",
+        "src/components/data-display/GlassStackedBarChart.tsx",
+        "src/components/data-display/GlassHeatmap.tsx",
+        "src/components/data-display/GlassTreemap.tsx",
+        "src/components/data-display/GlassFunnelChart.tsx",
+        "src/components/data-display/GlassCandlestickChart.tsx",
+        "src/components/data-display/GlassScatterChart.tsx",
+        "src/components/data-display/GlassGauge.tsx",
+        "src/components/data-display/GlassDonutChart.tsx",
+        "src/components/data-display/GlassCompareChart.tsx",
+        "src/components/data-display/index.ts",
+        "src/components/features/GlassKanban.tsx",
+        "src/components/features/GlassSpreadsheet.tsx",
+        "src/components/features/GlassFileTree.tsx",
+        "src/components/features/GlassEditor.tsx",
+        "src/components/features/GlassChat.tsx",
+        "src/components/features/GlassPayment.tsx",
+        "src/components/features/GlassTerminal.tsx",
+        "src/components/features/GlassFilePreview.tsx",
+        "src/components/features/GlassDataTable.tsx",
+        "src/components/features/index.ts",
+        "src/components/agentic/GlassAgent.tsx",
+        "src/components/agentic/GlassCopilot.tsx",
+        "src/components/agentic/GlassDynamicUI.tsx",
+        "src/components/agentic/index.ts"
+      ],
+      "technical_notes": [
+        "Use pattern: export const GlassX = withErrorBoundary(GlassXRaw, fallback)",
+        "Each component should have componentName prop passed to boundary",
+        "Consider compact fallback UI for chart components vs full-page for features",
+        "Update barrel exports to maintain API compatibility"
+      ],
+      "passes": false
+    },
+    {
+      "id": "1.4",
+      "title": "WebSocket Authentication",
+      "description": "Add token validation and permission checks to WebSocket connections.",
+      "acceptance_criteria": [
+        "Connections require valid token when requireAuth=true",
+        "Token validated during WebSocket upgrade handshake",
+        "Permissions enforced per message type (subscribe, trade, chat)",
+        "Anonymous users get read-only access when auth not required",
+        "Connection audit trail logged with client ID and user ID",
+        "Graceful handling of invalid/expired tokens"
+      ],
+      "files_to_create": [
+        "server/src/auth.ts",
+        "tests/unit/websocket-auth.test.ts"
+      ],
+      "files_to_modify": [
+        "server/src/websocket.ts",
+        "server/src/types.ts",
+        "server/src/index.ts"
+      ],
+      "technical_notes": [
+        "Token can be in query string (?token=xxx) or Authorization header",
+        "Permission levels: read:prices, write:trades, write:chat, admin",
+        "Use JWT with short expiry (15 min) for WebSocket tokens",
+        "Add requireAuth config option (default: false for backward compat)",
+        "Log all connection/disconnection events with metadata"
+      ],
+      "passes": false
+    }
+  ]
+}

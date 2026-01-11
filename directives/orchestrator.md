@@ -1,3 +1,12 @@
+---
+"name": "orchestrator"
+"version": "1.0.0"
+"updated": "2026-01-11"
+"dependencies":
+  - "path": "scripts/merge_master.ts"
+    "sha256": "6bf805c220231a0179a2d7ed0dd255cc595e718310913635f767a5f7c324b412"
+---
+
 # Directive: Multi-Agent Orchestrator
 
 This directive defines the SOP for the "Principal Agent" responsible for coordinating parallel development across specialist sub-agents.

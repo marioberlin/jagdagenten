@@ -241,5 +241,41 @@ export class LiquidClient {
             }
         }));
     }
+
+    // ============ Session Management ============
+
+    /**
+     * Reset the client state (for session cleanup)
+     * Clears all tool states, contexts, actions, and listeners
+     */
+    public reset(): void {
+        this.toolStates = {};
+        this.readableContexts.clear();
+        this.actions.clear();
+        this.listeners.clear();
+        this.activeFocusId = undefined;
+        this.strategy = new FlatContextStrategy();
+    }
+
+    /**
+     * Get the number of registered contexts (for monitoring)
+     */
+    public getContextCount(): number {
+        return this.readableContexts.size;
+    }
+
+    /**
+     * Get the number of registered actions (for monitoring)
+     */
+    public getActionCount(): number {
+        return this.actions.size;
+    }
+
+    /**
+     * Get the number of active tool states (for monitoring)
+     */
+    public getToolStateCount(): number {
+        return Object.keys(this.toolStates).length;
+    }
 }
 

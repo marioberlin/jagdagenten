@@ -1,3 +1,9 @@
+---
+"name": "add_glass_component"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Add Glass Component
 
 ## Goal

@@ -1,0 +1,184 @@
+{
+  "name": "Phase 4: Advanced Features",
+  "version": "1.0.0",
+  "created": "2026-01-11",
+  "priority": "P3-Low",
+  "depends_on": ["phase1.json", "phase2.json", "phase3.json"],
+  "stories": [
+    {
+      "id": "4.1",
+      "title": "Plugin Sandbox Execution",
+      "description": "Run LiquidSkills plugin commands in isolated subprocess with minimal capabilities.",
+      "acceptance_criteria": [
+        "Plugins run in isolated temporary directory",
+        "Environment variables filtered to allowlist only",
+        "Execution timeout enforced (default 30s)",
+        "Memory limit enforced (default 128MB)",
+        "Sandbox directory cleaned up after execution",
+        "Plugin manifest can declare required permissions"
+      ],
+      "files_to_create": [
+        "server/src/sandbox.ts",
+        "server/src/sandbox.test.ts"
+      ],
+      "files_to_modify": [
+        "server/src/routes/plugins.ts",
+        "LiquidSkills/liquid-design/plugin.json"
+      ],
+      "technical_notes": [
+        "Use Bun.spawn with cwd set to sandbox directory",
+        "Copy only declared allowedPaths to sandbox",
+        "Filter env to: PATH, HOME, NODE_ENV by default",
+        "Add permissions field to plugin.json manifest",
+        "Consider Bun's native subprocess isolation if available"
+      ],
+      "security_considerations": [
+        "No access to parent directories (../)",
+        "No access to .env or secrets",
+        "No network access unless declared",
+        "No process spawning unless declared",
+        "Audit log all sandbox executions"
+      ],
+      "passes": false
+    },
+    {
+      "id": "4.2",
+      "title": "Self-Healing Production Loop",
+      "description": "Automatically analyze client errors, generate fix PRDs, and create pull requests.",
+      "acceptance_criteria": [
+        "Client errors trigger AI analysis within 1 minute",
+        "Valid PRDs generated from actionable errors",
+        "Ralph loop executes fixes in feature branch",
+        "PRs created automatically with test results",
+        "Maintainers notified on failure or ambiguous errors",
+        "Duplicate errors deduplicated by stack trace hash"
+      ],
+      "files_to_create": [
+        "server/src/healer/index.ts",
+        "server/src/healer/analyzer.ts",
+        "server/src/healer/prd.ts",
+        "server/src/healer/queue.ts",
+        "server/src/healer/prompts.ts",
+        "scripts/healer_cron.ts"
+      ],
+      "files_to_modify": [
+        "server/src/security.ts",
+        "server/src/index.ts"
+      ],
+      "dependencies_runtime": ["3.1", "3.2"],
+      "technical_notes": [
+        "Use Redis queue for healing jobs (or memory fallback)",
+        "Deduplicate by hashing error message + stack trace",
+        "AI analyzer uses HEALER_SYSTEM_PROMPT for structured output",
+        "Rate limit healing: max 5 PRDs per hour per error class",
+        "Create feature branch: fix/heal-{error-hash}-{timestamp}"
+      ],
+      "workflow": [
+        "1. Client error hits /api/v1/security/audit",
+        "2. Error queued for analysis (debounced 5 min)",
+        "3. AI analyzes and generates PRD",
+        "4. PRD validated for actionability",
+        "5. Ralph loop executes on feature branch",
+        "6. Tests run, PR created if passing",
+        "7. Notify maintainers for review"
+      ],
+      "passes": false
+    },
+    {
+      "id": "4.3",
+      "title": "Multi-Agent Orchestration",
+      "description": "Enable parallel development by coordinating specialist sub-agents (UI, API, Security, Test).",
+      "acceptance_criteria": [
+        "Orchestrator correctly decomposes PRD by domain",
+        "Specialist agents work in parallel on sub-PRDs",
+        "No file-level conflicts in merged result",
+        "End-to-end tests pass after merge",
+        "Progress visible in real-time dashboard",
+        "Graceful handling of specialist failures"
+      ],
+      "files_to_create": [
+        "server/src/orchestrator/index.ts",
+        "server/src/orchestrator/decompose.ts",
+        "server/src/orchestrator/merge.ts",
+        "server/src/orchestrator/progress.ts",
+        "server/src/orchestrator/specialists/ui.ts",
+        "server/src/orchestrator/specialists/api.ts",
+        "server/src/orchestrator/specialists/security.ts",
+        "server/src/orchestrator/specialists/test.ts",
+        "directives/specialists/ui_specialist.md",
+        "directives/specialists/api_specialist.md",
+        "directives/specialists/security_specialist.md",
+        "directives/specialists/test_specialist.md"
+      ],
+      "files_to_modify": [
+        "directives/orchestrator.md",
+        "scripts/merge_master.ts"
+      ],
+      "dependencies_runtime": ["4.1"],
+      "technical_notes": [
+        "Decomposition rules in directives/orchestrator.md",
+        "Each specialist gets isolated sub-PRD and file scope",
+        "Merge order: Security -> API -> UI -> Test",
+        "Use git worktrees for parallel development",
+        "Progress stored in Redis with TTL"
+      ],
+      "domain_mapping": {
+        "ui": ["src/components", "src/pages", "src/styles"],
+        "api": ["server/src/routes", "server/src/services"],
+        "security": ["server/src/security.ts", "server/src/auth.ts"],
+        "test": ["tests/", "*.test.ts", "*.spec.ts"]
+      },
+      "passes": false
+    },
+    {
+      "id": "4.4",
+      "title": "Federated Plugin Registry",
+      "description": "Create public registry for sharing, versioning, and securing LiquidSkills plugins.",
+      "acceptance_criteria": [
+        "Registry server with REST API for publish/search/install",
+        "CLI commands: liquidskills publish, install, update",
+        "Signed manifests for trust verification",
+        "Automated security scanning on publish",
+        "Semantic versioning with dependency resolution",
+        "Documentation site generated from manifests"
+      ],
+      "files_to_create": [
+        "registry/server/index.ts",
+        "registry/server/routes/plugins.ts",
+        "registry/server/routes/search.ts",
+        "registry/server/services/scanner.ts",
+        "registry/server/services/signer.ts",
+        "registry/cli/index.ts",
+        "registry/cli/commands/publish.ts",
+        "registry/cli/commands/install.ts",
+        "registry/cli/commands/update.ts"
+      ],
+      "files_to_modify": [
+        "LiquidSkills/_registry.md"
+      ],
+      "dependencies_runtime": ["4.1"],
+      "technical_notes": [
+        "Consider using npm registry protocol for compatibility",
+        "Store plugins in S3-compatible object storage",
+        "Use GPG signing for manifest verification",
+        "Security scan: check for known vulnerabilities, suspicious patterns",
+        "Generate static docs site from plugin manifests"
+      ],
+      "api_endpoints": [
+        "POST /api/plugins - Publish new plugin/version",
+        "GET /api/plugins/:name - Get plugin metadata",
+        "GET /api/plugins/:name/:version - Get specific version",
+        "GET /api/plugins/:name/:version/download - Download tarball",
+        "GET /api/search?q=:query - Search plugins",
+        "POST /api/plugins/:name/verify - Verify signature"
+      ],
+      "out_of_scope": [
+        "Billing/monetization",
+        "Private registries",
+        "Plugin analytics",
+        "User accounts (use GitHub OAuth)"
+      ],
+      "passes": false
+    }
+  ]
+}

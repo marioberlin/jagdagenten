@@ -191,15 +191,28 @@ export class ErrorBoundary extends Component<Props, State> {
 // Higher-order component for easier usage
 export function withErrorBoundary<P extends object>(
     Component: React.ComponentType<P>,
-    fallback?: ReactNode
+    options?: {
+        fallback?: ReactNode;
+        componentName?: string;
+        level?: 'page' | 'component';
+    }
 ) {
-    return function WithErrorBoundary(props: P) {
+    const componentName = options?.componentName || Component.displayName || Component.name || 'Unknown';
+
+    function WithErrorBoundary(props: P) {
         return (
-            <ErrorBoundary fallback={fallback}>
+            <ErrorBoundary
+                fallback={options?.fallback}
+                componentName={componentName}
+                level={options?.level || 'component'}
+            >
                 <Component {...props} />
             </ErrorBoundary>
         );
-    };
+    }
+
+    WithErrorBoundary.displayName = `withErrorBoundary(${componentName})`;
+    return WithErrorBoundary;
 }
 
 // Hook version for functional components

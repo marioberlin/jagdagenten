@@ -1,3 +1,9 @@
+---
+"name": "ralph_convert"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Ralph PRD Conversion Directive
 
 > [!IMPORTANT]

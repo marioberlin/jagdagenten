@@ -147,5 +147,11 @@ export * from './generative';
 
 // SmartGlass (AI-Enhanced Components - Level 2.5)
 export * from './smartglass';
+
+// ErrorBoundary-Wrapped Components (Production Safety)
+// Use *Safe variants for crash-protected components
+export * from './wrapped';
+
 // Lazy Loaded Components (Bundle Optimization)
-export { lazyCharts, lazyFeatures, lazyAgents, LazyChart, LazyFeature } from '../utils/dynamicImports';
+// These wrappers include ErrorBoundary protection automatically
+export { lazyCharts, lazyFeatures, lazyAgents, LazyChart, LazyFeature, LazyAgent } from '../utils/dynamicImports';

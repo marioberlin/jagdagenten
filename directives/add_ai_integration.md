@@ -1,3 +1,9 @@
+---
+"name": "add_ai_integration"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Add AI Integration
 
 ## Goal

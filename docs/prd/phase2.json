@@ -1,0 +1,100 @@
+{
+  "name": "Phase 2: Performance & Scalability",
+  "version": "1.0.0",
+  "created": "2026-01-11",
+  "priority": "P1-High",
+  "depends_on": ["phase1.json"],
+  "stories": [
+    {
+      "id": "2.1",
+      "title": "Request Coalescing for AI Calls",
+      "description": "Wire AI calls through cache.getOrSet() to prevent stampede on cache miss and reduce API costs.",
+      "acceptance_criteria": [
+        "Multiple simultaneous identical requests share single API call",
+        "Cache miss logged only once per unique prompt",
+        "No increase in p99 response latency",
+        "API cost reduction of 30%+ during traffic spikes",
+        "Existing cache TTL configuration still respected"
+      ],
+      "files_to_create": [],
+      "files_to_modify": [
+        "server/src/index.ts",
+        "server/src/cache.ts"
+      ],
+      "technical_notes": [
+        "Extract callClaudeAPI() and callGeminiAPI() as separate functions",
+        "Use Bun.hash() for fast prompt hashing",
+        "Cache key format: ai:{provider}:{hash}",
+        "Add coalescing metrics to cache stats",
+        "Ensure error handling doesn't cache failures"
+      ],
+      "verification": {
+        "load_test": "Run 10 concurrent identical requests, verify only 1 API call",
+        "metrics": "Check cache stats show coalesced requests"
+      },
+      "passes": false
+    },
+    {
+      "id": "2.2",
+      "title": "WebSocket Horizontal Scaling",
+      "description": "Enable WebSocket message broadcasting across multiple server instances using Redis pub/sub.",
+      "acceptance_criteria": [
+        "Messages broadcast to clients on all server instances",
+        "Subscriptions persist across individual instance restarts",
+        "Graceful degradation when Redis unavailable (local-only mode)",
+        "No duplicate messages received by clients",
+        "Instance ID visible in logs for debugging"
+      ],
+      "files_to_create": [
+        "server/src/websocket-redis.ts",
+        "tests/integration/websocket-scaling.test.ts"
+      ],
+      "files_to_modify": [
+        "server/src/websocket.ts",
+        "server/src/index.ts"
+      ],
+      "technical_notes": [
+        "Create DistributedWebSocketManager extending base WebSocketManager",
+        "Use Redis pub/sub channel: ws:broadcast",
+        "Include sourceInstance in messages to prevent echo",
+        "Store subscriptions in Redis Sets: subs:{symbol}",
+        "Add instance heartbeat for health monitoring"
+      ],
+      "verification": {
+        "multi_instance": "Start 2 server instances, connect client to each, verify cross-broadcast",
+        "failover": "Kill Redis, verify local broadcast still works"
+      },
+      "passes": false
+    },
+    {
+      "id": "2.3",
+      "title": "Theme Hydration Race Fix",
+      "description": "Eliminate flash of wrong theme on page load by synchronously applying CSS variables before React mounts.",
+      "acceptance_criteria": [
+        "No visible theme flash on page load",
+        "Works correctly with browser cache cleared",
+        "Graceful fallback if localStorage is corrupt or empty",
+        "No impact on Time to Interactive metric",
+        "Works with all three theme modes (Evolution, HIG, Web)"
+      ],
+      "files_to_create": [
+        "src/stores/utils/syncHydrate.ts"
+      ],
+      "files_to_modify": [
+        "src/main.tsx"
+      ],
+      "technical_notes": [
+        "Parse localStorage synchronously before createRoot()",
+        "Apply only critical CSS variables (blur, opacity, radius, bg colors)",
+        "Set data-theme attribute for Tailwind dark mode",
+        "Use try/catch with silent failure (store will hydrate normally)",
+        "Keep function small (<50 lines) for fast execution"
+      ],
+      "verification": {
+        "visual": "Record page load at 0.25x speed, verify no flash",
+        "network": "Disable cache, hard refresh, verify correct theme"
+      },
+      "passes": false
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "name": "Phase 3: Developer Experience & Observability",
+  "version": "1.0.0",
+  "created": "2026-01-11",
+  "priority": "P2-Medium",
+  "depends_on": ["phase1.json", "phase2.json"],
+  "stories": [
+    {
+      "id": "3.1",
+      "title": "Structured Logging with Pino",
+      "description": "Replace all console.log/error calls with structured Pino logger for production-grade logging.",
+      "acceptance_criteria": [
+        "All server logs output as JSON in production",
+        "Pretty printing enabled in development",
+        "Request IDs correlate across log entries",
+        "Log levels work correctly (debug hidden in prod)",
+        "AI call duration and cache status logged",
+        "No console.log statements remain in server code"
+      ],
+      "files_to_create": [
+        "server/src/logger.ts"
+      ],
+      "files_to_modify": [
+        "server/package.json",
+        "server/src/index.ts",
+        "server/src/cache.ts",
+        "server/src/websocket.ts",
+        "server/src/security.ts",
+        "server/src/sentinel.ts"
+      ],
+      "dependencies": {
+        "pino": "^8.17.0",
+        "pino-pretty": "^10.3.0"
+      },
+      "technical_notes": [
+        "Base logger includes service name and version",
+        "Create child logger per request with requestId",
+        "Add userId to child logger when authenticated",
+        "Use logger.info({ component: 'redis' }, 'message') pattern",
+        "Add performance logging with duration field for AI calls"
+      ],
+      "log_schema": {
+        "level": "info|warn|error|debug",
+        "time": "unix timestamp",
+        "service": "liquid-glass-server",
+        "requestId": "uuid",
+        "userId": "optional",
+        "component": "ai|cache|ws|http",
+        "msg": "human readable message"
+      },
+      "passes": false
+    },
+    {
+      "id": "3.2",
+      "title": "OpenTelemetry Integration",
+      "description": "Add distributed tracing and metrics export using OpenTelemetry SDK.",
+      "acceptance_criteria": [
+        "Traces visible in Jaeger/Honeycomb/similar",
+        "AI call latency measured with provider attribute",
+        "Cache hit/miss visible in trace spans",
+        "Error spans correctly attributed with status",
+        "Request latency histogram exported as metric",
+        "Active WebSocket connections gauge available"
+      ],
+      "files_to_create": [
+        "server/src/telemetry.ts"
+      ],
+      "files_to_modify": [
+        "server/package.json",
+        "server/src/index.ts"
+      ],
+      "dependencies": {
+        "@opentelemetry/sdk-node": "^0.48.0",
+        "@opentelemetry/api": "^1.7.0",
+        "@opentelemetry/exporter-trace-otlp-http": "^0.48.0",
+        "@opentelemetry/exporter-metrics-otlp-http": "^0.48.0",
+        "@opentelemetry/semantic-conventions": "^1.21.0"
+      },
+      "technical_notes": [
+        "Initialize SDK before any other imports",
+        "Use OTEL_EXPORTER_OTLP_ENDPOINT env var for config",
+        "Add custom attributes: ai.provider, ai.cached, ai.duration",
+        "Implement graceful shutdown on SIGTERM",
+        "Consider sampling rate for high-traffic production"
+      ],
+      "spans_to_create": [
+        "http.request - auto-instrumented",
+        "ai.call - manual, with provider/cached/duration",
+        "cache.get - manual, with hit/miss",
+        "cache.set - manual, with ttl",
+        "redis.command - auto-instrumented if using redis instrumentation",
+        "websocket.message - manual, with type/clientId"
+      ],
+      "passes": false
+    },
+    {
+      "id": "3.3",
+      "title": "GraphQL Schema Completion",
+      "description": "Expand GraphQL endpoint with full schema including queries, mutations, and subscriptions.",
+      "acceptance_criteria": [
+        "Full type-safe schema with all entities",
+        "Working subscriptions for price updates via SSE",
+        "Mutations protected by authentication middleware",
+        "TypeScript types generated from schema",
+        "GraphQL Playground available in development",
+        "Introspection disabled in production"
+      ],
+      "files_to_create": [
+        "server/src/schemas/graphql.ts",
+        "server/src/resolvers/index.ts",
+        "server/src/resolvers/chat.ts",
+        "server/src/resolvers/market.ts",
+        "server/src/resolvers/portfolio.ts"
+      ],
+      "files_to_modify": [
+        "server/package.json",
+        "server/src/index.ts"
+      ],
+      "dependencies": {
+        "graphql": "^16.8.0",
+        "graphql-yoga": "^5.1.0",
+        "@graphql-tools/schema": "^10.0.0"
+      },
+      "schema_types": [
+        "Query: chat, portfolio, marketData, serverStatus",
+        "Mutation: sendMessage, createTrade, updateWatchlist",
+        "Subscription: priceUpdates, chatStream",
+        "ChatResponse, MarketData, Portfolio, Position, Trade"
+      ],
+      "technical_notes": [
+        "Use graphql-yoga for Bun compatibility",
+        "Implement subscriptions via SSE (Yoga supports this)",
+        "Add authentication guard for mutations",
+        "Consider DataLoader for N+1 prevention in portfolio queries"
+      ],
+      "passes": false
+    },
+    {
+      "id": "3.4",
+      "title": "Directive Version Checksums",
+      "description": "Add SHA-256 checksums to directive frontmatter to detect script changes.",
+      "acceptance_criteria": [
+        "All directives with dependencies have checksums in frontmatter",
+        "CI pipeline verifies checksums on every PR",
+        "Update script regenerates checksums automatically",
+        "Clear error message when checksum mismatch detected",
+        "Pre-commit hook optionally updates checksums"
+      ],
+      "files_to_create": [
+        "scripts/verify_directives.ts",
+        "scripts/update_directive_hashes.ts"
+      ],
+      "files_to_modify": [
+        "directives/ralph_node.md",
+        "directives/orchestrator.md",
+        "directives/code_simplifier.md",
+        "directives/add_glass_component.md",
+        "directives/add_ai_integration.md",
+        ".github/workflows/ci.yml"
+      ],
+      "technical_notes": [
+        "Use YAML frontmatter with dependencies array",
+        "Each dependency has path, sha256, optional version",
+        "Verification script exits non-zero on mismatch",
+        "Update script reads all directives, recomputes hashes, writes back",
+        "Add CI step after checkout, before tests"
+      ],
+      "frontmatter_schema": {
+        "name": "string",
+        "version": "semver",
+        "updated": "ISO date",
+        "dependencies": [
+          {
+            "path": "relative path to script",
+            "sha256": "64 char hex string",
+            "version": "optional semver constraint"
+          }
+        ]
+      },
+      "passes": false
+    }
+  ]
+}

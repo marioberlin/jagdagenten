@@ -1,0 +1,82 @@
+[
+  {
+    "id": "heal_1768168651670_3v3e0v",
+    "errorReport": {
+      "type": "client_error",
+      "message": "Error 1",
+      "stack": "TypeError: Cannot read property \"data\" of undefined\n    at UserProfile (src/components/UserProfile.tsx:42:15)\n    at renderWithHooks (react-dom.development.js:14985:18)\n    at mountIndeterminateComponent (react-dom.development.js:17811:13)",
+      "context": {
+        "componentName": "UserProfile",
+        "url": "/dashboard/profile",
+        "userAgent": "Mozilla/5.0",
+        "level": "component",
+        "errorCount": 3
+      },
+      "timestamp": "2026-01-11T21:57:30.725Z"
+    },
+    "status": "queued",
+    "attempts": 0,
+    "maxAttempts": 3,
+    "createdAt": "2026-01-11T21:57:31.670Z",
+    "updatedAt": "2026-01-11T21:57:31.670Z"
+  },
+  {
+    "id": "heal_1768168651671_qwi5l1",
+    "errorReport": {
+      "type": "client_error",
+      "message": "Error 2",
+      "stack": "TypeError: Cannot read property \"data\" of undefined\n    at UserProfile (src/components/UserProfile.tsx:42:15)\n    at renderWithHooks (react-dom.development.js:14985:18)\n    at mountIndeterminateComponent (react-dom.development.js:17811:13)",
+      "context": {
+        "componentName": "UserProfile",
+        "url": "/dashboard/profile",
+        "userAgent": "Mozilla/5.0",
+        "level": "component",
+        "errorCount": 3
+      },
+      "timestamp": "2026-01-11T21:57:30.725Z"
+    },
+    "status": "queued",
+    "attempts": 0,
+    "maxAttempts": 3,
+    "createdAt": "2026-01-11T21:57:31.671Z",
+    "updatedAt": "2026-01-11T21:57:31.671Z"
+  },
+  {
+    "id": "heal_1768168651673_v6nnpq",
+    "errorReport": {
+      "type": "client_error",
+      "message": "Error 3",
+      "stack": "TypeError: Cannot read property \"data\" of undefined\n    at UserProfile (src/components/UserProfile.tsx:42:15)\n    at renderWithHooks (react-dom.development.js:14985:18)\n    at mountIndeterminateComponent (react-dom.development.js:17811:13)",
+      "context": {
+        "componentName": "UserProfile",
+        "url": "/dashboard/profile",
+        "userAgent": "Mozilla/5.0",
+        "level": "component",
+        "errorCount": 3
+      },
+      "timestamp": "2026-01-11T21:57:30.725Z"
+    },
+    "status": "queued",
+    "attempts": 0,
+    "maxAttempts": 3,
+    "createdAt": "2026-01-11T21:57:31.673Z",
+    "updatedAt": "2026-01-11T21:57:31.673Z"
+  },
+  {
+    "id": "heal_1768169467316_qxjykq",
+    "errorReport": {
+      "type": "client_error",
+      "message": "Test error message",
+      "context": {
+        "componentName": "TestComponent",
+        "url": "/test"
+      },
+      "timestamp": "2026-01-11T22:11:07.314Z"
+    },
+    "status": "queued",
+    "attempts": 0,
+    "maxAttempts": 3,
+    "createdAt": "2026-01-11T22:11:07.316Z",
+    "updatedAt": "2026-01-11T22:11:07.316Z"
+  }
+]

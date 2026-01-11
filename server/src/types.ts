@@ -34,15 +34,25 @@ export interface ParallelChatResponse {
 }
 
 // Rate Limiting Types
+export type RateLimitTier = 'user' | 'session' | 'ip';
+
 export interface RateLimitResult {
     allowed: boolean;
     remaining: number;
     resetTime: number;
+    tier: RateLimitTier;
+    limit: number;
 }
 
 export interface RateLimitConfig {
     max: number;
     windowMs: number;
+}
+
+export interface TieredRateLimitConfig {
+    user: RateLimitConfig;    // Authenticated users: highest limit
+    session: RateLimitConfig; // Session token users: medium limit
+    ip: RateLimitConfig;      // Anonymous users: lowest limit
 }
 
 // Cache Types

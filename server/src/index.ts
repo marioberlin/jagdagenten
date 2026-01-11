@@ -9,6 +9,15 @@ import { getSentinelStatus } from './sentinel.js';
 import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } from './schemas/chat.js';
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
+import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
+import {
+    logger,
+    componentLoggers,
+    createRequestLogger,
+    generateRequestId,
+    logAIRequest,
+    logSecurityEvent
+} from './logger.js';
 
 type RateLimitStore = {
     type: 'redis';
@@ -29,12 +38,49 @@ async function initRedis() {
         redis = redisClient;
         useRedis = true;
         rateLimitStore = { type: 'redis', client: redisClient };
-        console.log('[Redis] Connected successfully');
-    } catch {
-        console.log('[Redis] Not available, using memory cache');
+        componentLoggers.redis.info({ url: process.env.REDIS_URL || 'redis://localhost:6379' }, 'Connected successfully');
+    } catch (err) {
+        componentLoggers.redis.warn({ error: (err as Error).message }, 'Not available, using memory cache');
         useRedis = false;
         rateLimitStore = { type: 'memory', store: new Map() };
     }
+}
+
+// Tiered Rate Limit Configuration
+const RATE_LIMITS: TieredRateLimitConfig = {
+    user: { max: 100, windowMs: 15 * 60 * 1000 },    // Authenticated: 100/15min
+    session: { max: 50, windowMs: 15 * 60 * 1000 },  // Session token: 50/15min
+    ip: { max: 30, windowMs: 15 * 60 * 1000 }        // Anonymous: 30/15min
+};
+
+/**
+ * Extract rate limit key and tier from request
+ * Priority: User ID > Session Token > IP Address
+ */
+function getRateLimitKeyAndTier(request: Request): { key: string; tier: RateLimitTier } {
+    // Priority 1: Authenticated user ID from Authorization header
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+        // In production, you would validate and decode the JWT to get userId
+        // For now, we use the token itself as the key (hashed in production)
+        const token = authHeader.substring(7);
+        // Simple hash for demo - use proper JWT validation in production
+        const userId = token.length > 10 ? token.substring(0, 10) : token;
+        return { key: `ratelimit:user:${userId}`, tier: 'user' };
+    }
+
+    // Priority 2: Session token for tracked anonymous users
+    const sessionToken = request.headers.get('X-Session-Token');
+    if (sessionToken) {
+        return { key: `ratelimit:session:${sessionToken}`, tier: 'session' };
+    }
+
+    // Priority 3: IP address fallback
+    const forwardedFor = request.headers.get('X-Forwarded-For');
+    const ip = forwardedFor?.split(',')[0]?.trim()
+             || request.headers.get('X-Real-IP')
+             || 'unknown';
+    return { key: `ratelimit:ip:${ip}`, tier: 'ip' };
 }
 
 const sseClients = new Set<ReadableStreamDefaultController>();
@@ -60,18 +106,66 @@ setInterval(() => {
     broadcast(update);
 }, 5000);
 
-async function getCachedResponse(prompt: string): Promise<string | null> {
-    return cache.get(prompt, 'ai');
-}
+// Note: getCachedResponse and setCacheResponse are deprecated
+// The callAI function now uses cache.getOrSet for stampede protection
+// @see Item 2.1 Request Coalescing in IMPLEMENTATION_PLAN.md
 
-async function setCacheResponse(prompt: string, response: string): Promise<void> {
-    await cache.set(prompt, response, 'ai');
-}
-
-async function checkRateLimit(ip: string, max: number, windowMs: number) {
+/**
+ * Check rate limit using tiered approach
+ * Returns rate limit result with tier information
+ */
+async function checkRateLimit(request: Request): Promise<RateLimitResult> {
+    const { key, tier } = getRateLimitKeyAndTier(request);
+    const config = RATE_LIMITS[tier];
+    const { max, windowMs } = config;
     const now = Date.now();
+
     if (rateLimitStore.type === 'redis' && rateLimitStore.client) {
-        const key = 'ratelimit:' + ip;
+        const pipeline = rateLimitStore.client.pipeline();
+        pipeline.incr(key);
+        pipeline.ttl(key);
+        const results = await pipeline.exec();
+        const count = (results?.[0]?.[1] as number) || 0;
+        let ttl = (results?.[1]?.[1] as number);
+
+        // If TTL is -1 (no expiry set) or -2 (key doesn't exist), set it
+        if (ttl < 0) {
+            ttl = Math.ceil(windowMs / 1000);
+            await rateLimitStore.client.expire(key, ttl);
+        }
+
+        if (count > max) {
+            return { allowed: false, remaining: 0, resetTime: now + ttl * 1000, tier, limit: max };
+        }
+        return { allowed: true, remaining: max - count, resetTime: now + ttl * 1000, tier, limit: max };
+    }
+
+    // Memory store fallback
+    const memStore = rateLimitStore as { type: 'memory'; store: Map<string, { count: number; resetTime: number }> };
+    const existing = memStore.store.get(key);
+
+    if (!existing || existing.resetTime < now) {
+        memStore.store.set(key, { count: 1, resetTime: now + windowMs });
+        return { allowed: true, remaining: max - 1, resetTime: now + windowMs, tier, limit: max };
+    }
+
+    if (existing.count >= max) {
+        return { allowed: false, remaining: 0, resetTime: existing.resetTime, tier, limit: max };
+    }
+
+    existing.count++;
+    return { allowed: true, remaining: max - existing.count, resetTime: existing.resetTime, tier, limit: max };
+}
+
+/**
+ * Legacy rate limit check for backward compatibility
+ * @deprecated Use checkRateLimit(request) instead
+ */
+async function checkRateLimitLegacy(ip: string, max: number, windowMs: number) {
+    const now = Date.now();
+    const key = 'ratelimit:' + ip;
+
+    if (rateLimitStore.type === 'redis' && rateLimitStore.client) {
         const pipeline = rateLimitStore.client.pipeline();
         pipeline.incr(key);
         pipeline.ttl(key);
@@ -82,11 +176,11 @@ async function checkRateLimit(ip: string, max: number, windowMs: number) {
         await rateLimitStore.client.expire(key, ttl);
         return { allowed: true, remaining: max - count, resetTime: now + windowMs };
     }
-    const memKey = 'ratelimit:' + ip;
+
     const memStore = rateLimitStore as { type: 'memory'; store: Map<string, { count: number; resetTime: number }> };
-    const existing = memStore.store.get(memKey);
+    const existing = memStore.store.get(key);
     if (!existing || existing.resetTime < now) {
-        memStore.store.set(memKey, { count: 1, resetTime: now + windowMs });
+        memStore.store.set(key, { count: 1, resetTime: now + windowMs });
         return { allowed: true, remaining: max - 1, resetTime: now + windowMs };
     }
     if (existing.count >= max) return { allowed: false, remaining: 0, resetTime: existing.resetTime };
@@ -94,35 +188,112 @@ async function checkRateLimit(ip: string, max: number, windowMs: number) {
     return { allowed: true, remaining: max - existing.count, resetTime: existing.resetTime };
 }
 
-async function callAI(provider: 'gemini' | 'claude', messages: Array<{ role: string; content: string }>) {
-    const lastMessage = messages[messages.length - 1]?.content || '';
-    const cached = await getCachedResponse(lastMessage);
-    if (cached) return cached;
+/**
+ * Hash a prompt string for cache key generation
+ * Uses Bun's fast hash function
+ */
+function hashPrompt(prompt: string): string {
+    // Bun.hash returns a number, convert to hex string
+    return Bun.hash(prompt).toString(16);
+}
 
-    let response: string;
-    if (provider === 'claude') {
-        const apiKey = process.env.ANTHROPIC_API_KEY;
-        if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-        const result = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, messages })
-        });
-        const data = await result.json() as { content?: Array<{ text: string }> };
-        response = data.content?.[0]?.text || 'No response';
-    } else {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
-        const result = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + apiKey, {
+/**
+ * Call Claude API directly (without caching)
+ */
+async function callClaudeAPI(messages: Array<{ role: string; content: string }>): Promise<string> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
+
+    const result = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            messages
+        })
+    });
+
+    const data = await result.json() as { content?: Array<{ text: string }> };
+    return data.content?.[0]?.text || 'No response';
+}
+
+/**
+ * Call Gemini API directly (without caching)
+ */
+async function callGeminiAPI(messages: Array<{ role: string; content: string }>): Promise<string> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+
+    const lastMessage = messages[messages.length - 1]?.content || '';
+
+    const result = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + apiKey,
+        {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: lastMessage }] }] })
-        });
-        const data = await result.json() as { candidates?: Array<{ content?: { parts?: Array<{ text: string }> } }> };
-        response = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
-    }
-    await setCacheResponse(lastMessage, response);
-    return response;
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: lastMessage }] }]
+            })
+        }
+    );
+
+    const data = await result.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text: string }> } }>
+    };
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+}
+
+/**
+ * Call AI with request coalescing and stampede protection
+ *
+ * Uses cache.getOrSet to ensure only one request is made per unique prompt,
+ * even if multiple concurrent requests come in for the same prompt.
+ *
+ * @see docs/IMPLEMENTATION_PLAN.md - Item 2.1 Request Coalescing
+ */
+async function callAI(
+    provider: 'gemini' | 'claude',
+    messages: Array<{ role: string; content: string }>,
+    requestLogger?: ReturnType<typeof createRequestLogger>
+): Promise<string> {
+    const lastMessage = messages[messages.length - 1]?.content || '';
+    const cacheKey = `ai:${provider}:${hashPrompt(lastMessage)}`;
+    const aiLog = requestLogger || componentLoggers.ai;
+    const startTime = Date.now();
+
+    aiLog.debug({ provider, cacheKey: cacheKey.substring(0, 30) }, 'AI request initiated');
+
+    return cache.getOrSet(cacheKey, 'ai', async () => {
+        aiLog.debug({ provider }, 'Cache miss - calling API');
+
+        try {
+            const result = provider === 'claude'
+                ? await callClaudeAPI(messages)
+                : await callGeminiAPI(messages);
+
+            logAIRequest(aiLog, provider, {
+                duration: Date.now() - startTime,
+                cached: false,
+                promptLength: lastMessage.length,
+                responseLength: result.length
+            });
+
+            return result;
+        } catch (error) {
+            logAIRequest(aiLog, provider, {
+                duration: Date.now() - startTime,
+                cached: false,
+                promptLength: lastMessage.length,
+                error: error as Error
+            });
+            throw error;
+        }
+    });
 }
 
 async function callParallelAI(messages: Array<{ role: string; content: string }>) {
@@ -183,7 +354,7 @@ async function startServer() {
                 },
                 cancel() {
                     sseClients.delete(this as any);
-                    console.log('[SSE] Client disconnected');
+                    componentLoggers.http.debug({ clients: sseClients.size }, 'SSE client disconnected');
                 }
             });
         })
@@ -223,14 +394,20 @@ async function startServer() {
         // Redis Sentinel
         .get('/api/v1/redis/sentinel', async () => await getSentinelStatus())
 
-        // Chat endpoint with Rate Limiting & Zod validation
+        // Chat endpoint with Tiered Rate Limiting & Zod validation
         .post('/api/v1/chat', async ({ request, body, set }) => {
-            const ip = request.headers.get('x-forwarded-for') || 'unknown';
-            const limit = await checkRateLimit(ip, 30, 15 * 60 * 1000);
+            const limit = await checkRateLimit(request);
+
+            // Set rate limit headers for all responses
+            set.headers['X-RateLimit-Limit'] = String(limit.limit);
+            set.headers['X-RateLimit-Remaining'] = String(limit.remaining);
+            set.headers['X-RateLimit-Reset'] = String(Math.floor(limit.resetTime / 1000));
+            set.headers['X-RateLimit-Tier'] = limit.tier;
 
             if (!limit.allowed) {
                 set.status = 429;
-                return { error: 'Rate limit exceeded' };
+                set.headers['Retry-After'] = String(Math.ceil((limit.resetTime - Date.now()) / 1000));
+                return { error: 'Rate limit exceeded', tier: limit.tier, retryAfter: Math.ceil((limit.resetTime - Date.now()) / 1000) };
             }
 
             // Validate request with Zod
@@ -250,14 +427,20 @@ async function startServer() {
             return 'data: ' + JSON.stringify({ response }) + '\n\n';
         })
 
-        // Parallel Chat with Zod validation
+        // Parallel Chat with Tiered Rate Limiting & Zod validation
         .post('/api/v1/chat/parallel', async ({ request, body, set }) => {
-            const ip = request.headers.get('x-forwarded-for') || 'unknown';
-            const limit = await checkRateLimit(ip, 30, 15 * 60 * 1000);
+            const limit = await checkRateLimit(request);
+
+            // Set rate limit headers for all responses
+            set.headers['X-RateLimit-Limit'] = String(limit.limit);
+            set.headers['X-RateLimit-Remaining'] = String(limit.remaining);
+            set.headers['X-RateLimit-Reset'] = String(Math.floor(limit.resetTime / 1000));
+            set.headers['X-RateLimit-Tier'] = limit.tier;
 
             if (!limit.allowed) {
                 set.status = 429;
-                return { error: 'Rate limit exceeded' };
+                set.headers['Retry-After'] = String(Math.ceil((limit.resetTime - Date.now()) / 1000));
+                return { error: 'Rate limit exceeded', tier: limit.tier, retryAfter: Math.ceil((limit.resetTime - Date.now()) / 1000) };
             }
 
             // Validate request with Zod
@@ -321,8 +504,22 @@ async function startServer() {
 
         .listen(PORT);
 
-    console.log(`\n╔═══════════════════════════════════════════════════════╗\n║  LiquidCrypto Server                                  ║\n║  ─────────────────────────────────────────────────    ║\n║  Runtime: Bun (Native)                                ║\n║  Framework: Elysia (v1.0)                             ║\n║  Redis: ${useRedis ? '✓ Connected' : '○ Not configured'}                            ║\n║  SSE Stream: http://localhost:${PORT}/stream               ║\n║  Parallel AI: POST /api/v1/chat/parallel               ║\n║  Port: ${PORT}                                               ║\n╚═══════════════════════════════════════════════════════╝`);
-    console.log(`[Elysia] Server running at http://${app.server?.hostname}:${app.server?.port}`);
+    logger.info({
+        port: PORT,
+        redis: useRedis,
+        runtime: 'bun',
+        framework: 'elysia',
+        endpoints: {
+            http: `http://localhost:${PORT}`,
+            websocket: 'ws://localhost:3001',
+            stream: `http://localhost:${PORT}/stream`
+        }
+    }, 'LiquidCrypto Server started');
+
+    // Pretty ASCII banner for development
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`\n╔═══════════════════════════════════════════════════════╗\n║  LiquidCrypto Server                                  ║\n║  ─────────────────────────────────────────────────    ║\n║  Runtime: Bun (Native)                                ║\n║  Framework: Elysia (v1.0)                             ║\n║  Redis: ${useRedis ? '✓ Connected' : '○ Not configured'}                            ║\n║  SSE Stream: http://localhost:${PORT}/stream               ║\n║  Parallel AI: POST /api/v1/chat/parallel               ║\n║  Port: ${PORT}                                               ║\n╚═══════════════════════════════════════════════════════╝`);
+    }
 }
 
 startServer();

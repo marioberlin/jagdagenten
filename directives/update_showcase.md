@@ -1,3 +1,9 @@
+---
+"name": "update_showcase"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Update Showcase
 
 ## Goal

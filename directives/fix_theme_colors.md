@@ -1,3 +1,9 @@
+---
+"name": "fix_theme_colors"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Fix Theme Colors
 
 ## Goal

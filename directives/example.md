@@ -1,3 +1,9 @@
+---
+"name": "example"
+"version": "1.0.0"
+"updated": "2026-01-11"
+---
+
 # Example Directive Template
 
 > This is a template for creating new directives. Copy this file and modify it for your specific use case.
