@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
-import { useSpring, animated } from '@react-spring/web';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
-export interface GlassSwitchProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
+import { GlassComponentProps } from '@/components/types';
+
+export interface GlassSwitchProps extends Omit<GlassComponentProps, 'onChange'> {
     checked?: boolean;
     onCheckedChange?: (checked: boolean) => void;
 }
 
 export const GlassSwitch = React.forwardRef<HTMLButtonElement, GlassSwitchProps>(
-    ({ checked = false, onCheckedChange, className, disabled, ...props }, ref) => {
+    ({ checked = false, onCheckedChange, className, disabled, material = 'thin', enableLiquid = false, ...props }, ref) => {
         const [internalChecked, setInternalChecked] = useState(checked);
         const isChecked = onCheckedChange ? checked : internalChecked;
 
@@ -19,11 +22,6 @@ export const GlassSwitch = React.forwardRef<HTMLButtonElement, GlassSwitchProps>
             setInternalChecked(newValue);
             onCheckedChange?.(newValue);
         };
-
-        const { x } = useSpring({
-            x: isChecked ? 20 : 0,
-            config: { tension: 300, friction: 18 }
-        });
 
         return (
             <button
@@ -38,12 +36,12 @@ export const GlassSwitch = React.forwardRef<HTMLButtonElement, GlassSwitchProps>
                     disabled && "opacity-50 cursor-not-allowed",
                     className
                 )}
-                {...props}
+                {...props as any}
             >
                 {/* Track */}
                 <GlassContainer
-                    material="thin"
-                    enableLiquid={false}
+                    material={material}
+                    enableLiquid={enableLiquid}
                     className={cn(
                         "absolute inset-0 rounded-full transition-colors duration-300",
                         isChecked ? "!bg-success-muted !border-success/30" : "!bg-glass-surface"
@@ -51,7 +49,11 @@ export const GlassSwitch = React.forwardRef<HTMLButtonElement, GlassSwitchProps>
                 />
 
                 {/* Thumb */}
-                <animated.div style={{ x }} className="relative z-10">
+                <motion.div
+                    className="relative z-10"
+                    animate={{ x: isChecked ? 20 : 0 }}
+                    transition={TRANSITIONS.spring}
+                >
                     <GlassContainer
                         material="thick"
                         enableLiquid={false}
@@ -60,7 +62,7 @@ export const GlassSwitch = React.forwardRef<HTMLButtonElement, GlassSwitchProps>
                             isChecked ? "bg-primary" : "bg-secondary"
                         )}
                     />
-                </animated.div>
+                </motion.div>
             </button>
         );
     }

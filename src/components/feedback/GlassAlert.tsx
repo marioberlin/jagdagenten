@@ -4,11 +4,36 @@ import { cn } from '@/utils/cn';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 interface GlassAlertProps extends React.HTMLAttributes<HTMLDivElement> {
+    /** 
+     * Semantic variant for the alert.
+     * - `default`: Info/Neutral (White/Blue).
+     * - `destructive`: Error/Critical (Red).
+     * - `success`: Completion/Good (Green).
+     * - `warning`: Caution (Yellow).
+     * @default 'default'
+     */
     variant?: 'default' | 'destructive' | 'success' | 'warning';
+
+    /** Optional title heading. */
     title?: string;
+
+    /** Custom icon override. Defaults to standard icons based on variant. */
     icon?: React.ReactNode;
 }
 
+/**
+ * GlassAlert
+ * 
+ * A callout component for displaying prominent messages, warnings, or status updates.
+ * Supports various semantic severities and uses standard glass styling.
+ * 
+ * @example
+ * ```tsx
+ * <GlassAlert variant="destructive" title="Error">
+ *   Something went wrong.
+ * </GlassAlert>
+ * ```
+ */
 export const GlassAlert = React.forwardRef<HTMLDivElement, GlassAlertProps>(
     ({ className, variant = 'default', title, children, icon, ...props }, ref) => {
         const variantStyles = {
@@ -25,9 +50,14 @@ export const GlassAlert = React.forwardRef<HTMLDivElement, GlassAlertProps>(
             warning: <AlertTriangle className="h-4 w-4" />,
         };
 
+        // Determine ARIA role based on variant urgency
+        const ariaRole = variant === 'destructive' || variant === 'warning' ? 'alert' : 'status';
+
         return (
             <GlassContainer
                 ref={ref}
+                role={ariaRole}
+                aria-live={variant === 'destructive' || variant === 'warning' ? 'assertive' : 'polite'}
                 material="thin"
                 className={cn(
                     "relative w-full rounded-2xl p-4 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground border",

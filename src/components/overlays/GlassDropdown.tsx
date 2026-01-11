@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 interface GlassDropdownProps {
     trigger: React.ReactNode;
@@ -25,42 +26,43 @@ export const GlassDropdown = ({ trigger, children, className, align = 'left' }: 
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const { opacity, transform } = useSpring({
-        opacity: isOpen ? 1 : 0,
-        transform: isOpen ? 'translate3d(0, 0px, 0) scale(1)' : 'translate3d(0, -10px, 0) scale(0.95)',
-        config: { tension: 400, friction: 30 }
-    });
-
     return (
         <div className="relative inline-block" ref={dropdownRef}>
             <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
                 {trigger}
             </div>
 
-            <animated.div
-                style={{ opacity, transform, pointerEvents: isOpen ? 'auto' : 'none' }}
-                className={cn(
-                    "absolute z-50 mt-2 min-w-[200px] outline-none",
-                    align === 'right' ? 'right-0' : 'left-0',
-                    className
-                )}
-            >
-                <GlassContainer material="regular" className="p-1.5 shadow-xl">
-                    <div className="flex flex-col gap-0.5">
-                        {React.Children.map(children, child => {
-                            if (React.isValidElement<{ onClick?: (e: React.MouseEvent) => void }>(child)) {
-                                return React.cloneElement(child, {
-                                    onClick: (e: React.MouseEvent) => {
-                                        child.props.onClick?.(e);
-                                        setIsOpen(false);
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={TRANSITIONS.spring}
+                        className={cn(
+                            "absolute z-50 mt-2 min-w-[200px] outline-none",
+                            align === 'right' ? 'right-0' : 'left-0',
+                            className
+                        )}
+                    >
+                        <GlassContainer material="regular" className="p-1.5 shadow-xl">
+                            <div className="flex flex-col gap-0.5">
+                                {React.Children.map(children, child => {
+                                    if (React.isValidElement<{ onClick?: (e: React.MouseEvent) => void }>(child)) {
+                                        return React.cloneElement(child, {
+                                            onClick: (e: React.MouseEvent) => {
+                                                child.props.onClick?.(e);
+                                                setIsOpen(false);
+                                            }
+                                        });
                                     }
-                                });
-                            }
-                            return child;
-                        })}
-                    </div>
-                </GlassContainer>
-            </animated.div>
+                                    return child;
+                                })}
+                            </div>
+                        </GlassContainer>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

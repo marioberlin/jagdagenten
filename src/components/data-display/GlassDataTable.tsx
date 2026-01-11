@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { GlassContainer } from '../primitives/GlassContainer';
+import { SurfaceContainer } from '../primitives/SurfaceContainer';
 import { GlassInput } from '../forms/GlassInput';
 import { GlassButton } from '../primitives/GlassButton';
 import { cn } from '@/utils/cn';
@@ -150,7 +150,7 @@ export const GlassDataTable = <T,>({
     }, [searchQuery]);
 
     return (
-        <GlassContainer material="surface" className={cn("w-full overflow-hidden", className)}>
+        <SurfaceContainer material="flat" className={cn("w-full overflow-hidden", className)}>
             {/* Search Bar */}
             {searchable && (
                 <div className="p-4 border-b border-[var(--glass-border)]">
@@ -233,9 +233,9 @@ export const GlassDataTable = <T,>({
                         </div>
                     ) : (
                         paginatedData.map((item) => (
-                            <GlassContainer
+                            <SurfaceContainer
                                 key={String(item[keyField])}
-                                material="thin"
+                                material="elevated"
                                 border
                                 interactive={!!onRowClick}
                                 className="p-4 space-y-2"
@@ -251,7 +251,7 @@ export const GlassDataTable = <T,>({
                                         </span>
                                     </div>
                                 ))}
-                            </GlassContainer>
+                            </SurfaceContainer>
                         ))
                     )}
                 </div>
@@ -287,7 +287,7 @@ export const GlassDataTable = <T,>({
                     </div>
                 </div>
             )}
-        </GlassContainer>
+        </SurfaceContainer>
     );
 };
 

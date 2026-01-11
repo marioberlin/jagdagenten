@@ -62,3 +62,10 @@ export const Backgrounds: BackgroundConfig[] = [
     { id: 'vid-geometry', type: 'video', name: 'Abstract Geometry', videoUrl: 'https://www.youtube.com/embed/Tkqu4j0Gpvk?autoplay=1&mute=1&loop=1&playlist=Tkqu4j0Gpvk&controls=0&showinfo=0&rel=0', thumbnail: 'https://img.youtube.com/vi/Tkqu4j0Gpvk/mqdefault.jpg', preferredTheme: 'dark' },
     { id: 'vid-nebula', type: 'video', name: 'Cosmic Nebula', videoUrl: 'https://www.youtube.com/embed/5CRfNSq1GRc?autoplay=1&mute=1&loop=1&playlist=5CRfNSq1GRc&controls=0&showinfo=0&rel=0', thumbnail: 'https://img.youtube.com/vi/5CRfNSq1GRc/mqdefault.jpg', preferredTheme: 'dark' }
 ];
+
+export const addDynamicBackground = (bg: BackgroundConfig) => {
+    // Check if exists
+    if (!Backgrounds.find(b => b.id === bg.id)) {
+        Backgrounds.push(bg);
+    }
+};

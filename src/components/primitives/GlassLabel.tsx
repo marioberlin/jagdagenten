@@ -1,6 +1,8 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
 
+import { Slot } from '@radix-ui/react-slot';
+
 export interface GlassLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
     /** Whether this label is for a required field */
     required?: boolean;
@@ -8,6 +10,8 @@ export interface GlassLabelProps extends React.LabelHTMLAttributes<HTMLLabelElem
     error?: boolean;
     /** Display size variant */
     size?: 'sm' | 'default' | 'lg';
+    /** Change the underlying element to the child */
+    asChild?: boolean;
 }
 
 /**
@@ -20,7 +24,8 @@ export interface GlassLabelProps extends React.LabelHTMLAttributes<HTMLLabelElem
  * - Consistent typography with glass design system
  */
 export const GlassLabel = React.forwardRef<HTMLLabelElement, GlassLabelProps>(
-    ({ className, children, required, error, size = 'default', ...props }, ref) => {
+    ({ className, children, required, error, size = 'default', asChild = false, ...props }, ref) => {
+        const Comp = asChild ? Slot : 'label';
         const sizeClasses = {
             sm: 'text-xs',
             default: 'text-sm',
@@ -28,7 +33,7 @@ export const GlassLabel = React.forwardRef<HTMLLabelElement, GlassLabelProps>(
         };
 
         return (
-            <label
+            <Comp
                 ref={ref}
                 className={cn(
                     // Base styles
@@ -49,7 +54,7 @@ export const GlassLabel = React.forwardRef<HTMLLabelElement, GlassLabelProps>(
                 {required && (
                     <span className="text-red-400 ml-1" aria-hidden="true">*</span>
                 )}
-            </label>
+            </Comp>
         );
     }
 );

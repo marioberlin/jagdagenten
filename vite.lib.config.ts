@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from 'tailwindcss'
+import tailwindcss from '@tailwindcss/postcss'
 import autoprefixer from 'autoprefixer'
 import dts from 'vite-plugin-dts'
 import { resolve } from 'path'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
     plugins: [
@@ -11,6 +12,10 @@ export default defineConfig({
         dts({
             include: ['src/components'],
             exclude: ['src/components/**/*.stories.tsx', 'src/components/**/*.test.tsx']
+        }),
+        visualizer({
+            filename: 'bundle-stats.html',
+            gzipSize: true,
         })
     ],
     css: {

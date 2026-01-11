@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useRef } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, HTMLMotionProps } from 'framer-motion';
+import { TRANSITIONS } from '@/styles/animations';
 
 // Context
 interface TabsContextType {
@@ -48,7 +49,7 @@ export const GlassTabsList = ({ className, children }: React.HTMLAttributes<HTML
 };
 
 // Trigger (The clickable tab)
-interface GlassTabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface GlassTabsTriggerProps extends HTMLMotionProps<"button"> {
     value: string;
 }
 export const GlassTabsTrigger = ({ className, value, children, ...props }: GlassTabsTriggerProps) => {
@@ -58,19 +59,19 @@ export const GlassTabsTrigger = ({ className, value, children, ...props }: Glass
     const isActive = context.value === value;
     const ref = useRef<HTMLButtonElement>(null);
 
-    // Initial scale for active state
-    const styles = useSpring({
-        scale: isActive ? 1 : 0.95,
-        opacity: isActive ? 1 : 0.7,
-        config: { tension: 300, friction: 20 }
-    });
-
     return (
-        <animated.button
+        <motion.button
             ref={ref}
             type="button"
-            onClick={() => context.onValueChange(value)}
-            style={styles}
+            onClick={(e) => {
+                context.onValueChange(value);
+                props.onClick?.(e);
+            }}
+            animate={{
+                scale: isActive ? 1 : 0.95,
+                opacity: isActive ? 1 : 0.7,
+            }}
+            transition={TRANSITIONS.spring}
             className={cn(
                 "relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-2xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                 isActive ? "text-label-glass-primary shadow-sm bg-glass-surface-hover backdrop-blur-md" : "hover:bg-glass-surface",
@@ -81,12 +82,12 @@ export const GlassTabsTrigger = ({ className, value, children, ...props }: Glass
             {/* Active Pill Indicator (Simulated) */}
             {/* In a more complex version, this would be a shared layout animated div in the parent, but simplified here for reliability */}
             {children}
-        </animated.button>
+        </motion.button>
     );
 };
 
 // Content (The body)
-interface GlassTabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassTabsContentProps extends HTMLMotionProps<"div"> {
     value: string;
 }
 export const GlassTabsContent = ({ className, value, children, ...props }: GlassTabsContentProps) => {
@@ -95,18 +96,13 @@ export const GlassTabsContent = ({ className, value, children, ...props }: Glass
 
     const isActive = context.value === value;
 
-    const styles = useSpring({
-        opacity: isActive ? 1 : 0,
-        y: isActive ? 0 : 10,
-        config: { tension: 300, friction: 20 },
-        immediate: !isActive
-    });
-
     if (!isActive) return null;
 
     return (
-        <animated.div
-            style={styles}
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={TRANSITIONS.spring}
             className={cn(
                 "mt-4 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 className
@@ -114,7 +110,7 @@ export const GlassTabsContent = ({ className, value, children, ...props }: Glass
             {...props}
         >
             {children}
-        </animated.div>
+        </motion.div>
     );
 };
 

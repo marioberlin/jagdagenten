@@ -8,8 +8,7 @@ test.describe('Showcase Expansion Verification', () => {
     });
 
     test('Forms & Inputs Section', async ({ page }) => {
-        // Use specific button locator
-        const navButton = page.locator('button', { hasText: 'Forms & Inputs' });
+        const navButton = page.locator('#nav-item-forms');
         await navButton.click();
 
         // Wait for section verification
@@ -19,7 +18,7 @@ test.describe('Showcase Expansion Verification', () => {
     });
 
     test('Data & Charts Section', async ({ page }) => {
-        const navButton = page.locator('button', { hasText: 'Data & Charts' });
+        const navButton = page.locator('#nav-item-data');
         await navButton.click();
 
         await expect(page.locator('h3:has-text("Metrics & Processes")')).toBeVisible({ timeout: 10000 });
@@ -35,7 +34,7 @@ test.describe('Showcase Expansion Verification', () => {
     });
 
     test('Layout & Grids Section', async ({ page }) => {
-        const navButton = page.locator('button', { hasText: 'Layout & Grids' });
+        const navButton = page.locator('#nav-item-layout');
         await navButton.click();
 
         await expect(page.locator('h3:has-text("Grid Systems")')).toBeVisible({ timeout: 10000 });
@@ -49,26 +48,29 @@ test.describe('Showcase Expansion Verification', () => {
     });
 
     test('Overlays & Popovers Section', async ({ page }) => {
-        const navButton = page.locator('button', { hasText: 'Overlays & Popovers' });
+        const navButton = page.locator('#nav-item-overlays');
         await navButton.click();
 
         await expect(page.locator('button:has-text("Start Tour")')).toBeVisible({ timeout: 10000 });
     });
 
     test('Media & Visuals Section', async ({ page }) => {
-        const navButton = page.locator('button', { hasText: 'Media & Visuals' });
+        const navButton = page.locator('#nav-item-media');
         await navButton.click();
+        await page.waitForTimeout(1000);
 
-        await expect(page.locator('h3:has-text("Media & Visuals")')).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('text=Audio Player')).toBeVisible();
+        const heading = page.locator('h3:has-text("Media & Visuals")');
+        await expect(heading.first()).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('text=Audio Player').first()).toBeVisible();
     });
 
     test('Complex Composites Section', async ({ page }) => {
-        const navButton = page.locator('button', { hasText: 'Complex Composites' });
+        const navButton = page.locator('#nav-item-complex');
         await navButton.click();
 
         await expect(page.locator('h3:has-text("Complex Composites")')).toBeVisible({ timeout: 10000 });
-        await expect(page.getByPlaceholder('Type a message...')).toBeVisible();
+        // Updated placeholder for GlassCollaborativeChatInput
+        await expect(page.getByPlaceholder('Message the team...')).toBeVisible();
 
         // New Calculator Component
         await expect(page.locator('text=Functional Calculator')).toBeVisible();

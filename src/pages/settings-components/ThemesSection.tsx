@@ -45,13 +45,13 @@ export const ThemesSection = ({
                                 key={thm.id}
                                 className={`relative p-4 rounded-xl border transition-all ${activeThemeId === thm.id
                                     ? 'border-accent bg-accent/10'
-                                    : 'border-white/10 bg-glass-surface'
+                                    : 'border-[var(--glass-border)] bg-glass-surface'
                                     }`}
                             >
                                 {/* Background Preview */}
                                 <div className="mb-3 rounded-lg overflow-hidden h-16 bg-glass-surface-hover relative">
                                     {(() => {
-                                        const bg = Backgrounds.find(b => b.id === thm.backgroundId);
+                                        const bg = Backgrounds.find(b => b.id === thm.light.background.id);
                                         if (bg?.type === 'image' && bg.src) {
                                             return (
                                                 <img
@@ -170,7 +170,7 @@ export const ThemesSection = ({
                                     {/* Background Preview */}
                                     <div className="mb-3 rounded-lg overflow-hidden h-16 bg-glass-surface-hover relative">
                                         {(() => {
-                                            const bg = Backgrounds.find(b => b.id === thm.backgroundId);
+                                            const bg = Backgrounds.find(b => b.id === thm.light.background.id);
                                             if (bg?.type === 'image' && bg.src) {
                                                 return (
                                                     <img

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 interface GlassCollapsibleProps {
     trigger: React.ReactNode;
@@ -13,23 +13,26 @@ interface GlassCollapsibleProps {
 export const GlassCollapsible = ({ trigger, children, defaultOpen = false, className }: GlassCollapsibleProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
-    const style = useSpring({
-        height: isOpen ? 'auto' : 0,
-        opacity: isOpen ? 1 : 0,
-        overflow: 'hidden',
-        config: { tension: 300, friction: 30 }
-    });
-
     return (
         <div className={cn("w-full", className)}>
             <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
                 {trigger}
             </div>
-            <animated.div style={style}>
-                <div className="pt-2">
-                    {children}
-                </div>
-            </animated.div>
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={TRANSITIONS.spring}
+                        className="overflow-hidden"
+                    >
+                        <div className="pt-2">
+                            {children}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

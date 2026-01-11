@@ -101,7 +101,7 @@ export const GlassDatePicker = forwardRef<HTMLDivElement, GlassDatePickerProps>(
         return (
             <div ref={ref}>
                 <GlassPopover content={PopoverContent}>
-                    <GlassButton variant="outline" className={cn("min-w-[200px] justify-start text-left font-normal", !date && "text-muted-foreground", className)}>
+                    <GlassButton variant="outline" className={cn("min-w-[140px] justify-start text-left font-normal", !date && "text-muted-foreground", className)}>
                         <CalendarIcon size={16} className="mr-2 opacity-50" />
                         {currDate ? currDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : <span>Pick a date</span>}
                     </GlassButton>

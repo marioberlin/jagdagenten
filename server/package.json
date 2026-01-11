@@ -1,0 +1,24 @@
+{
+    "name": "liquid-glass-server",
+    "version": "0.1.0",
+    "description": "Backend proxy for Liquid Glass UI - Bun + Elysia",
+    "type": "module",
+    "main": "src/index.ts",
+    "scripts": {
+        "start": "bun run src/index.ts",
+        "dev": "bun run --watch src/index.ts",
+        "build": "bun build src/index.ts --outfile dist/index.js --target node"
+    },
+    "dependencies": {
+        "@anthropic-ai/sdk": "^0.33.1",
+        "@elysiajs/cors": "^1.4.1",
+        "@google/generative-ai": "^0.21.0",
+        "elysia": "^1.0.0",
+        "ioredis": "^5.4.1",
+        "zod": "^4.3.5"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.1.0",
+        "bun-types": "^1.1.0"
+    }
+}

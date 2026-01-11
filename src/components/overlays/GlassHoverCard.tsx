@@ -12,7 +12,7 @@ interface GlassHoverCardProps {
 
 export const GlassHoverCard = ({ trigger, children, width = 300, delay = 200, className }: GlassHoverCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
-    const timeoutRef = useRef<NodeJS.Timeout>();
+    const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     const handleMouseEnter = () => {
         clearTimeout(timeoutRef.current);

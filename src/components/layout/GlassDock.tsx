@@ -105,7 +105,10 @@ export const GlassDock = ({ items = defaultItems, className }: GlassDockProps) =
 
                     {/* Scroll to top button */}
                     <button
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        onClick={() => {
+                            const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                            window.scrollTo({ top: 0, behavior: isReduced ? 'auto' : 'smooth' });
+                        }}
                         className={cn(
                             "flex items-center justify-center w-10 h-10 rounded-full",
                             "text-secondary hover:text-primary hover:bg-glass-surface-hover",

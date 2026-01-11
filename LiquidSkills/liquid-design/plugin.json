@@ -1,0 +1,29 @@
+{
+    "name": "liquid-design",
+    "version": "1.0.0",
+    "description": "Premium Glassmorphism Design System & Scaffolding",
+    "author": {
+        "name": "Liquid Agency"
+    },
+    "keywords": [
+        "ui",
+        "design",
+        "glassmorphism",
+        "scaffold"
+    ],
+    "skills": "./",
+    "commands": "./tools/bun/",
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bun run ${CLAUDE_PLUGIN_ROOT}/tools/bun/audit.ts"
+                    }
+                ]
+            }
+        ]
+    }
+}

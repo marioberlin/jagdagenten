@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useSpring, animated, config } from '@react-spring/web';
-import { useDrag } from '@use-gesture/react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { TRANSITIONS } from '@/styles/animations';
 
 export interface GlassDrawerProps {
     /** Whether the drawer is open */
@@ -69,15 +69,10 @@ export const GlassDrawer = ({
     showHandle = true,
     dismissible = true,
 }: GlassDrawerProps) => {
-    const [shouldRender, setShouldRender] = useState(open);
     const focusTrapRef = useFocusTrap(open, () => onOpenChange(false));
-
-    // Track drag offset
-    const [dragY, setDragY] = useState(0);
 
     useEffect(() => {
         if (open) {
-            setShouldRender(true);
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
@@ -87,124 +82,104 @@ export const GlassDrawer = ({
         };
     }, [open]);
 
-    const backdropSpring = useSpring({
-        opacity: open ? 1 : 0,
-        onRest: () => {
-            if (!open) setShouldRender(false);
-        },
-    });
+    const handleDragEnd = (_: any, info: PanInfo) => {
+        if (!dismissible) return;
 
-    const drawerSpring = useSpring({
-        transform: open
-            ? `translateY(${dragY}px)`
-            : 'translateY(100%)',
-        config: config.stiff,
-    });
-
-    // Drag gesture for swipe-to-dismiss
-    const bindDrag = useDrag(
-        ({ movement: [, my], velocity: [, vy], direction: [, dy], active }) => {
-            // Only allow dragging down
-            if (my < 0) {
-                setDragY(0);
-                return;
-            }
-
-            if (active) {
-                setDragY(my);
-            } else {
-                // Released - check if should dismiss
-                const shouldDismiss = dismissible && (my > 100 || (vy > 0.5 && dy > 0));
-                if (shouldDismiss) {
-                    onOpenChange(false);
-                }
-                setDragY(0);
-            }
-        },
-        {
-            filterTaps: true,
-            bounds: { top: 0 },
-            rubberband: true,
+        // Dismiss if dragged down more than 100px or flicked down
+        if (info.offset.y > 100 || info.velocity.y > 500) {
+            onOpenChange(false);
         }
-    );
-
-    if (!shouldRender) return null;
+    };
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-end justify-center">
-            {/* Backdrop */}
-            <animated.div
-                className="absolute inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
-                style={{ opacity: backdropSpring.opacity }}
-                onClick={() => onOpenChange(false)}
-                aria-hidden="true"
-            />
+        <AnimatePresence>
+            {open && (
+                <div className="fixed inset-0 z-[100] flex items-end justify-center">
+                    {/* Backdrop */}
+                    <motion.div
+                        className="absolute inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => onOpenChange(false)}
+                        aria-hidden="true"
+                    />
 
-            {/* Drawer */}
-            <animated.div
-                ref={focusTrapRef}
-                style={drawerSpring}
-                className={cn(
-                    "relative z-10 w-full max-w-lg",
-                    size !== 'auto' && `h-[${sizeHeights[size]}]`
-                )}
-                role="dialog"
-                aria-modal="true"
-                aria-label={title}
-            >
-                <GlassContainer
-                    material="thick"
-                    border
-                    className={cn(
-                        "w-full flex flex-col rounded-t-3xl rounded-b-none overflow-hidden",
-                        size === 'auto' ? 'max-h-[85vh]' : '',
-                    )}
-                    style={{ height: size !== 'auto' ? sizeHeights[size] : 'auto' }}
-                >
-                    {/* Drag Handle */}
-                    {showHandle && (
-                        <div
-                            {...(dismissible ? bindDrag() : {})}
-                            className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+                    {/* Drawer */}
+                    <motion.div
+                        ref={focusTrapRef}
+                        initial={{ y: '100%' }}
+                        animate={{ y: 0 }}
+                        exit={{ y: '100%' }}
+                        transition={TRANSITIONS.spring}
+                        drag={dismissible ? "y" : false}
+                        dragConstraints={{ top: 0 }}
+                        dragElastic={{ top: 0.05, bottom: 1 }}
+                        onDragEnd={handleDragEnd}
+                        className={cn(
+                            "relative z-10 w-full max-w-lg",
+                            // size is handled by style below to avoid arbitrary value issues
+                        )}
+                        style={{ height: size !== 'auto' ? sizeHeights[size] : 'auto' }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={title}
+                    >
+                        <GlassContainer
+                            material="thick"
+                            border
+                            className={cn(
+                                "w-full flex flex-col rounded-t-3xl rounded-b-none overflow-hidden",
+                                size === 'auto' ? 'max-h-[85vh]' : '',
+                            )}
+                            style={{ height: '100%' }}
                         >
-                            <div className="w-12 h-1.5 rounded-full bg-secondary" />
-                        </div>
-                    )}
+                            {/* Drag Handle */}
+                            {showHandle && (
+                                <div
+                                    className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+                                >
+                                    <div className="w-12 h-1.5 rounded-full bg-secondary" />
+                                </div>
+                            )}
 
-                    {/* Header */}
-                    {(title || description) && (
-                        <div className="flex items-start justify-between px-6 pb-4 border-b border-[var(--glass-border)]">
-                            <div className="space-y-1">
-                                {title && (
-                                    <h2 className="text-lg font-bold text-primary">{title}</h2>
-                                )}
-                                {description && (
-                                    <p className="text-sm text-secondary">{description}</p>
-                                )}
+                            {/* Header */}
+                            {(title || description) && (
+                                <div className="flex items-start justify-between px-6 pb-4 border-b border-[var(--glass-border)]">
+                                    <div className="space-y-1">
+                                        {title && (
+                                            <h2 className="text-lg font-bold text-primary">{title}</h2>
+                                        )}
+                                        {description && (
+                                            <p className="text-sm text-secondary">{description}</p>
+                                        )}
+                                    </div>
+                                    <GlassButton
+                                        variant="ghost"
+                                        size="icon"
+                                        className="rounded-full w-8 h-8 !p-0 -mr-2 -mt-1"
+                                        onClick={() => onOpenChange(false)}
+                                        aria-label="Close drawer"
+                                    >
+                                        <X size={16} />
+                                    </GlassButton>
+                                </div>
+                            )}
+
+                            {/* Content */}
+                            <div className={cn(
+                                "flex-1 overflow-y-auto custom-scrollbar",
+                                !title && !description && !showHandle ? 'pt-6' : '',
+                                "px-6 pb-6"
+                            )}>
+                                {children}
                             </div>
-                            <GlassButton
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full w-8 h-8 !p-0 -mr-2 -mt-1"
-                                onClick={() => onOpenChange(false)}
-                                aria-label="Close drawer"
-                            >
-                                <X size={16} />
-                            </GlassButton>
-                        </div>
-                    )}
-
-                    {/* Content */}
-                    <div className={cn(
-                        "flex-1 overflow-y-auto",
-                        !title && !description && !showHandle ? 'pt-6' : '',
-                        "px-6 pb-6"
-                    )}>
-                        {children}
-                    </div>
-                </GlassContainer>
-            </animated.div>
-        </div>,
+                        </GlassContainer>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>,
         document.body
     );
 };

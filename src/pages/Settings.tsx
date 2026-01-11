@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Monitor, Sparkles, Sliders } from 'lucide-react';
+import { Monitor, Sparkles, Sliders, Bot, Puzzle } from 'lucide-react';
 import { GlassContainer } from '@/components';
 import { GlassPageHeader } from '@/components';
 import { useTheme } from '../hooks/useTheme';
-import type { ModeSpecificSettings } from '../types/ThemeTypes';
+import { ThemeModeConfig } from '../stores/types';
 
 // Import extracted sub-components
-import { ThemesSection, CustomizationSection, WallpaperSection } from './settings-components';
+import { ThemesSection, CustomizationSection, WallpaperSection, PluginMarketplaceSettings } from './settings-components';
+import { AgentConfigSettings } from './settings-components/AgentConfigSettings';
 
-type SettingsSection = 'wallpaper' | 'glass' | 'themes' | 'customization';
+type SettingsSection = 'wallpaper' | 'glass' | 'themes' | 'customization' | 'agent-config' | 'marketplace';
 
 export const Settings = () => {
     const {
@@ -28,6 +29,8 @@ export const Settings = () => {
         setGlassTintColor,
         setAccentColor,
         setTextVibrancy,
+        setOutlineOpacity,
+        setGlassMaterial,
         specularEnabled,
         setSpecularEnabled,
         blurStrength,
@@ -40,6 +43,14 @@ export const Settings = () => {
         setTextShadowEnabled,
         performanceMode,
         setPerformanceMode,
+        bounceIntensity,
+        setBounceIntensity,
+        pulseIntensity,
+        setPulseIntensity,
+        scaleIntensity,
+        setScaleIntensity,
+        wiggleIntensity,
+        setWiggleIntensity,
         builtInThemes,
         customThemes,
         activeThemeId,
@@ -51,26 +62,20 @@ export const Settings = () => {
     } = useTheme();
 
     const [activeSection, setActiveSection] = useState<SettingsSection>('themes');
-    const [activeModeTab, setActiveModeTab] = useState<'light' | 'dark'>('dark');
 
     // Local state for mode-specific settings
-    const [localLightMode, setLocalLightMode] = useState<ModeSpecificSettings>({
-        glassIntensity: 50,
-        overlayEnabled: false,
-        overlayIntensity: 25,
-        glassTintColor: null,
-        backgroundId: 'liquid-1',
-        accentColor: '#007AFF',
-        textVibrancy: 50
+    // Local state for mode-specific settings
+    const [localLightMode, setLocalLightMode] = useState<ThemeModeConfig>({
+        glass: { intensity: 50, tintColor: null, material: 'regular' },
+        visual: { accentColor: '#007AFF', textVibrancy: 50, outlineOpacity: 30 },
+        background: { id: 'liquid-1', luminance: 'light' },
+        overlay: { enabled: false, intensity: 25 }
     });
-    const [localDarkMode, setLocalDarkMode] = useState<ModeSpecificSettings>({
-        glassIntensity: 50,
-        overlayEnabled: false,
-        overlayIntensity: 25,
-        glassTintColor: null,
-        backgroundId: 'liquid-1',
-        accentColor: '#007AFF',
-        textVibrancy: 50
+    const [localDarkMode, setLocalDarkMode] = useState<ThemeModeConfig>({
+        glass: { intensity: 50, tintColor: null, material: 'regular' },
+        visual: { accentColor: '#007AFF', textVibrancy: 50, outlineOpacity: 30 },
+        background: { id: 'liquid-1', luminance: 'dark' },
+        overlay: { enabled: false, intensity: 25 }
     });
 
     // Load mode-specific settings from active theme
@@ -78,28 +83,42 @@ export const Settings = () => {
         if (activeThemeId) {
             const activeTheme = [...builtInThemes, ...customThemes].find(t => t.id === activeThemeId);
             if (activeTheme) {
-                setLocalLightMode(activeTheme.lightMode);
-                setLocalDarkMode(activeTheme.darkMode);
+                // When loading settings, preserve the current background if it corresponds to the current mode
+                const lightSettings = {
+                    ...activeTheme.light,
+                    background: {
+                        ...activeTheme.light.background,
+                        id: theme === 'light' ? activeBackgroundId : activeTheme.light.background.id
+                    }
+                };
+                const darkSettings = {
+                    ...activeTheme.dark,
+                    background: {
+                        ...activeTheme.dark.background,
+                        id: theme === 'dark' ? activeBackgroundId : activeTheme.dark.background.id
+                    }
+                };
+
+                setLocalLightMode(lightSettings);
+                setLocalDarkMode(darkSettings);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeThemeId, builtInThemes, customThemes]);
-
-    // Sync mode tab with system theme on initial load
-    useEffect(() => {
-        setActiveModeTab(theme === 'dark' ? 'dark' : 'light');
-    }, []);
 
     // Real-time sync: When local light mode settings change AND system is in light mode, apply immediately
     useEffect(() => {
         if (theme === 'light') {
-            setGlassIntensity(localLightMode.glassIntensity);
-            setOverlayEnabled(localLightMode.overlayEnabled);
-            setOverlayIntensity(localLightMode.overlayIntensity);
-            setGlassTintColor(localLightMode.glassTintColor);
-            setAccentColor(localLightMode.accentColor ?? '#007AFF');
-            setTextVibrancy(localLightMode.textVibrancy ?? 50);
-            if (localLightMode.backgroundId) {
-                setActiveBackground(localLightMode.backgroundId);
+            if (localLightMode.glass.intensity !== undefined) setGlassIntensity(localLightMode.glass.intensity);
+            if (localLightMode.overlay.enabled !== undefined) setOverlayEnabled(localLightMode.overlay.enabled);
+            if (localLightMode.overlay.intensity !== undefined) setOverlayIntensity(localLightMode.overlay.intensity);
+            if (localLightMode.glass.tintColor !== undefined) setGlassTintColor(localLightMode.glass.tintColor);
+            if (localLightMode.visual.accentColor) setAccentColor(localLightMode.visual.accentColor);
+            if (localLightMode.visual.textVibrancy !== undefined) setTextVibrancy(localLightMode.visual.textVibrancy);
+            if (localLightMode.visual.outlineOpacity !== undefined) setOutlineOpacity(localLightMode.visual.outlineOpacity);
+            if (localLightMode.glass.material) setGlassMaterial(localLightMode.glass.material);
+            if (localLightMode.background.id) {
+                setActiveBackground(localLightMode.background.id);
             }
         }
     }, [localLightMode]);
@@ -107,14 +126,16 @@ export const Settings = () => {
     // Real-time sync: When local dark mode settings change AND system is in dark mode, apply immediately
     useEffect(() => {
         if (theme === 'dark') {
-            setGlassIntensity(localDarkMode.glassIntensity);
-            setOverlayEnabled(localDarkMode.overlayEnabled);
-            setOverlayIntensity(localDarkMode.overlayIntensity);
-            setGlassTintColor(localDarkMode.glassTintColor);
-            setAccentColor(localDarkMode.accentColor ?? '#007AFF');
-            setTextVibrancy(localDarkMode.textVibrancy ?? 50);
-            if (localDarkMode.backgroundId) {
-                setActiveBackground(localDarkMode.backgroundId);
+            if (localDarkMode.glass.intensity !== undefined) setGlassIntensity(localDarkMode.glass.intensity);
+            if (localDarkMode.overlay.enabled !== undefined) setOverlayEnabled(localDarkMode.overlay.enabled);
+            if (localDarkMode.overlay.intensity !== undefined) setOverlayIntensity(localDarkMode.overlay.intensity);
+            if (localDarkMode.glass.tintColor !== undefined) setGlassTintColor(localDarkMode.glass.tintColor);
+            if (localDarkMode.visual.accentColor) setAccentColor(localDarkMode.visual.accentColor);
+            if (localDarkMode.visual.textVibrancy !== undefined) setTextVibrancy(localDarkMode.visual.textVibrancy);
+            if (localDarkMode.visual.outlineOpacity !== undefined) setOutlineOpacity(localDarkMode.visual.outlineOpacity);
+            if (localDarkMode.glass.material) setGlassMaterial(localDarkMode.glass.material);
+            if (localDarkMode.background.id) {
+                setActiveBackground(localDarkMode.background.id);
             }
         }
     }, [localDarkMode]);
@@ -128,12 +149,8 @@ export const Settings = () => {
         if (isCustomTheme) {
             const timer = setTimeout(() => {
                 updateTheme(activeThemeId, {
-                    backgroundId: activeBackgroundId,
-                    glassRadius,
-                    shadowStrength,
-                    density,
-                    lightMode: localLightMode,
-                    darkMode: localDarkMode
+                    light: localLightMode,
+                    dark: localDarkMode
                 });
             }, 1000); // 1s debounce
 
@@ -187,6 +204,24 @@ export const Settings = () => {
                                 <Monitor size={18} />
                                 Wallpaper
                             </button>
+
+                            <div className="text-xs font-medium text-label-tertiary uppercase tracking-widest mt-6 mb-3 px-2">Extensions</div>
+                            <button
+                                onClick={() => setActiveSection('marketplace')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'marketplace' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Puzzle size={18} />
+                                Plugins
+                            </button>
+
+                            <div className="text-xs font-medium text-label-tertiary uppercase tracking-widest mt-6 mb-3 px-2">Intelligence</div>
+                            <button
+                                onClick={() => setActiveSection('agent-config')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'agent-config' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Bot size={18} />
+                                Agent Config
+                            </button>
                         </div>
                     </div>
 
@@ -226,8 +261,11 @@ export const Settings = () => {
                                     setLocalLightMode={setLocalLightMode}
                                     localDarkMode={localDarkMode}
                                     setLocalDarkMode={setLocalDarkMode}
-                                    activeModeTab={activeModeTab}
-                                    setActiveModeTab={setActiveModeTab}
+                                    activeModeTab={theme === 'dark' ? 'dark' : 'light'}
+                                    setActiveModeTab={(mode) => {
+                                        if (mode === 'light' && theme !== 'light') toggleTheme();
+                                        if (mode === 'dark' && theme !== 'dark') toggleTheme();
+                                    }}
                                     specularEnabled={specularEnabled}
                                     setSpecularEnabled={setSpecularEnabled}
                                     blurStrength={blurStrength}
@@ -240,6 +278,14 @@ export const Settings = () => {
                                     setTextShadowEnabled={setTextShadowEnabled}
                                     performanceMode={performanceMode}
                                     setPerformanceMode={setPerformanceMode}
+                                    bounceIntensity={bounceIntensity}
+                                    setBounceIntensity={setBounceIntensity}
+                                    pulseIntensity={pulseIntensity}
+                                    setPulseIntensity={setPulseIntensity}
+                                    scaleIntensity={scaleIntensity}
+                                    setScaleIntensity={setScaleIntensity}
+                                    wiggleIntensity={wiggleIntensity}
+                                    setWiggleIntensity={setWiggleIntensity}
                                 />
                             )}
 
@@ -247,8 +293,26 @@ export const Settings = () => {
                             {activeSection === 'wallpaper' && (
                                 <WallpaperSection
                                     activeBackgroundId={activeBackgroundId}
-                                    setActiveBackground={setActiveBackground}
+                                    setActiveBackground={(id, preferredTheme) => {
+                                        setActiveBackground(id, preferredTheme);
+                                        // Sync local state immediately to keep UI in sync
+                                        if (theme === 'light') {
+                                            setLocalLightMode(prev => ({ ...prev, background: { ...prev.background, id: id } }));
+                                        } else {
+                                            setLocalDarkMode(prev => ({ ...prev, background: { ...prev.background, id: id } }));
+                                        }
+                                    }}
                                 />
+                            )}
+
+                            {/* Agent Config Section */}
+                            {activeSection === 'agent-config' && (
+                                <AgentConfigSettings />
+                            )}
+
+                            {/* Plugin Marketplace Section */}
+                            {activeSection === 'marketplace' && (
+                                <PluginMarketplaceSettings />
                             )}
                         </div>
                     </div>

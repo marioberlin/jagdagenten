@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
-import { useSpring, animated } from '@react-spring/web';
+import { motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
+import { TRANSITIONS } from '@/styles/animations';
 
 export interface GlassSliderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
     value?: number;
@@ -27,39 +28,60 @@ export const GlassSlider = React.forwardRef<HTMLDivElement, GlassSliderProps>(
         ...props
     }, ref) => {
         const [internalValue, setInternalValue] = useState(defaultValue);
+        const [isDragging, setIsDragging] = useState(false);
         const value = controlledValue !== undefined ? controlledValue : internalValue;
         const trackRef = useRef<HTMLDivElement>(null);
 
-        const percentage = ((value - min) / (max - min)) * 100;
+        const percentage = Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100);
 
-        const bind = useDrag(({ xy: [x], active, event }) => {
+        const bind = useDrag(({ active, event, delta: [dx], movement: [_, my], memo }) => {
             if (disabled || !trackRef.current) return;
             event.stopPropagation();
+            setIsDragging(active);
 
             if (active) {
                 document.body.style.cursor = 'grabbing';
             } else {
                 document.body.style.cursor = '';
+                return;
+            }
+
+            // Initialize memo with current value
+            if (memo === undefined) {
+                return { val: value };
             }
 
             const rect = trackRef.current.getBoundingClientRect();
-            const relativeX = Math.min(Math.max(0, x - rect.left), rect.width);
-            const newValue = Math.round(((relativeX / rect.width) * (max - min) + min) / step) * step;
+            const range = max - min;
+            const unitsPerPixel = range / rect.width;
 
+            // iOS-style fine scrubbing: 
+            // Dragging vertically away from track reduces horizontal sensitivity
+            const verticalDist = Math.abs(my);
+            const threshold = 50; // px
+            let factor = 1;
+
+            if (verticalDist > threshold) {
+                // Decaying factor for finer control
+                factor = 1 / (1 + (verticalDist - threshold) * 0.02);
+            }
+
+            // Accumulate exact value change based on current sensitivity
+            memo.val += (dx * unitsPerPixel * factor);
+
+            // Output processed value
+            const newValue = Math.round(memo.val / step) * step;
             const clampedValue = Math.min(Math.max(newValue, min), max);
 
             if (clampedValue !== value) {
                 setInternalValue(clampedValue);
                 onValueChange?.(clampedValue);
             }
+
+            return memo;
         }, {
             filterTaps: true,
             bounds: { left: 0 }
-        });
-
-        const { fillWidth } = useSpring({
-            fillWidth: percentage,
-            config: { tension: 280, friction: 30 }
         });
 
         return (
@@ -83,27 +105,29 @@ export const GlassSlider = React.forwardRef<HTMLDivElement, GlassSliderProps>(
                     }}
                 >
                     {/* Active Fill */}
-                    <animated.div
+                    <motion.div
                         className="absolute top-0 left-0 h-full bg-primary/30 backdrop-blur-sm"
-                        style={{ width: fillWidth.to(w => `${w}%`) }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={isDragging ? { type: "tween", ease: "linear", duration: 0 } : TRANSITIONS.springFast}
                     />
                 </div>
 
                 {/* Thumb */}
-                <animated.div
-                    {...bind()}
-                    className="absolute w-6 h-6 -ml-3 top-1/2 -mt-3 cursor-grab active:cursor-grabbing hover:scale-110 active:scale-95 transition-transform"
-                    style={{
-                        left: fillWidth.to(w => `${w}%`),
-                        touchAction: 'none'
-                    }}
+                <motion.div
+                    {...(bind() as any)}
+                    className="absolute w-6 h-6 -ml-3 top-1/2 -mt-3 cursor-grab active:cursor-grabbing z-10"
+                    animate={{ left: `${percentage}%` }}
+                    transition={isDragging ? { type: "tween", ease: "linear", duration: 0 } : TRANSITIONS.springFast}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{ touchAction: 'none' }}
                 >
                     <GlassContainer
                         material="thick"
                         enableLiquid={false}
                         className="w-full h-full rounded-full shadow-lg border border-[var(--glass-border)]"
                     />
-                </animated.div>
+                </motion.div>
             </div>
         );
     }

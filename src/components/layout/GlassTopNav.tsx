@@ -16,6 +16,9 @@ const navLinks: NavLink[] = [
     { label: 'Home', path: '/' },
     { label: 'Components', path: '/showcase' },
     { label: 'Demos', path: '/showcase#demos' },
+    { label: 'Market', path: '/market-overview' },
+    { label: 'Analytics', path: '/analytics' },
+    { label: 'Bot Config', path: '/trading' }, // Renamed from Trading to distinguish
 ];
 
 interface GlassTopNavProps {

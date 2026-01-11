@@ -16,9 +16,14 @@ import { ShowcaseTokens } from './ShowcaseTokens';
 import { ShowcaseInspiration } from './ShowcaseInspiration';
 import { ShowcaseAgentic } from './ShowcaseAgentic';
 import { ShowcaseExtensions } from './ShowcaseExtensions';
-import { ShowcaseAdditions } from './ShowcaseAdditions'; // New Import
+import { ShowcaseAGUI } from './ShowcaseAGUI';
 import { ShowCodeProvider } from '@/context/ShowCodeContext';
 import { useShowCode } from '@/hooks/useShowCode';
+import {
+    Type, Palette, MousePointer2, FormInput, BarChart3,
+    LayoutGrid, Layers, Image, Puzzle, Sparkles, Bot,
+    Blocks, Grid2X2, Cpu
+} from 'lucide-react';
 
 
 // TOC items per section
@@ -35,11 +40,13 @@ const sectionTOC: Record<string, TOCItem[]> = {
         { id: 'text-inputs', label: 'Text Inputs' },
         { id: 'selection', label: 'Selection Controls' },
         { id: 'rich-inputs', label: 'Rich Inputs' },
+        { id: 'extended', label: 'Extended Inputs' },
     ],
     data: [
         { id: 'metrics', label: 'Metrics' },
         { id: 'charts', label: 'Charts' },
         { id: 'tables', label: 'Tables' },
+        { id: 'scroll', label: 'Infinite Scroll' },
     ],
     layout: [
         { id: 'grids', label: 'Grid Systems' },
@@ -58,6 +65,7 @@ const sectionTOC: Record<string, TOCItem[]> = {
         { id: 'effects', label: 'Visual Effects' },
         { id: 'stepper', label: 'Stepper' },
         { id: 'parallax', label: 'Parallax Text Image' },
+        { id: 'utilities', label: 'Media Utilities' },
     ],
     complex: [
         { id: 'search', label: 'Search Bar' },
@@ -66,6 +74,7 @@ const sectionTOC: Record<string, TOCItem[]> = {
         { id: 'chat', label: 'Chat Interface' },
         { id: 'terminal', label: 'Terminal' },
         { id: 'calculator', label: 'Calculator' },
+        { id: 'dnd', label: 'Drag & Drop' },
     ],
     agentic: [
         { id: 'agent', label: 'GlassAgent' },
@@ -80,6 +89,7 @@ const sectionTOC: Record<string, TOCItem[]> = {
         { id: 'glass-shadows', label: 'Glass Shadows' },
     ],
     demos: [
+        { id: 'featured', label: 'Featured Demos' },
         { id: 'ai-chat', label: 'AI Chat' },
         { id: 'restaurant', label: 'Restaurant' },
         { id: 'entertainment', label: 'Entertainment' },
@@ -97,43 +107,40 @@ const sectionTOC: Record<string, TOCItem[]> = {
         { id: 'visualizer', label: 'Glass Visualizer' },
         { id: 'scanner', label: 'Glass Scanner' },
     ],
-    additions: [
-        { id: 'scroll', label: 'Infinite Scroll' },
-        { id: 'inputs', label: 'Advanced Inputs' },
-        { id: 'dnd', label: 'Drag & Drop' },
-        { id: 'media', label: 'Media Utilities' },
-    ]
 };
 
-type Section = 'typography' | 'buttons' | 'forms' | 'overlays' | 'data' | 'layout' | 'media' | 'complex' | 'tokens' | 'demos' | 'agentic' | 'extensions' | 'additions';
+type Section = 'typography' | 'buttons' | 'forms' | 'overlays' | 'data' | 'layout' | 'media' | 'complex' | 'tokens' | 'demos' | 'agentic' | 'extensions' | 'agui';
 
 const navSections: NavSection[] = [
     {
         title: 'Foundations',
         items: [
-            { id: 'typography', label: 'Typography & Materials' },
-            { id: 'tokens', label: 'Design Tokens', badge: 'New', badgeVariant: 'outline' },
+            { id: 'typography', label: 'Typography & Materials', icon: <Type size={16} /> },
+            { id: 'tokens', label: 'Design Tokens', icon: <Palette size={16} />, badge: 'New', badgeVariant: 'outline' },
         ],
     },
     {
         title: 'Components',
         items: [
-            { id: 'buttons', label: 'Buttons & Interactive' },
-            { id: 'forms', label: 'Forms & Inputs' },
-            { id: 'data', label: 'Data & Charts' },
-            { id: 'layout', label: 'Layout & Grids' },
-            { id: 'overlays', label: 'Overlays & Popovers' },
-            { id: 'media', label: 'Media & Visuals' },
-            { id: 'complex', label: 'Complex Composites' },
-            { id: 'extensions', label: 'Extensions', badge: 'New', badgeVariant: 'default' },
-            { id: 'additions', label: 'New Components', badge: 'Beta', badgeVariant: 'outline' }, // New Item
+            { id: 'buttons', label: 'Buttons & Interactive', icon: <MousePointer2 size={16} /> },
+            { id: 'forms', label: 'Forms & Inputs', icon: <FormInput size={16} /> },
+            { id: 'data', label: 'Data & Charts', icon: <BarChart3 size={16} /> },
+            { id: 'layout', label: 'Layout & Grids', icon: <LayoutGrid size={16} /> },
+            { id: 'overlays', label: 'Overlays & Popovers', icon: <Layers size={16} /> },
+            { id: 'media', label: 'Media & Visuals', icon: <Image size={16} /> },
+            { id: 'complex', label: 'Complex Composites', icon: <Puzzle size={16} /> },
+            { id: 'compound', label: 'Compound & Buttons', icon: <Grid2X2 size={16} />, badge: 'New', badgeVariant: 'default', href: '/showcase/compound' },
+            { id: 'extensions', label: 'Extensions', icon: <Blocks size={16} />, badge: 'New', badgeVariant: 'default' },
         ],
     },
     {
         title: 'Examples',
         items: [
-            { id: 'agentic', label: 'Agentic UI', badge: 'New', badgeVariant: 'outline' },
-            { id: 'demos', label: 'Demos', badge: '9', badgeVariant: 'default' },
+            { id: 'agentic', label: 'Agentic UI', icon: <Bot size={16} />, badge: 'New', badgeVariant: 'outline' },
+            { id: 'generative', label: 'Generative UI', icon: <Sparkles size={16} />, badge: 'Beta', badgeVariant: 'default', href: '/demos/generative' },
+            { id: 'generative-ext', label: 'Gen Extensions', icon: <Grid2X2 size={16} />, badge: 'New', badgeVariant: 'outline', href: '/demos/generative-extensions' },
+            { id: 'agui', label: 'AG-UI Demos', icon: <Cpu size={16} />, badge: '7', badgeVariant: 'default' },
+            { id: 'demos', label: 'Demos', icon: <Sparkles size={16} />, badge: '9', badgeVariant: 'default' },
         ],
     },
 ];
@@ -146,7 +153,7 @@ const ShowcaseContent = () => {
     // Handle hash-based navigation
     useEffect(() => {
         const hash = window.location.hash.replace('#', '') as Section;
-        const validSections: Section[] = ['typography', 'buttons', 'forms', 'overlays', 'data', 'layout', 'media', 'complex', 'tokens', 'demos', 'agentic', 'extensions', 'additions'];
+        const validSections: Section[] = ['typography', 'buttons', 'forms', 'overlays', 'data', 'layout', 'media', 'complex', 'tokens', 'demos', 'agentic', 'extensions', 'agui'];
         if (hash && validSections.includes(hash)) {
             setActiveSection(hash);
         }
@@ -210,7 +217,7 @@ const ShowcaseContent = () => {
                 {activeSection === 'tokens' && <ShowcaseTokens />}
                 {activeSection === 'agentic' && <ShowcaseAgentic />}
                 {activeSection === 'extensions' && <ShowcaseExtensions />}
-                {activeSection === 'additions' && <ShowcaseAdditions />}
+                {activeSection === 'agui' && <ShowcaseAGUI />}
                 {activeSection === 'demos' && <ShowcaseInspiration />}
             </div>
         </DocsLayout>

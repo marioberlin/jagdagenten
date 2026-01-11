@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
     GlassContainer,
     GlassInput,
@@ -17,7 +18,13 @@ import {
     GlassUpload,
     GlassPayment,
     GlassDatePicker,
-    GlassFormGroup,
+    GlassForm,
+    GlassFormField,
+    GlassFormItem,
+    GlassFormLabel,
+    GlassFormControl,
+    GlassFormDescription,
+    GlassFormMessage,
     GlassButton,
     GlassCombobox,
     GlassToggle,
@@ -27,6 +34,11 @@ import {
     GlassTimePicker,
     GlassNumberInput,
     GlassCode,
+    //     GlassColorPicker,
+    //     GlassEmojiPicker,
+    //     GlassAutosizeTextarea,
+    //     GlassRating,
+    //     GlassCaptcha,
 } from '@/components';
 import { Mail, User, Bold, Italic, Underline, Chrome } from 'lucide-react';
 
@@ -37,6 +49,17 @@ export const ShowcaseForms = () => {
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
     const [selectedTags, setSelectedTags] = useState(['React', 'TypeScript', 'Tailwind']);
+    const [color] = useState('#3B82F6');
+    const [emoji] = useState('👋');
+
+    // Create a dummy form for demonstration
+    const form = useForm({
+        defaultValues: {
+            email: '',
+            username: '',
+            bio: 'Hi',
+        }
+    });
 
     const removeTag = (tag: string) => {
         setSelectedTags(selectedTags.filter(t => t !== tag));
@@ -49,75 +72,97 @@ export const ShowcaseForms = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <span className="text-xs font-bold uppercase tracking-widest mb-2 block text-blue-400">Forms</span>
-                        <h3 className="text-xl font-bold text-primary">Form Accessibility</h3>
+                        <h3 className="text-xl font-bold text-primary">Form Accessibility (React Hook Form)</h3>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Default State */}
-                    <div className="space-y-4">
-                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">With Labels & Helper Text</span>
-                        <GlassFormGroup
-                            label="Email Address"
-                            required
-                            helperText="We'll never share your email."
-                        >
-                            <GlassInput
-                                type="email"
-                                placeholder="you@example.com"
-                                icon={<Mail size={18} />}
-                            />
-                        </GlassFormGroup>
+                <GlassForm {...form}>
+                    <form className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        {/* Default State */}
+                        <div className="space-y-4">
+                            <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">With Labels & Helper Text</span>
 
-                        <GlassFormGroup label="Username">
-                            <GlassInput
-                                placeholder="Enter username..."
-                                icon={<User size={18} />}
+                            <GlassFormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <GlassFormItem>
+                                        <GlassFormLabel>Email Address</GlassFormLabel>
+                                        <GlassFormControl>
+                                            <GlassInput
+                                                type="email"
+                                                placeholder="you@example.com"
+                                                startContent={<Mail size={18} />}
+                                                {...field}
+                                            />
+                                        </GlassFormControl>
+                                        <GlassFormDescription>We'll never share your email.</GlassFormDescription>
+                                        <GlassFormMessage />
+                                    </GlassFormItem>
+                                )}
                             />
-                        </GlassFormGroup>
-                    </div>
 
-                    {/* Error State */}
-                    <div className="space-y-4">
-                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Error States</span>
-                        <GlassFormGroup
-                            label="Email Address"
-                            required
-                            error="Please enter a valid email address."
-                        >
-                            <GlassInput
-                                type="email"
-                                placeholder="you@example.com"
-                                defaultValue="invalid-email"
-                                icon={<Mail size={18} />}
+                            <GlassFormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <GlassFormItem>
+                                        <GlassFormLabel>Username</GlassFormLabel>
+                                        <GlassFormControl>
+                                            <GlassInput
+                                                placeholder="Enter username..."
+                                                startContent={<User size={18} />}
+                                                {...field}
+                                            />
+                                        </GlassFormControl>
+                                        <GlassFormMessage />
+                                    </GlassFormItem>
+                                )}
                             />
-                        </GlassFormGroup>
-
-                        <GlassFormGroup
-                            label="Bio"
-                            error="Bio must be at least 10 characters."
-                        >
-                            <GlassTextarea
-                                placeholder="Tell us about yourself..."
-                                defaultValue="Hi"
-                            />
-                        </GlassFormGroup>
-                    </div>
-
-                    {/* Button States */}
-                    <div className="md:col-span-2 space-y-4">
-                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Button Variants & States</span>
-                        <div className="flex flex-wrap gap-4 items-center">
-                            <GlassButton variant="primary">Primary</GlassButton>
-                            <GlassButton variant="secondary">Secondary</GlassButton>
-                            <GlassButton variant="outline">Outline</GlassButton>
-                            <GlassButton variant="ghost">Ghost</GlassButton>
-                            <GlassButton variant="destructive">Delete</GlassButton>
-                            <GlassButton variant="primary" loading>Loading</GlassButton>
-                            <GlassButton variant="primary" disabled>Disabled</GlassButton>
                         </div>
-                    </div>
-                </div>
+
+                        {/* Error State - Simulated manually for visual demo */}
+                        <div className="space-y-4">
+                            <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Error States</span>
+
+                            <div className="space-y-2">
+                                <GlassFormLabel className="text-destructive">Email Address</GlassFormLabel>
+                                <GlassInput
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    defaultValue="invalid-email"
+                                    startContent={<Mail size={18} />}
+                                    className="border-destructive focus-visible:ring-destructive"
+                                />
+                                <p className="text-sm font-medium text-destructive">Please enter a valid email address.</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <GlassFormLabel className="text-destructive">Bio</GlassFormLabel>
+                                <GlassTextarea
+                                    placeholder="Tell us about yourself..."
+                                    defaultValue="Hi"
+                                    className="border-destructive focus-visible:ring-destructive"
+                                />
+                                <p className="text-sm font-medium text-destructive">Bio must be at least 10 characters.</p>
+                            </div>
+                        </div>
+
+                        {/* Button States */}
+                        <div className="md:col-span-2 space-y-4">
+                            <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Button Variants & States</span>
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <GlassButton variant="primary">Primary</GlassButton>
+                                <GlassButton variant="secondary">Secondary</GlassButton>
+                                <GlassButton variant="outline">Outline</GlassButton>
+                                <GlassButton variant="ghost">Ghost</GlassButton>
+                                <GlassButton variant="destructive">Delete</GlassButton>
+                                <GlassButton variant="primary" loading>Loading</GlassButton>
+                                <GlassButton variant="primary" disabled>Disabled</GlassButton>
+                            </div>
+                        </div>
+                    </form>
+                </GlassForm>
             </GlassContainer>
 
             {/* Selection Controls */}
@@ -407,6 +452,76 @@ export const ShowcaseForms = () => {
                 </div>
             </GlassContainer>
 
+            {/* Extended Inputs */}
+            <GlassContainer id="extended" className="p-8 rounded-3xl" border material="regular">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <span className="text-xs font-bold uppercase tracking-widest mb-2 block text-blue-400">Forms</span>
+                        <h3 className="text-xl font-bold text-primary">Extended Input Widgets</h3>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    {/* Color Picker */}
+                    <div className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Color Picker</span>
+                        <div className="flex items-center gap-4">
+                            <div
+                                className="w-12 h-12 rounded-full border border-glass-border shadow-lg"
+                                style={{ backgroundColor: color }}
+                            />
+                            {/* <GlassColorPicker color={color} onChange={setColor} /> */}
+                            <div className="p-2 px-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-sm">
+                                Not Available
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Emoji Picker */}
+                    <div className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Emoji Picker</span>
+                        <div className="flex items-center gap-4">
+                            <span className="text-4xl bg-glass-frame p-2 rounded-xl h-14 w-14 flex items-center justify-center">{emoji}</span>
+                            {/* <GlassEmojiPicker onEmojiClick={(d) => setEmoji(d.emoji)} /> */}
+                            <div className="p-2 px-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center text-sm">
+                                Not Available
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Autosize Textarea */}
+                    <div className="space-y-4 md:col-span-2">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Autosize Textarea</span>
+                        {/* <GlassAutosizeTextarea
+                            minRows={3}
+                            placeholder="Type multiple lines to see me grow automatically..."
+                            className="text-lg"
+                        /> */}
+                        <div className="p-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center">
+                            Component under development
+                        </div>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Star Rating</span>
+                        {/* <GlassRating value={4} onChange={() => { }} size={32} /> */}
+                        <div className="p-2 px-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center text-sm">
+                            Not Available
+                        </div>
+                    </div>
+
+                    {/* Captcha */}
+                    <div className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Slide Captcha</span>
+                        {/* <GlassCaptcha onVerify={(success) => console.log('Verified:', success)} /> */}
+                        <div className="p-2 px-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center text-sm">
+                            Not Available
+                        </div>
+                    </div>
+                </div>
+            </GlassContainer>
+
             {/* Code Examples */}
             <GlassContainer className="p-8 rounded-3xl" border material="regular">
                 <div className="flex items-center justify-between mb-6">
@@ -421,13 +536,24 @@ export const ShowcaseForms = () => {
                         <GlassCode
                             language="tsx"
                             showLineNumbers={false}
-                            code={`<GlassFormGroup label="Email" required>
-  <GlassInput 
-    type="email" 
-    placeholder="you@example.com"
-    icon={<Mail size={18} />}
-  />
-</GlassFormGroup>`}
+                            code={`<GlassFormField
+  control={form.control}
+  name="email"
+  render={({ field }) => (
+    <GlassFormItem>
+      <GlassFormLabel>Email</GlassFormLabel>
+      <GlassFormControl>
+        <GlassInput 
+          type="email" 
+          placeholder="you@example.com"
+          icon={<Mail size={18} />}
+          {...field}
+        />
+      </GlassFormControl>
+      <GlassFormMessage />
+    </GlassFormItem>
+  )}
+/>`}
                         />
                     </div>
                     <div>

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useRef } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { TRANSITIONS } from '@/styles/animations';
 
 // Context
 interface AccordionContextType {
@@ -81,11 +82,6 @@ export const GlassAccordionTrigger = React.forwardRef<HTMLButtonElement, GlassAc
             ? context.value.includes(itemValue!)
             : context.value === itemValue;
 
-        const { rotation } = useSpring({
-            rotation: isOpen ? 180 : 0,
-            config: { tension: 300, friction: 20 }
-        });
-
         return (
             <button
                 ref={ref}
@@ -98,9 +94,12 @@ export const GlassAccordionTrigger = React.forwardRef<HTMLButtonElement, GlassAc
                 {...props}
             >
                 {children}
-                <animated.div style={{ transform: rotation.to(r => `rotate(${r}deg)`) }}>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50 transition-transform duration-200" />
-                </animated.div>
+                <motion.div
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={TRANSITIONS.spring}
+                >
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                </motion.div>
             </button>
         );
     }
@@ -122,27 +121,25 @@ export const GlassAccordionContent = React.forwardRef<HTMLDivElement, GlassAccor
                 : context.value === itemValue
         ) : false;
 
-        const { height, opacity } = useSpring({
-            from: { height: 0, opacity: 0 },
-            to: {
-                height: isOpen ? contentRef.current?.scrollHeight || 'auto' : 0,
-                opacity: isOpen ? 1 : 0
-            },
-            config: { tension: 300, friction: 26 }
-        });
-
         if (!context) return null;
 
         return (
-            <animated.div
-                ref={ref}
-                style={{ height, opacity, overflow: 'hidden' }}
-                className="overflow-hidden"
-            >
-                <div ref={contentRef} className={cn("px-6 pb-4 pt-0 text-secondary text-sm", className)} {...props}>
-                    {children}
-                </div>
-            </animated.div>
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        ref={ref}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={TRANSITIONS.spring}
+                        className="overflow-hidden"
+                    >
+                        <div ref={contentRef} className={cn("px-6 pb-4 pt-0 text-secondary text-sm", className)} {...props}>
+                            {children}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         );
     }
 );

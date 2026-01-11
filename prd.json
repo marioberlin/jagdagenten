@@ -1,0 +1,18 @@
+{
+  "projectName": "Self-Heal: PortfolioOverview - 9d33f8fc0e4497ae",
+  "branchName": "fix/self-heal-9d33f8fc0e4497ae",
+  "stories": [
+    {
+      "id": "FIX-9d33f8fc0e4497ae",
+      "title": "Fix error in PortfolioOverview",
+      "priority": "high",
+      "status": "pending",
+      "passes": false,
+      "acceptanceCriteria": [
+        "Resolve the error: \"Autonomy Verification Success\"",
+        "Prevent regression in PortfolioOverview",
+        "Component must pass its respective tests after fix"
+      ]
+    }
+  ]
+}

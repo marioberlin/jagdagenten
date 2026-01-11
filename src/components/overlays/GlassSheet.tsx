@@ -1,24 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { TRANSITIONS } from '@/styles/animations';
 
 interface GlassSheetProps {
+    /** Whether the sheet is open */
     open: boolean;
+    /** Callback for open state changes */
     onOpenChange: (open: boolean) => void;
+    /** Content to display inside the sheet */
     children: React.ReactNode;
+    /** 
+     * Edge to slide in from.
+     * @default 'right'
+     */
     side?: 'left' | 'right' | 'top' | 'bottom';
+    /** Optional title header */
     title?: string;
+    /** Optional description text */
     description?: string;
+    /** Additional CSS classes */
     className?: string;
-    /** Optional aria-label for the sheet */
+    /** Accessibility label */
     ariaLabel?: string;
 }
 
+/**
+ * GlassSheet
+ * 
+ * A side panel overlay component (standard "Drawer" in some libraries).
+ * Useful for mobile navigation, detailed property views, or settings panels.
+ * 
+ * @example
+ * ```tsx
+ * <GlassSheet open={open} onOpenChange={setOpen} side="right" title="Settings">
+ *   <SettingsForm />
+ * </GlassSheet>
+ * ```
+ */
 export const GlassSheet = ({
     open,
     onOpenChange,
@@ -29,14 +53,8 @@ export const GlassSheet = ({
     className,
     ariaLabel,
 }: GlassSheetProps) => {
-    const [shouldRender, setShouldRender] = useState(open);
-
     // Focus trap - handles Tab cycling, Escape key, and focus restoration
     const focusTrapRef = useFocusTrap(open, () => onOpenChange(false));
-
-    useEffect(() => {
-        if (open) setShouldRender(true);
-    }, [open]);
 
     // Lock body scroll when open
     useEffect(() => {
@@ -50,82 +68,86 @@ export const GlassSheet = ({
         };
     }, [open]);
 
-    const backdropSpring = useSpring({
-        opacity: open ? 1 : 0,
-        backdropFilter: open ? 'blur(4px)' : 'blur(0px)',
-        onRest: () => {
-            if (!open) setShouldRender(false);
+    // Animation variants based on side
+    const variants = {
+        initial: {
+            x: side === 'right' ? '100%' : side === 'left' ? '-100%' : 0,
+            y: side === 'bottom' ? '100%' : side === 'top' ? '-100%' : 0,
+        },
+        animate: { x: 0, y: 0 },
+        exit: {
+            x: side === 'right' ? '100%' : side === 'left' ? '-100%' : 0,
+            y: side === 'bottom' ? '100%' : side === 'top' ? '-100%' : 0,
         }
-    });
-
-    const sheetSpring = useSpring({
-        transform: open
-            ? 'translate3d(0%, 0%, 0)'
-            : side === 'right' ? 'translate3d(100%, 0, 0)'
-                : side === 'left' ? 'translate3d(-100%, 0, 0)'
-                    : side === 'bottom' ? 'translate3d(0, 100%, 0)'
-                        : 'translate3d(0, -100%, 0)',
-        config: { tension: 350, friction: 35 } // Snappy but smooth
-    });
-
-    if (!shouldRender) return null;
+    };
 
     const sideClasses = {
         right: 'inset-y-0 right-0 h-full w-3/4 sm:max-w-sm border-l',
         left: 'inset-y-0 left-0 h-full w-3/4 sm:max-w-sm border-r',
-        bottom: 'inset-x-0 bottom-0 w-full border-t',
-        top: 'inset-x-0 top-0 w-full border-b',
+        bottom: 'inset-x-0 bottom-0 w-full border-t max-h-[90vh]',
+        top: 'inset-x-0 top-0 w-full border-b max-h-[90vh]',
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-start justify-center sm:items-center">
-            {/* Backdrop */}
-            <animated.div
-                className="fixed inset-0 bg-black/20 dark:bg-black/40"
-                style={backdropSpring}
-                onClick={() => onOpenChange(false)}
-                aria-hidden="true"
-            />
+        <AnimatePresence>
+            {open && (
+                <div className="fixed inset-0 z-[100] flex items-start justify-center sm:items-center">
+                    {/* Backdrop */}
+                    <motion.div
+                        className="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => onOpenChange(false)}
+                        aria-hidden="true"
+                    />
 
-            {/* Sheet Content */}
-            <animated.div
-                ref={focusTrapRef}
-                className={cn(
-                    "fixed z-50 bg-background/80 shadow-2xl p-0",
-                    sideClasses[side],
-                    className
-                )}
-                style={sheetSpring}
-                role="dialog"
-                aria-modal="true"
-                aria-label={ariaLabel || title}
-            >
-                <GlassContainer
-                    material="thick"
-                    className="w-full h-full flex flex-col p-6 !rounded-none"
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="space-y-1">
-                            {title && <h2 className="text-lg font-bold text-primary">{title}</h2>}
-                            {description && <p className="text-sm text-secondary">{description}</p>}
-                        </div>
-                        <GlassButton
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full w-8 h-8 !p-0"
-                            onClick={() => onOpenChange(false)}
-                            aria-label="Close sheet"
+                    {/* Sheet Content */}
+                    <motion.div
+                        ref={focusTrapRef}
+                        className={cn(
+                            "fixed z-50 bg-background/80 shadow-2xl p-0",
+                            sideClasses[side],
+                            className
+                        )}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={variants}
+                        transition={TRANSITIONS.spring}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={ariaLabel || title}
+                    >
+                        <GlassContainer
+                            material="thick"
+                            className="w-full h-full flex flex-col p-6 !rounded-none"
                         >
-                            <X size={16} />
-                        </GlassButton>
-                    </div>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="space-y-1">
+                                    {title && <h2 className="text-lg font-bold text-primary">{title}</h2>}
+                                    {description && <p className="text-sm text-secondary">{description}</p>}
+                                </div>
+                                <GlassButton
+                                    variant="ghost"
+                                    size="sm"
+                                    className="rounded-full w-8 h-8 !p-0"
+                                    onClick={() => onOpenChange(false)}
+                                    aria-label="Close sheet"
+                                >
+                                    <X size={16} />
+                                </GlassButton>
+                            </div>
 
-                    <div className="flex-1 overflow-y-auto">
-                        {children}
-                    </div>
-                </GlassContainer>
-            </animated.div>
-        </div>,
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                {children}
+                            </div>
+                        </GlassContainer>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>,
         document.body
     );
 };

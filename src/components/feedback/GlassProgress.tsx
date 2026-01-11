@@ -1,5 +1,6 @@
-import { useSpring, animated } from '@react-spring/web';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 interface GlassProgressProps {
     value: number;
@@ -34,11 +35,6 @@ export const GlassProgress = ({
     const clampedValue = Math.min(Math.max(value, 0), max);
     const percentage = (clampedValue / max) * 100;
 
-    const { width } = useSpring({
-        width: `${percentage}%`,
-        config: { tension: 180, friction: 20 }
-    });
-
     return (
         <div className={cn("w-full space-y-2", className)}>
             {showLabel && (
@@ -56,14 +52,16 @@ export const GlassProgress = ({
                 sizeMap[size]
             )}>
                 {/* Fill */}
-                <animated.div
+                <motion.div
                     className={cn(
                         "h-full rounded-full",
                         "bg-gradient-to-r",
                         colorMap[color],
                         "shadow-sm"
                     )}
-                    style={{ width }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${percentage}%` }}
+                    transition={TRANSITIONS.springSlow}
                 />
             </div>
         </div>

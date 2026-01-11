@@ -131,3 +131,26 @@ dist
 
 # VS Code
 .vscode
+
+*storybook.log
+storybook-static
+
+# Test and temporary files
+test-results/
+tsc_errors.txt
+story_list.txt
+component_list.txt
+glass_components_list.txt
+bundle-stats.html
+*.zip
+
+# Data and backups
+analysis_results_all.csv
+n8n_backup/
+ClaudePlugins/
+ClaudeSkills/
+ClaudeSkills_backup/
+archive/
+TraderOld/
+bot/
+trades.json

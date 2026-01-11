@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { useTheme } from '@/hooks/useTheme';
 import {
@@ -108,95 +109,141 @@ export const GlassCommandPalette = ({ isOpen, onClose }: GlassCommandPaletteProp
     };
 
     return createPortal(
-        <div
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]"
-            onClick={onClose}
-        >
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-            {/* Command Palette */}
-            <GlassContainer
-                material="thick"
-                border
-                enableLiquid={false}
-                className="relative w-full max-w-lg mx-4 overflow-hidden"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Search Input */}
-                <div className="flex items-center px-4 border-b border-[var(--glass-border)]">
-                    <Search className="mr-3 h-5 w-5 text-secondary" />
-                    <input
-                        autoFocus
-                        className="flex h-14 w-full bg-transparent text-base outline-none placeholder:text-secondary"
-                        placeholder="Type a command or search..."
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                    <button
+        <AnimatePresence>
+            {isOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]"
+                >
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-glass-surface-hover transition-colors"
-                        aria-label="Close command palette"
+                    />
+
+                    {/* Command Palette */}
+                    <GlassContainer
+                        as={motion.div}
+                        // @ts-ignore - Framer Motion types through 'as' prop
+                        initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        material="thick"
+                        border
+                        enableLiquid={false}
+                        className="relative w-full max-w-lg mx-4 overflow-hidden shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <X size={18} className="text-secondary" />
-                    </button>
-                </div>
-
-                {/* Results */}
-                <div className="max-h-[300px] overflow-y-auto py-2">
-                    {filtered.length === 0 && (
-                        <div className="text-sm text-center py-8 text-secondary">
-                            No results found.
+                        {/* Search Input */}
+                        <div className="flex items-center px-4 border-b border-[var(--glass-border)]">
+                            <Search className="mr-3 h-5 w-5 text-secondary" />
+                            <input
+                                autoFocus
+                                className="flex h-14 w-full bg-transparent text-base outline-none placeholder:text-secondary/50 text-primary"
+                                placeholder="Type a command or search..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 rounded-lg hover:bg-glass-surface-hover transition-colors"
+                                aria-label="Close command palette"
+                            >
+                                <X size={18} className="text-secondary" />
+                            </button>
                         </div>
-                    )}
 
-                    {Object.entries(groupedItems).map(([category, categoryItems]) => (
-                        <div key={category}>
-                            <div className="px-4 py-2 text-xs font-semibold text-label-tertiary uppercase tracking-wider">
-                                {categoryLabels[category] || category}
-                            </div>
-                            {categoryItems.map((item) => {
-                                const globalIndex = filtered.indexOf(item);
-                                const isSelected = globalIndex === selectedIndex;
+                        {/* Results */}
+                        <motion.div
+                            className="max-h-[300px] overflow-y-auto py-2"
+                            layout
+                        >
+                            {filtered.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-sm text-center py-8 text-secondary"
+                                >
+                                    No results found.
+                                </motion.div>
+                            )}
 
-                                return (
-                                    <button
-                                        key={item.id}
-                                        onClick={item.action}
-                                        className={cn(
-                                            "w-full flex items-center px-4 py-2.5 text-left transition-colors",
-                                            isSelected
-                                                ? "bg-accent/20 text-accent"
-                                                : "text-primary hover:bg-glass-surface-hover"
-                                        )}
+                            <AnimatePresence mode="popLayout">
+                                {Object.entries(groupedItems).map(([category, categoryItems]) => (
+                                    <motion.div
+                                        key={category}
+                                        layout
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
                                     >
-                                        <span className={cn(
-                                            "mr-3 transition-colors",
-                                            isSelected ? "text-accent" : "text-secondary"
-                                        )}>
-                                            {item.icon}
-                                        </span>
-                                        <span className="flex-1 text-sm font-medium">{item.label}</span>
-                                        {item.shortcut && (
-                                            <kbd className="text-xs text-secondary bg-glass-surface px-2 py-0.5 rounded">
-                                                {item.shortcut}
-                                            </kbd>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
+                                        <div className="px-4 py-2 text-xs font-semibold text-label-tertiary uppercase tracking-wider sticky top-0 bg-glass-surface backdrop-blur-md z-10">
+                                            {categoryLabels[category] || category}
+                                        </div>
+                                        {categoryItems.map((item) => {
+                                            const globalIndex = filtered.indexOf(item);
+                                            const isSelected = globalIndex === selectedIndex;
 
-                {/* Footer */}
-                <div className="px-4 py-2 border-t border-[var(--glass-border)] flex items-center justify-between text-xs text-secondary">
-                    <span>↑↓ to navigate</span>
-                    <span>↵ to select</span>
-                    <span>esc to close</span>
+                                            return (
+                                                <motion.button
+                                                    layout
+                                                    key={item.id}
+                                                    onClick={item.action}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className={cn(
+                                                        "w-full flex items-center px-4 py-2.5 text-left transition-colors relative",
+                                                        isSelected
+                                                            ? "bg-accent/10 text-accent"
+                                                            : "text-primary hover:bg-glass-surface-hover"
+                                                    )}
+                                                >
+                                                    {isSelected && (
+                                                        <motion.div
+                                                            layoutId="command-active"
+                                                            className="absolute inset-0 border-l-2 border-accent bg-accent/5"
+                                                            initial={{ opacity: 0 }}
+                                                            animate={{ opacity: 1 }}
+                                                            exit={{ opacity: 0 }}
+                                                        />
+                                                    )}
+                                                    <span className={cn(
+                                                        "mr-3 transition-colors relative z-10",
+                                                        isSelected ? "text-accent" : "text-secondary"
+                                                    )}>
+                                                        {item.icon}
+                                                    </span>
+                                                    <span className="flex-1 text-sm font-medium relative z-10">{item.label}</span>
+                                                    {item.shortcut && (
+                                                        <kbd className="text-xs text-secondary bg-glass-surface px-2 py-0.5 rounded border border-white/5 relative z-10">
+                                                            {item.shortcut}
+                                                        </kbd>
+                                                    )}
+                                                </motion.button>
+                                            );
+                                        })}
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+
+                        {/* Footer */}
+                        <div className="px-4 py-2 border-t border-[var(--glass-border)] flex items-center justify-between text-xs text-secondary bg-glass-surface/50">
+                            <div className="flex gap-3">
+                                <span><kbd className="font-sans bg-white/10 px-1 rounded">↑↓</kbd> navigate</span>
+                                <span><kbd className="font-sans bg-white/10 px-1 rounded">↵</kbd> select</span>
+                            </div>
+                            <span><kbd className="font-sans bg-white/10 px-1 rounded">esc</kbd> close</span>
+                        </div>
+                    </GlassContainer>
                 </div>
-            </GlassContainer>
-        </div>,
+            )}
+        </AnimatePresence>,
         document.body
     );
 };

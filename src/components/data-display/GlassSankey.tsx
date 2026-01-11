@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
+import { GlassCard } from './GlassCard';
 import { cn } from '@/utils/cn';
+import { ErrorBoundary } from '../feedback/ErrorBoundary';
 
 interface SankeyNode {
     id: string;
@@ -150,43 +152,54 @@ export const GlassSankey = ({
     });
 
     return (
-        <GlassContainer className={cn("p-4", className)} style={{ width, height }}>
-            <svg width="100%" height="100%" className="overflow-visible">
-                {renderLinks}
+        <ErrorBoundary
+            fallback={
+                <GlassContainer className={cn("p-4 flex items-center justify-center", className)} style={{ width, height }}>
+                    <GlassCard className="p-4 text-center">
+                        <p className="text-secondary">Unable to render Sankey chart</p>
+                        <p className="text-xs text-tertiary mt-1">Check data format</p>
+                    </GlassCard>
+                </GlassContainer>
+            }
+        >
+            <GlassContainer className={cn("p-4", className)} style={{ width, height }}>
+                <svg width="100%" height="100%" className="overflow-visible">
+                    {renderLinks}
 
-                {renderNodes.map(node => (
-                    <g key={node.id}>
-                        <motion.rect
-                            x={node.x}
-                            y={node.y}
-                            width={node.width}
-                            height={node.height}
-                            fill={node.color || '#60a5fa'}
-                            rx="4"
-                            className="opacity-80 hover:opacity-100 cursor-pointer"
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 0.8 }}
-                            transition={{
-                                delay: node.col * 0.2,
-                                duration: 0.5
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                        >
-                            <title>{`${node.label}: ${node.value}`}</title>
-                        </motion.rect>
-                        {/* Label */}
-                        <text
-                            x={node.x + (node.col === 0 ? -5 : node.width + 5)}
-                            y={node.y + node.height / 2}
-                            dominantBaseline="middle"
-                            textAnchor={node.col === 0 ? "end" : "start"}
-                            className="fill-secondary text-[10px] pointer-events-none"
-                        >
-                            {node.label}
-                        </text>
-                    </g>
-                ))}
-            </svg>
-        </GlassContainer>
+                    {renderNodes.map(node => (
+                        <g key={node.id}>
+                            <motion.rect
+                                x={node.x}
+                                y={node.y}
+                                width={node.width}
+                                height={node.height}
+                                fill={node.color || '#60a5fa'}
+                                rx="4"
+                                className="opacity-80 hover:opacity-100 cursor-pointer"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 0.8 }}
+                                transition={{
+                                    delay: node.col * 0.2,
+                                    duration: 0.5
+                                }}
+                                whileHover={{ scale: 1.05 }}
+                            >
+                                <title>{`${node.label}: ${node.value}`}</title>
+                            </motion.rect>
+                            {/* Label */}
+                            <text
+                                x={node.x + (node.col === 0 ? -5 : node.width + 5)}
+                                y={node.y + node.height / 2}
+                                dominantBaseline="middle"
+                                textAnchor={node.col === 0 ? "end" : "start"}
+                                className="fill-secondary text-[10px] pointer-events-none"
+                            >
+                                {node.label}
+                            </text>
+                        </g>
+                    ))}
+                </svg>
+            </GlassContainer>
+        </ErrorBoundary>
     );
 };

@@ -1,13 +1,23 @@
-import React from 'react';
+// import React from 'react'; // React 17+ JSX transform
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
 
-export interface GlassBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+import { GlassComponentProps } from '@/components/types';
+
+export interface GlassBadgeProps extends GlassComponentProps {
     variant?: 'default' | 'outline' | 'destructive' | 'secondary' | 'glass';
     size?: 'sm' | 'md';
 }
 
-export const GlassBadge = ({ className, variant = 'default', size = 'md', children, ...props }: GlassBadgeProps) => {
+export const GlassBadge = ({
+    className,
+    variant = 'default',
+    size = 'md',
+    material = 'thin',
+    enableLiquid = false,
+    children,
+    ...props
+}: GlassBadgeProps) => {
     const variantStyles = {
         default: 'bg-primary/10 text-primary border-primary/20',
         secondary: 'bg-secondary/10 text-secondary border-secondary/20',
@@ -24,8 +34,8 @@ export const GlassBadge = ({ className, variant = 'default', size = 'md', childr
     return (
         <GlassContainer
             as="div"
-            material="thin"
-            enableLiquid={false} // Clean edges for badges
+            material={material}
+            enableLiquid={enableLiquid} // Clean edges for badges
             className={cn(
                 "inline-flex items-center rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                 variantStyles[variant],

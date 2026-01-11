@@ -1,25 +1,36 @@
-import { GlassContainer, GlassCode } from '@/components';
-import { GlassBadge } from '@/components';
-import { GlassChatContainer, GlassChatMessage, GlassChatInput } from '@/components';
-import { GlassTerminal } from '@/components';
-import { GlassCalculator } from '@/components';
-import { GlassSearchBar } from '@/components';
-import { GlassProfileCard } from '@/components';
-import { GlassProductCard } from '@/components';
+import {
+    GlassContainer,
+    GlassCode,
+    GlassBadge,
+    GlassTerminal,
+    GlassCalculator,
+    GlassSearchBar,
+    GlassProfileCard,
+    GlassProductCard,
+    GlassCollaborativeChatWindow
+} from '@/components';
 import { useState } from 'react';
 
-type ChatRole = 'user' | 'assistant' | 'system';
+// type ChatRole = 'user' | 'assistant' | 'system';
 
 export const ShowcaseComplex = () => {
-    // Chat Demo State
+    /*
     const [messages, setMessages] = useState<{ role: ChatRole; content: string }[]>([
         { role: 'system', content: 'Welcome to Liquid Glass UI AI.' },
         { role: 'assistant', content: 'Hello! I am your sophisticated AI assistant. How can I help you today?' }
     ]);
-    const [isTyping, setIsTyping] = useState(false);
+    */
+    // const [isTyping, setIsTyping] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    // const [sortItems, setSortItems] = useState([
+    // { id: 1, text: 'Research AI Models' },
+    // { id: 2, text: 'Design Glass Interface' },
+    // { id: 3, text: 'Implement Physics Engine' },
+    // { id: 4, text: 'User Testing' },
+    // ]);
 
+    /*
     const handleSend = (text: string) => {
         setMessages(prev => [...prev, { role: 'user', content: text }]);
         setIsTyping(true);
@@ -33,6 +44,7 @@ export const ShowcaseComplex = () => {
             }]);
         }, 1500);
     };
+    */
 
     const handleSearch = (query: string) => {
         setIsSearching(true);
@@ -145,6 +157,29 @@ export const ShowcaseComplex = () => {
                             />
                         </div>
                     </div>
+
+                    <div id="dnd" className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Drag & Drop Sortable</span>
+                        <div className="max-w-md">
+                            {/* <GlassSortableList
+                                items={sortItems}
+                                keyField="id"
+                                onReorder={setSortItems}
+                                className="space-y-3"
+                                renderItem={(item) => (
+                                    <GlassSortableItem id={item.id} enableDragOnItem={false}>
+                                        <div className="flex items-center gap-4 p-4 bg-glass-surface rounded-xl border border-glass-border shadow-sm group hover:border-primary/30 transition-colors">
+                                            <GlassDragHandle className="cursor-grab active:cursor-grabbing opacity-50 group-hover:opacity-100 transition-opacity" />
+                                            <span className="text-primary font-medium">{item.text}</span>
+                                        </div>
+                                    </GlassSortableItem>
+                                )}
+                            /> */}
+                            <div className="p-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center">
+                                Component under development
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </GlassContainer>
 
@@ -161,23 +196,21 @@ export const ShowcaseComplex = () => {
                 <div className="space-y-8">
                     <div id="chat" className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Chat Interface</span>
-                        <GlassContainer enableLiquid={false} className="h-[500px] overflow-hidden relative">
-                            <div className="absolute inset-0 flex flex-col w-full h-full">
-                                <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
-                                    <GlassChatContainer>
-                                        {messages.map((m, i) => (
-                                            <GlassChatMessage key={i} role={m.role}>
-                                                {m.content}
-                                            </GlassChatMessage>
-                                        ))}
-                                        {isTyping && <div className="text-white/30 text-sm ml-14 animate-pulse">AI is thinking...</div>}
-                                    </GlassChatContainer>
-                                </div>
-                                <div className="p-4 bg-black/20 backdrop-blur-md">
-                                    <GlassChatInput onSend={handleSend} isLoading={isTyping} />
-                                </div>
-                            </div>
-                        </GlassContainer>
+                        <div className="h-[500px]">
+                            <GlassCollaborativeChatWindow
+                                currentUserId="me"
+                                title="Project Alpha"
+                                participants={[
+                                    { id: 'me', name: 'Mario', isActive: true },
+                                    { id: 'ai', name: 'Liquid AI', isActive: true, isTyping: false, color: 'var(--system-purple)' }
+                                ]}
+                                messages={[
+                                    { id: '1', senderId: 'ai', content: 'Hello! How can I help you build your Liquid UI today?', timestamp: '10:00 AM' }
+                                ]}
+                                onSend={(msg) => console.log('Sending:', msg)}
+                                isLoading={false}
+                            />
+                        </div>
                     </div>
 
                     <div id="terminal" className="space-y-4">

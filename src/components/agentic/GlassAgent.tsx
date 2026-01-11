@@ -1,5 +1,6 @@
 import React from 'react';
-import { GlassContainer, GlassMaterial } from '../primitives/GlassContainer';
+import { GlassContainer } from '../primitives/GlassContainer';
+import { GlassMaterial } from '@/components/types';
 import { cn } from '@/utils/cn';
 
 export type AgentState = 'idle' | 'listening' | 'thinking' | 'replying' | 'error';

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import {
     GlassContainer,
     GlassBadge,
@@ -9,12 +10,17 @@ import {
     GlassMasonry,
     GlassCode,
     GlassParallaxTextImage,
+    //     GlassImageEditor,
+    //     GlassScreenshot,
+    //     GlassDrawingCanvas,
 } from '@/components';
 
 
 export const ShowcaseMedia = () => {
+    const screenshotRef = useRef<HTMLDivElement>(null);
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" ref={screenshotRef}>
             <GlassContainer className="p-8 rounded-3xl" border material="regular">
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -231,6 +237,42 @@ export const ShowcaseMedia = () => {
   intensity={0.6}
 />`}
                     />
+                </div>
+            </GlassContainer>
+
+            {/* Media Utilities */}
+            <GlassContainer id="utilities" className="p-8 rounded-3xl" border material="regular">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <span className="text-xs font-bold uppercase tracking-widest mb-2 block text-pink-400">Media</span>
+                        <h3 className="text-xl font-bold text-primary">Media Utilities</h3>
+                    </div>
+                    {/* <GlassScreenshot targetRef={screenshotRef} label="Capture Page" /> */}
+                </div>
+
+                <div className="flex flex-col gap-10">
+                    {/* Image Editor */}
+                    <div id="editor" className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Image Editor</span>
+                        {/* <GlassImageEditor
+                            image="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
+                            className="h-[500px]"
+                        /> */}
+                        <div className="p-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center">
+                            Component under development
+                        </div>
+                    </div>
+
+                    {/* Canvas */}
+                    <div id="canvas" className="space-y-4">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Drawing Canvas</span>
+                        <div className="w-full">
+                            {/* <GlassDrawingCanvas className="w-full h-[500px]" width={800} height={500} /> */}
+                            <div className="p-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center">
+                                Component under development
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </GlassContainer>
         </div>

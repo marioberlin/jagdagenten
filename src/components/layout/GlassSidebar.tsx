@@ -4,7 +4,8 @@ import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { cn } from '@/utils/cn';
 import { createPortal } from 'react-dom';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
+import { TRANSITIONS } from '@/styles/animations';
 
 export interface GlassSidebarProps {
     /** Sidebar content */
@@ -83,19 +84,6 @@ export const GlassSidebar = ({
         };
     }, [mobileOpen]);
 
-    // Animation for mobile drawer
-    const overlaySpring = useSpring({
-        opacity: mobileOpen ? 1 : 0,
-        config: { tension: 300, friction: 30 },
-    });
-
-    const drawerSpring = useSpring({
-        transform: mobileOpen
-            ? 'translateX(0%)'
-            : `translateX(${position === 'left' ? '-100%' : '100%'})`,
-        config: { tension: 300, friction: 30 },
-    });
-
     // Desktop sidebar classes
     const showAtClasses = breakpointClasses[collapseAt];
     const hideAtClasses = {
@@ -141,62 +129,71 @@ export const GlassSidebar = ({
 
             {/* Mobile Drawer Portal */}
             {createPortal(
-                <div
-                    className={cn(
-                        'fixed inset-0 z-50',
-                        hideAtClasses,
-                        !mobileOpen && 'pointer-events-none'
-                    )}
-                >
-                    {/* Backdrop */}
-                    <animated.div
-                        style={overlaySpring}
-                        className="absolute inset-0 bg-black/25 dark:bg-black/50 backdrop-blur-sm"
-                        onClick={() => setMobileOpen(false)}
-                        aria-hidden="true"
-                    />
-
-                    {/* Drawer */}
-                    <animated.aside
-                        style={drawerSpring}
-                        className={cn(
-                            'absolute top-0 bottom-0 w-80 max-w-[85vw]',
-                            position === 'left' ? 'left-0' : 'right-0'
-                        )}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={title || 'Sidebar navigation'}
-                    >
-                        <GlassContainer
-                            material="thick"
+                <AnimatePresence>
+                    {mobileOpen && (
+                        <div
                             className={cn(
-                                'h-full w-full flex flex-col',
-                                position === 'left' ? 'rounded-r-3xl' : 'rounded-l-3xl'
+                                'fixed inset-0 z-50',
+                                hideAtClasses
                             )}
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
-                                {title && (
-                                    <span className="text-lg font-bold text-primary">{title}</span>
-                                )}
-                                <GlassButton
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-full w-10 h-10 ml-auto"
-                                    onClick={() => setMobileOpen(false)}
-                                    aria-label="Close menu"
-                                >
-                                    <X size={20} />
-                                </GlassButton>
-                            </div>
+                            {/* Backdrop */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute inset-0 bg-black/25 dark:bg-black/50 backdrop-blur-sm"
+                                onClick={() => setMobileOpen(false)}
+                                aria-hidden="true"
+                            />
 
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-4">
-                                {children}
-                            </div>
-                        </GlassContainer>
-                    </animated.aside>
-                </div>,
+                            {/* Drawer */}
+                            <motion.aside
+                                initial={{ x: position === 'left' ? '-100%' : '100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: position === 'left' ? '-100%' : '100%' }}
+                                transition={TRANSITIONS.spring}
+                                className={cn(
+                                    'absolute top-0 bottom-0 w-80 max-w-[85vw]',
+                                    position === 'left' ? 'left-0' : 'right-0'
+                                )}
+                                role="dialog"
+                                aria-modal="true"
+                                aria-label={title || 'Sidebar navigation'}
+                            >
+                                <GlassContainer
+                                    material="thick"
+                                    className={cn(
+                                        'h-full w-full flex flex-col',
+                                        position === 'left' ? 'rounded-r-3xl' : 'rounded-l-3xl'
+                                    )}
+                                >
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
+                                        {title && (
+                                            <span className="text-lg font-bold text-primary">{title}</span>
+                                        )}
+                                        <GlassButton
+                                            variant="ghost"
+                                            size="icon"
+                                            className="rounded-full w-10 h-10 ml-auto"
+                                            onClick={() => setMobileOpen(false)}
+                                            aria-label="Close menu"
+                                        >
+                                            <X size={20} />
+                                        </GlassButton>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1 overflow-y-auto p-4">
+                                        {children}
+                                    </div>
+                                </GlassContainer>
+                            </motion.aside>
+                        </div>
+                    )}
+                </AnimatePresence>,
                 document.body
             )}
         </>

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 export interface SelectOption {
     label: string;
@@ -36,12 +37,6 @@ export const GlassSelect = React.forwardRef<HTMLDivElement, GlassSelectProps>(
             document.addEventListener('mousedown', handleClickOutside);
             return () => document.removeEventListener('mousedown', handleClickOutside);
         }, []);
-
-        const { height, opacity } = useSpring({
-            height: isOpen ? Math.min(options.length * 40 + 12, 300) : 0,
-            opacity: isOpen ? 1 : 0,
-            config: { tension: 350, friction: 30 }
-        });
 
         const handleSelect = (value: string) => {
             if (disabled) return;
@@ -79,37 +74,47 @@ export const GlassSelect = React.forwardRef<HTMLDivElement, GlassSelectProps>(
                         <span className={cn("text-sm font-medium", selectedValue ? "text-primary" : "text-secondary")}>
                             {selectedLabel}
                         </span>
-                        <ChevronDown size={14} className={cn("text-secondary transition-transform", isOpen && "rotate-180")} />
+                        <ChevronDown size={14} className={cn("text-secondary transition-transform duration-300", isOpen && "rotate-180")} />
                     </div>
                 </GlassContainer>
 
                 {/* Dropdown Menu */}
-                <div className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden rounded-xl">
-                    <animated.div style={{ height, opacity }} className="overflow-hidden">
-                        <GlassContainer material="thick" className="p-1.5 h-full overflow-y-auto custom-scrollbar !rounded-none">
-                            {options.map((option) => (
-                                <div
-                                    key={option.value}
-                                    onClick={() => handleSelect(option.value)}
-                                    className={cn(
-                                        "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm cursor-pointer hover:bg-glass-surface-hover transition-colors group",
-                                        selectedValue === option.value && "bg-glass-surface"
-                                    )}
-                                >
-                                    <span className={cn(
-                                        "font-medium transition-colors",
-                                        selectedValue === option.value ? "text-primary" : "text-secondary group-hover:text-primary"
-                                    )}>
-                                        {option.label}
-                                    </span>
-                                    {selectedValue === option.value && (
-                                        <Check size={14} className="text-accent" />
-                                    )}
-                                </div>
-                            ))}
-                        </GlassContainer>
-                    </animated.div>
-                </div>
+                <AnimatePresence>
+                    {isOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden rounded-xl">
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={TRANSITIONS.spring}
+                                className="overflow-hidden"
+                            >
+                                <GlassContainer material="thick" className="p-1.5 max-h-[300px] overflow-y-auto custom-scrollbar !rounded-none">
+                                    {options.map((option) => (
+                                        <div
+                                            key={option.value}
+                                            onClick={() => handleSelect(option.value)}
+                                            className={cn(
+                                                "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm cursor-pointer hover:bg-glass-surface-hover transition-colors group",
+                                                selectedValue === option.value && "bg-glass-surface"
+                                            )}
+                                        >
+                                            <span className={cn(
+                                                "font-medium transition-colors",
+                                                selectedValue === option.value ? "text-primary" : "text-secondary group-hover:text-primary"
+                                            )}>
+                                                {option.label}
+                                            </span>
+                                            {selectedValue === option.value && (
+                                                <Check size={14} className="text-accent" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </GlassContainer>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     }

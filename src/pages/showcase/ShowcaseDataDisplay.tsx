@@ -1,11 +1,11 @@
-
+// import { useState } from 'react';
 import { GlassContainer } from '@/components';
 import { GlassBadge } from '@/components';
 import { GlassAvatar } from '@/components';
 import { GlassProgress } from '@/components';
 import { GlassTable } from '@/components';
 import { GlassDataTable } from '@/components';
-import { GlassChart } from '@/components';
+// import { GlassChart } from '@/components';
 import { GlassCarousel } from '@/components';
 import { Zap, Bell } from 'lucide-react';
 import { GlassButton } from '@/components';
@@ -21,22 +21,35 @@ import { GlassMediaList } from '@/components';
 import { GlassWeather } from '@/components';
 import { GlassMiniPlayer } from '@/components';
 import { GlassStatsBar } from '@/components';
-import { GlassMediaCard } from '@/components';
+// import { GlassMediaCard } from '@/components';
 import { Activity, Terminal, FileText } from 'lucide-react';
-import {
-    GlassRadarChart,
-    GlassPolarAreaChart,
-    GlassStackedBarChart,
-    GlassHeatmap,
-    GlassTreemap,
-    GlassFunnelChart,
-    GlassCandlestickChart,
-    GlassScatterChart,
-    GlassGauge,
-    GlassSankey
-} from '@/components';
+// import {
+//     GlassRadarChart,
+//     GlassPolarAreaChart,
+//     GlassStackedBarChart,
+//     GlassHeatmap,
+//     GlassTreemap,
+//     GlassFunnelChart,
+//     GlassCandlestickChart,
+//     GlassScatterChart,
+//     GlassGauge,
+//     GlassSankey,
+//     //     GlassSticky,
+//     //     GlassInfiniteScroll,
+//     // GlassCard
+// } from '@/components';
 
 export const ShowcaseDataDisplay = () => {
+    // Infinite Scroll State
+    // const [items, setItems] = useState(Array.from({ length: 10 }));
+    // const [hasMore, setHasMore] = useState(true);
+
+    // const loadMore = async () => {
+    //     await new Promise(resolve => setTimeout(resolve, 1500));
+    //     setItems(prev => [...prev, ...Array.from({ length: 5 })]);
+    //     if (items.length > 30) setHasMore(false);
+    // };
+
     return (
         <div className="space-y-8">
             {/* Avatars & Progress Row */}
@@ -129,6 +142,41 @@ export const ShowcaseDataDisplay = () => {
   ]}
 />`}
                 />
+            </GlassContainer>
+
+            {/* Infinite Scroll & Sticky */}
+            <GlassContainer id="scroll" className="p-8 rounded-3xl" border material="regular">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <span className="text-xs font-bold uppercase tracking-widest mb-2 block text-purple-400">Data</span>
+                        <h3 className="text-xl font-bold text-primary">Infinite Scroll & Sticky</h3>
+                    </div>
+                </div>
+                <div className="text-sm text-secondary mb-4">
+                    Demonstrates a scrollable container with a sticky header and infinite loading capabilities.
+                </div>
+                <div className="relative h-[400px] overflow-auto border border-glass-border rounded-xl">
+                    {/* <GlassSticky offsetTop={0} className="w-full z-10">
+                        <div className="p-4 bg-glass-layer-2 backdrop-blur-md border-b border-glass-border font-bold text-primary">
+                            Sticky Header (Scroll down)
+                        </div>
+                    </GlassSticky>
+
+                    <GlassInfiniteScroll
+                        hasMore={hasMore}
+                        onLoadMore={loadMore}
+                        className="p-4 space-y-4"
+                    >
+                        {items.map((_, i) => (
+                            <GlassCard key={i} className="p-4 hover:scale-[1.01] transition-transform">
+                                Item {i + 1}
+                            </GlassCard>
+                        ))}
+                    </GlassInfiniteScroll> */}
+                    <div className="p-4 rounded-xl border border-glass-border bg-glass-surface text-secondary text-center">
+                        Component under development
+                    </div>
+                </div>
             </GlassContainer>
 
             {/* Data Architecture */}
@@ -237,22 +285,22 @@ export const ShowcaseDataDisplay = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Line Chart</span>
-                        <GlassChart
+                        {/* <GlassChart
                             type="line"
                             data={[65, 59, 80, 81, 56, 100, 40]}
                             labels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']}
                             height={250}
-                        />
+                        /> */}
                     </div>
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Bar Chart</span>
-                        <GlassChart
+                        {/* <GlassChart
                             type="bar"
                             data={[28, 48, 40, 19, 86, 27, 90]}
                             labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
                             height={250}
                             color="#a78bfa" // purple-400
-                        />
+                        /> */}
                     </div>
                 </div>
                 <GlassCode
@@ -278,7 +326,7 @@ export const ShowcaseDataDisplay = () => {
                     {/* Radar */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Radar Chart</span>
-                        <GlassRadarChart
+                        {/* <GlassRadarChart
                             keys={['sales', 'marketing', 'dev']}
                             indexBy="label"
                             data={[
@@ -288,23 +336,23 @@ export const ShowcaseDataDisplay = () => {
                                 { label: 'Q4', sales: 85, marketing: 90, dev: 60 },
                             ]}
                             height={400}
-                        />
+                        /> */}
                     </div>
                     {/* Polar */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Polar Area</span>
-                        <GlassPolarAreaChart
+                        {/* <GlassPolarAreaChart
                             data={[11, 16, 7, 3, 14]}
                             labels={['Red', 'Green', 'Yellow', 'Grey', 'Blue']}
                             height={400}
                             width={400}
-                        />
+                        /> */}
                     </div>
 
                     {/* Stacked Bar */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Stacked Bar</span>
-                        <GlassStackedBarChart
+                        {/* <GlassStackedBarChart
                             keys={['react', 'vue', 'angular']}
                             indexBy="year"
                             data={[
@@ -314,12 +362,12 @@ export const ShowcaseDataDisplay = () => {
                                 { year: '2024', react: 220, vue: 110, angular: 15 },
                             ]}
                             height={400}
-                        />
+                        /> */}
                     </div>
                     {/* Funnel */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Funnel</span>
-                        <GlassFunnelChart
+                        {/* <GlassFunnelChart
                             data={[
                                 { label: 'Impressions', value: 5000 },
                                 { label: 'Clicks', value: 2500 },
@@ -327,13 +375,13 @@ export const ShowcaseDataDisplay = () => {
                                 { label: 'Purchases', value: 200 },
                             ]}
                             height={300}
-                        />
+                        /> */}
                     </div>
 
                     {/* Candlestick - Financial */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Candlestick (Crypto/Stock)</span>
-                        <GlassCandlestickChart
+                        {/* <GlassCandlestickChart
                             data={[
                                 { timestamp: '1', open: 20, close: 25, high: 28, low: 18 },
                                 { timestamp: '2', open: 25, close: 22, high: 26, low: 20 },
@@ -343,12 +391,12 @@ export const ShowcaseDataDisplay = () => {
                                 { timestamp: '6', open: 30, close: 40, high: 42, low: 28 },
                             ]}
                             height={400}
-                        />
+                        /> */}
                     </div>
                     {/* Scatter 3D Bubbles */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Bubble Scatter</span>
-                        <GlassScatterChart
+                        {/* <GlassScatterChart
                             data={[
                                 { x: 10, y: 20, z: 5 },
                                 { x: 30, y: 50, z: 15 },
@@ -358,24 +406,24 @@ export const ShowcaseDataDisplay = () => {
                                 { x: 40, y: 90, z: 20 },
                             ]}
                             height={400}
-                        />
+                        /> */}
                     </div>
 
                     {/* Gauge */}
                     <div className="space-y-4 flex flex-col items-center">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block w-full">Radial Gauge</span>
-                        <GlassGauge
+                        {/* <GlassGauge
                             value={78}
                             units="Score"
                             minLabel="Low"
                             maxLabel="High"
                             size={300}
-                        />
+                        /> */}
                     </div>
                     {/* Sankey */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Sankey Flow</span>
-                        <GlassSankey
+                        {/* <GlassSankey
                             nodes={[
                                 { id: 'a', label: 'Organic', color: '#4ade80' },
                                 { id: 'b', label: 'Ads', color: '#f87171' },
@@ -389,13 +437,13 @@ export const ShowcaseDataDisplay = () => {
                                 { source: 'b', target: 'd', value: 40 },
                             ]}
                             height={300}
-                        />
+                        /> */}
                     </div>
 
                     {/* Heatmap */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Heatmap</span>
-                        <GlassHeatmap
+                        {/* <GlassHeatmap
                             xLabels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
                             yLabels={['10AM', '2PM', '6PM', '10PM']}
                             data={[
@@ -403,12 +451,12 @@ export const ShowcaseDataDisplay = () => {
                                 { x: 'Tue', y: '10AM', value: 30 }, { x: 'Tue', y: '6PM', value: 50 },
                                 { x: 'Wed', y: '2PM', value: 80 }, { x: 'Fri', y: '10PM', value: 90 },
                             ]}
-                        />
+                        /> */}
                     </div>
                     {/* Treemap */}
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Treemap</span>
-                        <GlassTreemap
+                        {/* <GlassTreemap
                             height={300}
                             data={{
                                 name: 'Root',
@@ -420,7 +468,7 @@ export const ShowcaseDataDisplay = () => {
                                     { name: 'Sales', value: 15, color: '#fbbf24' },
                                 ]
                             }}
-                        />
+                        /> */}
                     </div>
                 </div>
             </GlassContainer>
@@ -470,12 +518,12 @@ export const ShowcaseDataDisplay = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     <div className="lg:col-span-2 space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Sales Overview</span>
-                        <GlassChart
+                        {/* <GlassChart
                             type="line"
                             data={[12000, 19000, 15000, 24000, 22000, 29000, 31000]}
                             labels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']}
                             height={300}
-                        />
+                        /> */}
                     </div>
                     <div className="space-y-4">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block">Traffic Sources</span>
@@ -796,32 +844,19 @@ console.log(future);`}
                         </div>
                     </div>
 
-                    {/* Media Cards */}
-                    <div>
+                    {/* Media Cards - Hidden until component is restored */}
+                    {/* 
+                    <div className="mt-8">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block mb-3">Media Cards</span>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <GlassMediaCard
-                                image="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200"
-                                title="Beyond the Silence"
-                                description="A deep dive into mindfulness..."
-                            />
-                            <GlassMediaCard
-                                image="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=200"
-                                title="Neon Skies"
-                                description="A high-tech odyssey..."
-                            />
-                            <GlassMediaCard
-                                image="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200"
-                                title="Echoes of the Mind"
-                                description="Explore how memories..."
-                            />
-                            <GlassMediaCard
-                                image="https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=200"
-                                title="Flow State"
-                                description="One hidden signal..."
-                            />
+                            <div className="aspect-video rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-secondary text-xs">
+                                Media Card Placeholder
+                            </div>
                         </div>
+                    </div>
+                    */}
 
+                    <div className="mt-8">
                         <GlassCode
                             className="mt-3"
                             language="tsx"
@@ -835,7 +870,7 @@ console.log(future);`}
                         />
                     </div>
                 </div>
-            </GlassContainer >
-        </div >
+            </GlassContainer>
+        </div>
     );
 };

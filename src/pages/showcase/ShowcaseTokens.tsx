@@ -1,4 +1,4 @@
-import { GlassContainer } from '@/components';
+import { GlassContainer, GlassButton } from '@/components';
 import { GlassBadge } from '@/components';
 import { GlassCode } from '@/components';
 import { Copy, Check } from 'lucide-react';
@@ -117,6 +117,18 @@ export const ShowcaseTokens = () => {
                 <p className="text-sm text-secondary mb-6">
                     Three material depths provide visual hierarchy. Each adjusts opacity, blur, and border visibility.
                 </p>
+
+                <div className="mb-6 bg-accent-primary/10 border border-accent-primary/20 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <h5 className="text-sm font-semibold text-white">Dynamic Material Registry (New)</h5>
+                        <p className="text-xs text-white/60 mt-1">
+                            Create and register custom materials at runtime using Tailwind classes.
+                        </p>
+                    </div>
+                    <GlassButton asChild size="sm" variant="primary">
+                        <a href="/demos/extension">View Demo</a>
+                    </GlassButton>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <GlassMaterialDemo material="thin" label="Thin" />
@@ -323,13 +335,24 @@ export const ShowcaseTokens = () => {
   /* Glass Borders */
   --glass-border: rgba(255, 255, 255, 0.15);
   
-  /* Backdrop Blur */
-  --blur-thin: 8px;
-  --blur-regular: 16px;
-  --blur-thick: 24px;
+  /* Shadow Scale - Apple HIG Aligned */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 40px rgba(255, 255, 255, 0.1);
+  
+  /* Motion Durations */
+  --duration-micro: 150ms;
+  --duration-standard: 300ms;
+  --duration-emphasis: 500ms;
+  --duration-ambient: 1000ms;
+  
+  /* Easing Functions */
+  --ease-glass: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }`}
                     language="css"
-                    filename="tokens.css"
+                    filename="src/styles/tailwind.css"
                 />
             </GlassContainer>
         </div>

@@ -12,7 +12,7 @@ interface GlassVoiceProps {
 export const GlassVoice = ({ className }: GlassVoiceProps) => {
     const [listening, setListening] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const animationRef = useRef<number>();
+    const animationRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (!listening) {

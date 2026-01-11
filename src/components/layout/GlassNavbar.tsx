@@ -1,6 +1,6 @@
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
-import { Settings, Sun, Moon } from 'lucide-react';
+import { Settings, Sun, Moon, PieChart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
@@ -75,6 +75,20 @@ export const GlassNavbar = ({
                 >
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </GlassContainer>
+
+                <Link
+                    to="/analytics"
+                    className="flex items-center justify-center p-3 rounded-full text-primary/80 hover:text-primary transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                    aria-label="Smart Analytics"
+                >
+                    <GlassContainer
+                        interactive
+                        material="nav-glass"
+                        className="p-3 rounded-full hover:brightness-110 transition-all group"
+                    >
+                        <PieChart size={20} className="text-primary/80 group-hover:text-primary transition-colors" />
+                    </GlassContainer>
+                </Link>
 
                 {/* Settings Link (Only show if not on Settings page) */}
                 {location.pathname !== '/settings' && location.pathname !== '/demos/admin' && (

@@ -71,7 +71,7 @@ export const GlassInputOTP = forwardRef<HTMLDivElement, GlassInputOTPProps>(
                         className="w-10 h-12 flex items-center justify-center !p-0 focus-within:ring-2 ring-primary/50 transition-all"
                     >
                         <input
-                            ref={(el) => (inputRefs.current[index] = el)}
+                            ref={(el) => { inputRefs.current[index] = el; }}
                             type="text"
                             maxLength={1}
                             value={digit}

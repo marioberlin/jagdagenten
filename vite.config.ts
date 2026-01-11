@@ -1,11 +1,76 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from 'tailwindcss'
+import tailwindcss from '@tailwindcss/postcss'
 import autoprefixer from 'autoprefixer'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [react()],
+    plugins: [
+        react(),
+        VitePWA({
+            registerType: 'autoUpdate',
+            includeAssets: ['icons/*.png', 'favicon.ico'],
+            manifest: {
+                name: 'LiquidCrypto',
+                short_name: 'LiquidCrypto',
+                description: 'Cryptocurrency trading with AI assistance',
+                theme_color: '#007AFF',
+                background_color: '#0a0a0a',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                scope: '/',
+                start_url: '/',
+                icons: [
+                    {
+                        src: '/icons/icon-192.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'any maskable'
+                    },
+                    {
+                        src: '/icons/icon-512.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'any maskable'
+                    }
+                ]
+            },
+            workbox: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                runtimeCaching: [
+                    {
+                        urlPattern: /^https:\/\/api\.anthropic\.com\/.*/i,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'anthropic-api-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    {
+                        urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'gemini-api-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    }
+                ]
+            }
+        })
+    ],
     css: {
         postcss: {
             plugins: [

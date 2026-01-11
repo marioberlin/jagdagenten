@@ -1,0 +1,16 @@
+{
+    "files": [
+        {
+            "path": "dist/assets/*.js",
+            "maxSize": "500kB"
+        },
+        {
+            "path": "dist/assets/*.css",
+            "maxSize": "100kB"
+        }
+    ],
+    "ci": {
+        "track": true,
+        "githubAccessToken": "${BUNDLEWATCH_GITHUB_TOKEN}"
+    }
+}

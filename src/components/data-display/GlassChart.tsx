@@ -1,5 +1,5 @@
 
-import { GlassContainer } from '../primitives/GlassContainer';
+import { SurfaceContainer } from '../primitives/SurfaceContainer';
 import { cn } from '@/utils/cn';
 
 interface GlassChartProps {
@@ -9,6 +9,10 @@ interface GlassChartProps {
     height?: number;
     color?: string; // hex or tailwind class specific logic
     className?: string;
+    /** Accessible label for screen readers */
+    ariaLabel?: string;
+    /** Detailed description for screen readers */
+    ariaDescription?: string;
 }
 
 export const GlassChart = ({
@@ -17,7 +21,9 @@ export const GlassChart = ({
     type = 'line',
     height = 200,
     color = '#60a5fa', // blue-400
-    className
+    className,
+    ariaLabel,
+    ariaDescription
 }: GlassChartProps) => {
     const max = Math.max(...data);
 
@@ -38,7 +44,15 @@ export const GlassChart = ({
         const areaPathData = `${pathData} L 100 100 L 0 100 Z`;
 
         return (
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+            <svg
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                className="w-full h-full overflow-visible"
+                role="img"
+                aria-label={ariaLabel}
+                aria-describedby={ariaDescription ? 'chart-desc' : undefined}
+            >
+                {ariaDescription && <desc id="chart-desc">{ariaDescription}</desc>}
                 <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={color} stopOpacity="0.5" />
@@ -102,7 +116,7 @@ export const GlassChart = ({
     const labelHeight = labels ? 28 : 0;
 
     return (
-        <GlassContainer material="thick" enableLiquid={false} className={cn("p-4 flex flex-col", className)} style={{ height: height + labelHeight }}>
+        <SurfaceContainer material="flat" className={cn("p-4 flex flex-col", className)} style={{ height: height + labelHeight }}>
             <div style={{ height: height - 32 }} className="relative">
                 {type === 'line' ? renderLine() : renderBar()}
             </div>
@@ -116,7 +130,7 @@ export const GlassChart = ({
                     ))}
                 </div>
             )}
-        </GlassContainer>
+        </SurfaceContainer>
     );
 };
 

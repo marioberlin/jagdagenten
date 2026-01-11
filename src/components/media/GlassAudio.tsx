@@ -84,20 +84,16 @@ export const GlassAudio = React.forwardRef<HTMLDivElement, GlassAudioProps>(
                 <div className="relative group">
                     <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500" />
                     <div className={cn(
-                        "relative w-64 h-64 rounded-full overflow-hidden border-4 border-glass-border shadow-glass-lg transition-transform duration-700 ease-spring",
+                        "relative w-64 h-64 rounded-full overflow-hidden border-4 border-glass-border shadow-glass-lg transition-transform duration-1000 ease-spring",
                         isPlaying ? "scale-105 rotate-3" : "scale-100 rotate-0"
                     )}>
                         {poster ? (
                             <img src={poster} alt={title} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-glass-surface flex items-center justify-center">
-                                <span className="text-4xl">🎵</span>
                             </div>
                         )}
-                        {/* Center hole for vinyl look */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-16 h-16 bg-glass-background/30 backdrop-blur-md rounded-full border border-white/10" />
-                        </div>
+
                     </div>
                 </div>
 
@@ -170,40 +166,23 @@ export const GlassAudio = React.forwardRef<HTMLDivElement, GlassAudioProps>(
 
         const HorizontalLayout = () => (
             <div className="flex items-center w-full gap-6 p-2">
-                {/* Album Art */}
-                <div className="relative flex-shrink-0">
-                    <div className={cn(
-                        "relative w-24 h-24 rounded-2xl overflow-hidden shadow-md transition-transform duration-500",
-                        isPlaying ? "scale-105" : "scale-100"
-                    )}>
-                        {poster ? (
-                            <img src={poster} alt={title} className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full bg-glass-surface flex items-center justify-center">
-                                <span className="text-2xl">🎵</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="absolute -inset-2 bg-primary/20 blur-xl -z-10 rounded-full opacity-50" />
-                </div>
-
                 {/* Info & Controls */}
-                <div className="flex flex-col flex-1 gap-3 min-w-0">
-                    <div className="flex justify-between items-start">
+                <div className="flex flex-col flex-1 gap-3 min-w-0 items-center text-center">
+                    <div className="flex justify-center items-center gap-4 w-full relative">
                         <div className="min-w-0">
                             <h3 className="text-lg font-bold text-primary truncate leading-tight">{title}</h3>
                             <p className="text-sm text-secondary truncate">{artist}</p>
                         </div>
                         <button
                             onClick={() => setIsLiked(!isLiked)}
-                            className={cn("transition-colors", isLiked ? "text-red-500" : "text-label-tertiary hover:text-red-400")}
+                            className={cn("transition-colors absolute right-0", isLiked ? "text-red-500" : "text-label-tertiary hover:text-red-400")}
                         >
                             <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
                         </button>
                     </div>
 
                     {/* Progress */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-full max-w-xl">
                         <span className="text-xs text-label-tertiary w-10 text-right font-medium">{formatTime(currentTime)}</span>
                         <GlassSlider
                             value={progress}
@@ -215,7 +194,7 @@ export const GlassAudio = React.forwardRef<HTMLDivElement, GlassAudioProps>(
                     </div>
 
                     {/* Controls Row */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-center gap-8 w-full">
                         <div className="flex items-center gap-2">
                             <button className="p-2 hover:bg-glass-surface rounded-full text-label-tertiary hover:text-primary transition-colors">
                                 <Shuffle size={16} />

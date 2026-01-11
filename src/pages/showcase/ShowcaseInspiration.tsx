@@ -37,8 +37,11 @@ import {
     Layers,
     Camera,
     Plus,
-    ChevronLeft
+    ChevronLeft,
+    ArrowUpRight,
+    Sparkles
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // ============================================================================
 // DEMO 1: AI CHAT ASSISTANT (ZAP)
@@ -1026,6 +1029,45 @@ export const ShowcaseInspiration = () => {
                 </p>
 
                 <div className="space-y-12">
+                    {/* Featured Demos */}
+                    <div id="featured">
+                        <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block mb-4">
+                            Featured Demos
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <GlassContainer className="p-6 group relative overflow-hidden" material="thick" border interactive>
+                                <Link to="/demos/foundation" className="absolute inset-0 z-10" />
+                                <div className="relative z-0">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
+                                        <Layers size={20} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Foundation System</h3>
+                                    <p className="text-sm text-secondary mb-4">
+                                        Interactive playground for design tokens, typography, and foundational components.
+                                    </p>
+                                    <div className="flex items-center text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                        Launch Demo <ArrowUpRight size={12} className="ml-1" />
+                                    </div>
+                                </div>
+                            </GlassContainer>
+
+                            <GlassContainer className="p-6 group relative overflow-hidden" material="thick" border interactive>
+                                <Link to="/demos/signature" className="absolute inset-0 z-10" />
+                                <div className="relative z-0">
+                                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 mb-4">
+                                        <Sparkles size={20} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Signature Interactions</h3>
+                                    <p className="text-sm text-secondary mb-4">
+                                        High-polish interaction patterns, morphing cards, and fluid navigation animations.
+                                    </p>
+                                    <div className="flex items-center text-xs font-bold text-purple-400 uppercase tracking-wider">
+                                        Launch Demo <ArrowUpRight size={12} className="ml-1" />
+                                    </div>
+                                </div>
+                            </GlassContainer>
+                        </div>
+                    </div>
                     {/* Demo 1: AI Chat */}
                     <div id="ai-chat">
                         <span className="text-xs font-bold text-label-tertiary uppercase tracking-widest block mb-4">

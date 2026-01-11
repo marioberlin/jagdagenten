@@ -8,7 +8,7 @@ interface Column<T> {
     className?: string;
 }
 
-interface GlassTableProps<T> {
+export interface GlassTableProps<T> {
     data: T[];
     columns: Column<T>[];
     keyField: keyof T;

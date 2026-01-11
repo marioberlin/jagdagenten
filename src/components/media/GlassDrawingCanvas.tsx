@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { GlassSlider } from '../forms/GlassSlider';
@@ -11,12 +11,15 @@ export interface GlassDrawingCanvasProps {
     className?: string;
 }
 
-export function GlassDrawingCanvas({
+export const GlassDrawingCanvas = forwardRef<HTMLCanvasElement, GlassDrawingCanvasProps>(({
     width = 600,
     height = 400,
     className
-}: GlassDrawingCanvasProps) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+}, ref) => {
+    const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+    useImperativeHandle(ref, () => internalCanvasRef.current as HTMLCanvasElement);
+    // Use internal ref for local logic
+    const canvasRef = internalCanvasRef;
     const [isDrawing, setIsDrawing] = useState(false);
     const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
     const [color, setColor] = useState('#3B82F6');
@@ -171,4 +174,6 @@ export function GlassDrawingCanvas({
             </div>
         </GlassContainer>
     );
-}
+});
+
+GlassDrawingCanvas.displayName = 'GlassDrawingCanvas';

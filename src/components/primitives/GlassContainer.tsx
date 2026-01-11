@@ -1,14 +1,15 @@
-import React, { HTMLAttributes, ElementType, useState, useEffect } from 'react';
-import { useSpring, animated } from '@react-spring/web';
+import React, { useState, useEffect } from 'react';
+import { GlassComponentProps, GlassMaterial, GlassIntensity } from '../types';
+import { Slot, Slottable } from '@radix-ui/react-slot';
+import { glassRegistry } from '@/styles/MaterialRegistry';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { useTheme } from '@/hooks/useTheme';
-
-export type GlassMaterial = 'thin' | 'regular' | 'thick' | 'clear' | 'background' | 'surface' | 'prominent' | 'nav-glass';
-export type GlassIntensity = 'subtle' | 'medium' | 'heavy';
+import { TRANSITIONS } from '@/styles/animations';
 
 // Luminance-aware glass materials using CSS variables
 // These adapt to --glass-bg-* and --glass-blur-* variables set by ThemeContext
-const materialMap: Record<GlassMaterial, string> = {
+const materialMap: Record<GlassMaterial | string, string> = {
     // Original technical presets - now using CSS variable blur values
     thin: 'backdrop-blur-[var(--glass-blur-thin,8px)] backdrop-saturate-[var(--glass-saturate,1)] bg-[var(--glass-bg-thin)] border-[var(--glass-border)]',
     regular: 'backdrop-blur-[var(--glass-blur-regular,16px)] backdrop-saturate-[var(--glass-saturate,1)] bg-[var(--glass-bg-regular)] border-[var(--glass-border)] shadow-[0_8px_32px_0_rgba(0,0,0,var(--glass-shadow-opacity,0.1))]',
@@ -33,22 +34,30 @@ const intensityConfig: Record<GlassIntensity, { blur: string; opacity: string }>
     medium: { blur: '16px', opacity: '0.5' },
     heavy: { blur: '32px', opacity: '0.7' },
 };
+// GlassProps replaced by GlassComponentProps
 
-export interface GlassProps extends HTMLAttributes<HTMLElement> {
-    material?: GlassMaterial;
-    /** Fine-grained control over glass effect strength */
-    intensity?: GlassIntensity;
-    interactive?: boolean;
-    border?: boolean;
-    as?: ElementType;
-    enableLiquid?: boolean; // Optionally disable the liquid filter
-    // Additional props for button usage
-    disabled?: boolean;
-    type?: 'button' | 'submit' | 'reset';
-}
+/**
+ * GlassContainer
+ *
+ * The core primitive of the Liquid Glass UI. It renders a container with
+ * advanced glassmorphism effects, including background blur, saturation,
+ * liquid distortion (via SVG filter), and specular highlights.
+ *
+ * @example
+ * ```tsx
+ * <GlassContainer material="regular" interactive>
+ *   <h2 className="text-primary">Glass Card</h2>
+ * </GlassContainer>
+ * ```
+ */
+export const GlassContainer = React.forwardRef<HTMLElement, GlassComponentProps>(
+    ({ className, material = 'regular', intensity, interactive = false, border = true, enableLiquid = true, inactive = false, children, style, as, asChild = false, ...props }, ref) => {
+        const Component = asChild ? Slot : (as || 'div');
 
-export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
-    ({ className, material = 'regular', intensity, interactive = false, border = true, enableLiquid = true, children, style, as: Component = 'div', ...props }, ref) => {
+        // Resolve material from Registry or fallback to hardcoded map
+        // This enables runtime extensibility while preserving strict types for core presets
+        const resolvedMaterialClass = glassRegistry.get(material) || materialMap[material as GlassMaterial];
+
         // Compute intensity style overrides if provided
         const intensityStyles = intensity ? {
             backdropFilter: `blur(${intensityConfig[intensity].blur})`,
@@ -65,27 +74,20 @@ export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
             const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
             mediaQuery.addEventListener('change', handler);
             return () => mediaQuery.removeEventListener('change', handler);
-            return () => mediaQuery.removeEventListener('change', handler);
         }, []);
 
         const { performanceMode } = useTheme();
-
-        const [springProps, api] = useSpring(() => ({
-            scale: 1,
-            rotateX: 0,
-            rotateY: 0,
-            config: { tension: 300, friction: 20 },
-        }));
+        const [isHovered, setIsHovered] = useState(false);
 
         const handleMouseEnter = () => {
             if (interactive && !prefersReducedMotion) {
-                api.start({ scale: 1.02, config: { tension: 300, friction: 15 } });
+                setIsHovered(true);
             }
         };
 
         const handleMouseLeave = () => {
             if (interactive && !prefersReducedMotion) {
-                api.start({ scale: 1, rotateX: 0, rotateY: 0 });
+                setIsHovered(false);
             }
         };
 
@@ -107,8 +109,12 @@ export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
 
                     // Interactive Layout Wrapper
                     interactive && 'cursor-pointer',
+                    interactive && 'focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
                     interactive && !prefersReducedMotion && 'transition-transform duration-glass ease-glass',
                     interactive && !prefersReducedMotion && 'active:scale-[0.98] will-change-transform',
+
+                    // Inactive/recede state for depth hierarchy
+                    inactive && 'glass-inactive',
 
                     className
                 )}
@@ -127,13 +133,12 @@ export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
                     We moved overflow-hidden here and use borderRadius: inherit to unsure 
                     the large liquid layer below is strictly clipped to the parent's shape.
                 */}
-                {/* Layer 0: The Liquid Material (Background) */}
                 {shouldDisableFilter ? (
                     // SIMPLIFIED RENDER: Single layer, no filter, strict shape inheritance
                     <div
                         className={cn(
                             'absolute inset-0 -z-10',
-                            materialMap[material],
+                            resolvedMaterialClass,
                             // Explicitly inherit border radius from parent to ensure perfect match
                             // Using style={{ borderRadius: 'inherit' }} is safer than class
                             'transition-all duration-glass ease-glass',
@@ -160,21 +165,23 @@ export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
                             Liquid Layer: Larger than container (-inset-10) to provide sampling buffer 
                             for the displacement map (fixing color leakage/edge artifacts).
                         */}
-                        <animated.div
+                        <motion.div
                             className={cn(
                                 'absolute -inset-10', // Bleed for valid pixels for the filter
-                                materialMap[material],
+                                resolvedMaterialClass,
                                 // Interactive Effects (Brightness/Shadow on the material itself)
                                 'transition-all duration-glass ease-glass',
                                 interactive && 'group-hover:brightness-110',
                             )}
+                            animate={{
+                                scale: isHovered ? 1.02 : 1
+                            }}
+                            transition={TRANSITIONS.springFast}
                             style={{
-                                // Bind Spring Scale - reduce motion if needed
-                                transform: !prefersReducedMotion ? springProps.scale.to(s => `scale(${s}) translateZ(0)`) : undefined,
                                 // Toggle Filter for Performance - with smooth transition
                                 filter: activeFilter,
                                 transition: 'filter 200ms ease-out',
-                                willChange: 'filter',
+                                willChange: 'filter, transform',
                                 ...intensityStyles,
                             }}
                         />
@@ -203,9 +210,11 @@ export const GlassContainer = React.forwardRef<HTMLElement, GlassProps>(
                 />
 
                 {/* Layer 2: Content */}
-                <div className="relative z-0 h-full w-full">
-                    {children}
-                </div>
+                {asChild ? (
+                    <Slottable>{children}</Slottable>
+                ) : (
+                    children
+                )}
             </Component>
         );
     }

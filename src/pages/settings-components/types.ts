@@ -1,4 +1,5 @@
-import type { ModeSpecificSettings, Density, Theme } from '@/types/ThemeTypes';
+import type { Density } from '@/types/ThemeTypes';
+import type { Theme, ThemeModeConfig } from '../../stores/types';
 
 export interface SettingsSectionProps {
     /** Current system theme (light/dark) */
@@ -38,13 +39,13 @@ export interface SettingsSectionProps {
     /** Copy/duplicate a theme */
     copyTheme: (id: string, newName: string) => void;
     /** Local light mode settings */
-    localLightMode: ModeSpecificSettings;
+    localLightMode: ThemeModeConfig;
     /** Set local light mode */
-    setLocalLightMode: React.Dispatch<React.SetStateAction<ModeSpecificSettings>>;
+    setLocalLightMode: React.Dispatch<React.SetStateAction<ThemeModeConfig>>;
     /** Local dark mode settings */
-    localDarkMode: ModeSpecificSettings;
+    localDarkMode: ThemeModeConfig;
     /** Set local dark mode */
-    setLocalDarkMode: React.Dispatch<React.SetStateAction<ModeSpecificSettings>>;
+    setLocalDarkMode: React.Dispatch<React.SetStateAction<ThemeModeConfig>>;
     /** Currently active mode tab in customization */
     activeModeTab: 'light' | 'dark';
     /** Set active mode tab */
@@ -110,6 +111,22 @@ export interface CustomizationSectionProps extends Pick<
     performanceMode: boolean;
     /** Set performance mode */
     setPerformanceMode: (enabled: boolean) => void;
+    /** Bounce animation intensity (0 = off, 100 = max) */
+    bounceIntensity: number;
+    /** Set bounce intensity */
+    setBounceIntensity: (value: number) => void;
+    /** Pulse animation intensity (0 = off, 100 = max) */
+    pulseIntensity: number;
+    /** Set pulse intensity */
+    setPulseIntensity: (value: number) => void;
+    /** Scale animation intensity (0 = off, 100 = max) */
+    scaleIntensity: number;
+    /** Set scale intensity */
+    setScaleIntensity: (value: number) => void;
+    /** Wiggle animation intensity (0 = off, 100 = max) */
+    wiggleIntensity: number;
+    /** Set wiggle intensity */
+    setWiggleIntensity: (value: number) => void;
 }
 
 export interface WallpaperSectionProps extends Pick<

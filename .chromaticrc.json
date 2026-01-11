@@ -1,0 +1,13 @@
+{
+    "projectId": "LiquidCrypto",
+    "autoAcceptChanges": "main",
+    "onlyChanged": true,
+    "externals": [
+        "**/*.md",
+        "**/*.json",
+        "**/*.yml",
+        "**/*.yaml"
+    ],
+    "buildScriptName": "build-storybook",
+    "storybookBuildDir": "storybook-static"
+}

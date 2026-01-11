@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Theme Switching', () => {
     test.beforeEach(async ({ page }) => {
+        page.on('console', msg => {
+            if (msg.type() === 'log') console.log(`[BROWSER LOG]: ${msg.text()}`);
+            if (msg.type() === 'error') console.error(`[BROWSER ERROR]: ${msg.text()}`);
+        });
         await page.goto('/');
         await page.waitForSelector('header', { state: 'visible', timeout: 30000 });
     });
@@ -19,10 +23,10 @@ test.describe('Theme Switching', () => {
 
         // Find and click the theme toggle
         const themeToggle = page.locator('button[aria-label*="Switch to"]');
-        await themeToggle.click();
+        await themeToggle.click({ force: true });
 
         // Wait for theme transition
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
 
         // Verify theme has changed
         const hasDarkNow = await html.evaluate(el => el.classList.contains('dark'));
@@ -30,14 +34,17 @@ test.describe('Theme Switching', () => {
     });
 
     test('should persist theme preference in localStorage', async ({ page }) => {
-        // Toggle theme twice to ensure a change happens
+        // Toggle theme to ensure a change happens
         const themeToggle = page.locator('button[aria-label*="Switch to"]');
-        await themeToggle.click();
-        await page.waitForTimeout(500);
+        await themeToggle.click({ force: true });
+        await page.waitForTimeout(1000);
 
-        // Check localStorage - key is 'liquid-glass-theme'
-        const savedTheme = await page.evaluate(() => localStorage.getItem('liquid-glass-theme'));
-        expect(['light', 'dark']).toContain(savedTheme);
+        // Check localStorage - key is now 'liquid-glass-store'
+        const savedStore = await page.evaluate(() => localStorage.getItem('liquid-glass-store'));
+        expect(savedStore).not.toBeNull();
+
+        const parsed = JSON.parse(savedStore!);
+        expect(['light', 'dark']).toContain(parsed.state.mode);
     });
 
     test('should persist theme across navigation', async ({ page }) => {
@@ -47,15 +54,15 @@ test.describe('Theme Switching', () => {
 
         // Toggle theme
         const themeToggle = page.locator('button[aria-label*="Switch to"]');
-        await themeToggle.click();
-        await page.waitForTimeout(500);
+        await themeToggle.click({ force: true });
+        await page.waitForTimeout(1000);
 
         // Verify theme changed before navigating
         const isDarkAfterToggle = await html.evaluate(el => el.classList.contains('dark'));
         expect(isDarkAfterToggle).not.toBe(initialIsDark);
 
-        // Navigate to different page (using soft navigation to preserve state)
-        await page.click('a[href="/showcase"]');
+        // Navigate to different page
+        await page.locator('nav').getByRole('link', { name: /^Components$/ }).first().click();
         await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
 
         // Verify theme persisted

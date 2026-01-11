@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 interface GlassTooltipProps {
     content: React.ReactNode;
@@ -13,16 +14,15 @@ interface GlassTooltipProps {
 export const GlassTooltip = ({ content, children, side = 'top', className }: GlassTooltipProps) => {
     const [isVisible, setIsVisible] = useState(false);
 
-    const { opacity, transform } = useSpring({
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible
-            ? 'scale(1) translate3d(0,0,0)'
-            : side === 'top' ? 'scale(0.9) translate3d(0, 5px, 0)'
-                : side === 'bottom' ? 'scale(0.9) translate3d(0, -5px, 0)'
-                    : side === 'left' ? 'scale(0.9) translate3d(5px, 0, 0)'
-                        : 'scale(0.9) translate3d(-5px, 0, 0)',
-        config: { tension: 300, friction: 20 },
-    });
+    // Initial/Exit offsets based on side
+    const getOffset = () => {
+        switch (side) {
+            case 'top': return { y: 5 };
+            case 'bottom': return { y: -5 };
+            case 'left': return { x: 5 };
+            case 'right': return { x: -5 };
+        }
+    };
 
     // Positioning logic 
     const positionClasses = {
@@ -34,27 +34,36 @@ export const GlassTooltip = ({ content, children, side = 'top', className }: Gla
 
     return (
         <div
-            className="relative inline-block z-50"
+            className="relative inline-block z-50 group"
             onMouseEnter={() => setIsVisible(true)}
             onMouseLeave={() => setIsVisible(false)}
+            onFocus={() => setIsVisible(true)}
+            onBlur={() => setIsVisible(false)}
         >
             {children}
-            <animated.div
-                style={{ opacity, transform }}
-                className={cn(
-                    "absolute whitespace-nowrap z-50 pointer-events-none",
-                    positionClasses[side],
-                    side === 'top' || side === 'bottom' ? 'left-1/2 -translate-x-1/2' : 'top-1/2 -translate-y-1/2',
-                    className
+            <AnimatePresence>
+                {isVisible && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, ...getOffset() }}
+                        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, ...getOffset() }}
+                        transition={TRANSITIONS.springFast}
+                        className={cn(
+                            "absolute whitespace-nowrap z-50 pointer-events-none",
+                            positionClasses[side],
+                            side === 'top' || side === 'bottom' ? 'left-1/2 -translate-x-1/2' : 'top-1/2 -translate-y-1/2',
+                            className
+                        )}
+                    >
+                        <GlassContainer
+                            material="regular"
+                            className="px-3 py-1.5 text-xs text-primary rounded-lg shadow-xl"
+                        >
+                            {content}
+                        </GlassContainer>
+                    </motion.div>
                 )}
-            >
-                <GlassContainer
-                    material="regular"
-                    className="px-3 py-1.5 text-xs text-primary rounded-lg shadow-xl"
-                >
-                    {content}
-                </GlassContainer>
-            </animated.div>
+            </AnimatePresence>
         </div>
     );
 };

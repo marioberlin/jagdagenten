@@ -1,11 +1,12 @@
 
-import { useSpring, animated } from '@react-spring/web';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/utils/cn';
+import { TRANSITIONS } from '@/styles/animations';
 
 export interface GlassAlertDialogProps {
     /** Whether the dialog is open */
@@ -101,94 +102,93 @@ export const GlassAlertDialog = ({
         onConfirm?.();
     };
 
-    const animation = useSpring({
-        opacity: open ? 1 : 0,
-        transform: open ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-10px)',
-        config: { tension: 300, friction: 25 },
-    });
-
-    if (!open && animation.opacity.get() === 0) return null;
-
     return createPortal(
-        <div
-            className={cn(
-                "fixed inset-0 z-[100] flex items-center justify-center p-4",
-                open ? 'pointer-events-auto' : 'pointer-events-none'
-            )}
-        >
-            {/* Backdrop */}
-            <animated.div
-                className="absolute inset-0 bg-black/25 dark:bg-black/50 backdrop-blur-sm"
-                style={{ opacity: animation.opacity }}
-                onClick={handleCancel}
-                aria-hidden="true"
-            />
-
-            {/* Dialog Content */}
-            <animated.div
-                ref={focusTrapRef}
-                style={animation}
-                className="relative z-10 w-full max-w-md"
-                role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <GlassContainer
-                    material="thick"
-                    border
-                    className="p-6"
+        <AnimatePresence>
+            {open && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4"
                 >
-                    {/* Icon + Content */}
-                    <div className="flex gap-4">
-                        {/* Icon */}
-                        <div className={cn(
-                            "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
-                            variant === 'destructive' && "bg-destructive-muted",
-                            variant === 'warning' && "bg-warning-muted",
-                            variant === 'success' && "bg-success-muted",
-                            variant === 'default' && "bg-accent-muted"
-                        )}>
-                            <Icon size={20} className={config.iconColor} />
-                        </div>
+                    {/* Backdrop */}
+                    <motion.div
+                        className="absolute inset-0 bg-black/25 dark:bg-black/50 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={handleCancel}
+                        aria-hidden="true"
+                    />
 
-                        {/* Text Content */}
-                        <div className="flex-1 min-w-0">
-                            <h2
-                                id="alert-dialog-title"
-                                className="text-lg font-bold text-primary mb-1"
-                            >
-                                {title}
-                            </h2>
-                            <p
-                                id="alert-dialog-description"
-                                className="text-sm text-secondary leading-relaxed"
-                            >
-                                {description}
-                            </p>
-                        </div>
-                    </div>
+                    {/* Dialog Content */}
+                    <motion.div
+                        ref={focusTrapRef}
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={TRANSITIONS.spring}
+                        className="relative z-10 w-full max-w-md"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                    >
+                        <GlassContainer
+                            material="thick"
+                            border
+                            className="p-6"
+                        >
+                            {/* Icon + Content */}
+                            <div className="flex gap-4">
+                                {/* Icon */}
+                                <div className={cn(
+                                    "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
+                                    variant === 'destructive' && "bg-destructive-muted",
+                                    variant === 'warning' && "bg-warning-muted",
+                                    variant === 'success' && "bg-success-muted",
+                                    variant === 'default' && "bg-accent-muted"
+                                )}>
+                                    <Icon size={20} className={config.iconColor} />
+                                </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 mt-6">
-                        <GlassButton
-                            variant="ghost"
-                            onClick={handleCancel}
-                            disabled={loading}
-                        >
-                            {cancelText}
-                        </GlassButton>
-                        <GlassButton
-                            variant={config.confirmVariant}
-                            onClick={handleConfirm}
-                            loading={loading}
-                        >
-                            {confirmText}
-                        </GlassButton>
-                    </div>
-                </GlassContainer>
-            </animated.div>
-        </div>,
+                                {/* Text Content */}
+                                <div className="flex-1 min-w-0">
+                                    <h2
+                                        id="alert-dialog-title"
+                                        className="text-lg font-bold text-primary mb-1"
+                                    >
+                                        {title}
+                                    </h2>
+                                    <p
+                                        id="alert-dialog-description"
+                                        className="text-sm text-secondary leading-relaxed"
+                                    >
+                                        {description}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex justify-end gap-3 mt-6">
+                                <GlassButton
+                                    variant="ghost"
+                                    onClick={handleCancel}
+                                    disabled={loading}
+                                >
+                                    {cancelText}
+                                </GlassButton>
+                                <GlassButton
+                                    variant={config.confirmVariant}
+                                    onClick={handleConfirm}
+                                    loading={loading}
+                                >
+                                    {confirmText}
+                                </GlassButton>
+                            </div>
+                        </GlassContainer>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>,
         document.body
     );
 };

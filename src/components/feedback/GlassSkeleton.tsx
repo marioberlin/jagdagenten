@@ -1,6 +1,6 @@
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
-import { useSpring, animated } from '@react-spring/web';
+import { motion } from 'framer-motion';
 
 interface GlassSkeletonProps {
     className?: string;
@@ -9,21 +9,21 @@ interface GlassSkeletonProps {
 }
 
 export const GlassSkeleton = ({ className, width, height }: GlassSkeletonProps) => {
-    const { opacity } = useSpring({
-        from: { opacity: 0.3 },
-        to: { opacity: 0.7 },
-        loop: { reverse: true },
-        config: { duration: 1000 },
-    });
-
     return (
         <GlassContainer
             material="thin"
             className={cn("overflow-hidden bg-glass-surface", className)}
             style={{ width, height }}
         >
-            <animated.div
-                style={{ opacity }}
+            <motion.div
+                initial={{ opacity: 0.3 }}
+                animate={{ opacity: 0.7 }}
+                transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                }}
                 className="w-full h-full bg-glass-surface-hover"
             />
         </GlassContainer>

@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind CSS v4 - Import the new CSS-first configuration */
+@import "./styles/tailwind.css";
+
+/* Keep custom glass design system (not covered by Tailwind) */
 
 @layer base {
     html {
@@ -154,7 +155,7 @@
         /* Clear variant: For media overlays - highly translucent */
         --glass-bg-clear: rgba(0, 0, 0, 0.08);
         --glass-border-clear: rgba(0, 0, 0, 0.08);
-        --glass-border: rgba(0, 0, 0, 0.12);
+        --glass-border: rgba(0, 0, 0, 0.20);
         --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
         --glass-surface: rgba(0, 0, 0, 0.03);
         --glass-surface-hover: rgba(0, 0, 0, 0.06);
@@ -172,7 +173,7 @@
         --glass-bg-thin: rgba(255, 255, 255, 0.65);
         --glass-bg-regular: rgba(255, 255, 255, 0.80);
         --glass-bg-thick: rgba(255, 255, 255, 0.92);
-        --glass-border: rgba(0, 0, 0, 0.12);
+        --glass-border: rgba(0, 0, 0, 0.20);
         --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
         --glass-surface: rgba(0, 0, 0, 0.03);
         --glass-surface-hover: rgba(0, 0, 0, 0.06);
@@ -190,7 +191,7 @@
         --glass-bg-thin: rgba(255, 255, 255, 0.70);
         --glass-bg-regular: rgba(255, 255, 255, 0.85);
         --glass-bg-thick: rgba(255, 255, 255, 0.95);
-        --glass-border: rgba(0, 0, 0, 0.15);
+        --glass-border: rgba(0, 0, 0, 0.22);
         --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.20);
         --glass-surface: rgba(0, 0, 0, 0.04);
         --glass-surface-hover: rgba(0, 0, 0, 0.08);
@@ -208,7 +209,116 @@
        Following Apple HIG color system
        ========================================================================== */
 
+
+
     :root {
+        /* ==========================================================================
+           DESIGN TOKENS (Tailwind Config Backing)
+           ========================================================================== */
+
+        /* 1. SPACING (4pt Grid) */
+        --space-0: 0px;
+        --space-px: 1px;
+        --space-0-5: 0.125rem;
+        /* 2px */
+        --space-1: 0.25rem;
+        /* 4px */
+        --space-1-5: 0.375rem;
+        /* 6px */
+        --space-2: 0.5rem;
+        /* 8px */
+        --space-2-5: 0.625rem;
+        /* 10px */
+        --space-3: 0.75rem;
+        /* 12px */
+        --space-3-5: 0.875rem;
+        /* 14px */
+        --space-4: 1rem;
+        /* 16px */
+        --space-5: 1.25rem;
+        /* 20px */
+        --space-6: 1.5rem;
+        /* 24px */
+        --space-7: 1.75rem;
+        /* 28px */
+        --space-8: 2rem;
+        /* 32px */
+        --space-9: 2.25rem;
+        /* 36px */
+        --space-10: 2.5rem;
+        /* 40px */
+        --space-11: 2.75rem;
+        /* 44px */
+        --space-12: 3rem;
+        /* 48px */
+        --space-14: 3.5rem;
+        /* 56px */
+        --space-16: 4rem;
+        /* 64px */
+        --space-20: 5rem;
+        /* 80px */
+        --space-24: 6rem;
+        /* 96px */
+        --space-28: 7rem;
+        /* 112px */
+        --space-32: 8rem;
+        /* 128px */
+
+        /* 2. TYPOGRAPHY */
+        /* Font Sizes */
+        --font-size-xs: 0.75rem;
+        /* 12px */
+        --font-size-sm: 0.875rem;
+        /* 14px */
+        --font-size-base: 1rem;
+        /* 16px */
+        --font-size-lg: 1.125rem;
+        /* 18px */
+        --font-size-xl: 1.25rem;
+        /* 20px */
+        --font-size-2xl: 1.5rem;
+        /* 24px */
+        --font-size-3xl: 1.875rem;
+        /* 30px */
+        --font-size-4xl: 2.25rem;
+        /* 36px */
+
+        /* Line Heights */
+        --line-height-tight: 1.25;
+        --line-height-snug: 1.375;
+        --line-height-normal: 1.5;
+        --line-height-relaxed: 1.625;
+        --line-height-loose: 2;
+
+        /* Font Weights */
+        --font-weight-normal: 400;
+        --font-weight-medium: 500;
+        --font-weight-semibold: 600;
+        --font-weight-bold: 700;
+
+        /* Letter Spacing */
+        --letter-spacing-tighter: -0.05em;
+        --letter-spacing-tight: -0.025em;
+        --letter-spacing-normal: 0em;
+        --letter-spacing-wide: 0.025em;
+        --letter-spacing-wider: 0.05em;
+
+        /* 3. RADIUS */
+        --radius-none: 0px;
+        --radius-sm: 0.25rem;
+        /* 4px */
+        --radius-md: 0.5rem;
+        /* 8px */
+        --radius-lg: 0.75rem;
+        /* 12px */
+        --radius-xl: 1rem;
+        /* 16px */
+        --radius-2xl: 1.5rem;
+        /* 24px */
+        --radius-3xl: 2rem;
+        /* 32px */
+        --radius-full: 9999px;
+
         /* System Colors - Dynamic, adapt to mode */
         --system-blue: #007AFF;
         --system-green: #34C759;
@@ -239,6 +349,32 @@
         --color-destructive-muted: rgba(255, 59, 48, 0.15);
         --color-success-muted: rgba(52, 199, 89, 0.15);
         --color-warning-muted: rgba(255, 149, 0, 0.15);
+
+        /* ==========================================================================
+           SHADOW SCALE - Apple HIG Aligned
+           Semantic shadow tokens for elevation hierarchy
+           ========================================================================== */
+        --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+        --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        --shadow-glow: 0 0 40px rgba(255, 255, 255, 0.1);
+
+        /* ==========================================================================
+           MOTION DURATIONS - Apple HIG Aligned
+           Semantic timing tokens for animation consistency
+           ========================================================================== */
+        --duration-micro: 150ms;
+        /* Hover states, small interactions */
+        --duration-standard: 300ms;
+        /* Default transitions */
+        --duration-emphasis: 500ms;
+        /* Modals, reveals, emphasis */
+        --duration-ambient: 1000ms;
+        /* Breathing, gentle loops */
+
+        /* Easing Functions */
+        --ease-glass: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     /* Dark mode accent color adjustments for vibrancy */
@@ -396,6 +532,18 @@
     /* Slight tracking for small text legibility */
 }
 
+/* ==========================================================================
+   GLASS INACTIVE STATE
+   Elements recede visually when not focused for z-axis depth hierarchy
+   ========================================================================== */
+
+.glass-inactive {
+    transform: scale(0.98);
+    opacity: 0.7;
+    filter: brightness(0.9);
+    transition: all var(--duration-standard, 300ms) var(--ease-glass, ease-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
 
     *,
@@ -405,6 +553,11 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+
+    /* Disable scale transform for inactive state */
+    .glass-inactive {
+        transform: none;
     }
 }
 
@@ -631,4 +784,168 @@ html:not([style*="--glass-noise-opacity: 0"]) .backdrop-blur-thick {
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     background-size: 180px 180px;
+}
+
+/* ==========================================================================
+   MOTION & ANIMATION EFFECTS
+   
+   CSS variables controlled by Settings:
+   - --anim-bounce-enabled: 0 or 1
+   - --anim-bounce-scale: Scale multiplier (1.0 - 1.15)
+   - --anim-pulse-enabled: 0 or 1
+   - --anim-pulse-opacity: Opacity delta (0 - 0.3)
+   - --anim-scale-enabled: 0 or 1
+   - --anim-scale-amount: Scale delta (0 - 0.2)
+   - --anim-wiggle-enabled: 0 or 1
+   - --anim-wiggle-deg: Rotation in degrees (0 - 5deg)
+   ========================================================================== */
+
+/* Preview animations for settings page icons */
+@keyframes bounce-preview {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+@keyframes pulse-preview {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes scale-preview {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+@keyframes wiggle-preview {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(5deg);
+    }
+
+    75% {
+        transform: rotate(-5deg);
+    }
+}
+
+/* Utility classes for interactive elements */
+.anim-bounce {
+    transition: transform var(--duration-standard, 300ms) var(--ease-spring, ease);
+}
+
+.anim-bounce:hover {
+    transform: scale(var(--anim-bounce-scale, 1.05));
+}
+
+.anim-bounce:active {
+    transform: scale(0.95);
+}
+
+.anim-pulse {
+    animation: element-pulse calc(var(--duration-ambient, 1000ms) * 1.5) ease-in-out infinite;
+}
+
+@keyframes element-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: calc(1 - var(--anim-pulse-opacity, 0.2));
+    }
+}
+
+.anim-scale {
+    transition: transform var(--duration-standard, 300ms) var(--ease-spring, ease);
+}
+
+.anim-scale:hover {
+    transform: scale(calc(1 + var(--anim-scale-amount, 0.1)));
+}
+
+.anim-wiggle:hover {
+    animation: element-wiggle 0.4s ease-in-out;
+}
+
+@keyframes element-wiggle {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(var(--anim-wiggle-deg, 3deg));
+    }
+
+    75% {
+        transform: rotate(calc(var(--anim-wiggle-deg, 3deg) * -1));
+    }
+}
+
+/* Disable animations when effects are off (set to 0) */
+html[style*="--anim-bounce-enabled: 0"] .anim-bounce:hover {
+    transform: none;
+}
+
+html[style*="--anim-pulse-enabled: 0"] .anim-pulse {
+    animation: none;
+}
+
+html[style*="--anim-scale-enabled: 0"] .anim-scale:hover {
+    transform: none;
+}
+
+html[style*="--anim-wiggle-enabled: 0"] .anim-wiggle:hover {
+    animation: none;
+}
+
+/* ==========================================================================
+   APPLE ANIMATION CURVES (HIG PRESETS)
+   Specific timing functions for Native Mode feel
+   ========================================================================== */
+:root {
+  /* Use Tailwind values where possible, but add specific spring physics */
+  
+  /* Spring Physics (Apple-style) */
+  --ease-spring-light: cubic-bezier(0.5, 1.8, 0.5, 1.0);
+  --ease-spring-medium: cubic-bezier(0.5, 1.5, 0.5, 1.0);
+  --ease-spring-heavy: cubic-bezier(0.5, 1.2, 0.5, 1.0);
+  --ease-spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1.0);
+  
+  /* Modal / Sheet / Presentation */
+  --ease-modal-present: cubic-bezier(0.32, 0.72, 0.0, 1.0);
+  --ease-modal-dismiss: cubic-bezier(0.32, 0.72, 0.0, 1.0);
+  --ease-sheet: cubic-bezier(0.2, 0.9, 0.3, 1.0);
+  
+  /* Interaction */
+  --ease-press: cubic-bezier(0.2, 0.0, 0.4, 1.0);
+  --ease-release: cubic-bezier(0.4, 0.0, 0.2, 1.0);
 }

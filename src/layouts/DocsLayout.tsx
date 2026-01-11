@@ -15,8 +15,10 @@ export interface NavSection {
 export interface NavItem {
     id: string;
     label: string;
+    icon?: ReactNode;
     badge?: string;
     badgeVariant?: 'default' | 'outline';
+    href?: string;
 }
 
 interface DocsLayoutProps {
@@ -80,31 +82,68 @@ export const DocsLayout = ({
                             {section.title}
                         </h3>
                         <div className="space-y-1">
-                            {section.items.map((item) => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => handleNavClick(item.id)}
-                                    className={cn(
-                                        "w-full text-left px-3 py-2 rounded-lg text-sm font-medium",
-                                        "transition-all duration-200",
-                                        "flex items-center justify-between gap-2",
-                                        activeItem === item.id
-                                            ? "bg-accent/15 text-primary"
-                                            : "text-secondary hover:text-primary hover:bg-white/5"
-                                    )}
-                                >
-                                    <span>{item.label}</span>
-                                    {item.badge && (
-                                        <GlassBadge
-                                            variant={item.badgeVariant || 'outline'}
-                                            size="sm"
-                                            className="text-[10px] py-0"
+                            {section.items.map((item) => {
+                                const isExternal = 'href' in item;
+                                const Content = (
+                                    <span className="flex items-center gap-2">
+                                        {item.icon && <span className="w-4 h-4 flex-shrink-0">{item.icon}</span>}
+                                        {item.label}
+                                    </span>
+                                );
+
+                                if (isExternal && item.href) {
+                                    return (
+                                        <a
+                                            key={item.id}
+                                            href={item.href}
+                                            className={cn(
+                                                "w-full text-left px-3 py-2 rounded-lg text-sm font-medium",
+                                                "transition-all duration-200",
+                                                "flex items-center justify-between gap-2",
+                                                "text-secondary hover:text-primary hover:bg-white/5"
+                                            )}
                                         >
-                                            {item.badge}
-                                        </GlassBadge>
-                                    )}
-                                </button>
-                            ))}
+                                            {Content}
+                                            {item.badge && (
+                                                <GlassBadge
+                                                    variant={item.badgeVariant || 'outline'}
+                                                    size="sm"
+                                                    className="text-[10px] py-0"
+                                                >
+                                                    {item.badge}
+                                                </GlassBadge>
+                                            )}
+                                        </a>
+                                    );
+                                }
+
+                                return (
+                                    <button
+                                        key={item.id}
+                                        id={`nav-item-${item.id}`}
+                                        onClick={() => handleNavClick(item.id)}
+                                        className={cn(
+                                            "w-full text-left px-3 py-2 rounded-lg text-sm font-medium",
+                                            "transition-all duration-200",
+                                            "flex items-center justify-between gap-2",
+                                            activeItem === item.id
+                                                ? "bg-accent/15 text-primary"
+                                                : "text-secondary hover:text-primary hover:bg-white/5"
+                                        )}
+                                    >
+                                        {Content}
+                                        {item.badge && (
+                                            <GlassBadge
+                                                variant={item.badgeVariant || 'outline'}
+                                                size="sm"
+                                                className="text-[10px] py-0"
+                                            >
+                                                {item.badge}
+                                            </GlassBadge>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
