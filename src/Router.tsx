@@ -1,18 +1,23 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AgentConfigProvider } from './context/AgentConfigContext';
 import { BackgroundManager } from './components/Backgrounds/BackgroundManager';
-import { GlassTopNav } from '@/components';
 import { GlassCommandPalette } from '@/components';
 import { ErrorBoundary } from '@/components';
 
-// Lazy-loaded pages for code splitting
+// Layouts
+import { LiquidOSLayout } from './layouts/LiquidOSLayout';
+import { RushHourLayout } from './layouts/RushHourLayout';
+
+// Lazy-loaded pages
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
 const Settings = lazy(() => import('./pages/Settings').then(mod => ({ default: mod.Settings })));
 const Showcase = lazy(() => import('./pages/Showcase').then(mod => ({ default: mod.Showcase })));
 const SFSymbolsViewer = lazy(() => import('./pages/SfSymbolsBrowser').then(mod => ({ default: mod.default })));
 const DesignGuide = lazy(() => import('./pages/DesignGuide').then(mod => ({ default: mod.default })));
+
+// Demos
 const GenerativeShowcase = lazy(() => import('./pages/demos/GenerativeShowcase').then(mod => ({ default: mod.default })));
 const GenerativeExtensions = lazy(() => import('./pages/demos/GenerativeExtensions').then(mod => ({ default: mod.default })));
 const CopilotFormDemo = lazy(() => import('./pages/demos/CopilotFormDemo').then(mod => ({ default: mod.default })));
@@ -25,6 +30,8 @@ const AIResearcherDemo = lazy(() => import('./pages/demos/AIResearcherDemo').the
 const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mod => ({ default: mod.default })));
 const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
 const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
+
+// Docs
 const CopilotDocs = lazy(() => import('./pages/showcase/CopilotDocs').then(mod => ({ default: mod.default })));
 const AIResearcherDocs = lazy(() => import('./pages/showcase/AIResearcherDocs').then(mod => ({ default: mod.default })));
 const DynamicDashboardDocs = lazy(() => import('./pages/showcase/DynamicDashboardDocs').then(mod => ({ default: mod.default })));
@@ -35,6 +42,8 @@ const TravelPlannerDocs = lazy(() => import('./pages/showcase/TravelPlannerDocs'
 const GenerativeShowcaseDocs = lazy(() => import('./pages/showcase/GenerativeShowcaseDocs').then(mod => ({ default: mod.default })));
 const GenerativeExtensionsDocs = lazy(() => import('./pages/showcase/GenerativeExtensionsDocs').then(mod => ({ default: mod.default })));
 const AuditDocs = lazy(() => import('./pages/showcase/AuditDocs').then(mod => ({ default: mod.default })));
+
+// Trading (RushHour)
 const MarketOverview = lazy(() => import('./pages/MarketOverview').then(mod => ({ default: mod.MarketOverview })));
 const TradingDashboard = lazy(() => import('./pages/trading/Dashboard').then(mod => ({ default: mod.Dashboard })));
 const TradingRiskSettings = lazy(() => import('./pages/trading/RiskSettings').then(mod => ({ default: mod.RiskSettings })));
@@ -46,10 +55,10 @@ const PerformanceComparison = lazy(() => import('./pages/PerformanceComparison')
 // Loading fallback component
 function PageLoader() {
     return (
-        <div className="flex items-center justify-center h-screen w-full">
+        <div className="flex items-center justify-center h-screen w-full bg-black/20 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--glass-accent)]"></div>
-                <p className="text-[var(--text-secondary)]">Loading...</p>
+                <p className="text-[var(--text-secondary)]">Initializing Liquid OS...</p>
             </div>
         </div>
     );
@@ -74,33 +83,26 @@ export const AppRouter = () => {
     return (
         <BrowserRouter>
             <AgentConfigProvider>
-                {/* Global Background Layer */}
+                {/* Global Background Manager (Handles the immersive layer) */}
                 <BackgroundManager />
 
-                {/* Global Top Navigation */}
-                <GlassTopNav
-                    onCommandPaletteOpen={() => setCommandPaletteOpen(true)}
-                />
-
-                {/* Global Command Palette (⌘K) */}
+                {/* Global Command Palette (⌘K) - Constant across worlds */}
                 <GlassCommandPalette
                     isOpen={commandPaletteOpen}
                     onClose={() => setCommandPaletteOpen(false)}
                 />
 
-
-                {/* Application Content */}
                 <ErrorBoundary
                     fallback={
-                        <div className="min-h-screen flex items-center justify-center p-4">
-                            <div className="text-center">
-                                <h1 className="text-2xl font-bold text-red-600">Route Error</h1>
-                                <p className="text-gray-600 mt-2">This page encountered an error.</p>
+                        <div className="min-h-screen flex items-center justify-center p-4 bg-black text-white">
+                            <div className="text-center p-8 border border-white/10 rounded-2xl bg-white/5 backdrop-blur-xl">
+                                <h1 className="text-2xl font-bold text-red-400 mb-2">System Critical Error</h1>
+                                <p className="text-gray-400">The Liquid OS encountered a fatal exception.</p>
                                 <button
                                     onClick={() => window.location.reload()}
-                                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+                                    className="mt-6 px-6 py-2 bg-[var(--glass-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
                                 >
-                                    Reload Page
+                                    Reboot System
                                 </button>
                             </div>
                         </div>
@@ -108,43 +110,64 @@ export const AppRouter = () => {
                 >
                     <Suspense fallback={<PageLoader />}>
                         <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/showcase" element={<Showcase />} />
-                            <Route path="/sf-symbols" element={<SFSymbolsViewer />} />
-                            <Route path="/design-guide" element={<DesignGuide />} />
-                            <Route path="/demos/generative" element={<GenerativeShowcase />} />
-                            <Route path="/demos/generative-extensions" element={<GenerativeExtensions />} />
-                            <Route path="/demos/copilot-form" element={<CopilotFormDemo />} />
-                            <Route path="/demos/dynamic-dashboard" element={<DynamicDashboardDemo />} />
-                            <Route path="/demos/state-machine" element={<StateMachineDemo />} />
-                            <Route path="/demos/qa-agent" element={<QAAgentDemo />} />
-                            <Route path="/demos/research-canvas" element={<ResearchCanvasDemo />} />
-                            <Route path="/demos/travel-planner" element={<TravelPlannerDemo />} />
-                            <Route path="/demos/ai-researcher" element={<AIResearcherDemo />} />
-                            <Route path="/demos/foundation" element={<FoundationDemo />} />
-                            <Route path="/demos/signature" element={<SignatureDemo />} />
-                            <Route path="/demos/extension" element={<ExtensionDemo />} />
-                            <Route path="/docs/copilot" element={<CopilotDocs />} />
-                            <Route path="/docs/ai-researcher" element={<AIResearcherDocs />} />
-                            <Route path="/docs/dynamic-dashboard" element={<DynamicDashboardDocs />} />
-                            <Route path="/docs/qa-agent" element={<QAAgentDocs />} />
-                            <Route path="/docs/research-canvas" element={<ResearchCanvasDocs />} />
-                            <Route path="/docs/state-machine" element={<StateMachineDocs />} />
-                            <Route path="/docs/travel-planner" element={<TravelPlannerDocs />} />
-                            <Route path="/docs/generative-showcase" element={<GenerativeShowcaseDocs />} />
-                            <Route path="/docs/generative-extensions" element={<GenerativeExtensionsDocs />} />
-                            <Route path="/docs/ag-ui-vs-copilotkit" element={<AuditDocs />} />
-                            {/* Trading */}
-                            <Route path="/trading" element={<TradingDashboard />} />
-                            <Route path="/trading/risk-settings" element={<TradingRiskSettings />} />
-                            <Route path="/trading/bots" element={<TradingBotConfig />} />
-                            <Route path="/trading/bots/new" element={<TradingBotConfig />} />
-                            <Route path="/trading/bots/:id" element={<TradingBotConfig />} />
-                            <Route path="/market-overview" element={<MarketOverview />} />
-                            <Route path="/showcase/compound" element={<ShowcaseCompound />} />
-                            <Route path="/analytics" element={<SmartAnalytics />} />
-                            <Route path="/performance" element={<PerformanceComparison />} />
+                            {/* --- WORLD 1: LIQUID OS (Spatial) --- */}
+                            <Route element={<LiquidOSLayout />}>
+                                <Route path="/" element={<Navigate to="/os" replace />} />
+                                <Route path="/os" element={<Home />} />
+
+                                {/* System Apps */}
+                                <Route path="/os/settings" element={<Settings />} />
+                                <Route path="/os/design" element={<DesignGuide />} />
+                                <Route path="/os/showcase" element={<Showcase />} />
+                                <Route path="/os/icons" element={<SFSymbolsViewer />} />
+
+                                {/* Demos */}
+                                <Route path="/os/demos/generative" element={<GenerativeShowcase />} />
+                                <Route path="/os/demos/generative-extensions" element={<GenerativeExtensions />} />
+                                <Route path="/os/demos/copilot-form" element={<CopilotFormDemo />} />
+                                <Route path="/os/demos/dynamic-dashboard" element={<DynamicDashboardDemo />} />
+                                <Route path="/os/demos/state-machine" element={<StateMachineDemo />} />
+                                <Route path="/os/demos/qa-agent" element={<QAAgentDemo />} />
+                                <Route path="/os/demos/research-canvas" element={<ResearchCanvasDemo />} />
+                                <Route path="/os/demos/travel-planner" element={<TravelPlannerDemo />} />
+                                <Route path="/os/demos/ai-researcher" element={<AIResearcherDemo />} />
+                                <Route path="/os/demos/foundation" element={<FoundationDemo />} />
+                                <Route path="/os/demos/signature" element={<SignatureDemo />} />
+                                <Route path="/os/demos/extension" element={<ExtensionDemo />} />
+
+                                {/* Documentation */}
+                                <Route path="/os/docs/copilot" element={<CopilotDocs />} />
+                                <Route path="/os/docs/ai-researcher" element={<AIResearcherDocs />} />
+                                <Route path="/os/docs/dynamic-dashboard" element={<DynamicDashboardDocs />} />
+                                <Route path="/os/docs/qa-agent" element={<QAAgentDocs />} />
+                                <Route path="/os/docs/research-canvas" element={<ResearchCanvasDocs />} />
+                                <Route path="/os/docs/state-machine" element={<StateMachineDocs />} />
+                                <Route path="/os/docs/travel-planner" element={<TravelPlannerDocs />} />
+                                <Route path="/os/docs/generative-showcase" element={<GenerativeShowcaseDocs />} />
+                                <Route path="/os/docs/generative-extensions" element={<GenerativeExtensionsDocs />} />
+                                <Route path="/os/docs/audit" element={<AuditDocs />} />
+                            </Route>
+
+                            {/* --- WORLD 2: RUSH HOUR (Dense Terminal) --- */}
+                            <Route path="/terminal" element={<RushHourLayout />}>
+                                <Route index element={<Navigate to="/terminal/dashboard" replace />} />
+                                <Route path="dashboard" element={<TradingDashboard />} />
+                                <Route path="market" element={<MarketOverview />} />
+                                <Route path="risk" element={<TradingRiskSettings />} />
+                                <Route path="bots" element={<TradingBotConfig />} />
+                                <Route path="bots/:id" element={<TradingBotConfig />} />
+                                <Route path="analytics" element={<SmartAnalytics />} />
+                                <Route path="performance" element={<PerformanceComparison />} />
+                                <Route path="compound" element={<ShowcaseCompound />} />
+                            </Route>
+
+                            {/* Legacy Redirects (for safety) */}
+                            <Route path="/trading" element={<Navigate to="/terminal/dashboard" replace />} />
+                            <Route path="/settings" element={<Navigate to="/os/settings" replace />} />
+                            <Route path="/design-guide" element={<Navigate to="/os/design" replace />} />
+
+                            {/* Fallback */}
+                            <Route path="*" element={<Navigate to="/os" replace />} />
                         </Routes>
                     </Suspense>
                 </ErrorBoundary>
