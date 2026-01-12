@@ -1,13 +1,16 @@
 
 import { SurfaceContainer } from '../primitives/SurfaceContainer';
+import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
+import { useChartColors, TYPOGRAPHY } from '@/styles/design-tokens';
 
 interface GlassChartProps {
     data: number[];
     labels?: string[];
     type?: 'line' | 'bar';
     height?: number;
-    color?: string; // hex or tailwind class specific logic
+    /** Hex color for the chart line/bars. Defaults to Apple System Blue. */
+    color?: string;
     className?: string;
     /** Accessible label for screen readers */
     ariaLabel?: string;
@@ -20,11 +23,13 @@ export const GlassChart = ({
     labels,
     type = 'line',
     height = 200,
-    color = '#60a5fa', // blue-400
+    color,
     className,
     ariaLabel,
     ariaDescription
 }: GlassChartProps) => {
+    const { primary } = useChartColors();
+    const chartColor = color ?? primary;
     const max = Math.max(...data);
 
 
@@ -55,8 +60,8 @@ export const GlassChart = ({
                 {ariaDescription && <desc id="chart-desc">{ariaDescription}</desc>}
                 <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={color} stopOpacity="0.5" />
-                        <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+                        <stop offset="0%" stopColor={chartColor} stopOpacity="0.5" />
+                        <stop offset="100%" stopColor={chartColor} stopOpacity="0.0" />
                     </linearGradient>
                 </defs>
                 {/* Area Fill */}
@@ -65,7 +70,7 @@ export const GlassChart = ({
                 <path
                     d={pathData}
                     fill="none"
-                    stroke={color}
+                    stroke={chartColor}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -79,7 +84,7 @@ export const GlassChart = ({
                         cy={p.y}
                         r="1.5"
                         fill="#fff"
-                        stroke={color}
+                        stroke={chartColor}
                         strokeWidth="0.5"
                         vectorEffect="non-scaling-stroke"
                         className="opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
@@ -99,12 +104,18 @@ export const GlassChart = ({
                     return (
                         <div key={i} className="relative flex-1 group h-full flex items-end">
                             <div
-                                style={{ height: `${heightPercent}%`, backgroundColor: color }}
+                                style={{ height: `${heightPercent}%`, backgroundColor: chartColor }}
                                 className="w-full rounded-t-sm opacity-50 group-hover:opacity-80 transition-all duration-300"
                             >
-                                <div className="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-primary text-[10px] px-2 py-1 rounded whitespace-nowrap">
-                                    {labels ? `${labels[i]}: ${val}` : val}
-                                </div>
+                                <GlassContainer
+                                    material="thick"
+                                    className="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg whitespace-nowrap"
+                                    style={{ fontSize: TYPOGRAPHY.chart.label }}
+                                >
+                                    <span className="text-primary font-mono">
+                                        {labels ? `${labels[i]}: ${val}` : val}
+                                    </span>
+                                </GlassContainer>
                             </div>
                         </div>
                     );
@@ -124,7 +135,14 @@ export const GlassChart = ({
             {labels && (
                 <div className="flex justify-between mt-auto pt-2 px-1">
                     {labels.map((label, i) => (
-                        <span key={i} className="text-[11px] text-secondary font-mono text-center flex-1">
+                        <span
+                            key={i}
+                            className="text-secondary text-center flex-1"
+                            style={{
+                                fontSize: TYPOGRAPHY.chart.label,
+                                fontFamily: TYPOGRAPHY.fontFamily.mono,
+                            }}
+                        >
                             {label}
                         </span>
                     ))}

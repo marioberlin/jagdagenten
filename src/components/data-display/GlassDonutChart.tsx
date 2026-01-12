@@ -1,10 +1,12 @@
 
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
+import { useChartColors, TYPOGRAPHY } from '@/styles/design-tokens';
 
 interface GlassDonutChartProps {
     data: number[];
     labels?: string[];
+    /** Custom color palette. Defaults to Apple System Colors (Blue -> Green -> Orange -> Pink -> ...). */
     colors?: string[];
     height?: number;
     className?: string;
@@ -13,10 +15,12 @@ interface GlassDonutChartProps {
 export const GlassDonutChart = ({
     data,
     labels,
-    colors = ['#4ade80', '#60a5fa', '#c084fc', '#facc15'], // green, blue, purple, yellow
+    colors,
     height = 200,
     className
 }: GlassDonutChartProps) => {
+    const { palette } = useChartColors();
+    const chartColors = colors ?? [...palette];
     const total = data.reduce((acc, curr) => acc + curr, 0);
 
     // Calculate segments
@@ -46,7 +50,7 @@ export const GlassDonutChart = ({
             'Z'
         ].join(' ');
 
-        return { d, color: colors[i % colors.length], value, label: labels?.[i] };
+        return { d, color: chartColors[i % chartColors.length], value, label: labels?.[i] };
     });
 
     return (
@@ -80,8 +84,13 @@ export const GlassDonutChart = ({
                 <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
                     {labels.map((label, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: colors[i % colors.length] }} />
-                            <span className="text-[10px] text-secondary font-medium tracking-wide">{label}</span>
+                            <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
+                            <span
+                                className="text-secondary font-medium tracking-wide"
+                                style={{ fontSize: TYPOGRAPHY.chart.label }}
+                            >
+                                {label}
+                            </span>
                         </div>
                     ))}
                 </div>

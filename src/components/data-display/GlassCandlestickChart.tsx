@@ -3,6 +3,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { cn } from '@/utils/cn';
 import { ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
+import { useChartColors, TYPOGRAPHY } from '@/styles/design-tokens';
 
 interface CandlestickData {
     timestamp: string;
@@ -18,7 +19,9 @@ interface GlassCandlestickChartProps {
     title?: string;
     width?: number;
     height?: number;
+    /** Color for bullish (up) candles. Defaults to Apple System Green. */
     upColor?: string;
+    /** Color for bearish (down) candles. Defaults to Apple System Red. */
     downColor?: string;
     className?: string;
     ariaLabel?: string;
@@ -31,13 +34,16 @@ export const GlassCandlestickChart = ({
     title,
     width: propWidth,
     height: propHeight = 400,
-    upColor = '#22c55e',
-    downColor = '#ef4444',
+    upColor,
+    downColor,
     className,
     ariaLabel,
     ariaDescription,
     showVolume = false
 }: GlassCandlestickChartProps) => {
+    const { positive, negative } = useChartColors();
+    const bullishColor = upColor ?? positive;
+    const bearishColor = downColor ?? negative;
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: propWidth || 800, height: propHeight });
     const [zoomLevel, setZoomLevel] = useState(1);
@@ -201,22 +207,26 @@ export const GlassCandlestickChart = ({
 
             {/* OHLC Tooltip */}
             {hoveredCandle && (
-                <div className="absolute top-2 left-2 z-20 bg-glass-panel/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs font-mono border border-glass-border">
+                <GlassContainer
+                    material="thick"
+                    className="absolute top-2 left-2 z-20 rounded-lg px-3 py-2"
+                    style={{ fontFamily: TYPOGRAPHY.fontFamily.mono, fontSize: TYPOGRAPHY.chart.label }}
+                >
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                         <span className="text-secondary">Time:</span>
                         <span className="text-white">{hoveredCandle.timestamp}</span>
                         <span className="text-secondary">Open:</span>
                         <span className="text-white">{formatPrice(hoveredCandle.open)}</span>
                         <span className="text-secondary">High:</span>
-                        <span className="text-green-400">{formatPrice(hoveredCandle.high)}</span>
+                        <span style={{ color: bullishColor }}>{formatPrice(hoveredCandle.high)}</span>
                         <span className="text-secondary">Low:</span>
-                        <span className="text-red-400">{formatPrice(hoveredCandle.low)}</span>
+                        <span style={{ color: bearishColor }}>{formatPrice(hoveredCandle.low)}</span>
                         <span className="text-secondary">Close:</span>
-                        <span className={hoveredCandle.close >= hoveredCandle.open ? "text-green-400" : "text-red-400"}>
+                        <span style={{ color: hoveredCandle.close >= hoveredCandle.open ? bullishColor : bearishColor }}>
                             {formatPrice(hoveredCandle.close)}
                         </span>
                     </div>
-                </div>
+                </GlassContainer>
             )}
 
             <svg
@@ -261,8 +271,8 @@ export const GlassCandlestickChart = ({
                                 dominantBaseline="middle"
                                 textAnchor="start"
                                 fill="rgba(255, 255, 255, 0.7)"
-                                fontSize="11"
-                                fontFamily="monospace"
+                                fontSize={TYPOGRAPHY.chart.label}
+                                fontFamily={TYPOGRAPHY.fontFamily.mono}
                             >
                                 ${formatPrice(price)}
                             </text>
@@ -278,7 +288,7 @@ export const GlassCandlestickChart = ({
                             y1={getY(visibleData[visibleData.length - 1].close)}
                             x2={width}
                             y2={getY(visibleData[visibleData.length - 1].close)}
-                            stroke={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? upColor : downColor}
+                            stroke={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? bullishColor : bearishColor}
                             strokeWidth="1"
                             strokeDasharray="2 2"
                             className="opacity-60"
@@ -289,7 +299,7 @@ export const GlassCandlestickChart = ({
                             width={yAxisWidth - 8}
                             height={20}
                             rx={4}
-                            fill={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? upColor : downColor}
+                            fill={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? bullishColor : bearishColor}
                             fillOpacity={0.3}
                         />
                         <text
@@ -297,8 +307,10 @@ export const GlassCandlestickChart = ({
                             y={getY(visibleData[visibleData.length - 1].close)}
                             dominantBaseline="middle"
                             textAnchor="start"
-                            className="text-[10px] font-mono font-bold"
-                            fill={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? upColor : downColor}
+                            fontSize={TYPOGRAPHY.chart.label}
+                            fontFamily={TYPOGRAPHY.fontFamily.mono}
+                            fontWeight="bold"
+                            fill={visibleData[visibleData.length - 1].close >= visibleData[visibleData.length - 1].open ? bullishColor : bearishColor}
                         >
                             ${formatPrice(visibleData[visibleData.length - 1].close)}
                         </text>
@@ -334,7 +346,7 @@ export const GlassCandlestickChart = ({
                 {/* Candlesticks */}
                 {visibleData.map((d, i) => {
                     const isUp = d.close >= d.open;
-                    const color = isUp ? upColor : downColor;
+                    const candleColor = isUp ? bullishColor : bearishColor;
 
                     const x = i * spacing + (spacing - candleWidth) / 2;
                     const yHigh = getY(d.high);
@@ -353,7 +365,7 @@ export const GlassCandlestickChart = ({
                                 y1={yHigh}
                                 x2={x + candleWidth / 2}
                                 y2={yLow}
-                                stroke={color}
+                                stroke={candleColor}
                                 strokeWidth="1"
                                 className="opacity-70"
                             />
@@ -363,8 +375,8 @@ export const GlassCandlestickChart = ({
                                 y={boxTop}
                                 width={candleWidth}
                                 height={boxHeight}
-                                fill={isUp ? 'transparent' : color}
-                                stroke={color}
+                                fill={isUp ? 'transparent' : candleColor}
+                                stroke={candleColor}
                                 strokeWidth="1"
                                 className="transition-opacity hover:opacity-100"
                             />
@@ -387,7 +399,7 @@ export const GlassCandlestickChart = ({
                                     y={volumeHeight - volHeight}
                                     width={candleWidth}
                                     height={volHeight}
-                                    fill={isUp ? upColor : downColor}
+                                    fill={isUp ? bullishColor : bearishColor}
                                     fillOpacity={0.3}
                                 />
                             );
@@ -404,8 +416,8 @@ export const GlassCandlestickChart = ({
                             y={15}
                             textAnchor="middle"
                             fill="rgba(255, 255, 255, 0.7)"
-                            fontSize="11"
-                            fontFamily="monospace"
+                            fontSize={TYPOGRAPHY.chart.label}
+                            fontFamily={TYPOGRAPHY.fontFamily.mono}
                         >
                             {label.time}
                         </text>
