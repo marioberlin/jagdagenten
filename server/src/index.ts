@@ -9,6 +9,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } from './schemas/chat.js';
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
+import { handleA2AHttpRequest, getAgentCard } from './a2a/index.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -373,7 +374,10 @@ async function startServer() {
                 graphql: 'POST /graphql',
                 stream: 'GET /stream',
                 cacheStats: 'GET /api/v1/cache/stats',
-                securityAudit: 'GET /api/v1/security/audit'
+                securityAudit: 'GET /api/v1/security/audit',
+                a2a: 'POST /a2a (A2A Protocol)',
+                a2aStream: 'POST /a2a/stream (A2A SSE)',
+                agentCard: 'GET /.well-known/agent.json'
             }
         }))
 
@@ -490,6 +494,42 @@ async function startServer() {
 
         // Smart Enhancement Routes
         .use(smartRoutes)
+
+        // A2A Protocol Endpoints
+        // Agent Card (well-known endpoint for discovery)
+        .get('/.well-known/agent.json', () => {
+            const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+            return getAgentCard(baseUrl);
+        })
+
+        // A2A JSON-RPC endpoint
+        .post('/a2a', async ({ request, body, set }) => {
+            const headers: Record<string, string> = {};
+            request.headers.forEach((value, key) => {
+                headers[key.toLowerCase()] = value;
+            });
+
+            const response = await handleA2AHttpRequest(body, headers);
+            set.headers['Content-Type'] = 'application/json';
+            return response;
+        })
+
+        // A2A streaming endpoint (SSE)
+        .post('/a2a/stream', async ({ request, body, set }) => {
+            // For now, redirect to regular endpoint
+            // Full streaming implementation would use SSE
+            const headers: Record<string, string> = {};
+            request.headers.forEach((value, key) => {
+                headers[key.toLowerCase()] = value;
+            });
+
+            set.headers['Content-Type'] = 'text/event-stream';
+            set.headers['Cache-Control'] = 'no-cache';
+            set.headers['Connection'] = 'keep-alive';
+
+            const response = await handleA2AHttpRequest(body, headers);
+            return 'data: ' + JSON.stringify(response) + '\n\ndata: [DONE]\n\n';
+        })
 
         // 404 Handler - Elysia handles this by default but we can customize if needed
         .onError(({ code, error, set }) => {

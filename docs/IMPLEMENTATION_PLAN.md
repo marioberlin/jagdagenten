@@ -15,14 +15,16 @@
 4. [Phase 2: Performance & Scalability](#phase-2-performance--scalability)
 5. [Phase 3: Developer Experience & Observability](#phase-3-developer-experience--observability)
 6. [Phase 4: Advanced Features](#phase-4-advanced-features)
-7. [Implementation Checklist](#implementation-checklist)
-8. [Risk Register](#risk-register)
+7. [Phase 5: A2A Protocol Integration](#phase-5-a2a-protocol-integration)
+8. [Phase 6: Agent Hub UI](#phase-6-agent-hub-ui)
+9. [Implementation Checklist](#implementation-checklist)
+10. [Risk Register](#risk-register)
 
 ---
 
 ## Executive Summary
 
-This plan addresses 15 improvements identified during codebase analysis, organized into 4 phases by priority. Each item includes:
+This plan addresses 24 improvements identified during codebase analysis, organized into 6 phases by priority. Each item includes:
 
 - **Problem Statement**: What's wrong and why it matters
 - **Solution Design**: Technical approach with code patterns
@@ -51,6 +53,16 @@ This plan addresses 15 improvements identified during codebase analysis, organiz
 | 4.2 | Self-Healing Production Loop | P3-Low | 4 | High | Medium |
 | 4.3 | Multi-Agent Orchestration | P3-Low | 4 | Very High | High |
 | 4.4 | Federated Plugin Registry | P3-Low | 4 | Very High | Medium |
+| 5.1 | A2A Protocol Types | P2-Medium | 5 | Medium | Low |
+| 5.2 | A2UI Transformer | P2-Medium | 5 | Medium | Low |
+| 5.3 | A2A Client | P2-Medium | 5 | Medium | Low |
+| 5.4 | A2A Server Handler | P2-Medium | 5 | Medium | Low |
+| 6.1 | Agent Hub Page | P2-Medium | 6 | Medium | Low |
+| 6.2 | Agent Card Components | P2-Medium | 6 | Medium | Low |
+| 6.3 | Agent Probe Discovery | P2-Medium | 6 | Medium | Low |
+| 6.4 | Agent Chat Window | P2-Medium | 6 | Medium | Low |
+| 6.5 | Curated Agent Registry | P2-Medium | 6 | Low | Low |
+| 6.6 | Two Worlds Integration | P2-Medium | 6 | Low | Low |
 
 ---
 
@@ -1609,6 +1621,925 @@ Out of scope for this implementation plan. Recommend tracking as separate epic.
 
 ---
 
+## Phase 5: A2A Protocol Integration
+
+### 5.1 A2A Protocol Types
+
+**Priority:** P2-Medium
+**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+LiquidCrypto lacks interoperability with external AI agents. Google's A2A (Agent-to-Agent) protocol provides a standard for agent communication, but requires comprehensive type definitions.
+
+#### Solution Design
+
+Complete TypeScript type definitions for A2A and A2UI v0.8 specifications:
+
+```typescript
+// src/a2a/types.ts
+
+// Task states
+export type TaskState =
+    | 'submitted'
+    | 'working'
+    | 'input_required'
+    | 'completed'
+    | 'failed'
+    | 'cancelled';
+
+// A2UI message types
+export type A2UIMessageType =
+    | 'beginRendering'
+    | 'surfaceUpdate'
+    | 'dataModelUpdate'
+    | 'deleteSurface';
+
+// Data binding types
+export type A2UIBindingValue =
+    | { literalString: string }
+    | { path: string }
+    | { template: string };
+
+// Agent Card for discovery
+export interface AgentCard {
+    name: string;
+    description: string;
+    url: string;
+    version: string;
+    capabilities: AgentCapability[];
+    authentication: AgentAuthentication;
+}
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/a2a/types.ts` | Complete A2A & A2UI type definitions (500+ lines) |
+| `server/src/a2a/types.ts` | Server-side types |
+
+#### Success Criteria
+
+- [x] All A2A protocol types defined
+- [x] A2UI v0.8 message types complete
+- [x] Component type definitions
+- [x] Glass component catalog for validation
+
+---
+
+### 5.2 A2UI Transformer
+
+**Priority:** P2-Medium
+**Effort:** Medium (3-4 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+A2UI JSON payloads need transformation to LiquidCrypto's Glass UINode format for rendering with existing components.
+
+#### Solution Design
+
+Transformer that converts A2UI components to Glass UINode tree:
+
+```typescript
+// src/a2a/transformer.ts
+
+export function transformA2UI(
+    messages: A2UIMessage[],
+    onAction?: (actionId: string, data?: unknown) => void
+): UINode | null {
+    const state = createTransformerState();
+
+    for (const message of messages) {
+        processA2UIMessage(message, state);
+    }
+
+    return state.surfaces.get(state.primarySurfaceId) || null;
+}
+
+// Component mapping
+function transformComponent(component: A2UIComponent): UINode {
+    switch (component.type) {
+        case 'Text':
+            return { type: 'text', props: { children: resolveBinding(component.content) } };
+        case 'Button':
+            return { type: 'button', props: { children: resolveBinding(component.label) } };
+        case 'Row':
+            return { type: 'stack', props: { direction: 'horizontal' } };
+        case 'Column':
+            return { type: 'stack', props: { direction: 'vertical' } };
+        // ... 15+ component types
+    }
+}
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/a2a/transformer.ts` | A2UI → Glass transformer (500+ lines) |
+
+#### Key Features
+
+- Data binding resolution (`literalString`, `path`, `template`)
+- Surface state management for progressive updates
+- Action binding for interactive components
+- Validation with component count limits (500 max)
+- Depth limit enforcement (10 max)
+
+#### Success Criteria
+
+- [x] All A2UI component types mapped
+- [x] Data binding resolution working
+- [x] Progressive rendering supported
+- [x] Validation prevents DoS
+
+---
+
+### 5.3 A2A Client
+
+**Priority:** P2-Medium
+**Effort:** Medium (3-4 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Need a client to connect to external A2A-compliant agents with streaming support for real-time UI updates.
+
+#### Solution Design
+
+A2A client with JSON-RPC 2.0 and SSE streaming:
+
+```typescript
+// src/a2a/client.ts
+
+export class A2AClient {
+    private baseUrl: string;
+
+    constructor(baseUrl: string, config?: A2AClientConfig) {
+        this.baseUrl = baseUrl.replace(/\/$/, '');
+    }
+
+    async getAgentCard(): Promise<AgentCard> {
+        const response = await fetch(`${this.baseUrl}/.well-known/agent.json`);
+        return response.json();
+    }
+
+    async sendText(text: string): Promise<Task> {
+        return this.sendMessage([{ parts: [{ kind: 'text', text }] }]);
+    }
+
+    async *streamText(text: string): AsyncGenerator<TaskStreamEvent> {
+        // SSE streaming implementation
+        const response = await fetch(`${this.baseUrl}/a2a/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ method: 'message/send', params: { message: { parts: [{ kind: 'text', text }] } } })
+        });
+
+        const reader = response.body?.getReader();
+        // ... yield events as they arrive
+    }
+
+    extractA2UIParts(task: Task): A2UIPart[] {
+        // Extract A2UI parts from task history
+    }
+}
+
+// React hook
+export function useA2AClient(baseUrl: string): A2AClient {
+    return useMemo(() => new A2AClient(baseUrl), [baseUrl]);
+}
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/a2a/client.ts` | A2A protocol client (400+ lines) |
+
+#### Key Features
+
+- JSON-RPC 2.0 request handling
+- SSE streaming for real-time updates
+- Agent Card discovery
+- Task lifecycle management
+- A2UI part extraction
+- React hook `useA2AClient`
+
+#### Success Criteria
+
+- [x] Connect to A2A agents
+- [x] Stream task updates
+- [x] Extract A2UI messages
+- [x] React hook available
+
+---
+
+### 5.4 A2A Server Handler
+
+**Priority:** P2-Medium
+**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+LiquidCrypto should be able to act as an A2A agent, accepting requests from other agents and returning A2UI payloads.
+
+#### Solution Design
+
+JSON-RPC handler for A2A protocol:
+
+```typescript
+// server/src/a2a/handler.ts
+
+export class A2AHandler {
+    private tasks: Map<string, Task> = new Map();
+    private contextIndex: Map<string, string[]> = new Map();
+
+    async handleRequest(request: JSONRPCRequest): Promise<JSONRPCResponse> {
+        switch (request.method) {
+            case 'agent/card':
+                return this.getAgentCard();
+            case 'message/send':
+                return this.handleMessageSend(request.params);
+            case 'tasks/get':
+                return this.getTask(request.params.taskId);
+            case 'tasks/list':
+                return this.listTasks(request.params.contextId);
+            case 'tasks/cancel':
+                return this.cancelTask(request.params.taskId);
+            default:
+                return { error: { code: -32601, message: 'Method not found' } };
+        }
+    }
+}
+
+// Server endpoints added to server/src/index.ts:
+// GET  /.well-known/agent.json - Agent Card discovery
+// POST /a2a                    - JSON-RPC 2.0 endpoint
+// POST /a2a/stream             - SSE streaming endpoint
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `server/src/a2a/handler.ts` | JSON-RPC handler |
+| `server/src/a2a/types.ts` | Server-side types |
+| `server/src/a2a/index.ts` | Module exports |
+
+#### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/.well-known/agent.json` | GET | Agent Card discovery |
+| `/a2a` | POST | JSON-RPC 2.0 A2A requests |
+| `/a2a/stream` | POST | SSE streaming |
+
+#### Success Criteria
+
+- [x] Agent Card served at well-known URL
+- [x] JSON-RPC 2.0 compliant
+- [x] Task lifecycle management
+- [x] Context-based task indexing
+
+---
+
+### 5.5 A2UI Renderer Component
+
+**Priority:** P2-Medium
+**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Need a React component to render A2UI payloads using Glass components with support for streaming updates.
+
+#### Solution Design
+
+```tsx
+// src/components/agentic/GlassA2UIRenderer.tsx
+
+export interface GlassA2UIRendererProps {
+    messages: A2UIMessage[];
+    onAction?: (actionId: string, data?: unknown) => void;
+    streaming?: boolean;
+    loading?: boolean;
+    validate?: boolean;
+    surfaceId?: string;
+}
+
+export const GlassA2UIRenderer = React.forwardRef<HTMLDivElement, GlassA2UIRendererProps>(
+    ({ messages, onAction, streaming, loading, validate = true, surfaceId, ...props }, ref) => {
+        const uiTree = useMemo(() => {
+            if (validate) {
+                const validation = validateA2UIPayload(messages);
+                if (!validation.valid) {
+                    console.warn('A2UI validation failed:', validation.errors);
+                }
+            }
+            return transformA2UI(messages, onAction);
+        }, [messages, onAction, validate]);
+
+        return (
+            <GlassContainer ref={ref} {...props}>
+                <GlassDynamicUI
+                    tree={uiTree}
+                    streaming={streaming}
+                />
+            </GlassContainer>
+        );
+    }
+);
+
+// Connected renderer with agent
+export const ConnectedA2UIRenderer: React.FC<{
+    agentUrl: string;
+    initialPrompt?: string;
+    onAction?: (actionId: string, data?: unknown) => void;
+}> = ({ agentUrl, initialPrompt, onAction }) => {
+    const { messages, loading, send } = useA2UIStream(agentUrl);
+    // ... render with streaming support
+};
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/components/agentic/GlassA2UIRenderer.tsx` | React rendering component |
+| `src/components/agentic/GlassA2UIRenderer.stories.tsx` | Storybook stories |
+
+#### Storybook Stories
+
+- Restaurant List
+- Booking Form
+- Booking Confirmation
+- Sales Dashboard
+- Location Map
+- Crypto Portfolio
+- Trading Interface
+- Loading State
+- Empty State
+- Streaming Mode
+- Interactive Demo
+
+#### Success Criteria
+
+- [x] Renders A2UI payloads correctly
+- [x] Streaming mode supported
+- [x] Action callbacks work
+- [x] Storybook documentation
+
+---
+
+### 5.6 A2UI Examples
+
+**Priority:** P2-Medium
+**Effort:** Low (1-2 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Need example A2UI payloads to demonstrate capabilities and for testing.
+
+#### Solution Design
+
+Transform Google's reference examples plus create crypto-specific ones:
+
+```typescript
+// src/a2a/examples/restaurant-finder.ts
+export const restaurantFinderExamples = {
+    singleColumnList: [...],    // Restaurant listing
+    bookingForm: [...],         // Reservation form
+    confirmation: [...]         // Booking confirmation
+};
+
+// src/a2a/examples/rizzcharts.ts
+export const rizzchartsExamples = {
+    salesDashboard: [...],      // Analytics dashboard
+    locationMap: [...],         // Store locations
+    cryptoPortfolio: [...],     // Portfolio holdings
+    tradingInterface: [...]     // Trade execution
+};
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/a2a/examples/index.ts` | Example exports |
+| `src/a2a/examples/restaurant-finder.ts` | Restaurant booking examples |
+| `src/a2a/examples/rizzcharts.ts` | Analytics & crypto examples |
+
+#### Success Criteria
+
+- [x] Google examples transformed
+- [x] Crypto-specific examples added
+- [x] All examples render correctly
+- [x] Used in Storybook stories
+
+---
+
+### Phase 5 Test Coverage
+
+**File:** `tests/unit/a2a.test.ts`
+**Tests:** 30+
+
+| Test Group | Tests |
+|------------|-------|
+| Data Binding | 3 tests |
+| Transformer State | 3 tests |
+| Component Transformation | 15+ tests |
+| Validation | 4 tests |
+| Examples | 5+ tests |
+
+```bash
+# Run A2A tests
+bun test tests/unit/a2a.test.ts
+```
+
+---
+
+## Phase 6: Agent Hub UI
+
+### 6.1 Agent Hub Page
+
+**Priority:** P2-Medium
+**Effort:** Medium (3-4 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Users need a centralized place to discover, browse, and connect to A2A-compliant agents—an "App Store" for AI agents.
+
+#### Solution Design
+
+```tsx
+// src/pages/AgentHub.tsx
+
+export const AgentHub: React.FC = () => {
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+
+    const agents = getCuratedAgents(selectedCategory || undefined);
+    const filteredAgents = agents.filter(a =>
+        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
+        <GlassContainer className="min-h-screen p-8">
+            {/* Category Grid */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+                {AGENT_CATEGORIES.map(cat => (
+                    <CategoryCard key={cat.id} category={cat} />
+                ))}
+            </div>
+
+            {/* Agent Grid */}
+            <div className="grid grid-cols-3 gap-6">
+                {filteredAgents.map(agent => (
+                    <AgentCard
+                        key={agent.id}
+                        agent={agent}
+                        onClick={() => setSelectedAgent(agent)}
+                    />
+                ))}
+            </div>
+
+            {/* Chat Window (when agent selected) */}
+            {selectedAgent && (
+                <AgentChatWindow
+                    agent={selectedAgent}
+                    onClose={() => setSelectedAgent(null)}
+                />
+            )}
+        </GlassContainer>
+    );
+};
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/pages/AgentHub.tsx` | Main Agent Hub page |
+| `src/Router.tsx` | Route added at `/hub` |
+| `src/components/navigation/GlassDock.tsx` | Compass icon added |
+
+#### Success Criteria
+
+- [x] Agent Hub page accessible at `/hub`
+- [x] Category filtering works
+- [x] Search functionality
+- [x] Agent selection opens chat
+
+---
+
+### 6.2 Agent Card Components
+
+**Priority:** P2-Medium
+**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Need visually appealing cards to showcase agents with their capabilities, with 3D perspective hover effects matching the Glass design system.
+
+#### Solution Design
+
+```tsx
+// src/components/agents/AgentCard.tsx
+
+export const AgentCard: React.FC<AgentCardProps> = ({ agent, size = 'md', onClick }) => {
+    const [ref, bounds] = useMeasure();
+
+    // 3D perspective tracking
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    // Spring physics for smooth animation
+    const springConfig = { stiffness: 150, damping: 15, mass: 0.1 };
+    const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), springConfig);
+    const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
+
+    return (
+        <motion.div
+            ref={ref}
+            style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+            className={cn(sizeClasses[size], 'perspective-1000')}
+            onClick={() => onClick?.(agent)}
+        >
+            <GlassContainer className="h-full">
+                {/* Category gradient header */}
+                <div className={cn('h-2 rounded-t-xl', categoryGradients[agent.category])} />
+
+                {/* Agent icon */}
+                <div className="text-5xl mb-4">{agent.icon}</div>
+
+                {/* Info */}
+                <h3>{agent.name}</h3>
+                <p>{agent.description}</p>
+
+                {/* Capabilities */}
+                <div className="flex flex-wrap gap-2">
+                    {agent.capabilities.map(cap => (
+                        <GlassBadge key={cap}>{cap}</GlassBadge>
+                    ))}
+                </div>
+            </GlassContainer>
+        </motion.div>
+    );
+};
+
+// Compact variant for lists
+export const AgentCardCompact: React.FC<AgentCardCompactProps> = ({ agent, onClick }) => (
+    <GlassContainer className="flex items-center gap-4 p-3">
+        <span className="text-2xl">{agent.icon}</span>
+        <div>
+            <h4>{agent.name}</h4>
+            <p className="text-sm text-white/60">{agent.description}</p>
+        </div>
+    </GlassContainer>
+);
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/components/agents/AgentCard.tsx` | Card component with 3D effects |
+| `src/components/agents/AgentCard.stories.tsx` | Storybook documentation |
+| `src/components/agents/index.ts` | Component exports |
+
+#### Storybook Stories
+
+- Default, Small, Large sizes
+- WithClick handler
+- GridOfAgents layout
+- CompactVariant
+- AllSizes comparison
+- DifferentCategories showcase
+
+#### Success Criteria
+
+- [x] 3D perspective hover effects
+- [x] Multiple size variants (sm, md, lg)
+- [x] Compact variant for lists
+- [x] Category color gradients
+- [x] Storybook documentation
+
+---
+
+### 6.3 Agent Probe Discovery
+
+**Priority:** P2-Medium
+**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Users need to connect to external A2A agents by URL, with visual feedback about agent discovery and capabilities.
+
+#### Solution Design
+
+```tsx
+// src/components/agents/AgentProbe.tsx
+
+export const AgentProbe: React.FC<AgentProbeProps> = ({ onAgentFound }) => {
+    const [url, setUrl] = useState('');
+    const [status, setStatus] = useState<ProbeStatus>('idle');
+    const [agentCard, setAgentCard] = useState<AgentCard | null>(null);
+
+    const handleProbe = async () => {
+        setStatus('probing');
+        try {
+            const client = new A2AClient(url);
+            const card = await client.getAgentCard();
+            setAgentCard(card);
+            setStatus('success');
+            onAgentFound?.(card);
+        } catch (error) {
+            setStatus('error');
+        }
+    };
+
+    return (
+        <GlassContainer className="p-6">
+            <GlassInput
+                value={url}
+                onChange={setUrl}
+                placeholder="https://agent.example.com"
+                suffix={<ProbeButton onClick={handleProbe} status={status} />}
+            />
+
+            {/* Status indicators */}
+            {status === 'probing' && <GlassLoader />}
+            {status === 'success' && <AgentCardPreview card={agentCard} />}
+            {status === 'error' && <ErrorMessage />}
+        </GlassContainer>
+    );
+};
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/components/agents/AgentProbe.tsx` | URL probe component |
+
+#### Key Features
+
+- URL input with probe button
+- Status indicators (idle, probing, success, error)
+- Agent Card preview on success
+- Capability validation
+- Error handling with retry
+
+#### Success Criteria
+
+- [x] Probe `/.well-known/agent.json` endpoint
+- [x] Visual status feedback
+- [x] Agent Card preview
+- [x] Error handling
+
+---
+
+### 6.4 Agent Chat Window
+
+**Priority:** P2-Medium
+**Effort:** Medium (3-4 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Users need an interactive chat interface to communicate with agents, with A2UI rendering for rich responses.
+
+#### Solution Design
+
+```tsx
+// src/components/agents/AgentChatWindow.tsx
+
+export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
+    agent,
+    onClose,
+    initialMessage
+}) => {
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [input, setInput] = useState('');
+    const [a2uiMessages, setA2UIMessages] = useState<A2UIMessage[]>([]);
+
+    const client = useMemo(() =>
+        agent.url ? new A2AClient(agent.url) : null
+    , [agent.url]);
+
+    const sendMessage = async () => {
+        if (!input.trim()) return;
+
+        setMessages(prev => [...prev, { role: 'user', content: input }]);
+        setInput('');
+
+        if (client) {
+            // Stream response from A2A agent
+            for await (const event of client.streamText(input)) {
+                if (event.type === 'artifact') {
+                    const a2ui = event.artifact.parts.find(p => p.kind === 'a2ui');
+                    if (a2ui) setA2UIMessages(a2ui.messages);
+                }
+            }
+        }
+    };
+
+    return (
+        <GlassWindow
+            title={`Chat with ${agent.name}`}
+            onClose={onClose}
+            initialSize={{ width: 600, height: 500 }}
+        >
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto space-y-4">
+                {messages.map((msg, i) => (
+                    <MessageBubble key={i} message={msg} />
+                ))}
+
+                {/* A2UI Rendering */}
+                {a2uiMessages.length > 0 && (
+                    <GlassA2UIRenderer messages={a2uiMessages} />
+                )}
+            </div>
+
+            {/* Input */}
+            <div className="flex gap-2 p-4 border-t border-white/10">
+                <GlassInput
+                    value={input}
+                    onChange={setInput}
+                    onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                    placeholder="Type a message..."
+                />
+                <GlassButton onClick={sendMessage}>Send</GlassButton>
+            </div>
+        </GlassWindow>
+    );
+};
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/components/agents/AgentChatWindow.tsx` | Chat window component |
+
+#### Key Features
+
+- GlassWindow-based modal
+- Message history
+- A2UI rendering for rich responses
+- Streaming support
+- Curated agent quick responses
+
+#### Success Criteria
+
+- [x] Chat interface works
+- [x] A2UI responses render correctly
+- [x] Streaming updates display
+- [x] Window draggable/resizable
+
+---
+
+### 6.5 Curated Agent Registry
+
+**Priority:** P2-Medium
+**Effort:** Low (1-2 hours)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Need a registry of curated agents for discovery, organized by categories.
+
+#### Solution Design
+
+```typescript
+// src/services/agents/registry.ts
+
+export interface Agent {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: AgentCategory;
+    url?: string;
+    capabilities: string[];
+    samplePrompts: string[];
+}
+
+export type AgentCategory =
+    | 'finance' | 'commerce' | 'analytics' | 'security'
+    | 'creative' | 'productivity' | 'developer' | 'communication';
+
+export const AGENT_CATEGORIES = [
+    { id: 'finance', name: 'Finance', icon: '💰', gradient: 'from-green-500 to-emerald-600' },
+    { id: 'commerce', name: 'Commerce', icon: '🛒', gradient: 'from-blue-500 to-indigo-600' },
+    { id: 'analytics', name: 'Analytics', icon: '📊', gradient: 'from-purple-500 to-violet-600' },
+    { id: 'security', name: 'Security', icon: '🔒', gradient: 'from-red-500 to-rose-600' },
+    { id: 'creative', name: 'Creative', icon: '🎨', gradient: 'from-pink-500 to-fuchsia-600' },
+    { id: 'productivity', name: 'Productivity', icon: '⚡', gradient: 'from-yellow-500 to-amber-600' },
+    { id: 'developer', name: 'Developer', icon: '💻', gradient: 'from-cyan-500 to-teal-600' },
+    { id: 'communication', name: 'Communication', icon: '💬', gradient: 'from-orange-500 to-red-600' },
+];
+
+export const CURATED_AGENTS: Agent[] = [
+    // Finance
+    { id: 'restaurant-finder', name: 'Restaurant Finder', category: 'commerce', ... },
+    { id: 'portfolio-analyzer', name: 'Portfolio Analyzer', category: 'finance', ... },
+    // ... 8+ curated agents
+];
+
+export function getCuratedAgents(category?: AgentCategory): Agent[] {
+    if (!category) return CURATED_AGENTS;
+    return CURATED_AGENTS.filter(a => a.category === category);
+}
+```
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/services/agents/registry.ts` | Agent registry |
+| `src/services/agents/index.ts` | Service exports |
+
+#### Curated Agents
+
+| Agent | Category | Description |
+|-------|----------|-------------|
+| Restaurant Finder | Commerce | Find and book restaurants |
+| Portfolio Analyzer | Finance | Analyze crypto portfolios |
+| Sales Dashboard | Analytics | Visualize sales metrics |
+| Code Assistant | Developer | Help with coding tasks |
+| Security Auditor | Security | Security analysis |
+| Content Creator | Creative | Generate content |
+| Task Manager | Productivity | Manage tasks |
+| Team Chat | Communication | Team messaging |
+
+#### Success Criteria
+
+- [x] 8 categories defined
+- [x] 8+ curated agents
+- [x] Filter by category
+- [x] Sample prompts provided
+
+---
+
+### 6.6 Two Worlds Integration
+
+**Priority:** P2-Medium
+**Effort:** Low (1 hour)
+**Status:** ✅ Complete
+
+#### Problem Statement
+
+Agent Hub needs to integrate with both "Two Worlds" paradigms—the spatial Liquid OS and the focused Rush Hour terminal.
+
+#### Solution Design
+
+| Feature | Liquid OS | Rush Hour |
+|---------|-----------|-----------|
+| Access | Dock → Compass icon | `/hub` command |
+| Layout | Floating windows | Full-screen modal |
+| Chat | GlassWindow | Inline terminal |
+| Navigation | Spatial positioning | Keyboard shortcuts |
+
+#### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/components/navigation/GlassDock.tsx` | Added Compass icon for Agent Hub |
+| `src/Router.tsx` | Added `/hub` route |
+
+#### Success Criteria
+
+- [x] Dock icon navigates to Agent Hub
+- [x] Route works at `/hub`
+- [x] Consistent with Two Worlds paradigm
+
+---
+
+### Phase 6 Test Coverage
+
+**Component Tests:** AgentCard, AgentProbe, AgentChatWindow
+**Integration Tests:** Registry service, Agent discovery flow
+
+```bash
+# Run Agent Hub tests
+bun test tests/unit/agents.test.ts
+```
+
+---
+
 ## Implementation Checklist
 
 ### Phase 1: Critical (Complete First)
@@ -1637,6 +2568,24 @@ Out of scope for this implementation plan. Recommend tracking as separate epic.
 - [x] 4.2 Self-Healing Production Loop
 - [x] 4.3 Multi-Agent Orchestration
 - [x] 4.4 Federated Plugin Registry
+
+### Phase 5: A2A Protocol Integration (Complete)
+
+- [x] 5.1 A2A Protocol Types
+- [x] 5.2 A2UI Transformer
+- [x] 5.3 A2A Client
+- [x] 5.4 A2A Server Handler
+- [x] 5.5 A2UI Renderer Component
+- [x] 5.6 A2UI Examples
+
+### Phase 6: Agent Hub UI (Complete)
+
+- [x] 6.1 Agent Hub Page
+- [x] 6.2 Agent Card Components
+- [x] 6.3 Agent Probe Discovery
+- [x] 6.4 Agent Chat Window
+- [x] 6.5 Curated Agent Registry
+- [x] 6.6 Two Worlds Integration
 
 ---
 

@@ -31,6 +31,9 @@ const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mo
 const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
 const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
 
+// Agent Hub
+const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
+
 // Docs
 const CopilotDocs = lazy(() => import('./pages/showcase/CopilotDocs').then(mod => ({ default: mod.default })));
 const AIResearcherDocs = lazy(() => import('./pages/showcase/AIResearcherDocs').then(mod => ({ default: mod.default })));
@@ -120,6 +123,7 @@ export const AppRouter = () => {
                                 <Route path="/os/design" element={<DesignGuide />} />
                                 <Route path="/os/showcase" element={<Showcase />} />
                                 <Route path="/os/icons" element={<SFSymbolsViewer />} />
+                                <Route path="/os/agents" element={<AgentHub />} />
 
                                 {/* Demos */}
                                 <Route path="/os/demos/generative" element={<GenerativeShowcase />} />

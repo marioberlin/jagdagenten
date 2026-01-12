@@ -5,7 +5,7 @@ import { GlassDock } from '@/components/navigation/GlassDock';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
 import { GlassSettingsPanel } from '@/components/settings/GlassSettingsPanel';
-import { Terminal, Settings, Layout, Command, Zap } from 'lucide-react';
+import { Terminal, Settings, Layout, Command, Zap, Compass } from 'lucide-react';
 
 /**
  * LiquidOSLayout
@@ -31,6 +31,12 @@ export const LiquidOSLayout: React.FC = () => {
             icon: Zap,
             label: 'RushHour Terminal',
             onClick: () => navigate('/terminal') // Triggers Portal transition
+        },
+        {
+            id: 'agent-hub',
+            icon: Compass,
+            label: 'Agent Hub',
+            onClick: () => navigate('/os/agents')
         },
         {
             id: 'design-system',

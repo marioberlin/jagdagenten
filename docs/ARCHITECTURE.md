@@ -10,10 +10,12 @@
 3. [Frontend Architecture](#frontend-architecture)
 4. [Backend Architecture](#backend-architecture)
 5. [AI Integration (Liquid Engine)](#ai-integration-liquid-engine)
-6. [Data Flow](#data-flow)
-7. [Design System](#design-system)
-8. [Security Architecture](#security-architecture)
-9. [Deployment Architecture](#deployment-architecture)
+6. [A2A Protocol Integration](#a2a-protocol-integration)
+7. [Agent Hub UI](#agent-hub-ui)
+8. [Data Flow](#data-flow)
+9. [Design System](#design-system)
+10. [Security Architecture](#security-architecture)
+11. [Deployment Architecture](#deployment-architecture)
 
 ---
 
@@ -455,6 +457,436 @@ class LiquidClient {
 │     [Widget][Widget][Widget]                                │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## A2A Protocol Integration
+
+LiquidCrypto implements Google's Agent-to-Agent (A2A) protocol for interoperability with external AI agents and supports A2UI rendering for declarative UI generation.
+
+### A2A Architecture Overview
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      A2A Protocol Architecture                          │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  External Agents                          LiquidCrypto Server          │
+│  ──────────────                          ──────────────────            │
+│                                                                        │
+│  ┌──────────────┐    JSON-RPC 2.0       ┌──────────────────────┐      │
+│  │  Restaurant  │◄───────────────────►  │                      │      │
+│  │   Finder     │                       │   A2A Handler        │      │
+│  └──────────────┘                       │   /a2a (POST)        │      │
+│                                         │   /a2a/stream (SSE)  │      │
+│  ┌──────────────┐    A2UI Messages      │                      │      │
+│  │  RizzCharts  │◄───────────────────►  │   /.well-known/      │      │
+│  │   Analytics  │                       │   agent.json         │      │
+│  └──────────────┘                       │                      │      │
+│                                         └──────────┬───────────┘      │
+│  ┌──────────────┐                                  │                  │
+│  │   Custom     │                                  ▼                  │
+│  │   Agent      │                       ┌──────────────────────┐      │
+│  └──────────────┘                       │   A2UI Transformer   │      │
+│                                         │   transformA2UI()    │      │
+│                                         └──────────┬───────────┘      │
+│                                                    │                  │
+│                                                    ▼                  │
+│                                         ┌──────────────────────┐      │
+│                                         │   Glass Components   │      │
+│                                         │   GlassA2UIRenderer  │      │
+│                                         └──────────────────────┘      │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Protocol Components
+
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **A2A Client** | Connect to external A2A agents | `src/a2a/client.ts` |
+| **A2A Handler** | Handle incoming A2A requests | `server/src/a2a/handler.ts` |
+| **A2UI Transformer** | Convert A2UI to Glass UINode | `src/a2a/transformer.ts` |
+| **A2UI Renderer** | React component for rendering | `src/components/agentic/GlassA2UIRenderer.tsx` |
+| **Agent Card** | Agent metadata discovery | `server/src/a2a/handler.ts` |
+
+### A2A API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/.well-known/agent.json` | GET | Agent Card discovery |
+| `/a2a` | POST | JSON-RPC 2.0 A2A requests |
+| `/a2a/stream` | POST | SSE streaming for A2UI updates |
+
+### A2A JSON-RPC Methods
+
+| Method | Description |
+|--------|-------------|
+| `agent/card` | Get agent metadata |
+| `message/send` | Send message to create task |
+| `tasks/get` | Get task by ID |
+| `tasks/list` | List tasks for context |
+| `tasks/cancel` | Cancel running task |
+
+### A2UI Component Mapping
+
+A2UI components are transformed to Glass UINode types:
+
+| A2UI Component | Glass UINode | Notes |
+|----------------|--------------|-------|
+| `Text` | `text` | Direct mapping |
+| `Button` | `button` | Action binding supported |
+| `Row` | `stack` (horizontal) | `direction: 'horizontal'` |
+| `Column` | `stack` (vertical) | `direction: 'vertical'` |
+| `Card` | `card` | Material support |
+| `List` | `list` | Ordered/unordered |
+| `TextInput` | `input` | Type: text |
+| `NumberInput` | `input` | Type: number |
+| `SelectInput` | `select` | Options array |
+| `Image` | `image` | URL source |
+| `Link` | `link` | External/internal |
+| `Badge` | `badge` | Variant mapping |
+| `Progress` | `progress` | Value 0-100 |
+| `Divider` | `divider` | Horizontal rule |
+| `Spacer` | `spacer` | Flexible spacing |
+
+### Data Binding
+
+A2UI supports three binding types for dynamic data:
+
+```typescript
+// 1. Literal String - static value
+{ literalString: "Hello World" }
+
+// 2. Path Reference - from dataModel
+{ path: "$.restaurants[0].name" }
+
+// 3. Template Context - combined
+{ template: "Welcome, {{user.name}}!" }
+```
+
+### Task Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    A2A Task State Machine                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌───────────┐                                                  │
+│  │ submitted │ ──► Initial state when task created              │
+│  └─────┬─────┘                                                  │
+│        │                                                         │
+│        ▼                                                         │
+│  ┌───────────┐                                                  │
+│  │  working  │ ──► Agent processing, may send A2UI updates      │
+│  └─────┬─────┘                                                  │
+│        │                                                         │
+│   ┌────┴────┐                                                   │
+│   ▼         ▼                                                   │
+│ ┌─────┐  ┌────────┐                                             │
+│ │done │  │ failed │                                             │
+│ └─────┘  └────────┘                                             │
+│                                                                  │
+│  Additional states: input_required, cancelled                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Security Validation
+
+A2UI payloads are validated before transformation:
+
+```typescript
+// Component Catalog with limits
+const GLASS_COMPONENT_CATALOG = {
+    GlassContainer: { maxChildren: 20, requiresAuth: false },
+    GlassCard: { maxChildren: 10, requiresAuth: false },
+    GlassButton: { maxChildren: 1, requiresAuth: false },
+    // ... 25+ validated component types
+};
+
+// Validation limits
+const MAX_COMPONENTS = 500;  // Prevent DoS
+const MAX_DEPTH = 10;        // Prevent deep nesting
+```
+
+### Usage Examples
+
+#### Connecting to External Agent
+
+```typescript
+import { A2AClient, createA2AClient } from '@/a2a';
+
+// Create client
+const client = createA2AClient('https://agent.example.com', {
+    timeout: 30000,
+    retries: 3
+});
+
+// Send message
+const task = await client.sendText('Find restaurants near me');
+
+// Stream response with A2UI updates
+for await (const event of client.streamText('Show sales dashboard')) {
+    if (event.type === 'message' && event.message.parts) {
+        const a2uiParts = client.extractA2UIParts(event);
+        // Render A2UI updates
+    }
+}
+```
+
+#### Rendering A2UI in React
+
+```tsx
+import { GlassA2UIRenderer } from '@/components/agentic';
+
+function AgentUI({ messages }) {
+    return (
+        <GlassA2UIRenderer
+            messages={messages}
+            onAction={(actionId, data) => {
+                console.log('User action:', actionId, data);
+            }}
+            streaming={true}
+        />
+    );
+}
+```
+
+#### Using Connected Renderer
+
+```tsx
+import { ConnectedA2UIRenderer } from '@/components/agentic';
+
+function ChatWithAgent() {
+    return (
+        <ConnectedA2UIRenderer
+            agentUrl="https://agent.example.com"
+            initialPrompt="Show me analytics"
+            onAction={(actionId, data) => handleAction(actionId, data)}
+        />
+    );
+}
+```
+
+### Directory Structure
+
+```
+src/a2a/
+├── index.ts              # Module exports
+├── types.ts              # A2A & A2UI type definitions
+├── client.ts             # A2A protocol client
+├── transformer.ts        # A2UI → Glass transformer
+└── examples/
+    ├── index.ts          # Example exports
+    ├── restaurant-finder.ts  # Restaurant booking examples
+    └── rizzcharts.ts     # Analytics & crypto examples
+
+server/src/a2a/
+├── index.ts              # Server exports
+├── types.ts              # Server-side types
+└── handler.ts            # JSON-RPC handler
+
+src/components/agentic/
+├── GlassA2UIRenderer.tsx        # A2UI rendering component
+└── GlassA2UIRenderer.stories.tsx # Storybook stories
+```
+
+### References
+
+- [A2A Protocol Specification](https://a2a-protocol.org)
+- [A2UI Specification](https://a2ui.org)
+- [A2UI v0.8 Changelog](https://a2ui.org/changelog)
+
+---
+
+## Agent Hub UI
+
+The Agent Hub provides a beautiful "App Store" experience for discovering, connecting to, and conversing with A2A-compliant AI agents.
+
+### Agent Hub Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                         Agent Hub Architecture                              │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  User Interface (Liquid OS)                                                │
+│  ─────────────────────────                                                 │
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │                      AgentHub Page                                   │  │
+│  │  /os/agents                                                          │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────────┐ │  │
+│  │  │   AgentProbe    │  │   AgentCard     │  │  AgentChatWindow     │ │  │
+│  │  │   URL Discovery │  │   3D Cards      │  │  GlassWindow Chat    │ │  │
+│  │  └────────┬────────┘  └────────┬────────┘  └──────────┬───────────┘ │  │
+│  │           │                    │                      │              │  │
+│  │           └────────────────────┼──────────────────────┘              │  │
+│  │                                │                                      │  │
+│  └────────────────────────────────┼──────────────────────────────────────┘  │
+│                                   │                                         │
+│                                   ▼                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      Agent Registry                                  │   │
+│  │  src/services/agents/registry.ts                                     │   │
+│  │                                                                       │   │
+│  │  • getCuratedAgents()    • getAgentsByCategory()                     │   │
+│  │  • getFeaturedAgents()   • searchAgents()                            │   │
+│  │  • getCategoryInfo()     • getAgentById()                            │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                   │                                         │
+│                                   ▼                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      A2A Client                                      │   │
+│  │  src/a2a/client.ts                                                   │   │
+│  │                                                                       │   │
+│  │  • getAgentCard()        • streamText()                              │   │
+│  │  • sendText()            • extractA2UIParts()                        │   │
+│  └──────────────────────────────────┬──────────────────────────────────┘   │
+│                                     │                                       │
+│                                     ▼                                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                 External A2A Agents                                  │   │
+│  │  /.well-known/agent.json                                             │   │
+│  │                                                                       │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐ │   │
+│  │  │Restaurant│  │  Crypto  │  │RizzCharts│  │   Custom Agents      │ │   │
+│  │  │ Finder   │  │ Advisor  │  │Analytics │  │   via URL Probe      │ │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Agent Hub Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **AgentHub** | `src/pages/agents/AgentHub.tsx` | Main hub page with search, categories, featured agents |
+| **AgentCard** | `src/components/agents/AgentCard.tsx` | 3D perspective card with hover effects |
+| **AgentCardCompact** | `src/components/agents/AgentCard.tsx` | Compact variant for list views |
+| **AgentProbe** | `src/components/agents/AgentProbe.tsx` | URL-based agent discovery |
+| **AgentChatWindow** | `src/components/agents/AgentChatWindow.tsx` | Chat interface using GlassWindow |
+| **Registry** | `src/services/agents/registry.ts` | Curated agent data and search functions |
+
+### Agent Categories
+
+| Category | Icon | Color | Description |
+|----------|------|-------|-------------|
+| Finance | 📈 | `#10B981` | Trading, portfolio, and financial analysis |
+| Commerce | 🛒 | `#F59E0B` | Shopping, booking, and transactions |
+| Analytics | 📊 | `#6366F1` | Data visualization and insights |
+| Security | 🔐 | `#EF4444` | Authentication and protection |
+| Creative | 🎨 | `#EC4899` | Design, images, and content creation |
+| Productivity | ⚡ | `#8B5CF6` | Tasks, notes, and workflows |
+| Developer | 💻 | `#06B6D4` | Code, APIs, and technical tools |
+| Communication | 💬 | `#14B8A6` | Chat, email, and messaging |
+
+### Agent Card 3D Effects
+
+The AgentCard uses framer-motion for perspective transforms:
+
+```typescript
+// Spring physics configuration
+const springConfig = { stiffness: 150, damping: 15, mass: 0.1 };
+
+// Mouse-driven rotation
+const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), springConfig);
+const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
+
+// Applied to card
+<motion.div
+    style={{
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
+    }}
+/>
+```
+
+### Agent Discovery Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Agent Discovery Flow                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. User enters URL in AgentProbe                                │
+│     └──▶ Example: "restaurant-agent.example.com"                │
+│                                                                  │
+│  2. URL normalization                                            │
+│     └──▶ Add https:// if missing                                │
+│     └──▶ Remove trailing slashes                                │
+│                                                                  │
+│  3. Probe agent card endpoint                                    │
+│     └──▶ GET https://restaurant-agent.example.com/              │
+│          .well-known/agent.json                                 │
+│                                                                  │
+│  4. Validate response                                            │
+│     └──▶ Check required fields (name, url)                      │
+│     └──▶ Parse capabilities                                     │
+│                                                                  │
+│  5. Display discovered agent                                     │
+│     └──▶ Show agent card with capabilities                      │
+│     └──▶ Enable "Connect" button                                │
+│                                                                  │
+│  6. Connect to agent                                             │
+│     └──▶ Open AgentChatWindow                                   │
+│     └──▶ Initialize A2A client                                  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Chat Window Features
+
+The AgentChatWindow provides:
+
+- **GlassWindow Integration**: Draggable windows with macOS-style traffic lights
+- **Connection Status**: Real-time connection indicator
+- **Streaming Support**: Progressive response rendering
+- **A2UI Rendering**: Rich UI responses using GlassA2UIRenderer
+- **Error Handling**: Retry mechanism with error display
+- **Focus Management**: Multiple concurrent chat windows
+
+### Two Worlds Integration
+
+| World | Route | Experience |
+|-------|-------|------------|
+| **Liquid OS** | `/os/agents` | Full spatial exploration, floating windows |
+| **Rush Hour** | (Future) | Sidebar panel, compact agent list |
+
+**GlassDock Integration:**
+```typescript
+// Added to LiquidOSLayout.tsx
+{
+    id: 'agent-hub',
+    icon: Compass,
+    label: 'Agent Hub',
+    onClick: () => navigate('/os/agents')
+}
+```
+
+### Directory Structure
+
+```
+src/
+├── components/agents/
+│   ├── index.ts              # Barrel exports
+│   ├── AgentCard.tsx         # 3D card with hover effects
+│   ├── AgentCard.stories.tsx # Storybook stories
+│   ├── AgentProbe.tsx        # URL discovery
+│   ├── AgentProbe.stories.tsx
+│   ├── AgentChatWindow.tsx   # Chat interface
+│   └── AgentHub.stories.tsx
+│
+├── pages/agents/
+│   └── AgentHub.tsx          # Main hub page
+│
+└── services/agents/
+    └── registry.ts           # Agent registry & helpers
 ```
 
 ---
