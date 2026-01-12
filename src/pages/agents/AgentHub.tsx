@@ -66,6 +66,18 @@ export const AgentHub: React.FC = () => {
         return agents;
     }, [searchQuery, selectedCategory]);
 
+    // Calculate center position for new chat window
+    const getCenteredPosition = (index: number) => {
+        // Default to a reasonable center if window is not available (SSR)
+        if (typeof window === 'undefined') return { x: 400, y: 100 };
+
+        const width = 500; // Chat window width
+        const x = (window.innerWidth / 2) - (width / 2) + (index * 20);
+        const y = 80 + (index * 20); // Top-biased center
+
+        return { x: Math.max(0, x), y: Math.max(0, y) };
+    };
+
     const featuredAgents = useMemo(() => getFeaturedAgents(), []);
 
     const handleAgentDiscovered = (url: string, card: A2AAgentCard) => {
@@ -84,12 +96,7 @@ export const AgentHub: React.FC = () => {
             return;
         }
 
-        // Calculate position for new chat window
-        const offset = openChats.length * 30;
-        const position = {
-            x: 200 + offset,
-            y: 100 + offset
-        };
+        const position = getCenteredPosition(openChats.length);
 
         setOpenChats(prev => [...prev, { agent, position }]);
         setActiveChat(agent.id);
@@ -107,280 +114,288 @@ export const AgentHub: React.FC = () => {
         setActiveChat(agentId);
     };
 
+    const isChatOpen = openChats.length > 0;
+
     return (
-        <div className="w-full h-full overflow-y-auto overflow-x-hidden">
-            {/* Hero Section */}
-            <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="relative px-8 pt-12 pb-16"
-            >
-                {/* Gradient Orb Background */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none">
-                    <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl" />
-                </div>
-
-                <div className="relative max-w-6xl mx-auto text-center">
-                    {/* Title */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.1, duration: 0.5 }}
-                    >
-                        <div className="flex items-center justify-center gap-3 mb-4">
-                            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10">
-                                <Compass className="w-8 h-8 text-indigo-400" />
-                            </div>
-                        </div>
-                        <h1 className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/40 tracking-tight mb-4">
-                            Agent Hub
-                        </h1>
-                        <p className="text-xl text-white/50 font-light max-w-2xl mx-auto">
-                            Discover, connect, and orchestrate AI agents from around the world.
-                            Your gateway to the A2A ecosystem.
-                        </p>
-                    </motion.div>
-
-                    {/* Search Bar */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.5 }}
-                        className="mt-10 max-w-2xl mx-auto"
-                    >
-                        <div className="relative group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-                            <div className="relative flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
-                                <Search className="w-5 h-5 text-white/40" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search agents by name, category, or capability..."
-                                    className="flex-1 bg-transparent text-white placeholder:text-white/30 outline-none text-base font-light"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                                    >
-                                        <X size={16} className="text-white/40" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="flex items-center justify-center gap-4 mt-4">
-                            <button
-                                onClick={() => setShowProbe(!showProbe)}
-                                className={cn(
-                                    'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
-                                    showProbe
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white'
-                                )}
-                            >
-                                <Globe size={16} />
-                                <span>Discover by URL</span>
-                            </button>
-                            <div className="h-6 w-px bg-white/10" />
-                            <button
-                                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm font-medium transition-all"
-                            >
-                                {viewMode === 'grid' ? <LayoutList size={16} /> : <Grid3X3 size={16} />}
-                                <span>{viewMode === 'grid' ? 'List View' : 'Grid View'}</span>
-                            </button>
-                        </div>
-                    </motion.div>
-
-                    {/* URL Probe Panel */}
-                    <AnimatePresence>
-                        {showProbe && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="mt-6 max-w-2xl mx-auto"
-                            >
-                                <AgentProbe onAgentDiscovered={handleAgentDiscovered} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </motion.section>
-
-            {/* Categories */}
-            <motion.section
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="px-8 pb-8"
-            >
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        <CategoryPill
-                            active={selectedCategory === 'all'}
-                            onClick={() => setSelectedCategory('all')}
-                            icon={<Sparkles size={14} />}
-                            label="All Agents"
-                            count={getCuratedAgents().length}
-                        />
-                        {AGENT_CATEGORIES.map((cat) => (
-                            <CategoryPill
-                                key={cat.id}
-                                active={selectedCategory === cat.id}
-                                onClick={() => setSelectedCategory(cat.id)}
-                                icon={<span className="text-sm">{cat.icon}</span>}
-                                label={cat.name}
-                                count={getAgentsByCategory(cat.id).length}
-                                color={cat.color}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </motion.section>
-
-            {/* Featured Section (only show when no search) */}
-            {!searchQuery && selectedCategory === 'all' && (
+        <div className="w-full h-full relative">
+            {/* Main Content Layer */}
+            <div className={cn(
+                "w-full h-full overflow-y-auto overflow-x-hidden transition-all duration-500",
+                isChatOpen ? "opacity-30 blur-sm pointer-events-none scale-[0.98]" : "opacity-100 scale-100"
+            )}>
+                {/* Hero Section */}
                 <motion.section
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.5 }}
-                    className="px-8 pb-12"
+                    transition={{ duration: 0.6 }}
+                    className="relative px-8 pt-12 pb-16"
+                >
+                    {/* Gradient Orb Background */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none">
+                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl" />
+                    </div>
+
+                    <div className="relative max-w-6xl mx-auto text-center">
+                        {/* Title */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.1, duration: 0.5 }}
+                        >
+                            <div className="flex items-center justify-center gap-3 mb-4">
+                                <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10">
+                                    <Compass className="w-8 h-8 text-indigo-400" />
+                                </div>
+                            </div>
+                            <h1 className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/40 tracking-tight mb-4">
+                                Agent Hub
+                            </h1>
+                            <p className="text-xl text-white/50 font-light max-w-2xl mx-auto">
+                                Discover, connect, and orchestrate AI agents from around the world.
+                                Your gateway to the A2A ecosystem.
+                            </p>
+                        </motion.div>
+
+                        {/* Search Bar */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.5 }}
+                            className="mt-10 max-w-2xl mx-auto"
+                        >
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+                                <div className="relative flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+                                    <Search className="w-5 h-5 text-white/40" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search agents by name, category, or capability..."
+                                        className="flex-1 bg-transparent text-white placeholder:text-white/30 outline-none text-base font-light"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                                        >
+                                            <X size={16} className="text-white/40" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div className="flex items-center justify-center gap-4 mt-4">
+                                <button
+                                    onClick={() => setShowProbe(!showProbe)}
+                                    className={cn(
+                                        'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                                        showProbe
+                                            ? 'bg-indigo-500 text-white'
+                                            : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white'
+                                    )}
+                                >
+                                    <Globe size={16} />
+                                    <span>Discover by URL</span>
+                                </button>
+                                <div className="h-6 w-px bg-white/10" />
+                                <button
+                                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm font-medium transition-all"
+                                >
+                                    {viewMode === 'grid' ? <LayoutList size={16} /> : <Grid3X3 size={16} />}
+                                    <span>{viewMode === 'grid' ? 'List View' : 'Grid View'}</span>
+                                </button>
+                            </div>
+                        </motion.div>
+
+                        {/* URL Probe Panel */}
+                        <AnimatePresence>
+                            {showProbe && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-6 max-w-2xl mx-auto"
+                                >
+                                    <AgentProbe onAgentDiscovered={handleAgentDiscovered} />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.section>
+
+                {/* Categories */}
+                <motion.section
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="px-8 pb-8"
                 >
                     <div className="max-w-6xl mx-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-xl bg-yellow-500/20">
-                                    <Star size={18} className="text-yellow-400" />
-                                </div>
-                                <h2 className="text-2xl font-semibold text-white">Featured Agents</h2>
-                            </div>
-                            <button className="flex items-center gap-1 text-sm text-white/40 hover:text-white transition-colors">
-                                <span>View all</span>
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
-
-                        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-                            {featuredAgents.map((agent, index) => (
-                                <motion.div
-                                    key={agent.id}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
-                                >
-                                    <AgentCard
-                                        agent={agent}
-                                        size="lg"
-                                        onClick={() => handleAgentClick(agent)}
-                                    />
-                                </motion.div>
+                        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                            <CategoryPill
+                                active={selectedCategory === 'all'}
+                                onClick={() => setSelectedCategory('all')}
+                                icon={<Sparkles size={14} />}
+                                label="All Agents"
+                                count={getCuratedAgents().length}
+                            />
+                            {AGENT_CATEGORIES.map((cat) => (
+                                <CategoryPill
+                                    key={cat.id}
+                                    active={selectedCategory === cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    icon={<cat.icon size={14} />}
+                                    label={cat.name}
+                                    count={getAgentsByCategory(cat.id).length}
+                                    color={cat.color}
+                                />
                             ))}
                         </div>
                     </div>
                 </motion.section>
-            )}
 
-            {/* Main Agent Grid/List */}
-            <motion.section
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="px-8 pb-24"
-            >
-                <div className="max-w-6xl mx-auto">
-                    {/* Section Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-indigo-500/20">
-                                {searchQuery ? (
-                                    <Search size={18} className="text-indigo-400" />
-                                ) : (
-                                    <TrendingUp size={18} className="text-indigo-400" />
-                                )}
+                {/* Featured Section (only show when no search) */}
+                {!searchQuery && selectedCategory === 'all' && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                        className="px-8 pb-12"
+                    >
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-yellow-500/20">
+                                        <Star size={18} className="text-yellow-400 fill-yellow-400" />
+                                    </div>
+                                    <h2 className="text-2xl font-semibold text-white">Featured Agents</h2>
+                                </div>
+                                <button className="flex items-center gap-1 text-sm text-white/40 hover:text-white transition-colors">
+                                    <span>View all</span>
+                                    <ChevronRight size={16} />
+                                </button>
                             </div>
-                            <h2 className="text-2xl font-semibold text-white">
-                                {searchQuery
-                                    ? `Results for "${searchQuery}"`
-                                    : selectedCategory === 'all'
-                                        ? 'All Agents'
-                                        : AGENT_CATEGORIES.find(c => c.id === selectedCategory)?.name}
-                            </h2>
-                            <span className="text-sm text-white/40">
-                                ({filteredAgents.length} {filteredAgents.length === 1 ? 'agent' : 'agents'})
-                            </span>
+
+                            <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                                {featuredAgents.map((agent, index) => (
+                                    <motion.div
+                                        key={agent.id}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+                                    >
+                                        <AgentCard
+                                            agent={agent}
+                                            size="lg"
+                                            onClick={() => handleAgentClick(agent)}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </motion.section>
+                )}
 
-                    {/* Empty State */}
-                    {filteredAgents.length === 0 && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex flex-col items-center justify-center py-20"
-                        >
-                            <div className="p-4 rounded-2xl bg-white/5 mb-4">
-                                <Search size={32} className="text-white/20" />
+                {/* Main Agent Grid/List */}
+                <motion.section
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                    className="px-8 pb-24"
+                >
+                    <div className="max-w-6xl mx-auto">
+                        {/* Section Header */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-indigo-500/20">
+                                    {searchQuery ? (
+                                        <Search size={18} className="text-indigo-400" />
+                                    ) : (
+                                        <TrendingUp size={18} className="text-indigo-400" />
+                                    )}
+                                </div>
+                                <h2 className="text-2xl font-semibold text-white">
+                                    {searchQuery
+                                        ? `Results for "${searchQuery}"`
+                                        : selectedCategory === 'all'
+                                            ? 'All Agents'
+                                            : AGENT_CATEGORIES.find(c => c.id === selectedCategory)?.name}
+                                </h2>
+                                <span className="text-sm text-white/40">
+                                    ({filteredAgents.length} {filteredAgents.length === 1 ? 'agent' : 'agents'})
+                                </span>
                             </div>
-                            <h3 className="text-xl text-white/60 mb-2">No agents found</h3>
-                            <p className="text-white/40 text-center max-w-md">
-                                Try adjusting your search or explore by category.
-                                You can also discover agents by URL.
-                            </p>
-                            <button
-                                onClick={() => setShowProbe(true)}
-                                className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-medium transition-colors"
+                        </div>
+
+                        {/* Empty State */}
+                        {filteredAgents.length === 0 && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex flex-col items-center justify-center py-20"
                             >
-                                <Globe size={18} />
-                                <span>Discover by URL</span>
-                            </button>
-                        </motion.div>
-                    )}
-
-                    {/* Grid View */}
-                    {viewMode === 'grid' && filteredAgents.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredAgents.map((agent, index) => (
-                                <motion.div
-                                    key={agent.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: Math.min(index * 0.05, 0.5), duration: 0.4 }}
+                                <div className="p-4 rounded-2xl bg-white/5 mb-4">
+                                    <Search size={32} className="text-white/20" />
+                                </div>
+                                <h3 className="text-xl text-white/60 mb-2">No agents found</h3>
+                                <p className="text-white/40 text-center max-w-md">
+                                    Try adjusting your search or explore by category.
+                                    You can also discover agents by URL.
+                                </p>
+                                <button
+                                    onClick={() => setShowProbe(true)}
+                                    className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-medium transition-colors"
                                 >
-                                    <AgentCard
-                                        agent={agent}
-                                        size="md"
-                                        onClick={() => handleAgentClick(agent)}
-                                    />
-                                </motion.div>
-                            ))}
-                        </div>
-                    )}
+                                    <Globe size={18} />
+                                    <span>Discover by URL</span>
+                                </button>
+                            </motion.div>
+                        )}
 
-                    {/* List View */}
-                    {viewMode === 'list' && filteredAgents.length > 0 && (
-                        <div className="flex flex-col gap-3">
-                            {filteredAgents.map((agent, index) => (
-                                <motion.div
-                                    key={agent.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.3 }}
-                                >
-                                    <AgentCardCompact
-                                        agent={agent}
-                                        onClick={() => handleAgentClick(agent)}
-                                    />
-                                </motion.div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </motion.section>
+                        {/* Grid View */}
+                        {viewMode === 'grid' && filteredAgents.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {filteredAgents.map((agent, index) => (
+                                    <motion.div
+                                        key={agent.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: Math.min(index * 0.05, 0.5), duration: 0.4 }}
+                                    >
+                                        <AgentCard
+                                            agent={agent}
+                                            size="md"
+                                            onClick={() => handleAgentClick(agent)}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* List View */}
+                        {viewMode === 'list' && filteredAgents.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                                {filteredAgents.map((agent, index) => (
+                                    <motion.div
+                                        key={agent.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.3 }}
+                                    >
+                                        <AgentCardCompact
+                                            agent={agent}
+                                            onClick={() => handleAgentClick(agent)}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </motion.section>
+            </div>
 
             {/* Agent Detail Modal */}
             <AnimatePresence>
@@ -389,6 +404,22 @@ export const AgentHub: React.FC = () => {
                         agent={selectedAgent}
                         onClose={() => setSelectedAgent(null)}
                         onConnect={handleConnect}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Backdrop for open chats - only visible if connected */}
+            <AnimatePresence>
+                {isChatOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => {
+                            // Optional: Click backdrop to minimize all? 
+                            // For now let's just leave it neutral
+                        }}
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm z-30 pointer-events-none"
                     />
                 )}
             </AnimatePresence>
@@ -402,6 +433,7 @@ export const AgentHub: React.FC = () => {
                     isActive={activeChat === chat.agent.id}
                     onClose={() => handleCloseChat(chat.agent.id)}
                     onFocus={() => handleFocusChat(chat.agent.id)}
+                    className="z-40" // Ensure on top of backdrop
                 />
             ))}
         </div>
@@ -454,13 +486,15 @@ const AgentDetailModal: React.FC<{
     onConnect: (agent: CuratedAgent) => void;
 }> = ({ agent, onClose, onConnect }) => {
     const category = AGENT_CATEGORIES.find(c => c.id === agent.category);
+    const AgentIcon = agent.icon;
+    const CategoryIcon = category?.icon;
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-8"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-8"
         >
             {/* Backdrop */}
             <motion.div
@@ -503,13 +537,13 @@ const AgentDetailModal: React.FC<{
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.1, type: 'spring' }}
-                            className="flex-shrink-0 w-24 h-24 rounded-2xl flex items-center justify-center text-5xl"
+                            className="flex-shrink-0 w-24 h-24 rounded-2xl flex items-center justify-center text-5xl text-white"
                             style={{
                                 backgroundColor: `${agent.color || category?.color}20`,
                                 boxShadow: `0 8px 32px ${agent.color || category?.color}40`
                             }}
                         >
-                            {agent.icon}
+                            <AgentIcon size={48} />
                         </motion.div>
 
                         {/* Info */}
@@ -526,8 +560,10 @@ const AgentDetailModal: React.FC<{
                                 by {agent.provider.name}
                             </p>
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1">
-                                    <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                                <div className="flex items-center gap-1.5">
+                                    <div className="p-1 rounded-md bg-yellow-500/20">
+                                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                                    </div>
                                     <span className="text-white font-medium">{agent.rating}</span>
                                     <span className="text-white/40 text-sm">({agent.reviewCount.toLocaleString()} reviews)</span>
                                 </div>
@@ -538,7 +574,7 @@ const AgentDetailModal: React.FC<{
                                         color: category?.color
                                     }}
                                 >
-                                    <span>{category?.icon}</span>
+                                    {CategoryIcon && <CategoryIcon size={12} />}
                                     <span>{category?.name}</span>
                                 </div>
                             </div>

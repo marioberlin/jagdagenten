@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
 import { GlassDock } from '@/components/navigation/GlassDock';
 import { GlassWindow } from '@/components/containers/GlassWindow';
@@ -16,6 +17,20 @@ import { Terminal, Settings, Layout, Command, Zap, Compass } from 'lucide-react'
 export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [dockVisible, setDockVisible] = useState(true);
+
+    // Toggle Dock with Cmd+Space
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.shiftKey && e.code === 'Space') {
+                e.preventDefault();
+                setDockVisible(prev => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Dock Items Configuration
     const dockItems = [
@@ -75,8 +90,22 @@ export const LiquidOSLayout: React.FC = () => {
                     </GlassWindow>
                 )}
 
-                {/* System Dock */}
-                <GlassDock items={dockItems} />
+                {/* System Dock - Toggleable */}
+                <AnimatePresence>
+                    {dockVisible && (
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                            className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none"
+                        >
+                            <div className="pointer-events-auto">
+                                <GlassDock items={dockItems} />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </SpatialCanvas>
         </PortalFrame>
     );

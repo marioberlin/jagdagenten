@@ -5,6 +5,27 @@
  * This provides the "App Store" experience for discovering agents.
  */
 
+import React from 'react';
+import {
+    Utensils,
+    Bitcoin,
+    BarChart2,
+    FileText,
+    Image,
+    ShieldCheck,
+    Terminal,
+    Plane,
+    TrendingUp,
+    ShoppingCart,
+    BarChart,
+    Lock,
+    Palette,
+    Zap,
+    Code,
+    MessageSquare,
+    LucideIcon
+} from 'lucide-react';
+
 import type { AgentCard } from '@/a2a/types';
 
 export interface CuratedAgent {
@@ -14,7 +35,7 @@ export interface CuratedAgent {
     shortDescription: string;
     url: string;
     version: string;
-    icon: string;  // Emoji or URL
+    icon: React.ElementType;  // Lucide Icon Component
     category: AgentCategory;
     tags: string[];
     featured: boolean;
@@ -51,20 +72,20 @@ export type AgentCategory =
 export interface AgentCategoryInfo {
     id: AgentCategory;
     name: string;
-    icon: string;
+    icon: React.ElementType;
     description: string;
     color: string;
 }
 
 export const AGENT_CATEGORIES: AgentCategoryInfo[] = [
-    { id: 'finance', name: 'Finance', icon: '📈', description: 'Trading, portfolio, and financial analysis', color: '#10B981' },
-    { id: 'commerce', name: 'Commerce', icon: '🛒', description: 'Shopping, booking, and transactions', color: '#F59E0B' },
-    { id: 'analytics', name: 'Analytics', icon: '📊', description: 'Data visualization and insights', color: '#6366F1' },
-    { id: 'security', name: 'Security', icon: '🔐', description: 'Authentication and protection', color: '#EF4444' },
-    { id: 'creative', name: 'Creative', icon: '🎨', description: 'Design, images, and content creation', color: '#EC4899' },
-    { id: 'productivity', name: 'Productivity', icon: '⚡', description: 'Tasks, notes, and workflows', color: '#8B5CF6' },
-    { id: 'developer', name: 'Developer', icon: '💻', description: 'Code, APIs, and technical tools', color: '#06B6D4' },
-    { id: 'communication', name: 'Communication', icon: '💬', description: 'Chat, email, and messaging', color: '#14B8A6' },
+    { id: 'finance', name: 'Finance', icon: TrendingUp, description: 'Trading, portfolio, and financial analysis', color: '#10B981' },
+    { id: 'commerce', name: 'Commerce', icon: ShoppingCart, description: 'Shopping, booking, and transactions', color: '#F59E0B' },
+    { id: 'analytics', name: 'Analytics', icon: BarChart, description: 'Data visualization and insights', color: '#6366F1' },
+    { id: 'security', name: 'Security', icon: Lock, description: 'Authentication and protection', color: '#EF4444' },
+    { id: 'creative', name: 'Creative', icon: Palette, description: 'Design, images, and content creation', color: '#EC4899' },
+    { id: 'productivity', name: 'Productivity', icon: Zap, description: 'Tasks, notes, and workflows', color: '#8B5CF6' },
+    { id: 'developer', name: 'Developer', icon: Code, description: 'Code, APIs, and technical tools', color: '#06B6D4' },
+    { id: 'communication', name: 'Communication', icon: MessageSquare, description: 'Chat, email, and messaging', color: '#14B8A6' },
 ];
 
 /**
@@ -77,9 +98,9 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         name: 'Restaurant Finder',
         description: 'Discover and book restaurants near you with AI-powered recommendations. Get personalized suggestions based on cuisine preferences, ratings, and availability. Seamlessly make reservations directly through the agent.',
         shortDescription: 'Find & book restaurants with AI recommendations',
-        url: 'https://restaurant-agent.example.com',
+        url: 'http://127.0.0.1:3000/agents/restaurant',
         version: '1.2.0',
-        icon: '🍽️',
+        icon: Utensils,
         category: 'commerce',
         tags: ['food', 'booking', 'local', 'dining'],
         featured: true,
@@ -88,7 +109,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         reviewCount: 2847,
         addedAt: '2025-12-15',
         provider: { name: 'Google Sample Agents', url: 'https://developers.google.com/a2a', verified: true },
-        capabilities: { streaming: true, a2ui: true, pushNotifications: true, fileUpload: false },
+        capabilities: { streaming: false, a2ui: true, pushNotifications: true, fileUpload: false },
         authentication: 'none',
         color: '#F97316',
     },
@@ -99,7 +120,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'AI-powered crypto market analysis & signals',
         url: 'https://crypto-advisor.example.com',
         version: '2.0.1',
-        icon: '₿',
+        icon: Bitcoin,
         category: 'finance',
         tags: ['crypto', 'trading', 'portfolio', 'signals'],
         featured: true,
@@ -117,9 +138,9 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         name: 'RizzCharts Analytics',
         description: 'Transform your data into beautiful, interactive visualizations. Generate charts, dashboards, and reports from natural language queries. Supports live data connections and real-time updates.',
         shortDescription: 'Create stunning data visualizations with AI',
-        url: 'https://rizzcharts.example.com',
+        url: 'http://127.0.0.1:3000/agents/rizzcharts',
         version: '1.5.0',
-        icon: '📊',
+        icon: BarChart2,
         category: 'analytics',
         tags: ['charts', 'data', 'visualization', 'dashboards'],
         featured: true,
@@ -128,8 +149,8 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         reviewCount: 3156,
         addedAt: '2025-10-08',
         provider: { name: 'RizzCharts Inc.', url: 'https://rizzcharts.com', verified: true },
-        capabilities: { streaming: true, a2ui: true, pushNotifications: false, fileUpload: true },
-        authentication: 'oauth',
+        capabilities: { streaming: false, a2ui: true, pushNotifications: false, fileUpload: true },
+        authentication: 'none',
         color: '#6366F1',
     },
     {
@@ -139,7 +160,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'AI document analysis & knowledge extraction',
         url: 'https://documind.example.com',
         version: '3.1.0',
-        icon: '📄',
+        icon: FileText,
         category: 'productivity',
         tags: ['documents', 'pdf', 'research', 'analysis'],
         featured: false,
@@ -159,7 +180,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'Generate stunning images from text',
         url: 'https://imagegen.example.com',
         version: '2.3.0',
-        icon: '🎨',
+        icon: Image,
         category: 'creative',
         tags: ['images', 'art', 'design', 'generation'],
         featured: true,
@@ -179,7 +200,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'Digital signatures & document authentication',
         url: 'https://securesign.example.com',
         version: '1.0.5',
-        icon: '🔐',
+        icon: ShieldCheck,
         category: 'security',
         tags: ['signatures', 'authentication', 'legal', 'compliance'],
         featured: false,
@@ -199,7 +220,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'AI pair programming & code assistance',
         url: 'https://codepilot.example.com',
         version: '4.0.0',
-        icon: '💻',
+        icon: Terminal,
         category: 'developer',
         tags: ['code', 'programming', 'debugging', 'refactoring'],
         featured: false,
@@ -219,7 +240,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         shortDescription: 'AI-powered travel planning & booking',
         url: 'https://travel-planner.example.com',
         version: '2.1.0',
-        icon: '✈️',
+        icon: Plane,
         category: 'commerce',
         tags: ['travel', 'booking', 'hotels', 'flights'],
         featured: false,

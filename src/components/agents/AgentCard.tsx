@@ -60,10 +60,13 @@ export const AgentCard: React.FC<AgentCardProps> = ({
     };
 
     const iconSizes = {
-        sm: 'text-3xl',
-        md: 'text-4xl',
-        lg: 'text-5xl',
+        sm: 'w-8 h-8',
+        md: 'w-10 h-10',
+        lg: 'w-12 h-12',
     };
+
+    const AgentIcon = agent.icon;
+    const CategoryIcon = categoryInfo?.icon;
 
     return (
         <motion.div
@@ -119,14 +122,15 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                             'flex items-center justify-center rounded-xl',
                             'bg-gradient-to-br from-white/10 to-white/5',
                             'border border-white/10',
-                            size === 'sm' ? 'w-12 h-12' : size === 'md' ? 'w-14 h-14' : 'w-16 h-16'
+                            size === 'sm' ? 'w-12 h-12' : size === 'md' ? 'w-14 h-14' : 'w-16 h-16',
+                            'text-white'
                         )}
                         animate={{ scale: isHovered ? 1.1 : 1 }}
                         style={{
                             boxShadow: isHovered ? `0 8px 32px ${agent.color || '#6366F1'}40` : 'none'
                         }}
                     >
-                        <span className={iconSizes[size]}>{agent.icon}</span>
+                        <AgentIcon className={iconSizes[size]} />
                     </motion.div>
 
                     <div className="flex items-center gap-1">
@@ -171,8 +175,10 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
                 {/* Rating & Category */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                    <div className="flex items-center gap-1.5">
+                        <div className="p-1 rounded-md bg-yellow-500/20">
+                            <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                        </div>
                         <span className="text-sm text-white/80 font-medium">{agent.rating}</span>
                         <span className="text-xs text-white/40">({agent.reviewCount.toLocaleString()})</span>
                     </div>
@@ -184,7 +190,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                             color: categoryInfo?.color || '#6366F1',
                         }}
                     >
-                        <span>{categoryInfo?.icon}</span>
+                        {CategoryIcon && <CategoryIcon size={12} />}
                         <span>{categoryInfo?.name}</span>
                     </div>
                 </div>
@@ -221,6 +227,7 @@ export const AgentCardCompact: React.FC<AgentCardProps> = ({
     className
 }) => {
     const categoryInfo = getCategoryInfo(agent.category);
+    const AgentIcon = agent.icon;
 
     return (
         <motion.div
@@ -236,10 +243,10 @@ export const AgentCardCompact: React.FC<AgentCardProps> = ({
         >
             {/* Icon */}
             <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
                 style={{ backgroundColor: `${agent.color || categoryInfo?.color}20` }}
             >
-                {agent.icon}
+                <AgentIcon size={24} />
             </div>
 
             {/* Info */}
@@ -252,8 +259,10 @@ export const AgentCardCompact: React.FC<AgentCardProps> = ({
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-1 text-sm text-white/60">
-                <Star size={14} className="text-yellow-400 fill-yellow-400" />
+            <div className="flex items-center gap-1.5 text-sm text-white/60">
+                <div className="p-1 rounded-md bg-yellow-500/20">
+                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                </div>
                 <span>{agent.rating}</span>
             </div>
         </motion.div>

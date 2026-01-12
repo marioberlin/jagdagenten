@@ -220,15 +220,29 @@ function transformButton(
 ): UINode {
     const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext) || 'Button';
     const primary = props.primary as boolean | undefined;
-    const action = props.action as { submit?: { data?: Record<string, unknown> }; custom?: { actionId: string; data?: unknown } } | undefined;
+    const action = props.action as any;
+
+    let actionData: any = undefined;
+    let actionId: string | undefined = undefined;
+
+    if (action?.custom) {
+        actionId = action.custom.actionId;
+        actionData = action.custom.data;
+    } else if (action?.submit) {
+        actionId = 'submit';
+        actionData = action.submit.data;
+    } else if (action?.input) {
+        actionId = 'input';
+        actionData = { input: action.input };
+    }
 
     return {
         type: 'button',
         id,
         props: {
             variant: primary ? 'primary' : 'secondary',
-            data: action?.submit?.data || action?.custom?.data,
-            actionId: action?.custom?.actionId,
+            data: actionData,
+            actionId: actionId,
         },
         children: label,
     };
@@ -398,9 +412,17 @@ function transformList(
     const items = resolveBinding(itemsBinding, dataModel) as unknown[] || [];
 
     // Get template component
-    const templateComponent = surfaceState.components.get(templateId);
+    let templateComponent: A2UIComponent | undefined;
+
+    if (typeof props.template === 'string') {
+        templateComponent = surfaceState.components.get(props.template);
+    } else if (typeof props.template === 'object' && props.template !== null) {
+        // Handle inline template definition
+        templateComponent = props.template as A2UIComponent;
+    }
+
     if (!templateComponent) {
-        console.warn(`[A2UI Transformer] Template not found: ${templateId}`);
+        console.warn(`[A2UI Transformer] Template not found: ${props.template}`);
         return { type: 'stack', id, props: { direction: 'vertical' }, children: [] };
     }
 

@@ -109,7 +109,8 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 }]);
             } catch (err) {
                 console.error('[AgentChatWindow] Connection error:', err);
-                setError('Failed to connect to agent. Please try again.');
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                setError(`Connection Failed: ${errorMessage} (URL: ${agent.url})`);
                 setIsConnected(false);
             }
         };
@@ -259,10 +260,83 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     };
 
     // Handle A2UI action
-    const handleA2UIAction = useCallback((actionId: string, data?: unknown) => {
+    const handleA2UIAction = useCallback(async (actionId: string, data?: any) => {
         console.log('[AgentChatWindow] A2UI Action:', actionId, data);
-        // Could send action back to agent here
-    }, []);
+
+        // If action has an input text, send it as a user message
+        if (data?.input?.text) {
+            setInputValue(data.input.text);
+            // Wait a tick for state update (or just call send directly with the text)
+            // For cleaner UX, we'll just reuse the send logic but we need to mock the input
+            // Better: just call sendMessage with explicit content if we refactored sendMessage, 
+            // but for now let's just trigger a send manually
+
+            // Actually, best pattern is to just append the message and call client
+            const userMessage: ChatMessage = {
+                id: `user-${Date.now()}`,
+                role: 'user',
+                content: data.input.text,
+                timestamp: new Date(),
+            };
+
+            setMessages(prev => [...prev, userMessage]);
+            setIsLoading(true);
+            setError(null);
+
+            // Add placeholder for agent response
+            const agentMessageId = `agent-${Date.now()}`;
+            setMessages(prev => [...prev, {
+                id: agentMessageId,
+                role: 'agent',
+                content: '',
+                timestamp: new Date(),
+                taskState: 'working',
+            }]);
+
+            try {
+                if (!client) throw new Error("Client not connected");
+
+                // For actions, we might want to send a specific action RPC or just text
+                // The current restaurant agent expects text commands
+                const task = await client.sendText(data.input.text);
+
+                // Process response (Reuse logic - ideally refactor this into a helper)
+                let content = '';
+                let a2uiMessages: A2UIMessage[] = [];
+
+                if (task.status.message) {
+                    for (const part of task.status.message.parts) {
+                        if (part.type === 'text') content += part.text;
+                        else if (part.type === 'a2ui') a2uiMessages = [...a2uiMessages, ...part.a2ui];
+                    }
+                }
+                if (task.artifacts) {
+                    for (const artifact of task.artifacts) {
+                        for (const part of artifact.parts) {
+                            if (part.type === 'text') content += part.text;
+                            else if (part.type === 'a2ui') a2uiMessages = [...a2uiMessages, ...part.a2ui];
+                        }
+                    }
+                }
+
+                setMessages(prev => prev.map(msg =>
+                    msg.id === agentMessageId
+                        ? { ...msg, content: content || 'Task completed.', a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined, taskState: task.status.state }
+                        : msg
+                ));
+
+            } catch (err) {
+                console.error('[AgentChatWindow] Action error:', err);
+                setMessages(prev => prev.map(msg =>
+                    msg.id === agentMessageId
+                        ? { ...msg, content: '', error: err instanceof Error ? err.message : 'Action failed', taskState: 'failed' }
+                        : msg
+                ));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    }, [client]);
 
     // Retry connection
     const retryConnection = () => {
@@ -291,7 +365,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
                         style={{ backgroundColor: `${agent.color}20` }}
                     >
-                        {agent.icon}
+                        {React.createElement(agent.icon as React.ElementType, { size: 24, className: "text-white" })}
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -459,10 +533,10 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
 
 const MessageBubble: React.FC<{
     message: ChatMessage;
-    agentIcon: string;
+    agentIcon: React.ElementType; // Changed from string
     agentColor?: string;
     onA2UIAction: (actionId: string, data?: unknown) => void;
-}> = ({ message, agentIcon, agentColor, onA2UIAction }) => {
+}> = ({ message, agentIcon: AgentIcon, agentColor, onA2UIAction }) => {
     const isUser = message.role === 'user';
     const isError = message.taskState === 'failed' || !!message.error;
 
@@ -482,11 +556,11 @@ const MessageBubble: React.FC<{
                     ? 'bg-indigo-500/20 text-indigo-400'
                     : 'text-lg'
             )}
-            style={{
-                backgroundColor: !isUser ? `${agentColor}20` : undefined
-            }}
+                style={{
+                    backgroundColor: !isUser ? `${agentColor}20` : undefined
+                }}
             >
-                {isUser ? <User size={16} /> : agentIcon}
+                {isUser ? <User size={16} /> : <AgentIcon size={16} className="text-white" />}
             </div>
 
             {/* Content */}

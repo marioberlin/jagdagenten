@@ -10,6 +10,8 @@ import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } fr
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { handleA2AHttpRequest, getAgentCard } from './a2a/index.js';
+import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant';
+import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -79,8 +81,8 @@ function getRateLimitKeyAndTier(request: Request): { key: string; tier: RateLimi
     // Priority 3: IP address fallback
     const forwardedFor = request.headers.get('X-Forwarded-For');
     const ip = forwardedFor?.split(',')[0]?.trim()
-             || request.headers.get('X-Real-IP')
-             || 'unknown';
+        || request.headers.get('X-Real-IP')
+        || 'unknown';
     return { key: `ratelimit:ip:${ip}`, tier: 'ip' };
 }
 
@@ -500,6 +502,62 @@ async function startServer() {
         .get('/.well-known/agent.json', () => {
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
             return getAgentCard(baseUrl);
+        })
+
+        // ===========================================
+        // Agent Routes (Real Implementation)
+        // ===========================================
+
+        // Restaurant Finder
+        .group('/agents/restaurant', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const params = (body as any).params;
+                if ((body as any).method === 'agent/card') {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getRestaurantAgentCard(baseUrl) };
+                }
+                const result = await handleRestaurantRequest(params);
+                set.headers['Content-Type'] = 'application/json';
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    result
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getRestaurantAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // RizzCharts
+        .group('/agents/rizzcharts', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const params = (body as any).params;
+                if ((body as any).method === 'agent/card') {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getRizzChartsAgentCard(baseUrl) };
+                }
+                const result = await handleRizzChartsRequest(params);
+                set.headers['Content-Type'] = 'application/json';
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    result
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getRizzChartsAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
         })
 
         // A2A JSON-RPC endpoint

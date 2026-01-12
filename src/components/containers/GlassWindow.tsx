@@ -53,7 +53,9 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
                 width: isMaximized ? '100%' : initialSize.width,
                 height: isMaximized ? '100%' : initialSize.height,
                 zIndex: isActive ? 50 : 10,
-                ...(isMaximized && { top: 0, left: 0, right: 0, bottom: 0 })
+                top: 0,
+                left: 0,
+                ...(isMaximized && { right: 0, bottom: 0 })
             }}
             animate={{
                 scale: isActive ? 1 : 0.98,
