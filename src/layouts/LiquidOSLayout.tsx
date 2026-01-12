@@ -56,8 +56,10 @@ export const LiquidOSLayout: React.FC = () => {
     return (
         <PortalFrame activeMode="os">
             <SpatialCanvas scale={settingsOpen ? 0.95 : 1} blur={settingsOpen ? 10 : 0}>
-                {/* Main OS Content */}
-                <Outlet />
+                {/* Main OS Content - Scrollable Area */}
+                <div className="w-full h-full overflow-y-auto custom-scrollbar pb-32">
+                    <Outlet />
+                </div>
 
                 {/* System Settings Overlay Window */}
                 {settingsOpen && (
