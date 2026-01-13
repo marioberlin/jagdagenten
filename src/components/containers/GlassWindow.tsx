@@ -2,9 +2,9 @@ import React, { useRef, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { cn } from '../../utils/cn';
 import { X, Minus, Maximize2 } from 'lucide-react';
-import { GlassCard } from '../index'; // Assuming standard primitives export
 
 interface GlassWindowProps {
+    /** Unique identifier for the window */
     id: string;
     title: string;
     children: React.ReactNode;
@@ -42,6 +42,7 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     return (
         <motion.div
             ref={containerRef}
+            data-window-id={id}
             drag={!isMaximized}
             dragListener={false} // Only drag from header
             dragControls={dragControls}

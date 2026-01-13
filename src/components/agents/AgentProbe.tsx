@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Globe, Loader2, CheckCircle, XCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { Globe, Loader2, CheckCircle, XCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { AgentCard } from '@/a2a/types';
 

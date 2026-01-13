@@ -128,7 +128,7 @@ const A2UI_TO_GLASS_TYPE: Record<string, UINodeType> = {
 /**
  * Gets the Glass type for an A2UI component
  */
-function getGlassType(a2uiType: string): UINodeType | null {
+export function getGlassType(a2uiType: string): UINodeType | null {
     return A2UI_TO_GLASS_TYPE[a2uiType] || null;
 }
 
@@ -216,7 +216,7 @@ function transformButton(
     props: Record<string, unknown>,
     dataModel: Record<string, unknown>,
     templateContext?: Record<string, unknown>,
-    onAction?: (actionId: string, data?: unknown) => void
+    _onAction?: (actionId: string, data?: unknown) => void
 ): UINode {
     const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext) || 'Button';
     const primary = props.primary as boolean | undefined;
@@ -405,7 +405,6 @@ function transformList(
     onAction?: (actionId: string, data?: unknown) => void
 ): UINode {
     const itemsBinding = props.items as DataBinding<unknown[]>;
-    const templateId = props.template as string;
     const direction = props.direction as 'vertical' | 'horizontal' || 'vertical';
 
     // Resolve items array
@@ -460,7 +459,7 @@ function transformImage(
     templateContext?: Record<string, unknown>
 ): UINode {
     const src = resolveBinding(props.src as DataBinding<string>, dataModel, templateContext);
-    const alt = resolveBinding(props.alt as DataBinding<string>, dataModel, templateContext);
+    const altText = resolveBinding(props.alt as DataBinding<string>, dataModel, templateContext);
 
     // Image not in base GlassDynamicUI, render as styled div with bg image
     return {
@@ -468,6 +467,7 @@ function transformImage(
         id,
         props: {
             className: 'overflow-hidden rounded-lg',
+            'aria-label': altText || undefined,
         },
         style: {
             backgroundImage: src ? `url(${src})` : undefined,
@@ -661,12 +661,12 @@ export function transformA2UI(
  */
 export function validateA2UIPayload(
     messages: A2UIMessage[],
-    catalog: typeof GLASS_COMPONENT_CATALOG
+    _catalog: typeof GLASS_COMPONENT_CATALOG
 ): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
     let componentCount = 0;
     const MAX_COMPONENTS = 500;
-    const MAX_DEPTH = 10;
+    // MAX_DEPTH reserved for future nested component validation
 
     for (const message of messages) {
         if (message.type === 'surfaceUpdate') {
@@ -677,9 +677,9 @@ export function validateA2UIPayload(
                     return { valid: false, errors };
                 }
 
-                // Validate component type is known
-                const [typeName] = Object.keys(component.component);
+                // Validate component has at least one type defined
                 // Note: We allow all A2UI types, they get transformed to Glass equivalents
+                void Object.keys(component.component)[0];
             }
         }
     }

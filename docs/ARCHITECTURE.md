@@ -150,7 +150,7 @@ LiquidCrypto is a **comprehensive React component library and cryptocurrency tra
 
 ```
 src/
-├── components/           # UI Component Library
+├── components/           # UI Component Library (161+ components)
 │   ├── primitives/      # Base components (Button, Input, Container)
 │   ├── forms/           # Form system (react-hook-form + zod)
 │   ├── data-display/    # Cards, Charts, Tables, Metrics
@@ -165,6 +165,9 @@ src/
 │   ├── features/        # Complex features (Kanban, Editor, etc.)
 │   ├── trading/         # Domain-specific trading components
 │   ├── compound/        # Composed components
+│   ├── settings/        # Settings & showcase panels
+│   │   ├── GlassShowcasePanel.tsx  # Component library browser (161 components)
+│   │   └── GlassSettingsPanel.tsx  # System preferences
 │   └── showcase/        # Demo components
 │
 ├── context/             # React Context Providers
@@ -1037,6 +1040,44 @@ src/
 │  │ Solid bg    │ With shadow │ Inset style │                          │
 │  │ No blur     │ Lifted      │ Recessed    │                          │
 │  └─────────────┴─────────────┴─────────────┘                          │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Component Library Browser
+
+The **GlassShowcasePanel** provides an interactive browser for all 161+ Glass components.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                    Component Library Browser                           │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  Access: Click Sparkles icon in GlassDock (Liquid OS)                  │
+│  File: src/components/settings/GlassShowcasePanel.tsx                  │
+│                                                                        │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Categories (13)                    Components (161)             │   │
+│  ├─────────────────────────────────────────────────────────────────┤   │
+│  │ • Foundations (10)                 • Forms & Inputs (27)        │   │
+│  │ • Buttons & Actions (12)           • Data Display (15)          │   │
+│  │ • Feedback (8)                     • Layout (10)                │   │
+│  │ • Navigation (8)                   • Media (6)                  │   │
+│  │ • Complex (15)                     • Agentic (12)               │   │
+│  │ • Trading (8)                      • Extensions (10)            │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                        │
+│  Features:                                                             │
+│  • Full-text search across names, descriptions, tags                   │
+│  • Filter by All / New / Popular / Category                           │
+│  • Live interactive component previews                                 │
+│  • Copy-ready code snippets                                           │
+│  • Tag-based discovery                                                │
+│                                                                        │
+│  Special Handling:                                                     │
+│  • Portal components (Sheet, Drawer, Tour) shown as placeholders       │
+│  • Smart/AI components require LiquidProvider (use placeholders)       │
+│  • Media components use sample URLs for demos                          │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```

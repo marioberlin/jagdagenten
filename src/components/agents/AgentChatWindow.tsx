@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Send,
     Loader2,
-    Bot,
     User,
     Sparkles,
     AlertCircle,
@@ -11,13 +10,12 @@ import {
     Mic,
     MoreHorizontal,
     RefreshCcw,
-    X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { GlassA2UIRenderer } from '@/components/agentic/GlassA2UIRenderer';
-import { A2AClient, createA2AClient, type TaskStreamEvent } from '@/a2a/client';
-import type { AgentCard, A2AMessage, A2UIMessage, Task, TaskState } from '@/a2a/types';
+import { A2AClient, createA2AClient } from '@/a2a/client';
+import type { AgentCard, A2UIMessage, TaskState } from '@/a2a/types';
 import type { CuratedAgent } from '@/services/agents/registry';
 
 // ============================================================================
@@ -66,7 +64,7 @@ interface AgentChatWindowProps {
  */
 export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     agent,
-    agentCard,
+    agentCard: _agentCard, // Reserved for future AgentCard-specific features
     position = { x: 200, y: 100 },
     onClose,
     onMinimize,

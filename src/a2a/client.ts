@@ -11,7 +11,6 @@ import type {
     AgentCard,
     A2AMessage,
     Task,
-    TaskState,
     TaskStatus,
     JsonRpcRequest,
     JsonRpcResponse,
@@ -20,7 +19,6 @@ import type {
     TaskListParams,
     A2UIPart,
     Part,
-    TERMINAL_STATES,
 } from './types';
 
 // ============================================================================

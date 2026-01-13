@@ -1,4 +1,3 @@
-import React from 'react';
 import { AgentCommandCenter } from '@/components/features/CommandCenter/AgentCommandCenter';
 
 export const Home = () => {

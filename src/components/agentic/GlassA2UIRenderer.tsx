@@ -8,18 +8,13 @@
  * @see src/a2a/transformer.ts
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GlassDynamicUI } from './GlassDynamicUI';
 import type { UINode } from './GlassDynamicUI';
 import type { A2UIMessage } from '../../a2a/types';
 import {
-    transformA2UI,
     transformA2UIToGlass,
     validateA2UIPayload,
-    createTransformerState,
-    processA2UIMessage,
-    transformComponent,
-    type TransformerState,
 } from '../../a2a/transformer';
 import { GLASS_COMPONENT_CATALOG } from '../../a2a/types';
 import { GlassContainer } from '../primitives/GlassContainer';

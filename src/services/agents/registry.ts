@@ -23,10 +23,7 @@ import {
     Zap,
     Code,
     MessageSquare,
-    LucideIcon
 } from 'lucide-react';
-
-import type { AgentCard } from '@/a2a/types';
 
 export interface CuratedAgent {
     id: string;

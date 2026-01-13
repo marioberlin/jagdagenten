@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from 'framer-motion';
 import { cn } from '../../utils/cn';
-import { GlassCard } from '../index';
 
 interface DockItem {
     id: string;

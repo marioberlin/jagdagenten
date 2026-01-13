@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAgentConfig } from '@/context/AgentConfigContext';
-import { Activity, Cpu, Shield, Zap, Search, Command } from 'lucide-react';
+import { Activity, Cpu, Shield, Zap, Search } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 /**

@@ -1,15 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Monitor, Sparkles, Sliders, Bot, Puzzle } from 'lucide-react';
+import { Monitor, Sparkles, Sliders, Bot, Puzzle, Book, Accessibility, Keyboard, Database } from 'lucide-react';
 import { GlassContainer } from '@/components';
 import { GlassPageHeader } from '@/components';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeModeConfig } from '../stores/types';
 
 // Import extracted sub-components
-import { ThemesSection, CustomizationSection, WallpaperSection, PluginMarketplaceSettings } from './settings-components';
+import {
+    ThemesSection,
+    CustomizationSection,
+    WallpaperSection,
+    PluginMarketplaceSettings,
+    KnowledgeBaseSection,
+    AccessibilitySection,
+    KeyboardShortcutsSection,
+    DataManagementSection,
+} from './settings-components';
 import { AgentConfigSettings } from './settings-components/AgentConfigSettings';
 
-type SettingsSection = 'wallpaper' | 'glass' | 'themes' | 'customization' | 'agent-config' | 'marketplace';
+type SettingsSection =
+    | 'wallpaper'
+    | 'glass'
+    | 'themes'
+    | 'customization'
+    | 'agent-config'
+    | 'marketplace'
+    | 'knowledge-base'
+    | 'accessibility'
+    | 'keyboard'
+    | 'data';
 
 export const Settings = () => {
     const {
@@ -222,6 +241,36 @@ export const Settings = () => {
                                 <Bot size={18} />
                                 Agent Config
                             </button>
+                            <button
+                                onClick={() => setActiveSection('knowledge-base')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'knowledge-base' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Book size={18} />
+                                Knowledge Base
+                            </button>
+
+                            <div className="text-xs font-medium text-label-tertiary uppercase tracking-widest mt-6 mb-3 px-2">Preferences</div>
+                            <button
+                                onClick={() => setActiveSection('accessibility')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'accessibility' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Accessibility size={18} />
+                                Accessibility
+                            </button>
+                            <button
+                                onClick={() => setActiveSection('keyboard')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'keyboard' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Keyboard size={18} />
+                                Keyboard Shortcuts
+                            </button>
+                            <button
+                                onClick={() => setActiveSection('data')}
+                                className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-colors ${activeSection === 'data' ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-primary/5 hover:text-primary'}`}
+                            >
+                                <Database size={18} />
+                                Data Management
+                            </button>
                         </div>
                     </div>
 
@@ -313,6 +362,26 @@ export const Settings = () => {
                             {/* Plugin Marketplace Section */}
                             {activeSection === 'marketplace' && (
                                 <PluginMarketplaceSettings />
+                            )}
+
+                            {/* Knowledge Base Section */}
+                            {activeSection === 'knowledge-base' && (
+                                <KnowledgeBaseSection />
+                            )}
+
+                            {/* Accessibility Section */}
+                            {activeSection === 'accessibility' && (
+                                <AccessibilitySection />
+                            )}
+
+                            {/* Keyboard Shortcuts Section */}
+                            {activeSection === 'keyboard' && (
+                                <KeyboardShortcutsSection />
+                            )}
+
+                            {/* Data Management Section */}
+                            {activeSection === 'data' && (
+                                <DataManagementSection />
                             )}
                         </div>
                     </div>

@@ -7,11 +7,21 @@ import type {
     AgentCard,
     A2AMessage,
     Task,
-    TaskState,
     Artifact,
-    SendMessageParams
 } from './types';
 import { allExamples } from './examples';
+
+/**
+ * Helper to extract text content from A2AMessage parts
+ */
+function getMessageText(message: A2AMessage): string {
+    for (const part of message.parts) {
+        if (part.type === 'text') {
+            return part.text;
+        }
+    }
+    return '';
+}
 
 /**
  * Mock A2A Client
@@ -19,9 +29,11 @@ import { allExamples } from './examples';
  */
 export class MockA2AClient extends A2AClient {
     private mockId: string;
+    private mockAgentUrl: string;
 
     constructor(config: A2AClientConfig) {
         super(config);
+        this.mockAgentUrl = config.agentUrl;
         // Extract ID from URL (e.g. https://restaurant-agent.example.com -> restaurant)
         if (config.agentUrl.includes('restaurant')) {
             this.mockId = 'restaurant';
@@ -37,10 +49,10 @@ export class MockA2AClient extends A2AClient {
         const baseCard: AgentCard = {
             name: this.mockId === 'restaurant' ? 'Restaurant Finder' : 'RizzCharts',
             description: 'Mock Agent for Demo',
-            url: this.config.agentUrl || '',
+            url: this.mockAgentUrl,
             version: '1.0.0',
-            provider: { name: 'Mock Provider' },
-            capabilities: { streaming: true, a2ui: true, pushNotifications: false },
+            provider: { organization: 'Mock Provider' },
+            capabilities: { streaming: true, pushNotifications: false },
             extensions: {
                 a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text'] }
             }
@@ -51,12 +63,12 @@ export class MockA2AClient extends A2AClient {
         return baseCard;
     }
 
-    override async sendMessage(message: A2AMessage, options?: any): Promise<Task> {
+    override async sendMessage(message: A2AMessage, _options?: unknown): Promise<Task> {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return this.createMockTask(message.content || '');
+        return this.createMockTask(getMessageText(message));
     }
 
-    override async *streamMessage(message: A2AMessage, options?: any): AsyncGenerator<TaskStreamEvent> {
+    override async *streamMessage(message: A2AMessage, _options?: unknown): AsyncGenerator<TaskStreamEvent> {
         // Simulate thinking
         await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -70,7 +82,7 @@ export class MockA2AClient extends A2AClient {
         };
 
         // 2. Stream content chunks
-        const responseText = this.getMockResponseText(message.content || '');
+        const responseText = this.getMockResponseText(getMessageText(message));
         const chunks = responseText.match(/.{1,10}/g) || [responseText];
 
         for (const chunk of chunks) {
@@ -86,7 +98,7 @@ export class MockA2AClient extends A2AClient {
         }
 
         // 3. Send A2UI if applicable
-        const a2ui = this.getMockA2UI(message.content || '');
+        const a2ui = this.getMockA2UI(getMessageText(message));
         if (a2ui) {
             yield {
                 type: 'message',

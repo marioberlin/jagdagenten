@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Sparkles, Plus, Video, Wand2 } from 'lucide-react';
+import { Image as ImageIcon, Sparkles, Plus, Video, Wand2, LayoutGrid } from 'lucide-react';
 import { Backgrounds } from '@/components/Backgrounds/BackgroundRegistry';
 import { AIWallpaperGenerator } from './AIWallpaperGenerator';
 import type { WallpaperSectionProps } from './types';
@@ -8,7 +8,7 @@ export const WallpaperSection = ({
     activeBackgroundId,
     setActiveBackground
 }: WallpaperSectionProps) => {
-    const [activeTab, setActiveTab] = useState<'elements' | 'images' | 'videos' | 'ai'>('elements');
+    const [activeTab, setActiveTab] = useState<'all' | 'elements' | 'images' | 'videos' | 'ai'>('all');
 
     // We need a way to verify if the ID is a generated one or a preset one.
     // Presets are in Backgrounds. Generated ones are ephemeral/local.
@@ -49,6 +49,12 @@ export const WallpaperSection = ({
             {/* Tab Switcher */}
             <div className="mb-6">
                 <div className="flex gap-2 p-1 rounded-xl bg-glass-surface/50 w-fit flex-wrap">
+                    <button
+                        onClick={() => setActiveTab('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'all' ? 'bg-glass-surface-active text-label-glass-primary shadow-sm' : 'text-label-glass-secondary hover:text-label-glass-primary hover:bg-glass-surface-hover'}`}
+                    >
+                        <span className="flex items-center gap-2"><LayoutGrid size={16} /> All</span>
+                    </button>
                     <button
                         onClick={() => setActiveTab('elements')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'elements' ? 'bg-glass-surface-active text-label-glass-primary shadow-sm' : 'text-label-glass-secondary hover:text-label-glass-primary hover:bg-glass-surface-hover'}`}
@@ -104,6 +110,7 @@ export const WallpaperSection = ({
                     {/* Wallpaper Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {Backgrounds.filter(bg => {
+                            if (activeTab === 'all') return true;
                             if (activeTab === 'elements') return bg.type === 'element';
                             if (activeTab === 'images') return bg.type === 'image';
                             if (activeTab === 'videos') return bg.type === 'video';
@@ -115,7 +122,12 @@ export const WallpaperSection = ({
                                 className={`group relative aspect-[16/10] rounded-xl overflow-hidden border-2 transition-all duration-300 ${activeBackgroundId === bg.id ? 'border-accent shadow-[0_0_20px_var(--color-accent-muted)] scale-105' : 'border-transparent hover:border-white/30 hover:scale-105'}`}
                             >
                                 {bg.type === 'image' ? (
-                                    <img src={bg.src} alt={bg.name} className="w-full h-full object-cover" />
+                                    <div className="w-full h-full relative overflow-hidden">
+                                        <img src={bg.src} alt={bg.name} className="w-full h-full object-cover" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                                            <span className="text-xs font-medium text-white/90 drop-shadow-md">{bg.name}</span>
+                                        </div>
+                                    </div>
                                 ) : bg.type === 'video' ? (
                                     <div className="w-full h-full relative overflow-hidden">
                                         <img src={bg.thumbnail} alt={bg.name} className="w-full h-full object-cover" />
@@ -144,6 +156,17 @@ export const WallpaperSection = ({
                                         </div>
                                     );
                                 })()}
+
+                                {/* Type Badge (visible in All view) */}
+                                {activeTab === 'all' && (
+                                    <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-sm shadow-sm ${
+                                        bg.type === 'element' ? 'bg-purple-500/80 text-white' :
+                                        bg.type === 'image' ? 'bg-blue-500/80 text-white' :
+                                        'bg-red-500/80 text-white'
+                                    }`}>
+                                        {bg.type === 'element' ? 'Dynamic' : bg.type === 'image' ? 'Image' : 'Video'}
+                                    </div>
+                                )}
 
                                 {activeBackgroundId === bg.id && (
                                     <div className="absolute top-2 right-2 w-6 h-6 bg-accent rounded-full flex items-center justify-center shadow-lg">
