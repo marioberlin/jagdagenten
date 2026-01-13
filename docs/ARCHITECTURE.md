@@ -12,10 +12,11 @@
 5. [AI Integration (Liquid Engine)](#ai-integration-liquid-engine)
 6. [A2A Protocol Integration](#a2a-protocol-integration)
 7. [Agent Hub UI](#agent-hub-ui)
-8. [Data Flow](#data-flow)
-9. [Design System](#design-system)
-10. [Security Architecture](#security-architecture)
-11. [Deployment Architecture](#deployment-architecture)
+8. [LiquidContainer Runtime](#liquidcontainer-runtime)
+9. [Data Flow](#data-flow)
+10. [Design System](#design-system)
+11. [Security Architecture](#security-architecture)
+12. [Deployment Architecture](#deployment-architecture)
 
 ---
 
@@ -891,6 +892,179 @@ src/
 └── services/agents/
     └── registry.ts           # Agent registry & helpers
 ```
+
+---
+
+## LiquidContainer Runtime
+
+LiquidContainer is a container-based runtime for executing AI agents in isolated environments with support for multi-cloud deployment.
+
+### Container Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                      LiquidContainer Architecture                           │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  LiquidCrypto Server                                                       │
+│  ──────────────────                                                        │
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │                    Container Manager                                 │  │
+│  │                                                                       │  │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────────────┐   │  │
+│  │  │ ContainerPool │  │  Scheduler    │  │   ContainerExecutor   │   │  │
+│  │  │ (warm pool)   │  │ (placement)   │  │   (run code)          │   │  │
+│  │  └───────────────┘  └───────────────┘  └───────────────────────┘   │  │
+│  │          │                   │                      │               │  │
+│  │          └───────────────────┼──────────────────────┘               │  │
+│  │                              │                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐   │  │
+│  │  │                    Endpoint Clients                          │   │  │
+│  │  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │   │  │
+│  │  │  │  Local  │  │ Hetzner │  │   AWS   │  │  DigitalOcean   │ │   │  │
+│  │  │  │ Docker  │  │ Cloud   │  │   EC2   │  │                 │ │   │  │
+│  │  │  └────┬────┘  └────┬────┘  └────┬────┘  └────────┬────────┘ │   │  │
+│  │  └───────┼────────────┼────────────┼────────────────┼──────────┘   │  │
+│  └──────────┼────────────┼────────────┼────────────────┼──────────────┘  │
+│             │            │            │                │                  │
+│             ▼            ▼            ▼                ▼                  │
+│        ┌─────────┐  ┌─────────┐  ┌─────────┐     ┌─────────┐            │
+│        │Container│  │Container│  │Container│     │Container│            │
+│        │  Pool   │  │  Pool   │  │  Pool   │     │  Pool   │            │
+│        └─────────┘  └─────────┘  └─────────┘     └─────────┘            │
+│                                                                          │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Container Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **ContainerPool** | `server/src/container/pool.ts` | Manages warm container pool |
+| **ContainerScheduler** | `server/src/container/scheduler.ts` | Selects endpoints, handles affinity |
+| **ContainerClient** | `server/src/container/client.ts` | Docker API communication |
+| **ContainerExecutor** | `server/src/container/executor.ts` | Code execution in containers |
+| **SSHTunnel** | `server/src/container/ssh.ts` | SSH tunnel for remote hosts |
+| **SecretsProvider** | `server/src/container/secrets.ts` | Secrets management (env/vault/aws) |
+
+### Placement Strategies
+
+| Strategy | Description | Use Case |
+|----------|-------------|----------|
+| **Local** | Local Docker daemon only | Development, single machine |
+| **Remote** | Remote endpoints only | Production, cloud-only |
+| **Hybrid** | Local + remote with weights | High availability, burst capacity |
+
+### Resource Limits
+
+```typescript
+interface ResourceLimits {
+    memory: number;          // bytes (default: 512MB)
+    cpuQuota: number;        // 0-1 (default: 0.5 = 50% of one core)
+    pidsLimit: number;       // max processes (default: 100)
+    maxExecutionTime: number; // ms (default: 60000)
+}
+```
+
+### Affinity Rules
+
+Route agents to specific endpoints based on labels:
+
+```typescript
+// Example: Route to EU region, avoid spot instances
+const container = await pool.acquire({
+    agentId: 'critical-agent',
+    affinity: [
+        { key: 'region', operator: 'In', values: ['eu-central', 'eu-west'] },
+        { key: 'tier', operator: 'NotIn', values: ['spot'] },
+    ],
+});
+```
+
+### Supported Providers (9)
+
+| Provider | URL Format | Features |
+|----------|------------|----------|
+| Hetzner Cloud | `ssh://deploy@IP` | Best price/performance (EU) |
+| DigitalOcean | `ssh://root@IP` | Easy setup, worldwide |
+| Fly.io | `tcp://app.fly.dev:2375` | Edge deployment, auto-scaling |
+| Railway | `tcp://host:port` | Zero-config deploy |
+| AWS (EC2) | `ssh://ubuntu@IP` | Enterprise SLAs, spot instances |
+| Google Cloud | `tcp://IP:2375` | Global network, preemptible VMs |
+| Azure | `ssh://deploy@IP` | Enterprise compliance |
+| Bare Metal | `ssh://user@IP` | Full control, dedicated resources |
+| Custom | `tcp://host:port` | Any Docker host |
+
+### Settings UI
+
+Configuration via Settings > Containers tab:
+
+| Tab | Configuration |
+|-----|---------------|
+| **Placement** | Strategy (local/remote/hybrid), local weight |
+| **Pool** | Min idle, max total, timeouts, image |
+| **Resources** | Memory, CPU, PIDs, execution timeout |
+| **Network** | Mode (none/bridge/host), allowed hosts |
+| **Secrets** | Backend (env/vault/aws), prefixes |
+| **Telemetry** | OpenTelemetry enable/disable |
+
+### Directory Structure
+
+```
+server/src/container/
+├── index.ts          # Module exports
+├── config.ts         # Configuration loading
+├── pool.ts           # Container pool management
+├── scheduler.ts      # Endpoint selection
+├── client.ts         # Docker API client
+├── executor.ts       # Code execution
+├── ssh.ts            # SSH tunnel management
+├── secrets.ts        # Secrets providers
+├── metrics.ts        # Prometheus metrics
+└── types.ts          # TypeScript definitions
+
+src/stores/
+└── containerStore.ts # Frontend state (Zustand)
+
+src/components/settings/
+└── GlassContainerSettings.tsx # Settings UI
+```
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/container/status` | GET | Pool status and metrics |
+| `/api/v1/container/execute` | POST | Execute code in container |
+| `/api/v1/container/endpoints` | GET | List configured endpoints |
+
+### Health Monitoring
+
+```bash
+# Check pool status
+curl http://localhost:3000/api/v1/container/status
+```
+
+Response:
+```json
+{
+    "idle": 5,
+    "acquired": 3,
+    "total": 8,
+    "maxTotal": 20,
+    "health": "healthy",
+    "byEndpoint": {
+        "local": { "idle": 2, "acquired": 1 },
+        "hetzner-1": { "idle": 3, "acquired": 2 }
+    }
+}
+```
+
+### Related Documentation
+
+- [Container Deployment Guide](./CONTAINER_DEPLOYMENT_GUIDE.md)
+- [Setup Remote Host Script](../scripts/setup-remote-host.sh)
 
 ---
 

@@ -1,0 +1,55 @@
+# LiquidContainer Base Image
+#
+# Pre-baked with all runtimes to minimize cold start latency.
+# This image is the foundation for all LiquidContainer variants.
+#
+# Build: docker build -f Dockerfile.base -t liquid-container-base:latest .
+
+FROM debian:bookworm-slim AS base
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    jq \
+    ca-certificates \
+    unzip \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Bun (primary runtime)
+ENV BUN_INSTALL=/usr/local/bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+# Verify Bun installation
+RUN bun --version
+
+# Install Node.js 22 LTS (compatibility layer)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify Node installation
+RUN node --version && npm --version
+
+# Install global tools
+RUN bun install -g typescript tsx
+
+# Create non-root user for running agents
+RUN useradd -m -s /bin/bash -u 1000 agent
+
+# Create directories
+RUN mkdir -p /app /opt/liquid-runtime /secrets \
+    && chown -R agent:agent /app /secrets
+
+# Set working directory
+WORKDIR /app
+
+# Labels
+LABEL org.opencontainers.image.title="LiquidContainer Base"
+LABEL org.opencontainers.image.description="Base runtime for LiquidCrypto AI agents"
+LABEL org.opencontainers.image.vendor="LiquidCrypto"

@@ -17,6 +17,7 @@ import {
     Lightbulb, Type, Layers, Layout, Settings2, Move, Minimize2, Info,
 } from 'lucide-react';
 import { AIWallpaperGenerator } from '@/pages/settings-components/AIWallpaperGenerator';
+import { GlassContainerSettings } from './GlassContainerSettings';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
@@ -32,6 +33,7 @@ const tabs = [
     { id: 'agent', label: 'Agent', icon: Cpu, description: 'LLM provider, context strategy' },
     { id: 'knowledge', label: 'Knowledge', icon: Book, description: 'Agent knowledge base' },
     { id: 'plugins', label: 'Plugins', icon: Puzzle, description: 'Extensions & MCP servers' },
+    { id: 'containers', label: 'Containers', icon: Server, description: 'Remote deployment, pool settings' },
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
@@ -291,6 +293,13 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                         {/* === PLUGINS === */}
                         {activeTab === 'plugins' && (
                             <PluginsPanel />
+                        )}
+
+                        {/* === CONTAINERS === */}
+                        {activeTab === 'containers' && (
+                            <div className="max-w-4xl mx-auto">
+                                <GlassContainerSettings />
+                            </div>
                         )}
 
                         {/* === ACCESSIBILITY SETTINGS === */}
