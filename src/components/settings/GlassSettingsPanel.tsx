@@ -14,7 +14,8 @@ import {
     AlertTriangle, ShieldAlert, Clock, Lock, Brain, Wand2, FileSearch,
     Book, Tag, Globe, Edit3, Star, StarOff,
     Package, Server, ShieldCheck, Puzzle, Shield,
-    Lightbulb, Type, Layers, Layout, Settings2, Move, Minimize2, Info,
+    Lightbulb, Type, Layers, Layout, Settings2, Move, Minimize2, Info, Key,
+    Mail, Calendar, ChevronLeft,
 } from 'lucide-react';
 import { AIWallpaperGenerator } from '@/pages/settings-components/AIWallpaperGenerator';
 import { GlassContainerSettings } from './GlassContainerSettings';
@@ -38,6 +39,7 @@ const tabs = [
     { id: 'containers', label: 'Containers', icon: Server, description: 'Remote deployment, pool settings' },
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
+    { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
     { id: 'system', label: 'System', icon: Monitor, description: 'Rate limits, environment' },
 ];
@@ -279,8 +281,6 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                             <AgentConfigPanel
                                 llmProvider={llmProvider}
                                 setLLMProvider={setLLMProvider}
-                                claudeApiKey={claudeApiKey}
-                                setClaudeApiKey={setClaudeApiKey}
                                 contextStrategy={contextStrategy}
                                 setContextStrategy={setContextStrategy}
                                 runtimeMode={runtimeMode}
@@ -291,6 +291,14 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                                 setSecurityBlacklist={setSecurityBlacklist}
                                 getConfigForRoute={getConfigForRoute}
                                 updatePageConfig={updatePageConfig}
+                            />
+                        )}
+
+                        {/* === CREDENTIALS === */}
+                        {activeTab === 'credentials' && (
+                            <CredentialsPanel
+                                claudeApiKey={claudeApiKey}
+                                setClaudeApiKey={setClaudeApiKey}
                             />
                         )}
 
@@ -684,8 +692,8 @@ const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({
                                     <div className={cn(
                                         "absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-sm",
                                         bg.type === 'element' ? 'bg-purple-500/80 text-white' :
-                                        bg.type === 'image' ? 'bg-blue-500/80 text-white' :
-                                        'bg-red-500/80 text-white'
+                                            bg.type === 'image' ? 'bg-blue-500/80 text-white' :
+                                                'bg-red-500/80 text-white'
                                     )}>
                                         {bg.type === 'element' ? 'Dynamic' : bg.type === 'image' ? 'Image' : 'Video'}
                                     </div>
@@ -1107,8 +1115,7 @@ const DEMO_ROUTES: RouteConfigItem[] = [
 interface AgentConfigPanelProps {
     llmProvider: 'gemini' | 'claude' | 'proxy';
     setLLMProvider: (provider: 'gemini' | 'claude' | 'proxy') => void;
-    claudeApiKey: string;
-    setClaudeApiKey: (key: string) => void;
+
     contextStrategy: 'flat' | 'tree';
     setContextStrategy: (strategy: 'flat' | 'tree') => void;
     runtimeMode: 'demo' | 'production';
@@ -1124,8 +1131,6 @@ interface AgentConfigPanelProps {
 const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     llmProvider,
     setLLMProvider,
-    claudeApiKey,
-    setClaudeApiKey,
     contextStrategy,
     setContextStrategy,
     runtimeMode,
@@ -1333,8 +1338,8 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
                                         <div className="text-sm font-semibold text-white">LLM Provider</div>
                                         <div className="text-xs text-white/50 mt-0.5">
                                             {llmProvider === 'gemini' ? 'Google Gemini 2.0 Flash - Fast, multimodal.' :
-                                             llmProvider === 'claude' ? 'Anthropic Claude - Excellent reasoning.' :
-                                             'Route through backend proxy - Production mode.'}
+                                                llmProvider === 'claude' ? 'Anthropic Claude - Excellent reasoning.' :
+                                                    'Route through backend proxy - Production mode.'}
                                         </div>
                                     </div>
                                 </div>
@@ -1347,23 +1352,6 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
                                     <option value="claude">Claude (Anthropic)</option>
                                     <option value="proxy">Proxy (Backend)</option>
                                 </select>
-
-                                {/* Claude API Key (conditional) */}
-                                {llmProvider === 'claude' && (
-                                    <div className="mt-3 pt-3 border-t border-white/10">
-                                        <label className="text-xs text-white/50 block mb-2">Claude API Key</label>
-                                        <input
-                                            type="password"
-                                            value={claudeApiKey}
-                                            onChange={(e) => setClaudeApiKey(e.target.value)}
-                                            placeholder="sk-ant-..."
-                                            className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]"
-                                        />
-                                        <p className="text-xs text-white/40 mt-1">
-                                            {claudeApiKey ? '✓ Key saved' : 'Required for Claude provider'}
-                                        </p>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
@@ -2119,38 +2107,48 @@ const AccessibilityPanel: React.FC = () => {
 // ============================================
 
 const SHORTCUTS = [
-    { category: 'Navigation', items: [
-        { action: 'Command Palette', keys: ['Cmd', 'K'], customizable: true, description: 'Quick access to all commands' },
-        { action: 'Go to Dashboard', keys: ['G', 'D'], customizable: true },
-        { action: 'Go to Settings', keys: ['G', 'S'], customizable: true },
-        { action: 'Go to Agent Hub', keys: ['G', 'A'], customizable: true },
-        { action: 'Toggle Sidebar', keys: ['Cmd', '\\'], customizable: true },
-    ]},
-    { category: 'Trading', items: [
-        { action: 'New Trade', keys: ['N'], customizable: true },
-        { action: 'Quick Buy', keys: ['Shift', 'B'], customizable: true },
-        { action: 'Quick Sell', keys: ['Shift', 'S'], customizable: true },
-        { action: 'Close All Positions', keys: ['Cmd', 'Shift', 'C'], customizable: true },
-    ]},
-    { category: 'Dashboard', items: [
-        { action: 'Refresh Data', keys: ['R'], customizable: true },
-        { action: 'Toggle Time Range', keys: ['T'], customizable: true },
-        { action: 'Export Data', keys: ['Cmd', 'E'], customizable: true },
-        { action: 'Toggle Chart Type', keys: ['C'], customizable: true },
-    ]},
-    { category: 'General', items: [
-        { action: 'Search', keys: ['Cmd', 'F'], customizable: false },
-        { action: 'Undo', keys: ['Cmd', 'Z'], customizable: false },
-        { action: 'Redo', keys: ['Cmd', 'Shift', 'Z'], customizable: false },
-        { action: 'Help', keys: ['?'], customizable: true },
-        { action: 'Toggle Theme', keys: ['Cmd', 'Shift', 'T'], customizable: true },
-    ]},
-    { category: 'Editing', items: [
-        { action: 'Save', keys: ['Cmd', 'S'], customizable: false },
-        { action: 'Select All', keys: ['Cmd', 'A'], customizable: false },
-        { action: 'Copy', keys: ['Cmd', 'C'], customizable: false },
-        { action: 'Paste', keys: ['Cmd', 'V'], customizable: false },
-    ]},
+    {
+        category: 'Navigation', items: [
+            { action: 'Command Palette', keys: ['Cmd', 'K'], customizable: true, description: 'Quick access to all commands' },
+            { action: 'Go to Dashboard', keys: ['G', 'D'], customizable: true },
+            { action: 'Go to Settings', keys: ['G', 'S'], customizable: true },
+            { action: 'Go to Agent Hub', keys: ['G', 'A'], customizable: true },
+            { action: 'Toggle Sidebar', keys: ['Cmd', '\\'], customizable: true },
+        ]
+    },
+    {
+        category: 'Trading', items: [
+            { action: 'New Trade', keys: ['N'], customizable: true },
+            { action: 'Quick Buy', keys: ['Shift', 'B'], customizable: true },
+            { action: 'Quick Sell', keys: ['Shift', 'S'], customizable: true },
+            { action: 'Close All Positions', keys: ['Cmd', 'Shift', 'C'], customizable: true },
+        ]
+    },
+    {
+        category: 'Dashboard', items: [
+            { action: 'Refresh Data', keys: ['R'], customizable: true },
+            { action: 'Toggle Time Range', keys: ['T'], customizable: true },
+            { action: 'Export Data', keys: ['Cmd', 'E'], customizable: true },
+            { action: 'Toggle Chart Type', keys: ['C'], customizable: true },
+        ]
+    },
+    {
+        category: 'General', items: [
+            { action: 'Search', keys: ['Cmd', 'F'], customizable: false },
+            { action: 'Undo', keys: ['Cmd', 'Z'], customizable: false },
+            { action: 'Redo', keys: ['Cmd', 'Shift', 'Z'], customizable: false },
+            { action: 'Help', keys: ['?'], customizable: true },
+            { action: 'Toggle Theme', keys: ['Cmd', 'Shift', 'T'], customizable: true },
+        ]
+    },
+    {
+        category: 'Editing', items: [
+            { action: 'Save', keys: ['Cmd', 'S'], customizable: false },
+            { action: 'Select All', keys: ['Cmd', 'A'], customizable: false },
+            { action: 'Copy', keys: ['Cmd', 'C'], customizable: false },
+            { action: 'Paste', keys: ['Cmd', 'V'], customizable: false },
+        ]
+    },
 ];
 
 const CATEGORY_CONFIG: Record<string, { color: string; bgColor: string }> = {
@@ -2593,7 +2591,7 @@ const DataManagementPanel: React.FC = () => {
                                     <div>
                                         <h3 className="text-lg font-semibold">
                                             {showResetConfirm === 'factory' ? 'Factory Reset' :
-                                             showResetConfirm === 'all' ? 'Reset All Settings' : 'Reset Theme'}
+                                                showResetConfirm === 'all' ? 'Reset All Settings' : 'Reset Theme'}
                                         </h3>
                                     </div>
                                 </div>
@@ -2601,8 +2599,8 @@ const DataManagementPanel: React.FC = () => {
                                     {showResetConfirm === 'factory'
                                         ? 'This will permanently delete ALL your data. This cannot be undone.'
                                         : showResetConfirm === 'all'
-                                        ? 'This will reset all settings to defaults. Your data will be preserved.'
-                                        : 'This will reset theme colors and glass effects to defaults.'}
+                                            ? 'This will reset all settings to defaults. Your data will be preserved.'
+                                            : 'This will reset theme colors and glass effects to defaults.'}
                                 </p>
                                 <div className="flex justify-end gap-3">
                                     <button
@@ -2857,3 +2855,453 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ icon, title, description, enabled
         </button>
     </div>
 );
+interface CredentialsPanelProps {
+    claudeApiKey: string;
+    setClaudeApiKey: (key: string) => void;
+}
+
+interface Credential {
+    id: string;
+    name: string;
+    type: 'email_imap' | 'odoo' | 'gmail_oauth' | 'gdrive_oauth' | 'gcalendar_oauth' | 'api_token';
+    notes?: string;
+    data?: any;
+    status: 'connected' | 'disconnected' | 'error';
+    lastUsed?: string;
+}
+
+const CredentialsPanel: React.FC<CredentialsPanelProps> = ({
+    claudeApiKey,
+    setClaudeApiKey
+}) => {
+    const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [credentials, setCredentials] = useState<Credential[]>(() => {
+        const saved = localStorage.getItem('liquid_credentials');
+        const initialCreds: Credential[] = saved ? JSON.parse(saved) : [
+            { id: '1', name: 'Production API', type: 'api_token', status: 'connected', lastUsed: '2 mins ago' },
+            { id: '2', name: 'Marketing Drive', type: 'gdrive_oauth', status: 'disconnected', lastUsed: '1 day ago' },
+            { id: '3', name: 'Personal Mail', type: 'email_imap', status: 'connected', lastUsed: '1 hour ago' },
+        ];
+
+        // Inject Environment Variables if not present
+        const exists = (id: string) => initialCreds.some(c => c.id === id);
+
+        if (import.meta.env.VITE_ANTHROPIC_API_KEY && !exists('env-anthropic')) {
+            initialCreds.push({
+                id: 'env-anthropic',
+                name: 'Environment: Anthropic',
+                type: 'api_token',
+                status: 'connected',
+                lastUsed: 'System',
+                notes: 'Loaded from .env VITE_ANTHROPIC_API_KEY',
+                data: { tokenType: 'bearer', token: import.meta.env.VITE_ANTHROPIC_API_KEY }
+            });
+        }
+
+        if (import.meta.env.VITE_GEMINI_API_KEY && !exists('env-gemini')) {
+            initialCreds.push({
+                id: 'env-gemini',
+                name: 'Environment: Gemini',
+                type: 'api_token',
+                status: 'connected',
+                lastUsed: 'System',
+                notes: 'Loaded from .env VITE_GEMINI_API_KEY',
+                data: { tokenType: 'bearer', token: import.meta.env.VITE_GEMINI_API_KEY }
+            });
+        }
+
+        return initialCreds;
+    });
+
+    // Persistence
+    useEffect(() => {
+        localStorage.setItem('liquid_credentials', JSON.stringify(credentials));
+    }, [credentials]);
+
+    // Form State
+    const [formData, setFormData] = useState<Partial<Credential>>({});
+
+    const handleSave = () => {
+        if (view === 'create' && formData.name && formData.type) {
+            const newCred: Credential = {
+                id: Math.random().toString(36).substring(7),
+                name: formData.name,
+                type: formData.type as any,
+                notes: formData.notes,
+                status: 'disconnected',
+                lastUsed: 'Just now'
+            };
+            setCredentials([...credentials, newCred]);
+        } else if (view === 'edit' && selectedId) {
+            setCredentials(credentials.map(c => c.id === selectedId ? { ...c, ...formData } : c));
+        }
+        setView('list');
+        setFormData({});
+        setSelectedId(null);
+    };
+
+    const handleDelete = (id: string) => {
+        setCredentials(credentials.filter(c => c.id !== id));
+        if (selectedId === id) {
+            setView('list');
+            setSelectedId(null);
+        }
+    };
+
+    const handleAuth = () => {
+        // Real OAuth Flow
+        // Use backend endpoint to initiate flow
+        const authUrl = `http://localhost:3000/api/v1/auth/google?type=${formData.type}`;
+        window.open(authUrl, '_blank', 'width=500,height=600');
+
+        // Listen for success message from popup
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'OAUTH_SUCCESS' && event.data?.credentialType === formData.type) {
+                setFormData({
+                    ...formData,
+                    status: 'connected',
+                    lastUsed: 'Just now',
+                    data: { ...formData.data, tokens: event.data.tokens } // Store tokens
+                });
+                window.removeEventListener('message', handleMessage);
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Fallback for demo/mock if backend fails or no keys (Simulated for safety if backend 500s immediately)
+        // But since user asked for "Not Mock", we rely on the backend.
+        // If backend is missing keys, the popup will show the error.
+    };
+
+    const getIconForType = (type: string) => {
+        switch (type) {
+            case 'email_imap': return Mail;
+            case 'gmail_oauth': return Mail;
+            case 'gdrive_oauth': return Database;
+            case 'gcalendar_oauth': return Calendar;
+            case 'api_token': return Key;
+            case 'odoo': return Globe;
+            default: return Key;
+        }
+    };
+
+    const getLabelForType = (type: string) => {
+        switch (type) {
+            case 'email_imap': return 'Email (IMAP)';
+            case 'gmail_oauth': return 'Gmail OAuth';
+            case 'gdrive_oauth': return 'Google Drive OAuth';
+            case 'gcalendar_oauth': return 'Google Calendar OAuth';
+            case 'api_token': return 'API Token';
+            case 'odoo': return 'Odoo';
+            default: return type;
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-6">
+            {/* Main Header */}
+            {view === 'list' && (
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white mb-2">Credentials</h2>
+                        <p className="text-white/50">Manage your API keys, OAuth tokens, and external connections.</p>
+                    </div>
+                    <button
+                        onClick={() => { setView('create'); setFormData({}); }}
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--glass-accent)] text-white rounded-xl font-medium hover:brightness-110 transition-all shadow-lg shadow-[var(--glass-accent)]/20"
+                    >
+                        <Plus size={18} />
+                        Add Credential
+                    </button>
+                </div>
+            )}
+
+            {/* Back Button */}
+            {view !== 'list' && (
+                <button
+                    onClick={() => setView('list')}
+                    className="flex items-center gap-2 text-white/60 hover:text-white mb-6 transition-colors"
+                >
+                    <ChevronLeft size={18} />
+                    Back to Credentials
+                </button>
+            )}
+
+            {/* Content Area */}
+            <div className="space-y-6">
+
+                {/* === LIST VIEW === */}
+                {view === 'list' && (
+                    <>
+                        {/* System Built-ins */}
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider ml-1">System</h3>
+                            <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4 group hover:border-white/20 transition-all">
+                                <div className="p-3 rounded-lg bg-orange-500/20 text-orange-400">
+                                    <Key size={20} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h4 className="font-semibold text-white">Anthropic (Claude)</h4>
+                                        <div className="flex items-center gap-2">
+                                            {claudeApiKey ? (
+                                                <span className="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">Active</span>
+                                            ) : (
+                                                <span className="text-xs font-medium text-white/40 bg-white/5 px-2 py-0.5 rounded-full">Not Configured</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="password"
+                                            value={claudeApiKey}
+                                            onChange={(e) => setClaudeApiKey(e.target.value)}
+                                            placeholder="sk-ant-..."
+                                            className="bg-transparent border-none p-0 text-sm text-white/60 focus:ring-0 w-full placeholder:text-white/20"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* User Credentials */}
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider ml-1">My Credentials</h3>
+                            <div className="grid gap-3">
+                                {credentials.map((cred) => {
+                                    const Icon = getIconForType(cred.type);
+                                    return (
+                                        <div
+                                            key={cred.id}
+                                            onClick={() => { setSelectedId(cred.id); setFormData(cred); setView('edit'); }}
+                                            className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all group"
+                                        >
+                                            <div className="p-3 rounded-lg bg-white/10 text-white/80 group-hover:bg-[var(--glass-accent)]/20 group-hover:text-[var(--glass-accent)] transition-colors">
+                                                <Icon size={20} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-semibold text-white truncate">{cred.name}</h4>
+                                                    <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-white/40 uppercase tracking-wide font-medium">
+                                                        {getLabelForType(cred.type)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-white/40">
+                                                    <span className={cn("w-1.5 h-1.5 rounded-full", cred.status === 'connected' ? "bg-green-500" : "bg-red-500")} />
+                                                    <span className="capitalize">{cred.status}</span>
+                                                    <span>•</span>
+                                                    <span>Used {cred.lastUsed}</span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight size={18} className="text-white/20 group-hover:text-white/60 transition-colors" />
+                                        </div>
+                                    );
+                                })}
+
+                                {credentials.length === 0 && (
+                                    <div className="text-center py-12 rounded-xl border border-dashed border-white/10 bg-white/5">
+                                        <Key size={32} className="mx-auto text-white/20 mb-3" />
+                                        <p className="text-white/40">No credentials added yet</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {/* === CREATE / EDIT VIEW === */}
+                {(view === 'create' || view === 'edit') && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-6"
+                    >
+                        {/* Header Section */}
+                        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                            <h3 className="text-lg font-semibold text-white mb-1">
+                                {view === 'create' ? 'Add Credential' : 'Credential Details'}
+                            </h3>
+                            <p className="text-sm text-white/50 mb-6">
+                                {view === 'create'
+                                    ? 'Provide a name and select the type. You\'ll configure details in the next step.'
+                                    : 'Update your credential information below.'}
+                            </p>
+
+                            <div className="grid gap-6 max-w-2xl">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-white/60 uppercase tracking-wide">Name <span className="text-red-400">*</span></label>
+                                    <input
+                                        type="text"
+                                        value={formData.name || ''}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="e.g., Production API Key"
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)] placeholder:text-white/20"
+                                    />
+                                </div>
+
+                                {view === 'create' ? (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-white/60 uppercase tracking-wide">Type <span className="text-red-400">*</span></label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {[
+                                                { id: 'api_token', label: 'API Token', icon: Key },
+                                                { id: 'gdrive_oauth', label: 'Google Drive OAuth', icon: Database },
+                                                { id: 'gcalendar_oauth', label: 'Google Calendar', icon: Calendar },
+                                                { id: 'gmail_oauth', label: 'Gmail OAuth', icon: Mail },
+                                                { id: 'email_imap', label: 'Email (IMAP)', icon: Mail },
+                                                { id: 'odoo', label: 'Odoo', icon: Globe },
+                                            ].map((type) => (
+                                                <button
+                                                    key={type.id}
+                                                    onClick={() => setFormData({ ...formData, type: type.id as any })}
+                                                    className={cn(
+                                                        "flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
+                                                        formData.type === type.id
+                                                            ? "bg-[var(--glass-accent)]/20 border-[var(--glass-accent)] text-white"
+                                                            : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                                                    )}
+                                                >
+                                                    <type.icon size={18} />
+                                                    <span className="text-sm font-medium">{type.label}</span>
+                                                    {formData.type === type.id && <Check size={16} className="ml-auto text-[var(--glass-accent)]" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Type Display (Read-only in Edit) */
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-white/60 uppercase tracking-wide">Type</label>
+                                        <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 text-white/60">
+                                            {getIconForType(formData.type || '') && React.createElement(getIconForType(formData.type || ''), { size: 18 })}
+                                            <span className="text-sm font-medium">{getLabelForType(formData.type || '')}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-white/60 uppercase tracking-wide">Notes</label>
+                                    <textarea
+                                        value={formData.notes || ''}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        placeholder="Additional notes..."
+                                        rows={3}
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)] placeholder:text-white/20 resize-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Type Specific Config */}
+                        {view === 'edit' && formData.type === 'api_token' && (
+                            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
+                                <h3 className="text-lg font-semibold text-white">Token Configuration</h3>
+                                <div className="grid gap-6 max-w-2xl">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-white/60 uppercase tracking-wide">Token Type <span className="text-red-400">*</span></label>
+                                        <select
+                                            value={formData.data?.tokenType || 'bearer'}
+                                            onChange={(e) => setFormData({ ...formData, data: { ...formData.data, tokenType: e.target.value } })}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]"
+                                        >
+                                            <option value="bearer">Bearer Token</option>
+                                            <option value="basic">Basic Auth</option>
+                                            <option value="custom">Custom Header</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-white/60 uppercase tracking-wide">API Token <span className="text-red-400">*</span></label>
+                                        <input
+                                            type="password"
+                                            value={formData.data?.token || ''}
+                                            onChange={(e) => setFormData({ ...formData, data: { ...formData.data, token: e.target.value } })}
+                                            placeholder="sk-..."
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)] font-mono"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'edit' && formData.type?.includes('oauth') && (
+                            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
+                                <h3 className="text-lg font-semibold text-white">OAuth Authorization</h3>
+                                <div className="flex flex-col items-center justify-center py-8 text-center space-y-4 bg-black/20 rounded-xl border border-white/5 border-dashed">
+                                    <div className={cn(
+                                        "p-4 rounded-full transition-colors",
+                                        formData.status === 'connected' ? "bg-green-500/20 text-green-400" : "bg-white/5 text-white/60"
+                                    )}>
+                                        {formData.status === 'connected'
+                                            ? <Check size={32} />
+                                            : React.createElement(getIconForType(formData.type), { size: 32 })
+                                        }
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-medium">
+                                            {formData.status === 'connected'
+                                                ? `Connected to ${getLabelForType(formData.type)}`
+                                                : `Grant access to ${getLabelForType(formData.type)}`
+                                            }
+                                        </p>
+                                        <p className="text-sm text-white/40 mt-1">
+                                            {formData.status === 'connected'
+                                                ? 'Your account is successfully linked and ready to use.'
+                                                : 'No authorization found. Click below to grant access.'
+                                            }
+                                        </p>
+                                    </div>
+
+                                    {formData.status !== 'connected' && (
+                                        <button
+                                            onClick={handleAuth}
+                                            className="px-6 py-2 bg-[#00C853] hover:bg-[#00C853]/90 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            Grant Access
+                                        </button>
+                                    )}
+
+                                    {formData.status === 'connected' && (
+                                        <button
+                                            onClick={() => setFormData({ ...formData, status: 'disconnected' })}
+                                            className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-400 font-medium rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            Disconnect
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                            {view === 'edit' && (
+                                <button
+                                    onClick={() => handleDelete(selectedId!)}
+                                    className="mr-auto px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setView('list'); setFormData({}); }}
+                                className="px-6 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={!formData.name || (view === 'create' && !formData.type)}
+                                className="px-6 py-2.5 rounded-xl bg-[var(--glass-accent)] text-white font-medium hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--glass-accent)]/20"
+                            >
+                                Save Credential
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </div>
+        </div>
+    );
+};

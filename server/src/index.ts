@@ -10,9 +10,11 @@ import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } fr
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { containerRoutes } from './routes/container.js';
+import { authRoutes } from './routes/auth.js';
 import { handleA2AHttpRequest, getAgentCard } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts';
+import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -321,6 +323,7 @@ async function startServer() {
     const app = new Elysia()
         .use(cors())
         .use(pluginRoutes)
+        .use(authRoutes)
         // Global Middleware: Security & CORS
         // Global Middleware: Security & CORS
         .onRequest(({ set, request }) => {
@@ -494,6 +497,23 @@ async function startServer() {
         .get('/api/v1/market', () => ({
             data: { marketStats: { totalMarketCap: 2500000000000, volume24h: 95000000000, btcDominance: 52.5, FearGreedIndex: 65, topGainers: [{ symbol: 'SOL', change: 5.2 }, { symbol: 'ADA', change: 3.8 }], topLosers: [{ symbol: 'XRP', change: -2.3 }] } }
         }))
+
+        // Smart Sheets Creation (Platinum Workflow)
+        .post('/api/v1/sheets/create', async ({ body, set }) => {
+            const { email, title } = body as { email: string; title?: string };
+            if (!email) {
+                set.status = 400;
+                return { error: 'Email is required' };
+            }
+            try {
+                const result = await templateService.createSmartSheet(email, title);
+                return { success: true, data: result };
+            } catch (error) {
+                logger.error({ error }, 'Failed to create smart sheet');
+                set.status = 500;
+                return { error: 'Failed to create smart sheet' };
+            }
+        })
 
         // Smart Enhancement Routes
         .use(smartRoutes)

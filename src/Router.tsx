@@ -18,6 +18,7 @@ const SFSymbolsViewer = lazy(() => import('./pages/SfSymbolsBrowser').then(mod =
 const DesignGuide = lazy(() => import('./pages/DesignGuide').then(mod => ({ default: mod.default })));
 
 // Demos
+// const SheetsDemo = lazy(() => import('./pages/SheetsDemo').then(mod => ({ default: mod.SheetsDemo }))); // TODO: Implement sheets demo
 const GenerativeShowcase = lazy(() => import('./pages/demos/GenerativeShowcase').then(mod => ({ default: mod.default })));
 const GenerativeExtensions = lazy(() => import('./pages/demos/GenerativeExtensions').then(mod => ({ default: mod.default })));
 const CopilotFormDemo = lazy(() => import('./pages/demos/CopilotFormDemo').then(mod => ({ default: mod.default })));
@@ -138,6 +139,7 @@ export const AppRouter = () => {
                                 <Route path="/os/demos/foundation" element={<FoundationDemo />} />
                                 <Route path="/os/demos/signature" element={<SignatureDemo />} />
                                 <Route path="/os/demos/extension" element={<ExtensionDemo />} />
+                                {/* <Route path="/os/sheets" element={<SheetsDemo />} /> */}
 
                                 {/* Documentation */}
                                 <Route path="/os/docs/copilot" element={<CopilotDocs />} />
