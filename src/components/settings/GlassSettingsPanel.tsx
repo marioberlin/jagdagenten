@@ -39,6 +39,7 @@ const tabs = [
     { id: 'containers', label: 'Containers', icon: Server, description: 'Remote deployment, pool settings' },
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
+    { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
     { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
