@@ -9,6 +9,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } from './schemas/chat.js';
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
+import { containerRoutes } from './routes/container.js';
 import { handleA2AHttpRequest, getAgentCard } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts';
@@ -496,6 +497,9 @@ async function startServer() {
 
         // Smart Enhancement Routes
         .use(smartRoutes)
+
+        // Container Configuration Routes
+        .use(containerRoutes)
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)

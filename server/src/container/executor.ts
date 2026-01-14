@@ -3,16 +3,22 @@
  *
  * Provides the bridge between the orchestrator and the container pool.
  * Replaces the mock executeAgent() with real container execution.
+ * Now integrates with SDK Intelligence for optimal SDK selection.
  *
  * @see docs/LIQUID_CONTAINER_ARCHITECTURE.md
+ * @see docs/LIQUID_CONTAINER_SDK_IMPLEMENTATION_PLAN.md
  */
 
 import type { SubPRD, AgentWorkResult } from '../orchestrator/types.js';
 import type { ContainerPool } from './pool.js';
 import type { PooledContainer, InitRequest, ExecuteRequest } from './types.js';
+import type { SDKType } from './smart-defaults.js';
 import { getSpecialist } from '../orchestrator/specialists.js';
 import { componentLoggers } from '../logger.js';
 import { traceExecution } from './metrics.js';
+import { analyzeTask, type TaskAnalysis } from './sdk-intelligence.js';
+import { detectEnvironment } from './auto-config.js';
+import { generateSecurityConfig, type SecurityConfig } from './security-auto.js';
 
 const log = componentLoggers.http.child({ component: 'container-executor' });
 
@@ -29,6 +35,12 @@ export interface ExecutorConfig {
     workdir: string;
     /** Base environment variables */
     env: Record<string, string>;
+    /** Override SDK selection (auto-selects if not specified) */
+    sdkOverride?: SDKType;
+    /** Enable SDK intelligence for task-based selection */
+    enableSdkIntelligence?: boolean;
+    /** Security configuration */
+    securityConfig?: SecurityConfig;
 }
 
 export interface AgentScript {
@@ -85,9 +97,40 @@ console.log('---RESULT_END---');
 export class ContainerExecutor {
     private config: ExecutorConfig;
     private activeContainers: Map<string, PooledContainer> = new Map();
+    private cachedEnv: Awaited<ReturnType<typeof detectEnvironment>> | null = null;
 
     constructor(config: ExecutorConfig) {
-        this.config = config;
+        this.config = { enableSdkIntelligence: true, ...config };
+    }
+
+    /**
+     * Get or detect environment (cached)
+     */
+    private async getEnvironment() {
+        if (!this.cachedEnv) {
+            this.cachedEnv = await detectEnvironment();
+        }
+        return this.cachedEnv;
+    }
+
+    /**
+     * Analyze task and get SDK recommendation
+     */
+    async analyzeAndSelectSdk(subPrd: SubPRD): Promise<{
+        analysis: TaskAnalysis;
+        sdk: SDKType;
+        securityConfig: SecurityConfig;
+    }> {
+        const env = await this.getEnvironment();
+        const analysis = analyzeTask(subPrd, env);
+
+        // Use override if provided, otherwise use intelligence recommendation
+        const sdk = this.config.sdkOverride || analysis.suggestedSdk;
+
+        // Generate security config
+        const securityConfig = this.config.securityConfig || generateSecurityConfig(env);
+
+        return { analysis, sdk, securityConfig };
     }
 
     /**
@@ -99,14 +142,23 @@ export class ContainerExecutor {
         script?: AgentScript
     ): Promise<AgentWorkResult> {
         const startTime = Date.now();
-        const agent = getSpecialist(subPrd.agentId);
+        const _agent = getSpecialist(subPrd.agentId); // Marked with underscore as unused
         const agentId = `${sessionId}-${subPrd.agentId}-${subPrd.id}`;
+
+        // Analyze task and select SDK if intelligence is enabled
+        let sdkSelection: { analysis: TaskAnalysis; sdk: SDKType; securityConfig: SecurityConfig } | null = null;
+        if (this.config.enableSdkIntelligence) {
+            sdkSelection = await this.analyzeAndSelectSdk(subPrd);
+        }
 
         log.info({
             sessionId,
             subPrdId: subPrd.id,
             agentId: subPrd.agentId,
             storiesCount: subPrd.stories.length,
+            suggestedSdk: sdkSelection?.sdk,
+            taskType: sdkSelection?.analysis.type,
+            taskComplexity: sdkSelection?.analysis.complexity,
         }, 'Executing agent in container');
 
         let container: PooledContainer | null = null;

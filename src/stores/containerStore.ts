@@ -15,6 +15,58 @@ export type PlacementType = 'local' | 'remote' | 'hybrid';
 export type SecretsBackend = 'env' | 'vault' | 'aws';
 export type CloudProvider = 'hetzner' | 'digitalocean' | 'flyio' | 'railway' | 'aws' | 'gcp' | 'azure' | 'bare-metal' | 'custom';
 
+/**
+ * SDK types supported by the system
+ */
+export type SDKType =
+    | 'claude-agent-sdk'
+    | 'openai-agents-sdk'
+    | 'google-adk'
+    | 'gemini-cli'
+    | 'minimax'
+    | 'raw'
+    | 'auto';
+
+/**
+ * SDK preferences for task-based routing
+ */
+export interface SDKPreferences {
+    /** Default SDK to use when no specific preference applies */
+    default: SDKType;
+    /** SDK for UI/component work */
+    uiSpecialist: SDKType;
+    /** SDK for API/backend work */
+    apiSpecialist: SDKType;
+    /** SDK for test writing */
+    testSpecialist: SDKType;
+    /** SDK for security-sensitive tasks */
+    securitySpecialist: SDKType;
+    /** Optimization priority */
+    costOptimization: 'quality' | 'balanced' | 'cost';
+}
+
+/**
+ * Auto-configuration state
+ */
+export interface AutoConfigState {
+    /** Whether auto-configuration is enabled */
+    enabled: boolean;
+    /** When the last detection was performed */
+    lastDetected?: number;
+    /** Detected Docker availability */
+    dockerAvailable?: boolean;
+    /** Detected Docker platform */
+    dockerPlatform?: string;
+    /** Detected API keys (provider -> present) */
+    detectedApiKeys?: Record<string, boolean>;
+    /** Detected CLI tools */
+    detectedCliTools?: Record<string, boolean>;
+    /** System memory in bytes */
+    systemMemory?: number;
+    /** CPU cores */
+    cpuCores?: number;
+}
+
 export interface RemoteEndpoint {
     id: string;
     name: string;
@@ -76,11 +128,28 @@ export interface ContainerConfig {
         endpoint?: string;
         serviceName: string;
     };
+    /** SDK preferences for task-based routing */
+    sdkPreferences: SDKPreferences;
+    /** Auto-configuration state */
+    autoConfig: AutoConfigState;
 }
 
 // ============================================================================
 // Default Configuration
 // ============================================================================
+
+const defaultSdkPreferences: SDKPreferences = {
+    default: 'auto',
+    uiSpecialist: 'auto',
+    apiSpecialist: 'auto',
+    testSpecialist: 'auto',
+    securitySpecialist: 'claude-agent-sdk', // Always Claude for security
+    costOptimization: 'balanced',
+};
+
+const defaultAutoConfig: AutoConfigState = {
+    enabled: true, // Auto-config enabled by default
+};
 
 const defaultConfig: ContainerConfig = {
     placement: {
@@ -115,6 +184,8 @@ const defaultConfig: ContainerConfig = {
         enabled: false,
         serviceName: 'liquid-container',
     },
+    sdkPreferences: defaultSdkPreferences,
+    autoConfig: defaultAutoConfig,
 };
 
 // ============================================================================
@@ -245,6 +316,15 @@ interface ContainerStore {
     setTelemetryEnabled: (enabled: boolean) => void;
     setTelemetryConfig: (config: Partial<ContainerConfig['telemetry']>) => void;
 
+    // SDK Preferences
+    setSdkPreference: <K extends keyof SDKPreferences>(key: K, value: SDKPreferences[K]) => void;
+    setAllSdkPreferences: (prefs: Partial<SDKPreferences>) => void;
+
+    // Auto-Configuration
+    setAutoConfigEnabled: (enabled: boolean) => void;
+    updateAutoConfigState: (state: Partial<AutoConfigState>) => void;
+    applySmartDefaults: (defaults: Partial<ContainerConfig>) => void;
+
     // Bulk
     importConfig: (config: Partial<ContainerConfig>) => void;
     resetToDefaults: () => void;
@@ -332,6 +412,46 @@ export const useContainerStore = create<ContainerStore>()(
             })),
             setTelemetryConfig: (telemetryConfig: Partial<ContainerConfig['telemetry']>) => set((state: ContainerStore) => ({
                 config: { ...state.config, telemetry: { ...state.config.telemetry, ...telemetryConfig } }
+            })),
+
+            // SDK Preferences
+            setSdkPreference: <K extends keyof SDKPreferences>(key: K, value: SDKPreferences[K]) => set((state: ContainerStore) => ({
+                config: {
+                    ...state.config,
+                    sdkPreferences: { ...state.config.sdkPreferences, [key]: value }
+                }
+            })),
+            setAllSdkPreferences: (prefs: Partial<SDKPreferences>) => set((state: ContainerStore) => ({
+                config: {
+                    ...state.config,
+                    sdkPreferences: { ...state.config.sdkPreferences, ...prefs }
+                }
+            })),
+
+            // Auto-Configuration
+            setAutoConfigEnabled: (enabled: boolean) => set((state: ContainerStore) => ({
+                config: {
+                    ...state.config,
+                    autoConfig: { ...state.config.autoConfig, enabled }
+                }
+            })),
+            updateAutoConfigState: (autoConfigUpdate: Partial<AutoConfigState>) => set((state: ContainerStore) => ({
+                config: {
+                    ...state.config,
+                    autoConfig: { ...state.config.autoConfig, ...autoConfigUpdate }
+                }
+            })),
+            applySmartDefaults: (defaults: Partial<ContainerConfig>) => set((state: ContainerStore) => ({
+                config: {
+                    ...state.config,
+                    ...defaults,
+                    // Preserve auto-config state
+                    autoConfig: {
+                        ...state.config.autoConfig,
+                        ...defaults.autoConfig,
+                        lastDetected: Date.now(),
+                    },
+                }
             })),
 
             // Bulk

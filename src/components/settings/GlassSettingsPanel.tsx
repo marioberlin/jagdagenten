@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { AIWallpaperGenerator } from '@/pages/settings-components/AIWallpaperGenerator';
 import { GlassContainerSettings } from './GlassContainerSettings';
+import { GlassAgentSettings } from './GlassAgentSettings';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
@@ -30,6 +31,7 @@ interface GlassSettingsPanelProps {
 
 const tabs = [
     { id: 'visual', label: 'Appearance', icon: Palette, description: 'Themes, backgrounds, glass effects' },
+    { id: 'ai-agents', label: 'AI Agents', icon: Brain, description: 'SDK preferences, API keys, auto-config' },
     { id: 'agent', label: 'Agent', icon: Cpu, description: 'LLM provider, context strategy' },
     { id: 'knowledge', label: 'Knowledge', icon: Book, description: 'Agent knowledge base' },
     { id: 'plugins', label: 'Plugins', icon: Puzzle, description: 'Extensions & MCP servers' },
@@ -266,6 +268,13 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                         )}
 
                         {/* === AGENT SETTINGS === */}
+                        {/* === AI AGENTS (NEW) === */}
+                        {activeTab === 'ai-agents' && (
+                            <div className="max-w-4xl mx-auto">
+                                <GlassAgentSettings />
+                            </div>
+                        )}
+
                         {activeTab === 'agent' && (
                             <AgentConfigPanel
                                 llmProvider={llmProvider}

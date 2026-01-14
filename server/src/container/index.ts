@@ -131,3 +131,119 @@ export {
     type ExecutorConfig,
     type AgentScript,
 } from './executor.js';
+
+// Auto-Configuration
+export {
+    detectEnvironment,
+    detectDocker,
+    detectSystem,
+    detectApiKeys,
+    detectCliTools,
+    detectNetwork,
+    isMinimumViable,
+    getEnvironmentSummary,
+    type EnvironmentCapabilities,
+    type DockerCapabilities,
+    type SystemCapabilities,
+    type ApiKeyCapabilities,
+    type CliToolCapabilities,
+    type NetworkCapabilities,
+} from './auto-config.js';
+
+// Smart Defaults
+export {
+    generateSmartDefaults,
+    applyOverrides,
+    toContainerConfig,
+    SDK_COST_ESTIMATES,
+    SDK_CAPABILITIES,
+    type SDKType,
+    type SDKPreferences,
+    type SmartDefaults,
+    type SecuritySettings,
+} from './smart-defaults.js';
+
+// API Key Detection
+export {
+    detectAndValidateApiKeys,
+    validateApiKey,
+    getKeyManagementUrl,
+    getProviderInfo,
+    getSupportedProviders,
+    hasMinimumApiKeys,
+    getKeysSummary,
+    type ApiKeyStatus,
+    type KeySource,
+} from './api-key-detection.js';
+
+// SDK Intelligence
+export {
+    analyzeTask,
+    selectBestSdk,
+    estimateCost,
+    compareCosts,
+    getAvailableSdks,
+    analyzeTaskBatch,
+    type TaskType,
+    type TaskComplexity,
+    type TaskAnalysis,
+    type CostEstimate,
+    type SDKAlternative,
+    type SubPRD,
+    type Story,
+} from './sdk-intelligence.js';
+
+// Natural Language Config
+export {
+    parseNLConfig,
+    parseNLConfigBatch,
+    validateNLConfigChanges,
+    summarizePreferences,
+    type NLConfigRequest,
+    type NLConfigResult,
+} from './nl-config.js';
+
+// SDK Runners
+export {
+    // Gemini CLI
+    GeminiCliRunner,
+    createGeminiCliRunner,
+    isGeminiCliInstalled,
+    getGeminiCliVersion,
+    executeGeminiCli,
+    DEFAULT_GEMINI_CLI_CONFIG,
+    type GeminiCliConfig,
+    type GeminiCliResult,
+    type GeminiStreamEvent,
+    // Claude
+    ClaudeRunner,
+    createClaudeRunner,
+    isClaudeCliInstalled,
+    getClaudeCliVersion,
+    executeClaude,
+    DEFAULT_CLAUDE_CONFIG,
+    type ClaudeRunnerConfig,
+    type ClaudeRunnerResult,
+    type ClaudeStreamEvent,
+} from './runners/index.js';
+
+// Security Auto-Configuration
+export {
+    generateSecurityConfig,
+    validateSecurityConfig,
+    calculateSecurityScore,
+    toDockerSecurityOpts,
+    generateNetworkRules,
+    getSecurityPreset,
+    DEFAULT_ALLOWED_DOMAINS,
+    AI_PROVIDER_DOMAINS,
+    DROP_CAPABILITIES,
+    type SecurityConfig,
+    type CredentialProxyConfig,
+    type NetworkSecurityConfig,
+    type ContainerSecurityConfig,
+    type NestedSandboxConfig,
+    type AuditConfig,
+    type SecurityIssue,
+    type SecurityPreset,
+} from './security-auto.js';

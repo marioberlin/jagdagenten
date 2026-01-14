@@ -840,6 +840,197 @@ cd server/container && ./build.sh
 
 ---
 
+## Phase 8: SDK Intelligence System ✅
+
+### 8.1 Auto-Configuration Engine
+**File:** `server/src/container/auto-config.ts`
+
+Automatic environment detection for zero-config setup.
+
+```typescript
+import { detectEnvironment, isMinimumViable, getEnvironmentSummary } from './container';
+
+const env = await detectEnvironment();
+// Returns: { docker, system, apiKeys, cliTools, network, detectedAt }
+
+console.log(env.docker.available);    // true/false
+console.log(env.apiKeys.anthropic);   // true if ANTHROPIC_API_KEY set
+console.log(env.cliTools.geminiCli);  // true if Gemini CLI installed
+```
+
+**Detected Capabilities:**
+| Category | Properties |
+|----------|------------|
+| Docker | available, version, platform (docker-desktop, orbstack, colima) |
+| System | platform, arch, totalMemory, availableMemory, cpuCores |
+| API Keys | anthropic, openai, google, minimax |
+| CLI Tools | geminiCli, claudeCode, git, bun, node |
+| Network | proxyConfigured, canReachAnthropicApi, etc. |
+
+### 8.2 Smart Defaults Generator
+**File:** `server/src/container/smart-defaults.ts`
+
+Generates optimal configuration based on detected environment.
+
+```typescript
+import { generateSmartDefaults, toContainerConfig } from './container';
+
+const env = await detectEnvironment();
+const defaults = generateSmartDefaults(env);
+// Returns: { placement, pool, resources, sdkPreferences, security, reasoning }
+
+const config = toContainerConfig(defaults);
+// Ready to use container configuration
+```
+
+**SDK Cost Estimates:**
+| SDK | Per Task | Monthly | Input/1M | Output/1M |
+|-----|----------|---------|----------|-----------|
+| Claude Agent SDK | $0.05-0.50 | $50-500 | $3.00 | $15.00 |
+| OpenAI Agents SDK | $0.02-0.20 | $20-200 | $2.50 | $10.00 |
+| Google ADK | $0.01-0.10 | $10-100 | $0.125 | $0.375 |
+| Gemini CLI | $0.001-0.01 | $1-10 | $0.075 | $0.30 |
+| MiniMax | $0.01-0.05 | $10-50 | $0.10 | $0.40 |
+
+### 8.3 SDK Intelligence (Task Analyzer)
+**File:** `server/src/container/sdk-intelligence.ts`
+
+Automatically selects optimal SDK based on task characteristics.
+
+```typescript
+import { analyzeTask, selectBestSdk, estimateCost } from './container';
+
+const analysis = analyzeTask(subPrd, env);
+// Returns: { type, complexity, estimatedTurns, estimatedCost, suggestedSdk, reasoning, confidence, alternatives }
+
+// Task types: 'ui' | 'api' | 'test' | 'security' | 'refactor' | 'docs' | 'general'
+// Complexity: 'simple' | 'moderate' | 'complex'
+```
+
+**SDK Selection Logic:**
+| Task Type | Preferred SDK | Reasoning |
+|-----------|---------------|-----------|
+| Security | Claude | Most careful reasoning |
+| UI/Components | Claude | Best React/CSS understanding |
+| API/Backend | Gemini CLI | Fastest, most cost-effective |
+| Tests | Gemini CLI / OpenAI | Fast iteration |
+| Simple tasks | Gemini CLI | Speed and cost |
+| Complex tasks | Claude | Best quality |
+
+### 8.4 Natural Language Configuration
+**File:** `server/src/container/nl-config.ts`
+
+Configure SDK preferences using natural language.
+
+```typescript
+import { parseNLConfig, validateNLConfigChanges } from './container';
+
+const result = parseNLConfig({ input: "use Claude for UI, Gemini for API" });
+// Returns: { understood: true, interpretation: "claude-agent-sdk for ui, gemini-cli for api", changes: {...}, confidence: 0.9 }
+
+// Supported patterns:
+// - "use Claude for UI"
+// - "prefer quality over cost"
+// - "default to Gemini"
+// - "always use Claude for security"
+```
+
+### 8.5 SDK Runners
+**Directory:** `server/src/container/runners/`
+
+Execution wrappers for each AI SDK.
+
+**Gemini CLI Runner:**
+```typescript
+import { createGeminiCliRunner, executeGeminiCli } from './container';
+
+const runner = createGeminiCliRunner({
+    model: 'gemini-2.0-flash',
+    sandbox: true,
+    maxTurns: 50,
+});
+
+const result = await runner.execute("Fix the login bug");
+// Or stream: for await (const event of runner.executeStreaming(prompt)) { ... }
+```
+
+**Claude Runner:**
+```typescript
+import { createClaudeRunner, executeClaude } from './container';
+
+const runner = createClaudeRunner({
+    model: 'claude-sonnet-4-5',
+    maxTurns: 50,
+    printMode: false,
+});
+
+const result = await runner.execute("Implement dark mode");
+// Supports session resumption: await runner.resume(sessionId)
+```
+
+### 8.6 Security Auto-Configuration
+**File:** `server/src/container/security-auto.ts`
+
+Defense-in-depth security configuration.
+
+```typescript
+import { generateSecurityConfig, getSecurityPreset, validateSecurityConfig } from './container';
+
+const config = generateSecurityConfig(env);
+// Or use presets: getSecurityPreset('maximum' | 'strict' | 'standard' | 'permissive', env)
+
+const issues = validateSecurityConfig(config);
+const score = calculateSecurityScore(config);  // 0-100
+```
+
+**Security Layers:**
+| Layer | Protection |
+|-------|------------|
+| Credential Proxy | API keys never enter containers |
+| Network Isolation | Egress allow-list, DNS filtering |
+| Container Sandbox | Read-only root, no-new-privileges, dropped capabilities |
+| Nested Sandbox | Gemini CLI --sandbox mode |
+| Audit Logging | File, network, shell operations tracked |
+
+### 8.7 Agent Settings UI
+**Files:**
+- `src/components/settings/GlassAgentSettings.tsx` - Main settings panel
+- `src/components/settings/AgentStatusOverview.tsx` - Status dashboard
+
+```typescript
+// Access via Settings > AI Agents tab
+// Or navigate to GlassSettingsPanel
+```
+
+**Features:**
+- **4 Tabs**: Quick Setup, AI Models, API Keys, Advanced
+- **Real-time Status**: Docker, Claude, Gemini, OpenAI availability
+- **SDK Preferences**: Task-based routing configuration
+- **Cost Estimation**: Per-SDK cost breakdown
+- **Progressive Disclosure**: Zero-config for beginners, full control for experts
+
+### 8.8 Container API Routes
+**File:** `server/src/routes/container.ts`
+
+Complete REST API for container configuration.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/container/detect` | GET | Detect environment capabilities |
+| `/api/container/smart-defaults` | GET | Get recommended configuration |
+| `/api/container/api-keys` | GET | Detect API keys |
+| `/api/container/api-keys/validate` | POST | Validate specific API key |
+| `/api/container/sdk-info` | GET | Get SDK costs and capabilities |
+| `/api/container/analyze-task` | POST | Analyze task and get SDK recommendation |
+| `/api/container/available-sdks` | GET | Get available SDKs for environment |
+| `/api/container/estimate-cost` | POST | Estimate cost for SDK and turns |
+| `/api/container/nl-config` | POST | Parse natural language configuration |
+| `/api/container/security/config` | GET | Generate security configuration |
+| `/api/container/security/validate` | POST | Validate security configuration |
+| `/api/container/security/presets` | GET | Get security preset configurations |
+
+---
+
 ## Architecture Summary
 
 ```
@@ -858,7 +1049,10 @@ cd server/container && ./build.sh
 │  │   ├── AgentCard.tsx                     # 3D hover cards                  │
 │  │   ├── AgentProbe.tsx                    # URL discovery                   │
 │  │   └── AgentChatWindow.tsx               # Chat interface                  │
-│  ├── src/components/settings/GlassContainerSettings.tsx # Container UI      │
+│  ├── src/components/settings/              # Settings components             │
+│  │   ├── GlassContainerSettings.tsx        # Container deployment UI        │
+│  │   ├── GlassAgentSettings.tsx            # AI agent settings UI           │
+│  │   └── AgentStatusOverview.tsx           # Agent runtime status           │
 │  ├── src/pages/agents/AgentHub.tsx         # Agent Hub page                  │
 │  ├── src/services/agents/registry.ts       # Curated agent registry         │
 │  └── src/layouts/LiquidOSLayout.tsx        # Two Worlds: Spatial OS         │
@@ -876,11 +1070,21 @@ cd server/container && ./build.sh
 │  ├── server/src/orchestrator/              # Multi-agent coordination       │
 │  ├── server/src/registry/                  # Plugin registry                │
 │  ├── server/src/a2a/                       # A2A protocol handler           │
+│  ├── server/src/routes/container.ts        # Container API routes           │
 │  └── server/src/container/                 # LiquidContainer runtime        │
 │      ├── pool.ts                           # Container pool manager         │
 │      ├── scheduler.ts                      # Load balancing                 │
 │      ├── secrets.ts                        # Secrets management             │
-│      └── executor.ts                       # Orchestrator integration       │
+│      ├── executor.ts                       # Orchestrator integration       │
+│      ├── auto-config.ts                    # Environment detection          │
+│      ├── smart-defaults.ts                 # Smart configuration            │
+│      ├── sdk-intelligence.ts               # Task-based SDK selection       │
+│      ├── nl-config.ts                      # Natural language config        │
+│      ├── api-key-detection.ts              # API key detection              │
+│      ├── security-auto.ts                  # Security auto-config           │
+│      └── runners/                          # SDK execution runners          │
+│          ├── gemini-cli-runner.ts          # Gemini CLI wrapper             │
+│          └── claude-runner.ts              # Claude Agent SDK wrapper       │
 │                                                                              │
 │  Scripts                                                                     │
 │  ├── scripts/verify_directives.ts          # Directive checksums            │
