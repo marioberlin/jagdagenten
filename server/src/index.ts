@@ -11,6 +11,7 @@ import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { containerRoutes } from './routes/container.js';
 import { authRoutes } from './routes/auth.js';
+import { createArtifactRoutes } from './artifacts/index.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -324,6 +325,7 @@ async function startServer() {
         .use(cors())
         .use(pluginRoutes)
         .use(authRoutes)
+        .use(createArtifactRoutes())
         // Global Middleware: Security & CORS
         // Global Middleware: Security & CORS
         .onRequest(({ set, request }) => {

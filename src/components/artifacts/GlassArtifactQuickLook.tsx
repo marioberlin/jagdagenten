@@ -26,14 +26,34 @@ import {
   Database,
   BarChart3,
   Sparkles,
+  TrendingUp,
+  LineChart,
+  Briefcase,
+  Bell,
+  Folder,
+  FileEdit,
+  type LucideIcon,
 } from 'lucide-react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import {
   type StoredArtifact,
+  type ArtifactIconName,
   useArtifactStore,
   getArtifactIcon,
   formatArtifactDate,
 } from '../../stores/artifactStore';
+
+// Icon map for dynamic icon rendering
+const ICON_MAP: Record<ArtifactIconName, LucideIcon> = {
+  TrendingUp,
+  BarChart3,
+  FileText,
+  LineChart,
+  Briefcase,
+  Bell,
+  Folder,
+  FileEdit,
+};
 
 // ============================================================================
 // Types
@@ -311,9 +331,16 @@ export function GlassArtifactQuickLook({
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl" role="img" aria-label="artifact type">
-                    {icon}
-                  </span>
+                  {(() => {
+                    const IconComponent = ICON_MAP[icon];
+                    return IconComponent ? (
+                      <IconComponent
+                        size={32}
+                        className="text-purple-400"
+                        aria-label="artifact type"
+                      />
+                    ) : null;
+                  })()}
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-semibold text-white">

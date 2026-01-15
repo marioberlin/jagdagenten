@@ -29,6 +29,14 @@ import {
   Loader2,
   ChevronDown,
   Check,
+  TrendingUp,
+  BarChart3,
+  FileText,
+  LineChart,
+  Briefcase,
+  Bell,
+  FileEdit,
+  type LucideIcon,
 } from 'lucide-react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassArtifactCard } from './GlassArtifactCard';
@@ -39,6 +47,17 @@ import {
   useArtifactStore,
   ARTIFACT_CATEGORIES,
 } from '../../stores/artifactStore';
+
+// Icon map for category icons
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
+  TrendingUp,
+  BarChart3,
+  FileText,
+  LineChart,
+  Briefcase,
+  Bell,
+  FileEdit,
+};
 
 // ============================================================================
 // Types
@@ -67,6 +86,8 @@ function CategoryBadge({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const IconComponent = CATEGORY_ICON_MAP[category.icon];
+
   return (
     <button
       onClick={onClick}
@@ -81,7 +102,7 @@ function CategoryBadge({
         }
       `}
     >
-      <span>{category.icon}</span>
+      {IconComponent ? <IconComponent size={14} /> : null}
       <span>{category.label}</span>
     </button>
   );

@@ -35,6 +35,9 @@ const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod 
 // Agent Hub
 const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
 
+// Artifacts
+const ArtifactsPage = lazy(() => import('./pages/artifacts/ArtifactsPage').then(mod => ({ default: mod.ArtifactsPage })));
+
 // Docs
 const CopilotDocs = lazy(() => import('./pages/showcase/CopilotDocs').then(mod => ({ default: mod.default })));
 const AIResearcherDocs = lazy(() => import('./pages/showcase/AIResearcherDocs').then(mod => ({ default: mod.default })));
@@ -125,6 +128,7 @@ export const AppRouter = () => {
                                 <Route path="/os/showcase" element={<Showcase />} />
                                 <Route path="/os/icons" element={<SFSymbolsViewer />} />
                                 <Route path="/os/agents" element={<AgentHub />} />
+                                <Route path="/os/artifacts" element={<ArtifactsPage />} />
 
                                 {/* Demos */}
                                 <Route path="/os/demos/generative" element={<GenerativeShowcase />} />

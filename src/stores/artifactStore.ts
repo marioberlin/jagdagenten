@@ -61,13 +61,13 @@ export type ViewMode = 'grid' | 'list' | 'timeline' | 'graph';
 // ============================================================================
 
 export const ARTIFACT_CATEGORIES = [
-  { id: 'trading', label: 'Trading', icon: '💹', color: 'bg-green-500/20' },
-  { id: 'analysis', label: 'Analysis', icon: '📊', color: 'bg-blue-500/20' },
-  { id: 'report', label: 'Report', icon: '📄', color: 'bg-gray-500/20' },
-  { id: 'chart', label: 'Chart', icon: '📈', color: 'bg-purple-500/20' },
-  { id: 'portfolio', label: 'Portfolio', icon: '💼', color: 'bg-amber-500/20' },
-  { id: 'alert', label: 'Alert', icon: '🔔', color: 'bg-red-500/20' },
-  { id: 'custom', label: 'Custom', icon: '📝', color: 'bg-pink-500/20' },
+  { id: 'trading', label: 'Trading', icon: 'TrendingUp', color: 'bg-green-500/20' },
+  { id: 'analysis', label: 'Analysis', icon: 'BarChart3', color: 'bg-blue-500/20' },
+  { id: 'report', label: 'Report', icon: 'FileText', color: 'bg-gray-500/20' },
+  { id: 'chart', label: 'Chart', icon: 'LineChart', color: 'bg-purple-500/20' },
+  { id: 'portfolio', label: 'Portfolio', icon: 'Briefcase', color: 'bg-amber-500/20' },
+  { id: 'alert', label: 'Alert', icon: 'Bell', color: 'bg-red-500/20' },
+  { id: 'custom', label: 'Custom', icon: 'FileEdit', color: 'bg-pink-500/20' },
 ] as const;
 
 // ============================================================================
@@ -209,16 +209,62 @@ export const useArtifactStore = create<ArtifactStore>()(
       // Data fetching
       fetchRecentArtifacts: async (limit = 20) => {
         set({ isLoading: true, error: null });
+
+        // Helper to fetch from tasks
+        const fetchFromTasks = async () => {
+          const taskData = await apiRequest<{
+            artifacts: Array<{
+              artifactId: string;
+              taskId: string;
+              contextId: string;
+              name?: string;
+              parts: unknown[];
+              metadata?: Record<string, unknown>;
+              createdAt: string;
+            }>;
+          }>(`/from-tasks?limit=${limit}`);
+
+          // Transform task artifacts to StoredArtifact format
+          return taskData.artifacts.map((a) => ({
+            id: a.artifactId,
+            taskId: a.taskId,
+            contextId: a.contextId,
+            artifactId: a.artifactId,
+            name: a.name,
+            parts: a.parts as ArtifactPart[],
+            metadata: a.metadata,
+            version: 1,
+            isStreaming: false,
+            isComplete: true,
+            createdAt: a.createdAt,
+            updatedAt: a.createdAt,
+          })) as StoredArtifact[];
+        };
+
         try {
+          // Try the artifact store first
           const data = await apiRequest<{ artifacts: StoredArtifact[] }>(
             `/recent?limit=${limit}`
           );
-          set({ recentArtifacts: data.artifacts, isLoading: false });
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to fetch artifacts',
-            isLoading: false,
-          });
+
+          // If artifact store is empty, fall back to tasks
+          if (data.artifacts.length === 0) {
+            const taskArtifacts = await fetchFromTasks();
+            set({ recentArtifacts: taskArtifacts, isLoading: false });
+          } else {
+            set({ recentArtifacts: data.artifacts, isLoading: false });
+          }
+        } catch {
+          // Fall back to extracting artifacts from tasks on error
+          try {
+            const artifacts = await fetchFromTasks();
+            set({ recentArtifacts: artifacts, isLoading: false });
+          } catch (fallbackError) {
+            set({
+              error: fallbackError instanceof Error ? fallbackError.message : 'Failed to fetch artifacts',
+              isLoading: false,
+            });
+          }
         }
       },
 
@@ -417,27 +463,41 @@ export const selectFilteredArtifacts = (state: ArtifactStore) => {
 // Utility Functions
 // ============================================================================
 
-export function getArtifactIcon(artifact: StoredArtifact): string {
+/**
+ * Get Lucide icon name for artifact based on category.
+ * Returns the name of a Lucide React icon component.
+ */
+export type ArtifactIconName =
+  | 'TrendingUp'
+  | 'BarChart3'
+  | 'FileText'
+  | 'LineChart'
+  | 'Briefcase'
+  | 'Bell'
+  | 'Folder'
+  | 'FileEdit';
+
+export function getArtifactIcon(artifact: StoredArtifact): ArtifactIconName {
   const category = artifact.metadata?.category as string | undefined;
 
   switch (category) {
     case 'trading':
-      return '💹';
+      return 'TrendingUp';
     case 'analysis':
-      return '📊';
+      return 'BarChart3';
     case 'report':
-      return '📄';
+      return 'FileText';
     case 'chart':
-      return '📈';
+      return 'LineChart';
     case 'portfolio':
-      return '💼';
+      return 'Briefcase';
     case 'alert':
-      return '🔔';
+      return 'Bell';
     default:
       // Infer from parts
-      if (artifact.parts.some((p) => p.file)) return '📁';
-      if (artifact.parts.some((p) => p.data)) return '📝';
-      return '📄';
+      if (artifact.parts.some((p) => p.file)) return 'Folder';
+      if (artifact.parts.some((p) => p.data)) return 'FileEdit';
+      return 'FileText';
   }
 }
 

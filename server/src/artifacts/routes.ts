@@ -5,11 +5,29 @@
  */
 
 import { Elysia } from 'elysia';
+import { Pool } from 'pg';
 import type { ArtifactRegistry, ArtifactFilters, ArtifactCategory } from './types.js';
 import { createArtifactStoreFromEnv, TRADING_TEMPLATES } from './index.js';
 
 // Initialize artifact store (will be null if DATABASE_URL not set)
 let artifactStore: ArtifactRegistry | null = null;
+
+// PostgreSQL pool for direct task queries
+let taskPool: Pool | null = null;
+
+/**
+ * Get or create PostgreSQL pool for task queries
+ */
+function getTaskPool(): Pool | null {
+  if (!taskPool && process.env.DATABASE_URL) {
+    taskPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+    });
+  }
+  return taskPool;
+}
 
 /**
  * Get or create artifact store instance
@@ -371,6 +389,86 @@ export function createArtifactRoutes() {
       const limit = query.limit ? parseInt(query.limit as string, 10) : 50;
       const artifacts = await store.listByContext(params.contextId, limit);
       return { artifacts, count: artifacts.length };
+    })
+
+    // Extract artifacts from A2A tasks table
+    .get('/from-tasks', async ({ query, set }) => {
+      const pool = getTaskPool();
+      if (!pool) {
+        set.status = 503;
+        return { error: 'Database not available. Set DATABASE_URL environment variable.' };
+      }
+
+      const limit = query.limit ? parseInt(query.limit as string, 10) : 50;
+      const offset = query.offset ? parseInt(query.offset as string, 10) : 0;
+      const contextId = query.contextId as string | undefined;
+
+      try {
+        let queryText = `
+          SELECT
+            id as task_id,
+            context_id,
+            status_state,
+            artifacts,
+            created_at,
+            updated_at
+          FROM a2a_tasks
+          WHERE artifacts IS NOT NULL
+            AND artifacts != '[]'::jsonb
+        `;
+        const params: unknown[] = [];
+        let paramIndex = 1;
+
+        if (contextId) {
+          queryText += ` AND context_id = $${paramIndex++}`;
+          params.push(contextId);
+        }
+
+        queryText += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
+        params.push(limit, offset);
+
+        const result = await pool.query(queryText, params);
+
+        // Flatten artifacts from all tasks
+        const allArtifacts: Array<{
+          artifactId: string;
+          taskId: string;
+          contextId: string;
+          name?: string;
+          parts: unknown[];
+          metadata?: Record<string, unknown>;
+          createdAt: string;
+        }> = [];
+
+        for (const row of result.rows) {
+          const artifacts = typeof row.artifacts === 'string'
+            ? JSON.parse(row.artifacts)
+            : row.artifacts;
+
+          if (Array.isArray(artifacts)) {
+            for (const artifact of artifacts) {
+              allArtifacts.push({
+                artifactId: artifact.artifactId || artifact.artifact_id || `${row.task_id}-${allArtifacts.length}`,
+                taskId: row.task_id,
+                contextId: row.context_id,
+                name: artifact.name,
+                parts: artifact.parts || [],
+                metadata: artifact.metadata,
+                createdAt: row.created_at,
+              });
+            }
+          }
+        }
+
+        return {
+          artifacts: allArtifacts,
+          count: allArtifacts.length,
+          tasksWithArtifacts: result.rows.length,
+        };
+      } catch (error) {
+        set.status = 500;
+        return { error: error instanceof Error ? error.message : 'Failed to fetch artifacts from tasks' };
+      }
     })
 
     // Streaming endpoints

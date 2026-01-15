@@ -25,14 +25,38 @@ import {
   BarChart3,
   Database,
   Sparkles,
+  TrendingUp,
+  LineChart,
+  Briefcase,
+  Bell,
+  Folder,
+  FileEdit,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   type StoredArtifact,
+  type ArtifactIconName,
   getArtifactIcon,
   getArtifactPreviewText,
   formatArtifactDate,
   useArtifactStore,
 } from '../../stores/artifactStore';
+
+// ============================================================================
+// Icon Map
+// ============================================================================
+
+const ICON_MAP: Record<ArtifactIconName, LucideIcon> = {
+  TrendingUp,
+  BarChart3,
+  FileText,
+  LineChart,
+  Briefcase,
+  Bell,
+  Folder,
+  FileEdit,
+};
+
 import { GlassContainer } from '../primitives/GlassContainer';
 // Note: GlassTooltip available at '../overlays/GlassTooltip' if needed
 
@@ -198,9 +222,16 @@ export function GlassArtifactCard({
         {/* Icon and Category Badge */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-2xl" role="img" aria-label="artifact type">
-              {icon}
-            </span>
+            {(() => {
+              const IconComponent = ICON_MAP[icon];
+              return IconComponent ? (
+                <IconComponent
+                  size={config.iconSize}
+                  className="text-purple-400"
+                  aria-label="artifact type"
+                />
+              ) : null;
+            })()}
             {getContentTypeIcon(artifact)}
           </div>
 
