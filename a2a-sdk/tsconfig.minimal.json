@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "commonjs",
+        "declaration": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "moduleResolution": "node"
+    },
+    "include": [
+        "src/index.ts",
+        "src/shim.ts",
+        "src/minimal-types.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "src/server",
+        "src/client",
+        "src/transports",
+        "src/types",
+        "src/utils",
+        "src/auth",
+        "src/grpc"
+    ]
+}
