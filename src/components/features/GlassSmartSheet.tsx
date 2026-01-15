@@ -31,6 +31,7 @@ export const GlassSmartSheet: React.FC<GlassSmartSheetProps> = ({
         // Force iframe reload hack
         const iframe = document.getElementById('smart-sheet-frame') as HTMLIFrameElement;
         if (iframe) {
+            // eslint-disable-next-line no-self-assign
             iframe.src = iframe.src;
         }
         setTimeout(() => setIsRefreshing(false), 1000);

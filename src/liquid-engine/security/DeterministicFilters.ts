@@ -69,6 +69,7 @@ const REGEX_PATTERNS: readonly { pattern: RegExp; description: string }[] = [
     { pattern: /<script>.*?<\/script>/is, description: 'XSS Injection' },
     { pattern: /\[system\].*?\[\/system\]/is, description: 'Fake System Tag' },
     { pattern: /{{.*?}}|{%.*?%}/s, description: 'Template Injection' },
+    // eslint-disable-next-line no-control-regex
     { pattern: /\x00|\u0000/, description: 'Null Byte Injection' },
     { pattern: /base64_decode\(/i, description: 'Obfuscation Attempt' },
 ] as const;

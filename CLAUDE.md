@@ -1155,16 +1155,47 @@ bun test tests/unit/clientFactory.test.ts tests/unit/rate-limit.test.ts
 ### Environment Variables
 
 ```bash
-# Required
-GEMINI_API_KEY=your_key
-ANTHROPIC_API_KEY=your_key
+# =============================================================================
+# AI API Keys (at least one required for AI features)
+# =============================================================================
+GEMINI_API_KEY=your_key              # Google AI Studio: https://aistudio.google.com/apikey
+ANTHROPIC_API_KEY=your_key           # Anthropic Console: https://console.anthropic.com/
+OPENAI_API_KEY=your_key              # OpenAI Platform: https://platform.openai.com/api-keys (optional)
 
-# Optional
-REDIS_URL=redis://localhost:6379
-OTEL_ENABLED=true
+# =============================================================================
+# Google OAuth (for user authentication)
+# =============================================================================
+GOOGLE_CLIENT_ID=your_id             # Google Cloud Console: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_SECRET=your_secret     # Create OAuth 2.0 credentials, set redirect URI to /auth/google/callback
+
+# =============================================================================
+# Google APIs
+# =============================================================================
+GOOGLE_PLACES_API_KEY=your_key       # For Restaurant Finder agent (enable Places API New)
+VITE_GOOGLE_API_KEY=your_key         # Frontend Google API access
+VITE_GOOGLE_CLIENT_ID=your_id        # Frontend Google OAuth
+
+# =============================================================================
+# Google Service Account (for Smart Sheets / TemplateService)
+# =============================================================================
+GOOGLE_SERVICE_ACCOUNT_EMAIL=email   # From service account JSON key
+GOOGLE_PRIVATE_KEY="-----BEGIN..."   # From service account JSON key (enable Drive & Sheets APIs)
+GOOGLE_MASTER_TEMPLATE_ID=sheet_id   # Template spreadsheet ID to clone
+
+# =============================================================================
+# Infrastructure
+# =============================================================================
+REDIS_URL=redis://localhost:6379     # For distributed WebSocket and caching
+DATABASE_URL=postgresql://...        # PostgreSQL for A2A task persistence
+
+# =============================================================================
+# Observability & Security
+# =============================================================================
+OTEL_ENABLED=true                    # Enable OpenTelemetry tracing
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-REQUIRE_WS_AUTH=true
-LOG_LEVEL=info
+REQUIRE_WS_AUTH=true                 # Require WebSocket authentication
+JWT_SECRET=change-in-production      # JWT token signing secret
+LOG_LEVEL=info                       # Logging level (debug, info, warn, error)
 ```
 
 ### New Dependencies (January 2026)

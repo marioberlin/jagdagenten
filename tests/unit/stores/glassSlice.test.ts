@@ -8,7 +8,7 @@ import { ThemeStore, ThemeActions } from '@/stores/types';
 const createGlassTestStore = () => {
     return createStore<ThemeStore & ThemeActions>()(
         immer((set, get, store) => ({
-            // @ts-ignore - Partial logic
+            // @ts-expect-error - Partial logic
             ...createGlassSlice(set, get, store),
             glass: {
                 intensity: 50,

@@ -1,0 +1,28 @@
+# Build outputs
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# External/vendored code
+a2a-sdk/
+LiquidSkills/
+
+# Server code (has separate tsconfig)
+server/
+
+# Scripts (Node.js utilities)
+scripts/
+
+# Test utilities
+tests/
+
+# Config files
+*.config.js
+*.config.ts
+.eslintrc.cjs
+
+# Generated files
+*.d.ts

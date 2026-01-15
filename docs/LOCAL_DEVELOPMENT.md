@@ -95,10 +95,20 @@ WEBSOCKET_PORT=3001
 # Redis (optional, falls back to local)
 REDIS_URL=redis://localhost:6379
 
-# AI APIs (optional, for agent execution)
+# AI APIs (at least one required for AI features)
 ANTHROPIC_API_KEY=your-key
 OPENAI_API_KEY=your-key
 GEMINI_API_KEY=your-key
+
+# Google OAuth (for user authentication)
+GOOGLE_CLIENT_ID=your-id
+GOOGLE_CLIENT_SECRET=your-secret
+
+# Google APIs (optional, for specific agents)
+GOOGLE_PLACES_API_KEY=your-key           # Restaurant Finder agent
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your-email  # Smart Sheets
+GOOGLE_PRIVATE_KEY="-----BEGIN..."       # Smart Sheets
+GOOGLE_MASTER_TEMPLATE_ID=sheet-id       # Smart Sheets template
 ```
 
 ### Feature Flags

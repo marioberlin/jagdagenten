@@ -167,8 +167,8 @@ Execute: bun run scripts/build.ts`;
             // Simple regex to find script references
             const patterns = [
                 /`scripts\/([^`]+\.ts)`/g,
-                /scripts\/([^\s\)]+\.ts)/g,
-                /bun run scripts\/([^\s\)]+)/g
+                /scripts\/([^\s)]+\.ts)/g,
+                /bun run scripts\/([^\s)]+)/g
             ];
 
             const references: string[] = [];

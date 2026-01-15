@@ -7,7 +7,7 @@ import { ThemeStore, ThemeActions } from '@/stores/types';
 const createVisualTestStore = () => {
     return createStore<ThemeStore & ThemeActions>()(
         immer((set, get, store) => ({
-            // @ts-ignore - Partial logic
+            // @ts-expect-error - Partial logic
             ...createVisualSlice(set, get, store),
             visual: {
                 radius: 20,

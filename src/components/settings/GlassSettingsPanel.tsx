@@ -23,7 +23,7 @@ import { GlassAgentSettings } from './GlassAgentSettings';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
-    onClose?: () => void;  // eslint-disable-line @typescript-eslint/no-unused-vars
+    onClose?: () => void;   
 }
 
 // ============================================

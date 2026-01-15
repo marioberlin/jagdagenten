@@ -1,6 +1,6 @@
 [
   {
-    "id": "heal_1768168651670_3v3e0v",
+    "id": "heal_1768483586915_5uqkjw",
     "errorReport": {
       "type": "client_error",
       "message": "Error 1",
@@ -12,16 +12,16 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-11T21:57:30.725Z"
+      "timestamp": "2026-01-15T13:26:26.522Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-11T21:57:31.670Z",
-    "updatedAt": "2026-01-11T21:57:31.670Z"
+    "createdAt": "2026-01-15T13:26:26.915Z",
+    "updatedAt": "2026-01-15T13:26:26.915Z"
   },
   {
-    "id": "heal_1768168651671_qwi5l1",
+    "id": "heal_1768483586916_nm9u1a",
     "errorReport": {
       "type": "client_error",
       "message": "Error 2",
@@ -33,16 +33,16 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-11T21:57:30.725Z"
+      "timestamp": "2026-01-15T13:26:26.522Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-11T21:57:31.671Z",
-    "updatedAt": "2026-01-11T21:57:31.671Z"
+    "createdAt": "2026-01-15T13:26:26.916Z",
+    "updatedAt": "2026-01-15T13:26:26.916Z"
   },
   {
-    "id": "heal_1768168651673_v6nnpq",
+    "id": "heal_1768483586916_zku4xc",
     "errorReport": {
       "type": "client_error",
       "message": "Error 3",
@@ -54,16 +54,16 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-11T21:57:30.725Z"
+      "timestamp": "2026-01-15T13:26:26.522Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-11T21:57:31.673Z",
-    "updatedAt": "2026-01-11T21:57:31.673Z"
+    "createdAt": "2026-01-15T13:26:26.916Z",
+    "updatedAt": "2026-01-15T13:26:26.916Z"
   },
   {
-    "id": "heal_1768169467316_qxjykq",
+    "id": "heal_1768484051607_6eytx1",
     "errorReport": {
       "type": "client_error",
       "message": "Test error message",
@@ -71,12 +71,12 @@
         "componentName": "TestComponent",
         "url": "/test"
       },
-      "timestamp": "2026-01-11T22:11:07.314Z"
+      "timestamp": "2026-01-15T13:34:11.603Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-11T22:11:07.316Z",
-    "updatedAt": "2026-01-11T22:11:07.316Z"
+    "createdAt": "2026-01-15T13:34:11.607Z",
+    "updatedAt": "2026-01-15T13:34:11.607Z"
   }
 ]

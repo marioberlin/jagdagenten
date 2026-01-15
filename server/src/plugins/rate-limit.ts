@@ -3,7 +3,7 @@
  */
 import { Elysia } from 'elysia';
 
-let rateLimitStore: Map<string, { count: number; resetTime: number }> = new Map();
+const rateLimitStore: Map<string, { count: number; resetTime: number }> = new Map();
 
 export const rateLimitPlugin = (config: { max: number; windowMs: number } = { max: 100, windowMs: 15 * 60 * 1000 }) => {
     return new Elysia({ name: 'rate-limit' })

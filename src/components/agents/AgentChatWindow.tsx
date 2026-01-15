@@ -142,7 +142,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     // Helper: Extract text and A2UI from SDK task
     const extractTaskContent = useCallback((task: v1.Task): { content: string; a2uiMessages: LegacyA2UIMessage[] } => {
         let content = '';
-        let a2uiMessages: LegacyA2UIMessage[] = [];
+        const a2uiMessages: LegacyA2UIMessage[] = [];
 
         // Extract from status message
         if (task.status.message) {

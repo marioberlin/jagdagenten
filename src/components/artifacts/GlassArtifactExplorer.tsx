@@ -277,11 +277,12 @@ export function GlassArtifactExplorer({
         case 'name':
           comparison = (a.name || '').localeCompare(b.name || '');
           break;
-        case 'category':
+        case 'category': {
           const catA = (a.metadata?.category as string) || '';
           const catB = (b.metadata?.category as string) || '';
           comparison = catA.localeCompare(catB);
           break;
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;

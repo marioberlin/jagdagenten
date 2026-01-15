@@ -94,6 +94,28 @@ You sit between human intent (directives) and deterministic execution (scripts).
 
 Be pragmatic. Be reliable. Self-anneal.
 
+## Quick Start (Local Development)
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d
+
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+```
+
+For detailed setup instructions, see [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md).
+
+**Key environment variables:**
+```bash
+DATABASE_URL=postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto
+REDIS_URL=redis://localhost:6379
+PORT=3000
+```
+
 ---
 
 # LiquidCrypto System Documentation - January 2026
@@ -102,7 +124,7 @@ This document contains all the updates and improvements made to the LiquidCrypto
 
 ## 🎉 Implementation Plan Complete (January 2026)
 
-**All 24 features across 6 phases have been implemented and tested.**
+**All 29 features across 7 phases have been implemented and tested.**
 
 | Phase | Status | Features |
 |-------|--------|----------|
@@ -112,6 +134,7 @@ This document contains all the updates and improvements made to the LiquidCrypto
 | **Phase 4** | ✅ Complete | Plugin Sandbox, Self-Healing Loop, Multi-Agent Orchestration, Plugin Registry |
 | **Phase 5** | ✅ Complete | A2A Protocol, A2UI Rendering, External Agent Communication |
 | **Phase 6** | ✅ Complete | Agent Hub UI, Agent Discovery, Agent Cards, Chat Windows |
+| **Phase 7** | ✅ Complete | Container Runtime, Container Settings UI, Remote Deployment, Provider Presets |
 
 ---
 
@@ -711,6 +734,325 @@ const dockItems = [
 
 ---
 
+## Phase 7: Container Runtime ✅
+
+### 7.1 LiquidContainer System
+**Directory:** `server/src/container/`
+
+Complete container runtime for executing AI agents in isolated Docker environments with warm pool management.
+
+**Core Components:**
+| File | Purpose |
+|------|---------|
+| `types.ts` | Type definitions, error classes |
+| `config.ts` | Zod schemas, env parsing |
+| `pool.ts` | Container pool manager |
+| `scheduler.ts` | Weighted load balancing |
+| `client.ts` | HTTP client for runtime server |
+| `secrets.ts` | Multi-backend secrets (Env, Vault, AWS) |
+| `metrics.ts` | OpenTelemetry integration |
+| `executor.ts` | Orchestrator integration |
+| `remote/ssh-tunnel.ts` | SSH tunnel for remote Docker |
+
+```typescript
+import { createContainerPool, loadConfig } from './container';
+
+const config = loadConfig();
+const pool = await createContainerPool(config.pool);
+
+// Acquire container from warm pool (<100ms)
+const container = await pool.acquire({ agentId: 'my-agent' });
+
+// Execute agent script
+const result = await pool.executeInContainer(container.id, {
+    command: 'bun',
+    args: ['run', 'agent-script.ts'],
+});
+
+await pool.release(container.id);
+```
+
+### 7.2 Container Settings UI
+**Files:**
+- `src/stores/containerStore.ts` - Zustand store for configuration
+- `src/components/settings/GlassContainerSettings.tsx` - Settings panel
+
+Beautiful settings UI integrated into GlassSettingsPanel for configuring container deployment.
+
+**Access:**
+```typescript
+// Navigate to Settings > Containers
+// Or via GlassDock Settings icon
+```
+
+**Features:**
+- **6 Configuration Tabs**: Placement, Pool, Resources, Network, Secrets, Telemetry
+- **9 Cloud Providers**: Hetzner, DigitalOcean, Fly.io, Railway, AWS, GCP, Azure, Bare Metal, Custom
+- **Real-time Dashboard**: Capacity, endpoints, resources, placement mode
+- **Import/Export/Reset**: Configuration management
+- **Persistent Storage**: Zustand with localStorage
+
+### 7.3 Provider Presets
+Pre-configured cloud provider options with pricing and features:
+
+| Provider | Pricing | Features |
+|----------|---------|----------|
+| Hetzner Cloud | From €3.29/mo | Best value, EU data centers |
+| DigitalOcean | From $6/mo | Developer-friendly |
+| Fly.io | From $1.94/mo | Edge deployment, auto-scaling |
+| Railway | ~$5-20/mo | Zero-config deployment |
+| AWS (EC2/ECS) | From $0.0116/hr | Enterprise SLAs |
+| Google Cloud | From $0.0075/hr | Global network, ML integration |
+| Azure | From $0.0052/hr | Microsoft ecosystem |
+| Bare Metal | Varies | Full control |
+| Custom | N/A | Manual Docker config |
+
+### 7.4 Container Store
+**File:** `src/stores/containerStore.ts`
+
+Zustand store managing all container configuration state:
+
+```typescript
+import { useContainerStore } from '@/stores/containerStore';
+
+const {
+    config,
+    setPlacementType,    // 'local' | 'remote' | 'hybrid'
+    setPoolSetting,      // minIdle, maxTotal, timeouts
+    setResourceLimit,    // memory, cpu, pids
+    setSecretsBackend,   // 'env' | 'vault' | 'aws'
+    addEndpoint,         // Add remote endpoint
+    exportConfig,        // Export JSON config
+} = useContainerStore();
+```
+
+**Configuration Structure:**
+```typescript
+interface ContainerConfig {
+    placement: { type: PlacementType; localWeight: number };
+    pool: { minIdle, maxTotal, idleTimeout, image, ... };
+    resources: { memory, cpuQuota, pidsLimit, maxExecutionTime };
+    network: { mode, allowedHosts, enableOutbound };
+    secrets: { backend, envPrefix, vaultAddress?, awsRegion? };
+    endpoints: RemoteEndpoint[];
+    telemetry: { enabled, endpoint?, serviceName };
+}
+```
+
+### 7.5 Remote Deployment
+**Documentation:** `docs/CONTAINER_DEPLOYMENT_GUIDE.md`
+
+Comprehensive guide for deploying containers to remote servers:
+
+1. **Setup Script**: `scripts/setup-remote-host.sh`
+2. **Build Script**: `server/container/build.sh`
+3. **Docker Images**: `Dockerfile.base`, `Dockerfile`
+4. **Runtime Server**: `server/container/runtime-server/server.ts`
+
+```bash
+# Setup remote host
+ssh root@your-server < scripts/setup-remote-host.sh
+
+# Build container images
+cd server/container && ./build.sh
+
+# Configure endpoint in UI
+# Settings > Containers > Add Endpoint
+```
+
+---
+
+## Phase 8: SDK Intelligence System ✅
+
+### 8.1 Auto-Configuration Engine
+**File:** `server/src/container/auto-config.ts`
+
+Automatic environment detection for zero-config setup.
+
+```typescript
+import { detectEnvironment, isMinimumViable, getEnvironmentSummary } from './container';
+
+const env = await detectEnvironment();
+// Returns: { docker, system, apiKeys, cliTools, network, detectedAt }
+
+console.log(env.docker.available);    // true/false
+console.log(env.apiKeys.anthropic);   // true if ANTHROPIC_API_KEY set
+console.log(env.cliTools.geminiCli);  // true if Gemini CLI installed
+```
+
+**Detected Capabilities:**
+| Category | Properties |
+|----------|------------|
+| Docker | available, version, platform (docker-desktop, orbstack, colima) |
+| System | platform, arch, totalMemory, availableMemory, cpuCores |
+| API Keys | anthropic, openai, google, minimax |
+| CLI Tools | geminiCli, claudeCode, git, bun, node |
+| Network | proxyConfigured, canReachAnthropicApi, etc. |
+
+### 8.2 Smart Defaults Generator
+**File:** `server/src/container/smart-defaults.ts`
+
+Generates optimal configuration based on detected environment.
+
+```typescript
+import { generateSmartDefaults, toContainerConfig } from './container';
+
+const env = await detectEnvironment();
+const defaults = generateSmartDefaults(env);
+// Returns: { placement, pool, resources, sdkPreferences, security, reasoning }
+
+const config = toContainerConfig(defaults);
+// Ready to use container configuration
+```
+
+**SDK Cost Estimates:**
+| SDK | Per Task | Monthly | Input/1M | Output/1M |
+|-----|----------|---------|----------|-----------|
+| Claude Agent SDK | $0.05-0.50 | $50-500 | $3.00 | $15.00 |
+| OpenAI Agents SDK | $0.02-0.20 | $20-200 | $2.50 | $10.00 |
+| Google ADK | $0.01-0.10 | $10-100 | $0.125 | $0.375 |
+| Gemini CLI | $0.001-0.01 | $1-10 | $0.075 | $0.30 |
+| MiniMax | $0.01-0.05 | $10-50 | $0.10 | $0.40 |
+
+### 8.3 SDK Intelligence (Task Analyzer)
+**File:** `server/src/container/sdk-intelligence.ts`
+
+Automatically selects optimal SDK based on task characteristics.
+
+```typescript
+import { analyzeTask, selectBestSdk, estimateCost } from './container';
+
+const analysis = analyzeTask(subPrd, env);
+// Returns: { type, complexity, estimatedTurns, estimatedCost, suggestedSdk, reasoning, confidence, alternatives }
+
+// Task types: 'ui' | 'api' | 'test' | 'security' | 'refactor' | 'docs' | 'general'
+// Complexity: 'simple' | 'moderate' | 'complex'
+```
+
+**SDK Selection Logic:**
+| Task Type | Preferred SDK | Reasoning |
+|-----------|---------------|-----------|
+| Security | Claude | Most careful reasoning |
+| UI/Components | Claude | Best React/CSS understanding |
+| API/Backend | Gemini CLI | Fastest, most cost-effective |
+| Tests | Gemini CLI / OpenAI | Fast iteration |
+| Simple tasks | Gemini CLI | Speed and cost |
+| Complex tasks | Claude | Best quality |
+
+### 8.4 Natural Language Configuration
+**File:** `server/src/container/nl-config.ts`
+
+Configure SDK preferences using natural language.
+
+```typescript
+import { parseNLConfig, validateNLConfigChanges } from './container';
+
+const result = parseNLConfig({ input: "use Claude for UI, Gemini for API" });
+// Returns: { understood: true, interpretation: "claude-agent-sdk for ui, gemini-cli for api", changes: {...}, confidence: 0.9 }
+
+// Supported patterns:
+// - "use Claude for UI"
+// - "prefer quality over cost"
+// - "default to Gemini"
+// - "always use Claude for security"
+```
+
+### 8.5 SDK Runners
+**Directory:** `server/src/container/runners/`
+
+Execution wrappers for each AI SDK.
+
+**Gemini CLI Runner:**
+```typescript
+import { createGeminiCliRunner, executeGeminiCli } from './container';
+
+const runner = createGeminiCliRunner({
+    model: 'gemini-2.0-flash',
+    sandbox: true,
+    maxTurns: 50,
+});
+
+const result = await runner.execute("Fix the login bug");
+// Or stream: for await (const event of runner.executeStreaming(prompt)) { ... }
+```
+
+**Claude Runner:**
+```typescript
+import { createClaudeRunner, executeClaude } from './container';
+
+const runner = createClaudeRunner({
+    model: 'claude-sonnet-4-5',
+    maxTurns: 50,
+    printMode: false,
+});
+
+const result = await runner.execute("Implement dark mode");
+// Supports session resumption: await runner.resume(sessionId)
+```
+
+### 8.6 Security Auto-Configuration
+**File:** `server/src/container/security-auto.ts`
+
+Defense-in-depth security configuration.
+
+```typescript
+import { generateSecurityConfig, getSecurityPreset, validateSecurityConfig } from './container';
+
+const config = generateSecurityConfig(env);
+// Or use presets: getSecurityPreset('maximum' | 'strict' | 'standard' | 'permissive', env)
+
+const issues = validateSecurityConfig(config);
+const score = calculateSecurityScore(config);  // 0-100
+```
+
+**Security Layers:**
+| Layer | Protection |
+|-------|------------|
+| Credential Proxy | API keys never enter containers |
+| Network Isolation | Egress allow-list, DNS filtering |
+| Container Sandbox | Read-only root, no-new-privileges, dropped capabilities |
+| Nested Sandbox | Gemini CLI --sandbox mode |
+| Audit Logging | File, network, shell operations tracked |
+
+### 8.7 Agent Settings UI
+**Files:**
+- `src/components/settings/GlassAgentSettings.tsx` - Main settings panel
+- `src/components/settings/AgentStatusOverview.tsx` - Status dashboard
+
+```typescript
+// Access via Settings > AI Agents tab
+// Or navigate to GlassSettingsPanel
+```
+
+**Features:**
+- **4 Tabs**: Quick Setup, AI Models, API Keys, Advanced
+- **Real-time Status**: Docker, Claude, Gemini, OpenAI availability
+- **SDK Preferences**: Task-based routing configuration
+- **Cost Estimation**: Per-SDK cost breakdown
+- **Progressive Disclosure**: Zero-config for beginners, full control for experts
+
+### 8.8 Container API Routes
+**File:** `server/src/routes/container.ts`
+
+Complete REST API for container configuration.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/container/detect` | GET | Detect environment capabilities |
+| `/api/container/smart-defaults` | GET | Get recommended configuration |
+| `/api/container/api-keys` | GET | Detect API keys |
+| `/api/container/api-keys/validate` | POST | Validate specific API key |
+| `/api/container/sdk-info` | GET | Get SDK costs and capabilities |
+| `/api/container/analyze-task` | POST | Analyze task and get SDK recommendation |
+| `/api/container/available-sdks` | GET | Get available SDKs for environment |
+| `/api/container/estimate-cost` | POST | Estimate cost for SDK and turns |
+| `/api/container/nl-config` | POST | Parse natural language configuration |
+| `/api/container/security/config` | GET | Generate security configuration |
+| `/api/container/security/validate` | POST | Validate security configuration |
+| `/api/container/security/presets` | GET | Get security preset configurations |
+
+---
+
 ## Architecture Summary
 
 ```
@@ -722,12 +1064,17 @@ const dockItems = [
 │  ├── src/liquid-engine/clientFactory.ts    # Session-scoped clients         │
 │  ├── src/components/wrapped/               # ErrorBoundary wrappers          │
 │  ├── src/stores/utils/syncHydrate.ts       # Theme hydration fix            │
+│  ├── src/stores/containerStore.ts          # Container config store         │
 │  ├── src/a2a/                              # A2A client & transformer        │
 │  ├── src/components/agentic/GlassA2UIRenderer.tsx  # A2UI rendering         │
 │  ├── src/components/agents/                # Agent Hub components            │
 │  │   ├── AgentCard.tsx                     # 3D hover cards                  │
 │  │   ├── AgentProbe.tsx                    # URL discovery                   │
 │  │   └── AgentChatWindow.tsx               # Chat interface                  │
+│  ├── src/components/settings/              # Settings components             │
+│  │   ├── GlassContainerSettings.tsx        # Container deployment UI        │
+│  │   ├── GlassAgentSettings.tsx            # AI agent settings UI           │
+│  │   └── AgentStatusOverview.tsx           # Agent runtime status           │
 │  ├── src/pages/agents/AgentHub.tsx         # Agent Hub page                  │
 │  ├── src/services/agents/registry.ts       # Curated agent registry         │
 │  └── src/layouts/LiquidOSLayout.tsx        # Two Worlds: Spatial OS         │
@@ -744,7 +1091,22 @@ const dockItems = [
 │  ├── server/src/healer/                    # Self-healing system            │
 │  ├── server/src/orchestrator/              # Multi-agent coordination       │
 │  ├── server/src/registry/                  # Plugin registry                │
-│  └── server/src/a2a/                       # A2A protocol handler           │
+│  ├── server/src/a2a/                       # A2A protocol handler           │
+│  ├── server/src/routes/container.ts        # Container API routes           │
+│  └── server/src/container/                 # LiquidContainer runtime        │
+│      ├── pool.ts                           # Container pool manager         │
+│      ├── scheduler.ts                      # Load balancing                 │
+│      ├── secrets.ts                        # Secrets management             │
+│      ├── executor.ts                       # Orchestrator integration       │
+│      ├── auto-config.ts                    # Environment detection          │
+│      ├── smart-defaults.ts                 # Smart configuration            │
+│      ├── sdk-intelligence.ts               # Task-based SDK selection       │
+│      ├── nl-config.ts                      # Natural language config        │
+│      ├── api-key-detection.ts              # API key detection              │
+│      ├── security-auto.ts                  # Security auto-config           │
+│      └── runners/                          # SDK execution runners          │
+│          ├── gemini-cli-runner.ts          # Gemini CLI wrapper             │
+│          └── claude-runner.ts              # Claude Agent SDK wrapper       │
 │                                                                              │
 │  Scripts                                                                     │
 │  ├── scripts/verify_directives.ts          # Directive checksums            │
@@ -757,7 +1119,7 @@ const dockItems = [
 
 ## Test Coverage
 
-**170+ new tests across all phases:**
+**200+ new tests across all phases:**
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -775,6 +1137,7 @@ const dockItems = [
 | `orchestrator.test.ts` | 26 | Decomposition, execution |
 | `registry.test.ts` | 46 | Validation, store, scanning |
 | `a2a.test.ts` | 30+ | A2UI transformation, binding, validation |
+| `container-pool.test.ts` | 28 | Pool, scheduler, secrets, config |
 
 **Run tests:**
 ```bash
@@ -792,16 +1155,47 @@ bun test tests/unit/clientFactory.test.ts tests/unit/rate-limit.test.ts
 ### Environment Variables
 
 ```bash
-# Required
-GEMINI_API_KEY=your_key
-ANTHROPIC_API_KEY=your_key
+# =============================================================================
+# AI API Keys (at least one required for AI features)
+# =============================================================================
+GEMINI_API_KEY=your_key              # Google AI Studio: https://aistudio.google.com/apikey
+ANTHROPIC_API_KEY=your_key           # Anthropic Console: https://console.anthropic.com/
+OPENAI_API_KEY=your_key              # OpenAI Platform: https://platform.openai.com/api-keys (optional)
 
-# Optional
-REDIS_URL=redis://localhost:6379
-OTEL_ENABLED=true
+# =============================================================================
+# Google OAuth (for user authentication)
+# =============================================================================
+GOOGLE_CLIENT_ID=your_id             # Google Cloud Console: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_SECRET=your_secret     # Create OAuth 2.0 credentials, set redirect URI to /auth/google/callback
+
+# =============================================================================
+# Google APIs
+# =============================================================================
+GOOGLE_PLACES_API_KEY=your_key       # For Restaurant Finder agent (enable Places API New)
+VITE_GOOGLE_API_KEY=your_key         # Frontend Google API access
+VITE_GOOGLE_CLIENT_ID=your_id        # Frontend Google OAuth
+
+# =============================================================================
+# Google Service Account (for Smart Sheets / TemplateService)
+# =============================================================================
+GOOGLE_SERVICE_ACCOUNT_EMAIL=email   # From service account JSON key
+GOOGLE_PRIVATE_KEY="-----BEGIN..."   # From service account JSON key (enable Drive & Sheets APIs)
+GOOGLE_MASTER_TEMPLATE_ID=sheet_id   # Template spreadsheet ID to clone
+
+# =============================================================================
+# Infrastructure
+# =============================================================================
+REDIS_URL=redis://localhost:6379     # For distributed WebSocket and caching
+DATABASE_URL=postgresql://...        # PostgreSQL for A2A task persistence
+
+# =============================================================================
+# Observability & Security
+# =============================================================================
+OTEL_ENABLED=true                    # Enable OpenTelemetry tracing
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-REQUIRE_WS_AUTH=true
-LOG_LEVEL=info
+REQUIRE_WS_AUTH=true                 # Require WebSocket authentication
+JWT_SECRET=change-in-production      # JWT token signing secret
+LOG_LEVEL=info                       # Logging level (debug, info, warn, error)
 ```
 
 ### New Dependencies (January 2026)
@@ -844,5 +1238,95 @@ The January 2026 implementation plan is **100% complete**. LiquidCrypto now incl
 ✅ **Automation:** Self-healing loop, multi-agent orchestration, federated plugin registry
 ✅ **Interoperability:** A2A protocol, A2UI rendering, external agent communication
 ✅ **Agent Hub:** Beautiful agent discovery UI, 3D cards, chat windows, curated registry
+✅ **Container Runtime:** LiquidContainer system, remote deployment, settings UI, 9 cloud providers
 
-**Project Health: 10/10 - Production Ready with Enterprise Features & Full Agent Ecosystem**
+**Project Health: 10/10 - Production Ready with Enterprise Features, Full Agent Ecosystem & Container Runtime**
+
+---
+
+## Component Showcase Panel (January 2026)
+
+### Overview
+
+The **GlassShowcasePanel** (`src/components/settings/GlassShowcasePanel.tsx`) is a comprehensive component library browser showcasing all 161+ Glass components in an interactive modal window.
+
+**Access Methods:**
+- Click the **Sparkles icon** in the GlassDock (Liquid OS layout)
+- Keyboard shortcut from `/os` routes
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **161 Components** | All Glass components organized by category |
+| **13 Categories** | Foundations, Buttons, Forms, Data, Feedback, Layout, Navigation, Media, Complex, Agentic, Trading, Extensions |
+| **Search** | Full-text search across component names, descriptions, and tags |
+| **Filtering** | Filter by All, New, Popular, or specific categories |
+| **Live Previews** | Interactive component demos with real props |
+| **Code Snippets** | Copy-ready code examples for each component |
+
+### Component Categories
+
+```
+├── Foundations (10)     # Typography, colors, spacing, tokens
+├── Buttons & Actions (12) # Buttons, chips, icon buttons
+├── Forms & Inputs (27)  # Text inputs, selects, toggles, uploads
+├── Data Display (15)    # Tables, charts, metrics, timelines
+├── Feedback (8)         # Alerts, toasts, progress, skeletons
+├── Layout (10)          # Containers, grids, panels, windows
+├── Navigation (8)       # Tabs, breadcrumbs, pagination, dock
+├── Media (6)            # Audio, video, images, galleries
+├── Complex (15)         # Kanban, terminal, editor, calendar
+├── Agentic (12)         # AI chat, prompts, dynamic UI, agents
+├── Trading (8)          # Market ticker, order book, charts
+└── Extensions (10)      # Maps, flows, 3D, experimental
+```
+
+### Recent Fixes (January 2026)
+
+**Issue:** GlassShowcasePanel crashed on open with multiple errors.
+
+**Fixes Applied:**
+
+1. **Duplicate Key Errors**
+   - `search-bar` → `search-bar-complex` (complex category variant)
+   - `metric-card` → `metric-card-grid` (grid layout variant)
+   - `data-table` → `glass-table-basic` (GlassTable component)
+
+2. **Empty `src` Attribute Warnings**
+   - GlassAudio: Added sample audio URL from SoundHelix
+   - GlassVideo: Added sample video URL from W3Schools
+
+3. **LiquidProvider Context Error**
+   Smart components (GlassSmartCard, GlassSmartList, GlassSmartBadge, GlassSmartChart) require LiquidProvider context which isn't available in the showcase. Replaced with placeholder previews:
+   ```tsx
+   // Smart Card placeholder
+   <GlassContainer className="p-4 w-64" border>
+       <div className="flex items-center gap-2 mb-3">
+           <Sparkles size={16} className="text-purple-400" />
+           <span>AI-Generated</span>
+       </div>
+       <p>Smart Card content would be generated by AI...</p>
+   </GlassContainer>
+   ```
+
+4. **TypeScript Unused Import Warnings**
+   Added Smart component imports to `_portalComponents` object to satisfy TypeScript:
+   ```tsx
+   const _portalComponents = {
+       // ... existing portal components
+       GlassSmartBadge, GlassSmartCard, GlassSmartChart, GlassSmartList,
+   };
+   void _portalComponents;
+   ```
+
+### File Structure
+
+```
+src/components/settings/
+├── GlassShowcasePanel.tsx    # Main showcase (~4500 lines)
+│   ├── ComponentExample[]    # 161 component definitions
+│   ├── CATEGORIES           # Category metadata
+│   ├── ComponentCard        # Individual component display
+│   └── GlassShowcasePanel   # Main panel component
+└── GlassSettingsPanel.tsx   # Settings panel (separate)

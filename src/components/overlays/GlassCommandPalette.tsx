@@ -127,7 +127,7 @@ export const GlassCommandPalette = ({ isOpen, onClose }: GlassCommandPaletteProp
                     {/* Command Palette */}
                     <GlassContainer
                         as={motion.div}
-                        // @ts-ignore - Framer Motion types through 'as' prop
+                        // @ts-expect-error - Framer Motion types through 'as' prop
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}

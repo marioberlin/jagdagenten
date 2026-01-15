@@ -335,7 +335,7 @@ export function SmartAnalytics() {
                         </div>
                     </div>
                     <div className="h-[300px] w-full">
-                        {/* @ts-ignore - ChartJS type definition mismatch for mixed charts */}
+                        {/* @ts-expect-error - ChartJS type definition mismatch for mixed charts */}
                         <RxLine data={priceChartData} options={options} />
                     </div>
                     <div className="h-[100px] w-full mt-4">

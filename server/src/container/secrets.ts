@@ -192,7 +192,7 @@ export class AWSSecretsProvider implements SecretsProvider {
 
     async getSecret(name: string): Promise<string> {
         // Dynamic import to avoid requiring AWS SDK if not used
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const { SecretsManagerClient, GetSecretValueCommand } = await import(
             /* @vite-ignore */ '@aws-sdk/client-secrets-manager'
         ).catch(() => {

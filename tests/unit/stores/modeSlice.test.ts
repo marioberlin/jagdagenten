@@ -9,25 +9,25 @@ import { ThemeStore, ThemeActions } from '@/stores/types';
 const createTestStore = () => {
     return createStore<ThemeStore & ThemeActions>()(
         immer((set, get, store) => ({
-            // @ts-ignore - Partial mock
+            // @ts-expect-error - Partial mock
             ...createModeSlice(set, get, store),
             // Mock other required parts for applyThemeForMode to not crash if accessed
-            // @ts-ignore - Partial mock
+            // @ts-expect-error - Partial mock
             glass: { intensity: 50 },
-            // @ts-ignore - Partial mock
+            // @ts-expect-error - Partial mock
             visual: { radius: 10 },
             themes: {
                 builtIn: [
                     {
                         id: 'test-theme',
                         name: 'Test Theme',
-                        // @ts-ignore - Partial mock
+                        // @ts-expect-error - Partial mock
                         light: {
                             glass: { intensity: 10 },
                             visual: { radius: 5 },
                             background: { id: 'bg-light' }
                         },
-                        // @ts-ignore - Partial mock
+                        // @ts-expect-error - Partial mock
                         dark: {
                             glass: { intensity: 90 },
                             visual: { radius: 20 },

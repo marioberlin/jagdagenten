@@ -202,7 +202,7 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
       .join('\n');
 
     // Extract A2UI messages from artifacts
-    let a2uiMessages: a2ui.A2UIMessage[] = [];
+    const a2uiMessages: a2ui.A2UIMessage[] = [];
     if (task.artifacts) {
       for (const artifact of task.artifacts) {
         if (a2ui.isA2UIArtifact(artifact)) {
