@@ -2,7 +2,7 @@ import type { AgentCard, A2UIMessage, SendMessageParams } from '../a2a/types.js'
 import { randomUUID } from 'crypto';
 
 // ============================================================================
-// Restaurant Data
+// Restaurant Data Types
 // ============================================================================
 
 interface Restaurant {
@@ -14,32 +14,242 @@ interface Restaurant {
     distance: string;
     image: string;
     available: boolean;
+    address?: string;
+    userRatingCount?: number;
+    googleMapsUri?: string;
 }
 
-// Sample restaurant data (in production, this would come from a restaurant API)
-const RESTAURANTS: Restaurant[] = [
-    { id: '1', name: 'The Glass Kitchen', cuisine: 'Modern European', rating: 4.8, priceRange: '$$$', distance: '0.3 mi', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80', available: true },
-    { id: '2', name: 'Sushi Zen', cuisine: 'Japanese', rating: 4.9, priceRange: '$$$$', distance: '0.5 mi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=300&q=80', available: true },
-    { id: '3', name: 'Pasta & Co', cuisine: 'Italian', rating: 4.5, priceRange: '$$', distance: '0.2 mi', image: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=300&q=80', available: true },
-    { id: '4', name: 'Spice Garden', cuisine: 'Indian', rating: 4.6, priceRange: '$$', distance: '0.7 mi', image: 'https://images.unsplash.com/photo-1585937421612-70a008356c72?auto=format&fit=crop&w=300&q=80', available: false },
-    { id: '5', name: 'Le Petit Bistro', cuisine: 'French', rating: 4.7, priceRange: '$$$', distance: '0.4 mi', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=80', available: true },
-];
+// ============================================================================
+// Google Places API Integration
+// ============================================================================
+
+interface GooglePlacesResponse {
+    places?: GooglePlace[];
+}
+
+interface GooglePlace {
+    id: string;
+    displayName: { text: string; languageCode: string };
+    formattedAddress: string;
+    rating?: number;
+    userRatingCount?: number;
+    priceLevel?: 'PRICE_LEVEL_FREE' | 'PRICE_LEVEL_INEXPENSIVE' | 'PRICE_LEVEL_MODERATE' | 'PRICE_LEVEL_EXPENSIVE' | 'PRICE_LEVEL_VERY_EXPENSIVE';
+    primaryType?: string;
+    primaryTypeDisplayName?: { text: string };
+    photos?: Array<{ name: string; widthPx: number; heightPx: number }>;
+    googleMapsUri?: string;
+    currentOpeningHours?: { openNow: boolean };
+}
+
+// Default location: San Francisco downtown
+const DEFAULT_LOCATION = {
+    latitude: 37.7937,
+    longitude: -122.3965,
+};
+
+// Convert Google price level to display format
+function formatPriceLevel(priceLevel?: string): string {
+    switch (priceLevel) {
+        case 'PRICE_LEVEL_FREE': return 'Free';
+        case 'PRICE_LEVEL_INEXPENSIVE': return '$';
+        case 'PRICE_LEVEL_MODERATE': return '$$';
+        case 'PRICE_LEVEL_EXPENSIVE': return '$$$';
+        case 'PRICE_LEVEL_VERY_EXPENSIVE': return '$$$$';
+        default: return '$$';
+    }
+}
+
+// Get photo URL from Google Places photo reference
+function getPhotoUrl(photos?: Array<{ name: string }>, apiKey?: string): string {
+    if (!photos?.length || !apiKey) {
+        // Return a default restaurant image from Unsplash
+        return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80';
+    }
+    // Google Places Photo API URL
+    return `https://places.googleapis.com/v1/${photos[0].name}/media?maxHeightPx=300&maxWidthPx=300&key=${apiKey}`;
+}
+
+// Fetch restaurants from Google Places API
+async function fetchGooglePlaces(
+    cuisineType?: string,
+    location = DEFAULT_LOCATION,
+    radiusMeters = 1500
+): Promise<Restaurant[]> {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!apiKey) {
+        console.log('[Restaurant Agent] GOOGLE_PLACES_API_KEY not set, using fallback data');
+        return getFallbackRestaurants();
+    }
+
+    try {
+        // Build included types based on cuisine
+        const includedTypes = ['restaurant'];
+        if (cuisineType) {
+            // Google Places supports specific cuisine types
+            const cuisineTypeMap: Record<string, string> = {
+                'italian': 'italian_restaurant',
+                'japanese': 'japanese_restaurant',
+                'chinese': 'chinese_restaurant',
+                'indian': 'indian_restaurant',
+                'mexican': 'mexican_restaurant',
+                'thai': 'thai_restaurant',
+                'french': 'french_restaurant',
+                'korean': 'korean_restaurant',
+                'vietnamese': 'vietnamese_restaurant',
+                'greek': 'greek_restaurant',
+                'american': 'american_restaurant',
+                'mediterranean': 'mediterranean_restaurant',
+                'seafood': 'seafood_restaurant',
+                'steakhouse': 'steak_house',
+                'pizza': 'pizza_restaurant',
+                'sushi': 'sushi_restaurant',
+                'ramen': 'ramen_restaurant',
+                'breakfast': 'breakfast_restaurant',
+                'brunch': 'brunch_restaurant',
+                'cafe': 'cafe',
+                'bakery': 'bakery',
+            };
+            const mappedType = cuisineTypeMap[cuisineType.toLowerCase()];
+            if (mappedType) {
+                includedTypes.length = 0;
+                includedTypes.push(mappedType);
+            }
+        }
+
+        const requestBody = {
+            includedTypes,
+            maxResultCount: 10,
+            rankPreference: 'POPULARITY',
+            locationRestriction: {
+                circle: {
+                    center: location,
+                    radius: radiusMeters,
+                },
+            },
+        };
+
+        const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-Api-Key': apiKey,
+                'X-Goog-FieldMask': [
+                    'places.id',
+                    'places.displayName',
+                    'places.formattedAddress',
+                    'places.rating',
+                    'places.userRatingCount',
+                    'places.priceLevel',
+                    'places.primaryType',
+                    'places.primaryTypeDisplayName',
+                    'places.photos',
+                    'places.googleMapsUri',
+                    'places.currentOpeningHours',
+                ].join(','),
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Restaurant Agent] Google Places API error:', response.status, errorText);
+            return getFallbackRestaurants();
+        }
+
+        const data = await response.json() as GooglePlacesResponse;
+
+        if (!data.places?.length) {
+            console.log('[Restaurant Agent] No places found, using fallback data');
+            return getFallbackRestaurants();
+        }
+
+        // Transform Google Places to our Restaurant format
+        return data.places.map((place, index) => ({
+            id: place.id,
+            name: place.displayName.text,
+            cuisine: place.primaryTypeDisplayName?.text || formatCuisineType(place.primaryType),
+            rating: place.rating || 4.0,
+            userRatingCount: place.userRatingCount,
+            priceRange: formatPriceLevel(place.priceLevel),
+            distance: `${(0.1 + index * 0.15).toFixed(1)} mi`, // Approximate based on rank
+            image: getPhotoUrl(place.photos, apiKey),
+            available: place.currentOpeningHours?.openNow ?? true,
+            address: place.formattedAddress,
+            googleMapsUri: place.googleMapsUri,
+        }));
+
+    } catch (error) {
+        console.error('[Restaurant Agent] Failed to fetch from Google Places:', error);
+        return getFallbackRestaurants();
+    }
+}
+
+// Format cuisine type from Google's primaryType
+function formatCuisineType(primaryType?: string): string {
+    if (!primaryType) return 'Restaurant';
+    // Convert snake_case to Title Case
+    return primaryType
+        .replace(/_restaurant$/, '')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Fallback restaurant data when API is not available
+function getFallbackRestaurants(): Restaurant[] {
+    return [
+        { id: '1', name: 'The Glass Kitchen', cuisine: 'Modern European', rating: 4.8, priceRange: '$$$', distance: '0.3 mi', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80', available: true },
+        { id: '2', name: 'Sushi Zen', cuisine: 'Japanese', rating: 4.9, priceRange: '$$$$', distance: '0.5 mi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=300&q=80', available: true },
+        { id: '3', name: 'Pasta & Co', cuisine: 'Italian', rating: 4.5, priceRange: '$$', distance: '0.2 mi', image: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=300&q=80', available: true },
+        { id: '4', name: 'Spice Garden', cuisine: 'Indian', rating: 4.6, priceRange: '$$', distance: '0.7 mi', image: 'https://images.unsplash.com/photo-1585937421612-70a008356c72?auto=format&fit=crop&w=300&q=80', available: true },
+        { id: '5', name: 'Le Petit Bistro', cuisine: 'French', rating: 4.7, priceRange: '$$$', distance: '0.4 mi', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=80', available: true },
+    ];
+}
+
+// Cache for storing fetched restaurants (simple in-memory cache)
+let restaurantCache: { data: Restaurant[]; timestamp: number; cuisineFilter?: string } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getRestaurants(cuisineFilter?: string): Promise<Restaurant[]> {
+    const now = Date.now();
+
+    // Check if cache is valid
+    if (
+        restaurantCache &&
+        restaurantCache.cuisineFilter === cuisineFilter &&
+        now - restaurantCache.timestamp < CACHE_TTL_MS
+    ) {
+        return restaurantCache.data;
+    }
+
+    // Fetch fresh data
+    const restaurants = await fetchGooglePlaces(cuisineFilter);
+
+    // Update cache
+    restaurantCache = {
+        data: restaurants,
+        timestamp: now,
+        cuisineFilter,
+    };
+
+    return restaurants;
+}
 
 // ============================================================================
 // A2UI Generation
 // ============================================================================
 
-function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: string): A2UIMessage[] {
-    // Filter by cuisine if specified
-    let filtered = restaurants;
-    if (cuisineFilter) {
-        filtered = restaurants.filter(r =>
-            r.cuisine.toLowerCase().includes(cuisineFilter.toLowerCase())
-        );
-    }
-
+function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: string, isLiveData = false): A2UIMessage[] {
     // Only show available restaurants
-    filtered = filtered.filter(r => r.available);
+    const filtered = restaurants.filter(r => r.available);
+
+    const headerText = cuisineFilter
+        ? `${cuisineFilter.charAt(0).toUpperCase() + cuisineFilter.slice(1)} Restaurants`
+        : 'Top Restaurants Nearby';
+
+    const subtitleText = isLiveData
+        ? `${filtered.length} restaurants found via Google Places`
+        : `${filtered.length} restaurants available`;
 
     return [
         {
@@ -64,7 +274,7 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     id: 'header',
                     component: {
                         Text: {
-                            text: { literalString: cuisineFilter ? `${cuisineFilter} Restaurants` : 'Top Restaurants Nearby' },
+                            text: { literalString: headerText },
                             semantic: 'h2',
                         },
                     },
@@ -73,7 +283,7 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     id: 'subtitle',
                     component: {
                         Text: {
-                            text: { literalString: `${filtered.length} restaurants available for booking` },
+                            text: { literalString: subtitleText },
                             variant: 'secondary',
                         },
                     },
@@ -117,7 +327,7 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     id: 'info-col',
                     component: {
                         Column: {
-                            children: ['name', 'cuisine-rating', 'details-row', 'book-btn'],
+                            children: ['name', 'cuisine-rating', 'details-row', 'address-row', 'book-btn'],
                             alignment: 'start',
                         },
                     },
@@ -183,6 +393,15 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     },
                 },
                 {
+                    id: 'address-row',
+                    component: {
+                        Text: {
+                            text: { path: 'addressShort' },
+                            variant: 'secondary',
+                        },
+                    },
+                },
+                {
                     id: 'book-btn',
                     component: {
                         Button: {
@@ -209,7 +428,7 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     id: 'refresh-btn',
                     component: {
                         Button: {
-                            label: { literalString: 'Find More' },
+                            label: { literalString: 'Refresh' },
                             action: {
                                 input: {
                                     text: 'Show more restaurants',
@@ -239,7 +458,12 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
             data: {
                 restaurants: filtered.map(r => ({
                     ...r,
-                    ratingDisplay: `${r.rating.toFixed(1)} (${Math.floor(Math.random() * 500 + 100)} reviews)`,
+                    ratingDisplay: r.userRatingCount
+                        ? `${r.rating.toFixed(1)} (${r.userRatingCount.toLocaleString()} reviews)`
+                        : `${r.rating.toFixed(1)}`,
+                    addressShort: r.address
+                        ? r.address.split(',').slice(0, 2).join(',')
+                        : '',
                 })),
             },
         },
@@ -262,7 +486,7 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     id: 'root',
                     component: {
                         Card: {
-                            children: ['header', 'restaurant-info', 'divider', 'form-fields', 'submit-row'],
+                            children: ['header', 'restaurant-info', 'address-info', 'divider', 'form-fields', 'submit-row'],
                         },
                     },
                 },
@@ -297,6 +521,15 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     component: {
                         Text: {
                             text: { literalString: ` - ${restaurant.cuisine}` },
+                            variant: 'secondary',
+                        },
+                    },
+                },
+                {
+                    id: 'address-info',
+                    component: {
+                        Text: {
+                            text: { literalString: restaurant.address || '' },
                             variant: 'secondary',
                         },
                     },
@@ -466,7 +699,7 @@ function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
                     id: 'details',
                     component: {
                         Column: {
-                            children: ['detail-restaurant', 'detail-cuisine', 'detail-price'],
+                            children: ['detail-restaurant', 'detail-cuisine', 'detail-address', 'detail-price'],
                         },
                     },
                 },
@@ -488,6 +721,15 @@ function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
                     },
                 },
                 {
+                    id: 'detail-address',
+                    component: {
+                        Text: {
+                            text: { literalString: restaurant.address || '' },
+                            variant: 'secondary',
+                        },
+                    },
+                },
+                {
                     id: 'detail-price',
                     component: {
                         Text: {
@@ -500,8 +742,22 @@ function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
                     id: 'actions',
                     component: {
                         Row: {
-                            children: ['done-btn'],
+                            children: ['maps-btn', 'done-btn'],
                             alignment: 'center',
+                        },
+                    },
+                },
+                {
+                    id: 'maps-btn',
+                    component: {
+                        Button: {
+                            label: { literalString: 'View on Maps' },
+                            action: {
+                                custom: {
+                                    actionId: 'open_maps',
+                                    data: { url: restaurant.googleMapsUri || '' },
+                                },
+                            },
                         },
                     },
                 },
@@ -527,9 +783,9 @@ function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
 
 export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
     name: 'Restaurant Finder',
-    description: 'Discover and book restaurants near you with AI-powered recommendations',
+    description: 'Discover and book restaurants near you powered by Google Places API',
     url: `${baseUrl}/agents/restaurant`,
-    version: '1.3.0',
+    version: '2.0.0',
     provider: { organization: 'LiquidCrypto Agents' },
     capabilities: { streaming: false, pushNotifications: true },
     extensions: {
@@ -537,48 +793,64 @@ export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
     }
 });
 
+// Store last fetched restaurants for booking flow
+let lastFetchedRestaurants: Restaurant[] = [];
+
 export async function handleRestaurantRequest(params: SendMessageParams): Promise<any> {
     const prompt = params.message.parts
         // @ts-ignore
         .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     let a2uiMessages: A2UIMessage[];
     let textResponse: string;
 
     // Extract cuisine filter if mentioned
-    const cuisines = ['italian', 'japanese', 'french', 'indian', 'european', 'chinese', 'mexican', 'thai'];
+    const cuisines = [
+        'italian', 'japanese', 'french', 'indian', 'chinese', 'mexican', 'thai',
+        'korean', 'vietnamese', 'greek', 'american', 'mediterranean', 'seafood',
+        'steakhouse', 'pizza', 'sushi', 'ramen', 'breakfast', 'brunch', 'cafe', 'bakery'
+    ];
     const mentionedCuisine = cuisines.find(c => prompt.includes(c));
 
     // Intent matching
     if (prompt.includes('confirm') || prompt.includes('yes') || prompt.includes('reserve')) {
         // User confirming a booking - show confirmation
-        const restaurant = RESTAURANTS[0]; // In real app, would track which one
+        const restaurant = lastFetchedRestaurants[0] || getFallbackRestaurants()[0];
         a2uiMessages = generateBookingConfirmation(restaurant);
         textResponse = `Your reservation at ${restaurant.name} has been confirmed!`;
-    } else if (prompt.includes('book') && prompt.match(/\d+|glass|sushi|pasta|spice|bistro/i)) {
-        // User wants to book a specific restaurant
-        const restaurantName = prompt.match(/glass|sushi|pasta|spice|bistro/i)?.[0] || '';
-        const restaurant = RESTAURANTS.find(r =>
-            r.name.toLowerCase().includes(restaurantName.toLowerCase())
-        ) || RESTAURANTS[0];
+    } else if (prompt.includes('book')) {
+        // User wants to book a specific restaurant - try to match by name
+        const restaurants = lastFetchedRestaurants.length > 0 ? lastFetchedRestaurants : getFallbackRestaurants();
+
+        // Try to find a matching restaurant from the prompt
+        const restaurant = restaurants.find(r =>
+            prompt.includes(r.name.toLowerCase()) ||
+            r.name.toLowerCase().split(' ').some(word => prompt.includes(word))
+        ) || restaurants[0];
+
         a2uiMessages = generateBookingForm(restaurant);
         textResponse = `Great choice! Please fill in your booking details for ${restaurant.name}.`;
-    } else if (mentionedCuisine) {
-        // Filter by cuisine type
-        a2uiMessages = generateRestaurantList(RESTAURANTS, mentionedCuisine);
-        const count = RESTAURANTS.filter(r =>
-            r.cuisine.toLowerCase().includes(mentionedCuisine) && r.available
-        ).length;
-        textResponse = count > 0
-            ? `Found ${count} ${mentionedCuisine} restaurant${count > 1 ? 's' : ''} nearby.`
-            : `No ${mentionedCuisine} restaurants available right now. Here are other options:`;
     } else {
-        // Default - show all restaurants
-        a2uiMessages = generateRestaurantList(RESTAURANTS);
-        textResponse = `Here are the top-rated restaurants near you. ${RESTAURANTS.filter(r => r.available).length} available for booking.`;
+        // Search for restaurants (with optional cuisine filter)
+        const restaurants = await getRestaurants(mentionedCuisine);
+        lastFetchedRestaurants = restaurants;
+
+        const isLiveData = !!process.env.GOOGLE_PLACES_API_KEY;
+        a2uiMessages = generateRestaurantList(restaurants, mentionedCuisine, isLiveData);
+
+        const availableCount = restaurants.filter(r => r.available).length;
+
+        if (mentionedCuisine) {
+            textResponse = availableCount > 0
+                ? `Found ${availableCount} ${mentionedCuisine} restaurant${availableCount > 1 ? 's' : ''} nearby.`
+                : `No ${mentionedCuisine} restaurants found. Showing all restaurants instead.`;
+        } else {
+            textResponse = `Here are the top-rated restaurants near you. ${availableCount} available for booking.`;
+        }
+
+        if (isLiveData) {
+            textResponse += ' (Powered by Google Places)';
+        }
     }
 
     const taskId = randomUUID();
