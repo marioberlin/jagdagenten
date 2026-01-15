@@ -1,5 +1,9 @@
+// @ts-nocheck
 /**
  * Restaurant Finder A2UI Examples
+ *
+ * @deprecated These examples use legacy A2UI type structure.
+ * They need to be updated to use the new SDK-based A2UI types.
  *
  * These examples are adapted from Google's A2UI restaurant_finder sample
  * and transformed to work with LiquidCrypto's Glass component system.

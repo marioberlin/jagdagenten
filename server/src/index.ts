@@ -11,10 +11,9 @@ import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { containerRoutes } from './routes/container.js';
 import { authRoutes } from './routes/auth.js';
-import { handleA2AHttpRequest, getAgentCard } from './a2a/index.js';
-import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant';
-import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant';
-import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts';
+import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
+import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
+import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -585,34 +584,11 @@ async function startServer() {
                 .post('/', handleRpc);
         })
 
-        // A2A JSON-RPC endpoint
-        .post('/a2a', async ({ request, body, set }) => {
-            const headers: Record<string, string> = {};
-            request.headers.forEach((value, key) => {
-                headers[key.toLowerCase()] = value;
-            });
-
-            const response = await handleA2AHttpRequest(body, headers);
-            set.headers['Content-Type'] = 'application/json';
-            return response;
-        })
-
-        // A2A streaming endpoint (SSE)
-        .post('/a2a/stream', async ({ request, body, set }) => {
-            // For now, redirect to regular endpoint
-            // Full streaming implementation would use SSE
-            const headers: Record<string, string> = {};
-            request.headers.forEach((value, key) => {
-                headers[key.toLowerCase()] = value;
-            });
-
-            set.headers['Content-Type'] = 'text/event-stream';
-            set.headers['Cache-Control'] = 'no-cache';
-            set.headers['Connection'] = 'keep-alive';
-
-            const response = await handleA2AHttpRequest(body, headers);
-            return 'data: ' + JSON.stringify(response) + '\n\ndata: [DONE]\n\n';
-        })
+        // A2A Protocol Plugin (with PostgreSQL persistence if DATABASE_URL is set)
+        .use(createA2APlugin({
+            baseUrl: process.env.BASE_URL || `http://localhost:${PORT}`,
+            enableTelemetry: process.env.OTEL_ENABLED === 'true',
+        }))
 
         // 404 Handler - Elysia handles this by default but we can customize if needed
         .onError(({ code, error, set }) => {
@@ -627,21 +603,44 @@ async function startServer() {
 
         .listen(PORT);
 
+    // Start gRPC server if enabled
+    const GRPC_PORT = Number(process.env.GRPC_PORT) || 50051;
+    const enableGrpc = process.env.ENABLE_GRPC === 'true';
+    let grpcStarted = false;
+
+    if (enableGrpc) {
+        try {
+            const grpcServer = createA2AGrpcServer({
+                port: GRPC_PORT,
+                host: '0.0.0.0',
+                baseUrl: `http://localhost:${PORT}`,
+                enableTelemetry: process.env.OTEL_ENABLED === 'true',
+            });
+            await grpcServer.start();
+            grpcStarted = true;
+            componentLoggers.http.info({ port: GRPC_PORT }, 'gRPC server started');
+        } catch (err) {
+            componentLoggers.http.warn({ error: (err as Error).message }, 'gRPC server failed to start');
+        }
+    }
+
     logger.info({
         port: PORT,
+        grpcPort: enableGrpc ? GRPC_PORT : null,
         redis: useRedis,
         runtime: 'bun',
         framework: 'elysia',
         endpoints: {
             http: `http://localhost:${PORT}`,
             websocket: 'ws://localhost:3001',
-            stream: `http://localhost:${PORT}/stream`
+            stream: `http://localhost:${PORT}/stream`,
+            grpc: enableGrpc && grpcStarted ? `localhost:${GRPC_PORT}` : null
         }
     }, 'LiquidCrypto Server started');
 
     // Pretty ASCII banner for development
     if (process.env.NODE_ENV === 'development') {
-        console.log(`\n╔═══════════════════════════════════════════════════════╗\n║  LiquidCrypto Server                                  ║\n║  ─────────────────────────────────────────────────    ║\n║  Runtime: Bun (Native)                                ║\n║  Framework: Elysia (v1.0)                             ║\n║  Redis: ${useRedis ? '✓ Connected' : '○ Not configured'}                            ║\n║  SSE Stream: http://localhost:${PORT}/stream               ║\n║  Parallel AI: POST /api/v1/chat/parallel               ║\n║  Port: ${PORT}                                               ║\n╚═══════════════════════════════════════════════════════╝`);
+        console.log(`\n╔═══════════════════════════════════════════════════════╗\n║  LiquidCrypto Server                                  ║\n║  ─────────────────────────────────────────────────    ║\n║  Runtime: Bun (Native)                                ║\n║  Framework: Elysia (v1.0)                             ║\n║  Redis: ${useRedis ? '✓ Connected' : '○ Not configured'}                            ║\n║  gRPC:  ${grpcStarted ? `✓ Port ${GRPC_PORT}` : '○ Disabled (ENABLE_GRPC=true)'}                      ║\n║  SSE Stream: http://localhost:${PORT}/stream               ║\n║  Parallel AI: POST /api/v1/chat/parallel               ║\n║  Port: ${PORT}                                               ║\n╚═══════════════════════════════════════════════════════╝`);
     }
 }
 

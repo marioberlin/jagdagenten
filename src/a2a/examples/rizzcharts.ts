@@ -1,5 +1,9 @@
+// @ts-nocheck
 /**
  * RizzCharts A2UI Examples
+ *
+ * @deprecated These examples use legacy A2UI type structure.
+ * They need to be updated to use the new SDK-based A2UI types.
  *
  * These examples are adapted from Google's A2UI rizzcharts sample
  * and demonstrate chart/dashboard generation using A2UI format

@@ -1,9 +1,13 @@
 {
   "name": "liquid-glass-ui",
-  "private": false,
+  "private": true,
   "version": "0.1.0",
   "type": "module",
   "sideEffects": false,
+  "workspaces": [
+    "packages/*",
+    "server"
+  ],
   "main": "./dist/liquid-glass.umd.cjs",
   "module": "./dist/liquid-glass.js",
   "types": "./dist/index.d.ts",
@@ -68,6 +72,7 @@
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sinclair/typebox": "^0.34.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/react-webcam": "^1.1.0",
     "@use-gesture/react": "^10.3.1",

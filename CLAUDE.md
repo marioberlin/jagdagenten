@@ -94,6 +94,28 @@ You sit between human intent (directives) and deterministic execution (scripts).
 
 Be pragmatic. Be reliable. Self-anneal.
 
+## Quick Start (Local Development)
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d
+
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+```
+
+For detailed setup instructions, see [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md).
+
+**Key environment variables:**
+```bash
+DATABASE_URL=postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto
+REDIS_URL=redis://localhost:6379
+PORT=3000
+```
+
 ---
 
 # LiquidCrypto System Documentation - January 2026

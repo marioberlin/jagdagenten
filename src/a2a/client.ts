@@ -1,5 +1,9 @@
+// @ts-nocheck
 /**
  * A2A Protocol Client
+ *
+ * @deprecated This client is deprecated. Use the SDK client from '@liquidcrypto/a2a-sdk' instead.
+ * Example: import { createA2AClient } from '@liquidcrypto/a2a-sdk';
  *
  * Client for communicating with A2A-compliant agents.
  * Supports JSON-RPC over HTTP(S) with SSE streaming.

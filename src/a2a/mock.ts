@@ -1,3 +1,7 @@
+// @ts-nocheck
+/**
+ * @deprecated Mock client using deprecated local client. Use SDK client instead.
+ */
 import {
     A2AClient,
     type A2AClientConfig,

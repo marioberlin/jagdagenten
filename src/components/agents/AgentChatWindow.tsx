@@ -14,20 +14,29 @@ import {
 import { cn } from '@/utils/cn';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { GlassA2UIRenderer } from '@/components/agentic/GlassA2UIRenderer';
-import { A2AClient, createA2AClient } from '@/a2a/client';
-import type { AgentCard, A2UIMessage, TaskState } from '@/a2a/types';
+// Use SDK client instead of local implementation
+import {
+    A2AClient,
+    createA2AClient,
+    v1,
+    a2ui,
+} from '@liquidcrypto/a2a-sdk';
 import type { CuratedAgent } from '@/services/agents/registry';
 
 // ============================================================================
 // Types
 // ============================================================================
 
+// Legacy A2UIMessage type for GlassA2UIRenderer compatibility
+type LegacyA2UIMessage = a2ui.A2UIMessage;
+type TaskState = v1.TaskState;
+
 interface ChatMessage {
     id: string;
     role: 'user' | 'agent';
     content: string;
     timestamp: Date;
-    a2ui?: A2UIMessage[];
+    a2ui?: LegacyA2UIMessage[];
     taskState?: TaskState;
     error?: string;
 }
@@ -36,7 +45,7 @@ interface AgentChatWindowProps {
     /** The agent to chat with */
     agent: CuratedAgent;
     /** Agent card from discovery */
-    agentCard?: AgentCard;
+    agentCard?: v1.AgentCard;
     /** Window position */
     position?: { x: number; y: number };
     /** Callback when window is closed */
@@ -83,11 +92,13 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Initialize client
+    // Initialize client using new SDK
     useEffect(() => {
         const initClient = async () => {
             try {
-                const newClient = createA2AClient(agent.url, {
+                // Create SDK client with v1.0 compliant config
+                const newClient = createA2AClient({
+                    baseUrl: agent.url,
                     authToken,
                     enableA2UI: true,
                 });
@@ -128,6 +139,28 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         }
     }, [isActive]);
 
+    // Helper: Extract text and A2UI from SDK task
+    const extractTaskContent = useCallback((task: v1.Task): { content: string; a2uiMessages: LegacyA2UIMessage[] } => {
+        let content = '';
+        let a2uiMessages: LegacyA2UIMessage[] = [];
+
+        // Extract from status message
+        if (task.status.message) {
+            content = client?.extractText(task.status.message) ?? '';
+        }
+
+        // Extract A2UI from artifacts
+        if (task.artifacts) {
+            for (const artifact of task.artifacts) {
+                if (a2ui.isA2UIArtifact(artifact)) {
+                    a2uiMessages.push(...a2ui.extractA2UIMessages(artifact));
+                }
+            }
+        }
+
+        return { content, a2uiMessages };
+    }, [client]);
+
     // Send message
     const sendMessage = useCallback(async () => {
         if (!inputValue.trim() || !client || isLoading) return;
@@ -148,10 +181,10 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         const agentMessageId = `agent-${Date.now()}`;
         setMessages(prev => [...prev, {
             id: agentMessageId,
-            role: 'agent',
+            role: 'agent' as const,
             content: '',
             timestamp: new Date(),
-            taskState: 'working',
+            taskState: v1.TaskState.WORKING,
         }]);
 
         try {
@@ -160,32 +193,50 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             const supportsStreaming = card.capabilities?.streaming;
 
             if (supportsStreaming) {
-                // Use streaming
-                let fullContent = '';
-                let a2uiMessages: A2UIMessage[] = [];
+                // Use streaming with new SDK API
+                let a2uiMessages: LegacyA2UIMessage[] = [];
 
                 for await (const event of client.streamText(userMessage.content)) {
-                    if (event.type === 'message') {
-                        // Extract text content
-                        for (const part of event.message.parts) {
-                            if (part.type === 'text') {
-                                fullContent += part.text;
-                            } else if (part.type === 'a2ui') {
-                                a2uiMessages = [...a2uiMessages, ...part.a2ui];
-                            }
-                        }
-
-                        // Update message with streamed content
+                    if (event.type === 'complete') {
+                        // Final task received
+                        const { content, a2uiMessages: msgs } = extractTaskContent(event.task);
                         setMessages(prev => prev.map(msg =>
                             msg.id === agentMessageId
-                                ? { ...msg, content: fullContent, a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined }
+                                ? {
+                                    ...msg,
+                                    content: content || 'Task completed.',
+                                    a2ui: msgs.length > 0 ? msgs : undefined,
+                                    taskState: event.task.status.state
+                                }
                                 : msg
                         ));
-                    } else if (event.type === 'status_update') {
-                        // Update task state
+                    } else if (event.type === 'status') {
+                        // Status update
                         setMessages(prev => prev.map(msg =>
                             msg.id === agentMessageId
-                                ? { ...msg, taskState: event.status.state }
+                                ? { ...msg, taskState: event.data.status.state }
+                                : msg
+                        ));
+                    } else if (event.type === 'artifact') {
+                        // Artifact update - extract A2UI
+                        if (a2ui.isA2UIArtifact(event.data.artifact)) {
+                            a2uiMessages = [...a2uiMessages, ...a2ui.extractA2UIMessages(event.data.artifact)];
+                            setMessages(prev => prev.map(msg =>
+                                msg.id === agentMessageId
+                                    ? { ...msg, a2ui: a2uiMessages }
+                                    : msg
+                            ));
+                        }
+                    } else if (event.type === 'error') {
+                        // Stream error
+                        setMessages(prev => prev.map(msg =>
+                            msg.id === agentMessageId
+                                ? {
+                                    ...msg,
+                                    content: '',
+                                    error: event.error.message,
+                                    taskState: v1.TaskState.FAILED
+                                }
                                 : msg
                         ));
                     }
@@ -193,33 +244,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             } else {
                 // Non-streaming request
                 const task = await client.sendText(userMessage.content);
-
-                // Extract content from task
-                let content = '';
-                let a2uiMessages: A2UIMessage[] = [];
-
-                if (task.status.message) {
-                    for (const part of task.status.message.parts) {
-                        if (part.type === 'text') {
-                            content += part.text;
-                        } else if (part.type === 'a2ui') {
-                            a2uiMessages = [...a2uiMessages, ...part.a2ui];
-                        }
-                    }
-                }
-
-                // Extract from artifacts too
-                if (task.artifacts) {
-                    for (const artifact of task.artifacts) {
-                        for (const part of artifact.parts) {
-                            if (part.type === 'text') {
-                                content += part.text;
-                            } else if (part.type === 'a2ui') {
-                                a2uiMessages = [...a2uiMessages, ...part.a2ui];
-                            }
-                        }
-                    }
-                }
+                const { content, a2uiMessages } = extractTaskContent(task);
 
                 setMessages(prev => prev.map(msg =>
                     msg.id === agentMessageId
@@ -240,14 +265,14 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                         ...msg,
                         content: '',
                         error: err instanceof Error ? err.message : 'Failed to get response',
-                        taskState: 'failed'
+                        taskState: v1.TaskState.FAILED
                     }
                     : msg
             ));
         } finally {
             setIsLoading(false);
         }
-    }, [inputValue, client, isLoading]);
+    }, [inputValue, client, isLoading, extractTaskContent]);
 
     // Handle key press
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -258,22 +283,16 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     };
 
     // Handle A2UI action
-    const handleA2UIAction = useCallback(async (actionId: string, data?: any) => {
+    const handleA2UIAction = useCallback(async (actionId: string, data?: unknown) => {
         console.log('[AgentChatWindow] A2UI Action:', actionId, data);
 
         // If action has an input text, send it as a user message
-        if (data?.input?.text) {
-            setInputValue(data.input.text);
-            // Wait a tick for state update (or just call send directly with the text)
-            // For cleaner UX, we'll just reuse the send logic but we need to mock the input
-            // Better: just call sendMessage with explicit content if we refactored sendMessage, 
-            // but for now let's just trigger a send manually
-
-            // Actually, best pattern is to just append the message and call client
+        const actionData = data as { input?: { text?: string } } | undefined;
+        if (actionData?.input?.text) {
             const userMessage: ChatMessage = {
                 id: `user-${Date.now()}`,
                 role: 'user',
-                content: data.input.text,
+                content: actionData.input.text,
                 timestamp: new Date(),
             };
 
@@ -285,41 +304,27 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             const agentMessageId = `agent-${Date.now()}`;
             setMessages(prev => [...prev, {
                 id: agentMessageId,
-                role: 'agent',
+                role: 'agent' as const,
                 content: '',
                 timestamp: new Date(),
-                taskState: 'working',
+                taskState: v1.TaskState.WORKING,
             }]);
 
             try {
                 if (!client) throw new Error("Client not connected");
 
-                // For actions, we might want to send a specific action RPC or just text
-                // The current restaurant agent expects text commands
-                const task = await client.sendText(data.input.text);
-
-                // Process response (Reuse logic - ideally refactor this into a helper)
-                let content = '';
-                let a2uiMessages: A2UIMessage[] = [];
-
-                if (task.status.message) {
-                    for (const part of task.status.message.parts) {
-                        if (part.type === 'text') content += part.text;
-                        else if (part.type === 'a2ui') a2uiMessages = [...a2uiMessages, ...part.a2ui];
-                    }
-                }
-                if (task.artifacts) {
-                    for (const artifact of task.artifacts) {
-                        for (const part of artifact.parts) {
-                            if (part.type === 'text') content += part.text;
-                            else if (part.type === 'a2ui') a2uiMessages = [...a2uiMessages, ...part.a2ui];
-                        }
-                    }
-                }
+                // Send the action text as a message
+                const task = await client.sendText(actionData.input.text);
+                const { content, a2uiMessages } = extractTaskContent(task);
 
                 setMessages(prev => prev.map(msg =>
                     msg.id === agentMessageId
-                        ? { ...msg, content: content || 'Task completed.', a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined, taskState: task.status.state }
+                        ? {
+                            ...msg,
+                            content: content || 'Task completed.',
+                            a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined,
+                            taskState: task.status.state
+                        }
                         : msg
                 ));
 
@@ -327,14 +332,19 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 console.error('[AgentChatWindow] Action error:', err);
                 setMessages(prev => prev.map(msg =>
                     msg.id === agentMessageId
-                        ? { ...msg, content: '', error: err instanceof Error ? err.message : 'Action failed', taskState: 'failed' }
+                        ? {
+                            ...msg,
+                            content: '',
+                            error: err instanceof Error ? err.message : 'Action failed',
+                            taskState: v1.TaskState.FAILED
+                        }
                         : msg
                 ));
             } finally {
                 setIsLoading(false);
             }
         }
-    }, [client]);
+    }, [client, extractTaskContent]);
 
     // Retry connection
     const retryConnection = () => {

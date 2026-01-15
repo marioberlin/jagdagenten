@@ -10,6 +10,7 @@ import { cache } from './cache.js';
 import { runSecurityAudit, securityHeaders } from './security.js';
 import { wsManager } from './websocket.js';
 import { getSentinelStatus } from './sentinel.js';
+import { createA2APlugin } from './a2a/index.js';
 
 // CORS plugin
 const corsPlugin = cors({
@@ -52,7 +53,11 @@ const apiInfoPlugin = new Elysia({ name: 'api-info' })
             websocket: 'WS /ws',
             cacheStats: 'GET /api/v1/cache/stats',
             securityAudit: 'GET /api/v1/security/audit',
-            redisSentinel: 'GET /api/v1/redis/sentinel'
+            redisSentinel: 'GET /api/v1/redis/sentinel',
+            // A2A Protocol (SDK-based)
+            a2aDiscovery: 'GET /.well-known/agent.json',
+            a2aRpc: 'POST /a2a',
+            a2aStream: 'GET /a2a/stream',
         }
     }));
 
@@ -262,6 +267,11 @@ const marketPlugin = new Elysia({ name: 'market' })
         }
     }));
 
+// A2A Plugin - SDK-based agent protocol
+const a2aPlugin = createA2APlugin({
+    baseUrl: `http://localhost:${process.env.PORT || 3000}`,
+});
+
 // Build the Elysia app
 const app = new Elysia({ prefix: '' })
     .use(corsPlugin)
@@ -275,7 +285,8 @@ const app = new Elysia({ prefix: '' })
     .use(parallelChatPlugin)
     .use(graphqlPlugin)
     .use(portfolioPlugin)
-    .use(marketPlugin);
+    .use(marketPlugin)
+    .use(a2aPlugin);
 
 // Start server
 const PORT = Number(process.env.PORT) || 3000;

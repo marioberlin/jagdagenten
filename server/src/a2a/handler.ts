@@ -14,18 +14,15 @@ import type {
     JsonRpcError,
     Task,
     TaskState,
-    TaskStatus,
     A2AMessage,
     Artifact,
-    A2UIPart,
     A2UIMessage,
     SendMessageParams,
     TaskQueryParams,
     TaskListParams,
     AgentCard,
-    SUPPORTED_A2UI_COMPONENTS,
-} from './types';
-import { JSON_RPC_ERRORS, TERMINAL_STATES } from './types';
+} from './types.js';
+import { JSON_RPC_ERRORS, TERMINAL_STATES } from './types.js';
 
 // ============================================================================
 // Task Store
@@ -246,8 +243,8 @@ const handlers: Record<string, MethodHandler> = {
         updateTaskState(task.id, 'working');
 
         // Extract text from message
-        const textParts = message.parts.filter(p => p.type === 'text');
-        const prompt = textParts.map(p => (p as { text: string }).text).join('\n');
+        const textParts = message.parts.filter((p: { type: string }) => p.type === 'text');
+        const prompt = textParts.map((p: { type: string; text?: string }) => p.text || '').join('\n');
 
         // Check if A2UI is requested
         const wantsA2UI = configuration?.acceptedOutputModes?.includes('a2ui') ||

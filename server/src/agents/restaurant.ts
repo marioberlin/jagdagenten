@@ -1,4 +1,4 @@
-import type { AgentCard, A2AMessage, A2UIMessage, Task, SendMessageParams } from '../a2a/types';
+import type { AgentCard, A2UIMessage, SendMessageParams } from '../a2a/types.js';
 import { randomUUID } from 'crypto';
 
 // Reusing A2UI examples structure from frontend
@@ -166,8 +166,8 @@ export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
     description: 'Discover and book restaurants near you with AI',
     url: `${baseUrl}/agents/restaurant`,
     version: '1.2.0',
-    provider: { name: 'LiquidCrypto Agents' },
-    capabilities: { streaming: false, a2ui: true, pushNotifications: true },
+    provider: { organization: 'LiquidCrypto Agents' },
+    capabilities: { streaming: false, pushNotifications: true },
     extensions: {
         a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Image'] }
     }

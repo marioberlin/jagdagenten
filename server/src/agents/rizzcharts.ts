@@ -1,4 +1,4 @@
-import type { AgentCard, A2AMessage, A2UIMessage, Task, SendMessageParams } from '../a2a/types';
+import type { AgentCard, A2UIMessage, SendMessageParams } from '../a2a/types.js';
 import { randomUUID } from 'crypto';
 
 // Simple chart example
@@ -88,18 +88,14 @@ export const getRizzChartsAgentCard = (baseUrl: string): AgentCard => ({
     description: 'Data visualization and analytics agent',
     url: `${baseUrl}/agents/rizzcharts`,
     version: '1.5.0',
-    provider: { name: 'LiquidCrypto Agents' },
-    capabilities: { streaming: false, a2ui: true, pushNotifications: false },
+    provider: { organization: 'LiquidCrypto Agents' },
+    capabilities: { streaming: false, pushNotifications: false },
     extensions: {
         a2ui: { version: '0.8', supportedComponents: ['Card', 'Text', 'Row', 'Column'] }
     }
 });
 
-export async function handleRizzChartsRequest(params: SendMessageParams): Promise<any> {
-    const prompt = params.message.parts
-        // @ts-ignore
-        .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
-
+export async function handleRizzChartsRequest(_params: SendMessageParams): Promise<any> {
     // Simulate analysis delay
     await new Promise(resolve => setTimeout(resolve, 1200));
 

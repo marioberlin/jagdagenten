@@ -12,12 +12,12 @@
 import type {
     A2UIMessage,
     A2UIComponent,
-    ComponentType,
     DataBinding,
     BeginRenderingMessage,
     SurfaceUpdateMessage,
     DataModelUpdateMessage,
     GLASS_COMPONENT_CATALOG,
+    A2UITextValue,
 } from './types';
 import type { UINode, UINodeType } from '../components/agentic/GlassDynamicUI';
 
@@ -54,14 +54,20 @@ export function createTransformerState(): TransformerState {
 // ============================================================================
 
 /**
- * Resolves a data binding to its actual value
+ * Resolves a data binding to its actual value.
+ * Handles both legacy DataBinding format and SDK's A2UITextValue (which can be a plain string).
  */
 export function resolveBinding<T>(
-    binding: DataBinding<T> | undefined,
+    binding: DataBinding<T> | A2UITextValue | undefined,
     dataModel: Record<string, unknown>,
     templateContext?: Record<string, unknown>
 ): T | undefined {
     if (!binding) return undefined;
+
+    // SDK's A2UITextValue can be a plain string
+    if (typeof binding === 'string') {
+        return binding as T;
+    }
 
     // Literal values
     if ('literalString' in binding) return binding.literalString as T;
@@ -150,7 +156,7 @@ export function transformComponent(
 
     switch (typeName) {
         case 'Text':
-            return transformText(component.id, props as ComponentType extends { Text: infer T } ? T : never, dataModel, templateContext);
+            return transformText(component.id, props as { text: DataBinding<string> | A2UITextValue; semantic?: string }, dataModel, templateContext);
 
         case 'Button':
             return transformButton(component.id, props, dataModel, templateContext, onAction);
@@ -196,7 +202,7 @@ export function transformComponent(
 
 function transformText(
     id: string,
-    props: { text: DataBinding<string>; semantic?: string },
+    props: { text: DataBinding<string> | A2UITextValue; semantic?: string },
     dataModel: Record<string, unknown>,
     templateContext?: Record<string, unknown>
 ): UINode {
@@ -544,7 +550,8 @@ function transformTabs(
 // ============================================================================
 
 /**
- * Processes an A2UI message and updates transformer state
+ * Processes an A2UI message and updates transformer state.
+ * Handles both SDK types (setModel, endRendering) and legacy types for backward compatibility.
  */
 export function processA2UIMessage(
     message: A2UIMessage,
@@ -559,13 +566,15 @@ export function processA2UIMessage(
             processSurfaceUpdate(message, state);
             break;
 
-        case 'dataModelUpdate':
-            processDataModelUpdate(message, state);
+        // SDK uses 'setModel', handle it here
+        case 'setModel':
+            processSetModel(message, state);
             break;
 
-        case 'deleteSurface':
-            state.surfaces.delete(message.surfaceId);
-            state.dataModels.delete(message.surfaceId);
+        // SDK's actionResponse and endRendering - acknowledge but no-op for now
+        case 'actionResponse':
+        case 'endRendering':
+            // These are informational, no state update needed
             break;
     }
 }
@@ -592,11 +601,16 @@ function processSurfaceUpdate(message: SurfaceUpdateMessage, state: TransformerS
     }
 }
 
-function processDataModelUpdate(message: DataModelUpdateMessage, state: TransformerState): void {
+/**
+ * Process SDK's setModel message (replaces legacy dataModelUpdate)
+ */
+function processSetModel(message: DataModelUpdateMessage, state: TransformerState): void {
     const existing = state.dataModels.get(message.surfaceId) || {};
+    // SDK uses 'model' property instead of 'data'
+    const modelData = (message as { model?: Record<string, unknown> }).model || {};
     state.dataModels.set(message.surfaceId, {
         ...existing,
-        ...message.data,
+        ...modelData,
     });
 }
 

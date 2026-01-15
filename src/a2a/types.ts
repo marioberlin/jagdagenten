@@ -4,490 +4,63 @@
  * Based on A2A Protocol v1.0 Specification
  * @see https://a2a-protocol.org
  *
- * This module provides TypeScript types for A2A protocol compatibility,
- * enabling LiquidCrypto to communicate with external A2A-compliant agents.
+ * This module re-exports types from the SDK for backward compatibility
+ * and provides local type aliases for the legacy codebase.
  */
+
+// Re-export SDK namespaces for convenience
+export { v1, a2ui } from '@liquidcrypto/a2a-sdk';
+import { a2ui as a2uiModule, v1 as v1Module } from '@liquidcrypto/a2a-sdk';
+import type { a2ui as a2uiTypes, v1 as v1Types } from '@liquidcrypto/a2a-sdk';
 
 // ============================================================================
-// Core A2A Types
+// Core A2A Types (re-exported from SDK v1)
 // ============================================================================
 
-/**
- * Task states in the A2A lifecycle
- */
-export type TaskState =
-    | 'submitted'
-    | 'working'
-    | 'input_required'
-    | 'auth_required'
-    | 'completed'
-    | 'failed'
-    | 'cancelled'
-    | 'rejected';
+/** Agent Card - describes an agent's capabilities */
+export type AgentCard = v1Types.AgentCard;
 
-/**
- * Terminal states where no further transitions occur
- */
-export const TERMINAL_STATES: TaskState[] = ['completed', 'failed', 'cancelled', 'rejected'];
+/** A2A Message structure */
+export type A2AMessage = v1Types.Message;
 
-/**
- * Message roles in A2A communication
- */
+/** A2A Task structure */
+export type Task = v1Types.Task;
+
+/** Task status information */
+export type TaskStatus = v1Types.TaskStatus;
+
+/** Task states in the A2A lifecycle - re-export enum for value access */
+export const TaskState = v1Module.TaskState;
+export type TaskState = v1Types.TaskState;
+
+/** Artifact produced by agent */
+export type Artifact = v1Types.Artifact;
+
+/** Part types for message content */
+export type Part = v1Types.Part;
+export type TextPart = v1Types.TextPart;
+export type FilePart = v1Types.FilePart;
+export type DataPart = v1Types.DataPart;
+
+/** Agent capabilities */
+export type AgentCapabilities = v1Types.AgentCapabilities;
+
+/** Agent skill definition */
+export type AgentSkill = v1Types.AgentSkill;
+
+/** Message role */
 export type MessageRole = 'user' | 'agent';
 
-/**
- * Part types for message content
- */
-export interface TextPart {
-    type: 'text';
-    text: string;
-}
-
-export interface FilePart {
-    type: 'file';
-    file: {
-        name: string;
-        mimeType: string;
-        bytes?: string; // base64 encoded
-        uri?: string;
-    };
-}
-
-export interface DataPart {
-    type: 'data';
-    data: Record<string, unknown>;
-}
-
-/**
- * A2UI Part for UI payloads
- */
-export interface A2UIPart {
-    type: 'a2ui';
-    a2ui: A2UIMessage[];
-}
-
-export type Part = TextPart | FilePart | DataPart | A2UIPart;
-
-/**
- * A2A Message structure
- */
-export interface A2AMessage {
-    role: MessageRole;
-    parts: Part[];
-    metadata?: Record<string, unknown>;
-}
-
-/**
- * Artifact produced by agent
- */
-export interface Artifact {
-    name?: string;
-    description?: string;
-    parts: Part[];
-    index?: number;
-    append?: boolean;
-    lastChunk?: boolean;
-}
-
-/**
- * Task status information
- */
-export interface TaskStatus {
-    state: TaskState;
-    message?: A2AMessage;
-    timestamp: string;
-}
-
-/**
- * A2A Task structure
- */
-export interface Task {
-    id: string;
-    contextId: string;
-    status: TaskStatus;
-    artifacts?: Artifact[];
-    history?: A2AMessage[];
-    metadata?: Record<string, unknown>;
-}
+/** Terminal states */
+export const TERMINAL_STATES: v1Types.TaskState[] = [
+    v1Module.TaskState.COMPLETED,
+    v1Module.TaskState.FAILED,
+    v1Module.TaskState.CANCELED,
+    v1Module.TaskState.REJECTED,
+];
 
 // ============================================================================
-// Agent Card Types
-// ============================================================================
-
-/**
- * Skill definition in Agent Card
- */
-export interface AgentSkill {
-    id: string;
-    name: string;
-    description: string;
-    tags?: string[];
-    examples?: string[];
-    inputModes?: string[];
-    outputModes?: string[];
-}
-
-/**
- * Security scheme for authentication
- */
-export interface SecurityScheme {
-    type: 'http' | 'oauth2' | 'apiKey' | 'openIdConnect';
-    scheme?: string; // for http type
-    bearerFormat?: string;
-    flows?: Record<string, unknown>; // for oauth2
-    in?: 'header' | 'query' | 'cookie'; // for apiKey
-    name?: string; // for apiKey
-}
-
-/**
- * Agent capabilities
- */
-export interface AgentCapabilities {
-    streaming?: boolean;
-    pushNotifications?: boolean;
-    stateTransitionHistory?: boolean;
-}
-
-/**
- * A2UI extension capabilities
- */
-export interface A2UIExtension {
-    version: string;
-    supportedComponents: string[];
-    customComponents?: Record<string, unknown>;
-}
-
-/**
- * Agent Card - metadata describing an agent's capabilities
- */
-export interface AgentCard {
-    name: string;
-    description: string;
-    url: string;
-    version: string;
-    documentationUrl?: string;
-    provider?: {
-        organization: string;
-        url?: string;
-    };
-    capabilities?: AgentCapabilities;
-    skills?: AgentSkill[];
-    securitySchemes?: Record<string, SecurityScheme>;
-    security?: Array<Record<string, string[]>>;
-    defaultInputModes?: string[];
-    defaultOutputModes?: string[];
-    extensions?: {
-        a2ui?: A2UIExtension;
-        [key: string]: unknown;
-    };
-}
-
-// ============================================================================
-// A2UI Message Types (v0.8)
-// ============================================================================
-
-/**
- * A2UI message types for UI generation
- */
-export type A2UIMessageType =
-    | 'beginRendering'
-    | 'surfaceUpdate'
-    | 'dataModelUpdate'
-    | 'deleteSurface';
-
-/**
- * Base A2UI message structure
- */
-export interface A2UIMessageBase {
-    type: A2UIMessageType;
-    surfaceId: string;
-}
-
-/**
- * Begin rendering message - initializes a new UI surface
- */
-export interface BeginRenderingMessage extends A2UIMessageBase {
-    type: 'beginRendering';
-    rootComponentId: string;
-    styling?: {
-        primaryColor?: string;
-        fontFamily?: string;
-        [key: string]: unknown;
-    };
-}
-
-/**
- * Surface update message - updates component tree
- */
-export interface SurfaceUpdateMessage extends A2UIMessageBase {
-    type: 'surfaceUpdate';
-    components: A2UIComponent[];
-}
-
-/**
- * Data model update message - updates data bindings
- */
-export interface DataModelUpdateMessage extends A2UIMessageBase {
-    type: 'dataModelUpdate';
-    data: Record<string, unknown>;
-}
-
-/**
- * Delete surface message - removes a UI surface
- */
-export interface DeleteSurfaceMessage extends A2UIMessageBase {
-    type: 'deleteSurface';
-}
-
-export type A2UIMessage =
-    | BeginRenderingMessage
-    | SurfaceUpdateMessage
-    | DataModelUpdateMessage
-    | DeleteSurfaceMessage;
-
-// ============================================================================
-// A2UI Component Types
-// ============================================================================
-
-/**
- * Component alignment options
- */
-export type Alignment = 'start' | 'center' | 'end' | 'stretch';
-
-/**
- * Distribution options for layout components
- */
-export type Distribution = 'start' | 'center' | 'end' | 'spaceBetween' | 'spaceAround' | 'spaceEvenly';
-
-/**
- * Text semantic hints
- */
-export type TextSemantic = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'caption' | 'body';
-
-/**
- * TextField input types
- */
-export type TextFieldType = 'shortText' | 'longText' | 'number' | 'date' | 'obscured';
-
-/**
- * Data binding - either literal or path reference
- */
-export interface LiteralBinding<T> {
-    literalString?: string;
-    literalNumber?: number;
-    literalBoolean?: boolean;
-    literal?: T;
-}
-
-export interface PathBinding {
-    path: string;
-}
-
-export interface TemplateBinding {
-    template: string;
-}
-
-export type DataBinding<T = string> = LiteralBinding<T> | PathBinding | TemplateBinding;
-
-/**
- * Action triggered by user interaction
- */
-export interface A2UIAction {
-    submit?: {
-        data?: Record<string, unknown>;
-    };
-    navigate?: {
-        url: string;
-    };
-    custom?: {
-        actionId: string;
-        data?: Record<string, unknown>;
-    };
-}
-
-// Component definitions
-export interface TextComponent {
-    Text: {
-        text: DataBinding<string>;
-        semantic?: TextSemantic;
-    };
-}
-
-export interface ImageComponent {
-    Image: {
-        src: DataBinding<string>;
-        alt?: DataBinding<string>;
-        width?: number;
-        height?: number;
-    };
-}
-
-export interface IconComponent {
-    Icon: {
-        name: DataBinding<string>;
-        size?: number;
-    };
-}
-
-export interface ButtonComponent {
-    Button: {
-        label: DataBinding<string>;
-        action?: A2UIAction;
-        primary?: boolean;
-        disabled?: DataBinding<boolean>;
-    };
-}
-
-export interface TextFieldComponent {
-    TextField: {
-        placeholder?: DataBinding<string>;
-        value?: DataBinding<string>;
-        inputType?: TextFieldType;
-        label?: DataBinding<string>;
-        binding?: string; // path to bind value to
-    };
-}
-
-export interface CheckboxComponent {
-    Checkbox: {
-        label?: DataBinding<string>;
-        checked?: DataBinding<boolean>;
-        binding?: string;
-    };
-}
-
-export interface SliderComponent {
-    Slider: {
-        min?: number;
-        max?: number;
-        step?: number;
-        value?: DataBinding<number>;
-        label?: DataBinding<string>;
-        binding?: string;
-    };
-}
-
-export interface DateTimeInputComponent {
-    DateTimeInput: {
-        label?: DataBinding<string>;
-        value?: DataBinding<string>;
-        binding?: string;
-    };
-}
-
-export interface MultipleChoiceComponent {
-    MultipleChoice: {
-        label?: DataBinding<string>;
-        options: Array<{
-            value: string;
-            label: DataBinding<string>;
-        }>;
-        selected?: DataBinding<string>;
-        binding?: string;
-    };
-}
-
-export interface DividerComponent {
-    Divider: Record<string, never>;
-}
-
-export interface RowComponent {
-    Row: {
-        children: string[]; // component IDs
-        distribution?: Distribution;
-        alignment?: Alignment;
-    };
-}
-
-export interface ColumnComponent {
-    Column: {
-        children: string[];
-        distribution?: Distribution;
-        alignment?: Alignment;
-    };
-}
-
-export interface CardComponent {
-    Card: {
-        children: string[];
-        elevation?: number;
-    };
-}
-
-export interface ListComponent {
-    List: {
-        items: DataBinding<unknown[]>;
-        template: string; // component ID for template
-        direction?: 'vertical' | 'horizontal';
-    };
-}
-
-export interface TabsComponent {
-    Tabs: {
-        tabs: Array<{
-            title: DataBinding<string>;
-            content: string; // component ID
-        }>;
-    };
-}
-
-export interface ModalComponent {
-    Modal: {
-        title?: DataBinding<string>;
-        content: string; // component ID
-        open?: DataBinding<boolean>;
-    };
-}
-
-export interface VideoComponent {
-    Video: {
-        src: DataBinding<string>;
-        autoplay?: boolean;
-        controls?: boolean;
-    };
-}
-
-export interface AudioPlayerComponent {
-    AudioPlayer: {
-        src: DataBinding<string>;
-        autoplay?: boolean;
-    };
-}
-
-/**
- * Union of all component types
- */
-export type ComponentType =
-    | TextComponent
-    | ImageComponent
-    | IconComponent
-    | ButtonComponent
-    | TextFieldComponent
-    | CheckboxComponent
-    | SliderComponent
-    | DateTimeInputComponent
-    | MultipleChoiceComponent
-    | DividerComponent
-    | RowComponent
-    | ColumnComponent
-    | CardComponent
-    | ListComponent
-    | TabsComponent
-    | ModalComponent
-    | VideoComponent
-    | AudioPlayerComponent;
-
-/**
- * A2UI Component structure
- */
-export interface A2UIComponent {
-    id: string;
-    component: ComponentType;
-    weight?: number; // flex-grow value
-}
-
-// ============================================================================
-// JSON-RPC Types for A2A Protocol
+// JSON-RPC Types
 // ============================================================================
 
 export interface JsonRpcRequest<T = unknown> {
@@ -508,25 +81,7 @@ export interface JsonRpcResponse<T = unknown> {
     };
 }
 
-/**
- * A2A RPC Methods
- */
-export type A2AMethod =
-    | 'message/send'
-    | 'message/stream'
-    | 'tasks/get'
-    | 'tasks/list'
-    | 'tasks/cancel'
-    | 'tasks/subscribe'
-    | 'tasks/pushNotificationConfig/set'
-    | 'tasks/pushNotificationConfig/get'
-    | 'tasks/pushNotificationConfig/list'
-    | 'tasks/pushNotificationConfig/delete'
-    | 'agent/card';
-
-/**
- * Send message request params
- */
+/** Send message request params */
 export interface SendMessageParams {
     message: A2AMessage;
     configuration?: {
@@ -539,22 +94,152 @@ export interface SendMessageParams {
     };
 }
 
-/**
- * Task query params
- */
+/** Task query params */
 export interface TaskQueryParams {
     id: string;
     historyLength?: number;
 }
 
-/**
- * Task list params
- */
+/** Task list params */
 export interface TaskListParams {
     contextId?: string;
     state?: TaskState[];
     limit?: number;
     offset?: number;
+}
+
+/** A2UI Part for UI payloads (legacy compatibility) */
+export interface A2UIPart {
+    type: 'a2ui';
+    a2ui: A2UIMessage[];
+}
+
+// ============================================================================
+// A2UI Message Type Aliases (for backward compatibility)
+// ============================================================================
+
+/**
+ * A2UI Message - re-exported from SDK
+ * This is the canonical type used throughout the application.
+ */
+export type A2UIMessage = a2uiTypes.A2UIMessage;
+
+/**
+ * Begin rendering message - initializes a new UI surface
+ */
+export type BeginRenderingMessage = a2uiTypes.A2UIBeginRenderingMessage;
+
+/**
+ * Surface update message - updates component tree
+ */
+export type SurfaceUpdateMessage = a2uiTypes.A2UISurfaceUpdateMessage;
+
+/**
+ * Set model message - updates data bindings
+ * (Note: SDK uses 'setModel', legacy used 'dataModelUpdate')
+ */
+export type DataModelUpdateMessage = a2uiTypes.A2UISetModelMessage;
+
+/**
+ * A2UI Component - re-exported from SDK
+ */
+export type A2UIComponent = a2uiTypes.A2UIComponent;
+
+/**
+ * Component props union type
+ */
+export type ComponentType = a2uiTypes.A2UIComponentProps;
+
+/**
+ * Text value binding type from SDK
+ */
+export type A2UITextValue = a2uiTypes.A2UITextValue;
+
+// ============================================================================
+// Data Binding Types (Legacy Compatibility Layer)
+// ============================================================================
+
+/**
+ * Legacy DataBinding type - maps to SDK A2UITextValue
+ * For backward compatibility with existing transformer code.
+ */
+export interface LiteralBinding<T> {
+    literalString?: string;
+    literalNumber?: number;
+    literalBoolean?: boolean;
+    literal?: T;
+}
+
+export interface PathBinding {
+    path: string;
+}
+
+export interface TemplateBinding {
+    template: string;
+}
+
+export type DataBinding<T = string> = LiteralBinding<T> | PathBinding | TemplateBinding;
+
+/**
+ * Convert SDK A2UITextValue to legacy DataBinding format
+ */
+export function textValueToDataBinding(value: a2uiTypes.A2UITextValue): DataBinding<string> {
+    if (typeof value === 'string') {
+        return { literalString: value };
+    }
+    if ('literalString' in value) {
+        return { literalString: value.literalString };
+    }
+    if ('path' in value) {
+        return { path: value.path };
+    }
+    return { literalString: '' };
+}
+
+/**
+ * Resolve an A2UI text value to a string
+ * Re-exported from SDK for convenience
+ */
+export const resolveTextValue = a2uiModule.resolveTextValue;
+
+// ============================================================================
+// Legacy Component Type Aliases
+// ============================================================================
+
+/**
+ * Component alignment options
+ */
+export type Alignment = 'start' | 'center' | 'end' | 'stretch';
+
+/**
+ * Distribution options for layout components
+ */
+export type Distribution = 'start' | 'center' | 'end' | 'spaceBetween' | 'spaceAround' | 'spaceEvenly';
+
+/**
+ * Text semantic hints
+ */
+export type TextSemantic = a2uiTypes.A2UITextSemantic;
+
+/**
+ * TextField input types
+ */
+export type TextFieldType = 'shortText' | 'longText' | 'number' | 'date' | 'obscured';
+
+/**
+ * Action triggered by user interaction
+ */
+export interface A2UIAction {
+    submit?: {
+        data?: Record<string, unknown>;
+    };
+    navigate?: {
+        url: string;
+    };
+    custom?: {
+        actionId: string;
+        data?: Record<string, unknown>;
+    };
 }
 
 // ============================================================================
