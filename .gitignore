@@ -154,3 +154,4 @@ archive/
 TraderOld/
 bot/
 trades.json
+.tmp/
