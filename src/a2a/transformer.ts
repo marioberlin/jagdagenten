@@ -338,9 +338,10 @@ function transformRow(
         id,
         props: {
             direction: 'horizontal',
-            gap: 4,
+            gap: 8,
             distribution: props.distribution,
             alignment: props.alignment,
+            className: 'items-start',
         },
         children,
     };
@@ -368,7 +369,7 @@ function transformColumn(
         id,
         props: {
             direction: 'vertical',
-            gap: 4,
+            gap: 6,
             distribution: props.distribution,
             alignment: props.alignment,
         },
@@ -398,6 +399,7 @@ function transformCard(
         id,
         props: {
             elevation: props.elevation,
+            className: 'bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-2xl p-4 mb-4',
         },
         children,
     };
@@ -467,20 +469,21 @@ function transformImage(
     const src = resolveBinding(props.src as DataBinding<string>, dataModel, templateContext);
     const altText = resolveBinding(props.alt as DataBinding<string>, dataModel, templateContext);
 
-    // Image not in base GlassDynamicUI, render as styled div with bg image
+    // Image with Liquid Glass styling - rounded corners, subtle border
     return {
         type: 'container',
         id,
         props: {
-            className: 'overflow-hidden rounded-lg',
+            className: 'overflow-hidden rounded-xl border border-white/10 flex-shrink-0',
             'aria-label': altText || undefined,
         },
         style: {
             backgroundImage: src ? `url(${src})` : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            width: props.width as number || '100%',
-            height: props.height as number || 200,
+            width: props.width as number || 120,
+            height: props.height as number || 120,
+            minWidth: props.width as number || 120,
         },
         children: [],
     };
@@ -568,6 +571,8 @@ export function processA2UIMessage(
 
         // SDK uses 'setModel', handle it here
         case 'setModel':
+        // Legacy/LiquidCrypto agents use 'dataModelUpdate'
+        case 'dataModelUpdate':
             processSetModel(message, state);
             break;
 
@@ -603,11 +608,13 @@ function processSurfaceUpdate(message: SurfaceUpdateMessage, state: TransformerS
 
 /**
  * Process SDK's setModel message (replaces legacy dataModelUpdate)
+ * Handles both SDK format (model property) and legacy format (data property)
  */
 function processSetModel(message: DataModelUpdateMessage, state: TransformerState): void {
     const existing = state.dataModels.get(message.surfaceId) || {};
-    // SDK uses 'model' property instead of 'data'
-    const modelData = (message as { model?: Record<string, unknown> }).model || {};
+    // SDK uses 'model' property, legacy format uses 'data' property
+    const messageAny = message as { model?: Record<string, unknown>; data?: Record<string, unknown> };
+    const modelData = messageAny.model || messageAny.data || {};
     state.dataModels.set(message.surfaceId, {
         ...existing,
         ...modelData,

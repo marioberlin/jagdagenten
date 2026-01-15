@@ -104,7 +104,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 });
 
                 // Try to get agent card to verify connection
-                await newClient.getAgentCard();
+                await newClient.getCard();
                 setClient(newClient);
                 setIsConnected(true);
                 setError(null);
@@ -146,7 +146,11 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
 
         // Extract from status message
         if (task.status.message) {
-            content = client?.extractText(task.status.message) ?? '';
+            // SDK v2 change: client.extractText is removed, do manual extraction
+            content = task.status.message.parts
+                ?.filter((p: any) => p.kind === 'text')
+                ?.map((p: any) => p.text)
+                ?.join('\n') ?? '';
         }
 
         // Extract A2UI from artifacts
@@ -159,11 +163,17 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         }
 
         return { content, a2uiMessages };
-    }, [client]);
+    }, []);
 
     // Send message
     const sendMessage = useCallback(async () => {
         if (!inputValue.trim() || !client || isLoading) return;
+
+        console.log('[AgentChatWindow] Sending message...', {
+            hasSendText: typeof client.sendText === 'function',
+            hasStreamText: typeof client.streamText === 'function',
+            clientKeys: Object.keys(client || {})
+        });
 
         const userMessage: ChatMessage = {
             id: `user-${Date.now()}`,
@@ -189,10 +199,10 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
 
         try {
             // Check if agent supports streaming
-            const card = await client.getAgentCard();
+            const card = await client.getCard();
             const supportsStreaming = card.capabilities?.streaming;
 
-            if (supportsStreaming) {
+            if (supportsStreaming && typeof client.streamText === 'function') {
                 // Use streaming with new SDK API
                 let a2uiMessages: LegacyA2UIMessage[] = [];
 
@@ -243,6 +253,9 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 }
             } else {
                 // Non-streaming request
+                if (typeof client.sendText !== 'function') {
+                    throw new Error(`Client missing sendText method. Available: ${Object.keys(client || {}).join(', ')}`);
+                }
                 const task = await client.sendText(userMessage.content);
                 const { content, a2uiMessages } = extractTaskContent(task);
 
@@ -359,7 +372,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             id={`agent-chat-${agent.id}`}
             title={agent.name}
             initialPosition={position}
-            initialSize={{ width: 500, height: 650 }}
+            initialSize={{ width: 750, height: 700 }}
             onClose={onClose}
             onMinimize={onMinimize}
             isActive={isActive}

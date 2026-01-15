@@ -13,8 +13,8 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import {
-    ATTR_SERVICE_NAME,
-    ATTR_SERVICE_VERSION
+    SEMRESATTRS_SERVICE_NAME as ATTR_SERVICE_NAME,
+    SEMRESATTRS_SERVICE_VERSION as ATTR_SERVICE_VERSION
 } from '@opentelemetry/semantic-conventions';
 import {
     trace,

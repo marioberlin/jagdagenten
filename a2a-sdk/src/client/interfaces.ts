@@ -65,6 +65,13 @@ export type Consumer = (
   agentCard: AgentCard
 ) => Promise<void> | void;
 
+export type StreamEvent =
+  | { type: 'complete'; task: Task }
+  | { type: 'error'; error: any }
+  | { type: 'status'; data: { status: TaskStatusUpdateEvent['status'] } } // Approximate
+  | { type: 'artifact'; data: { artifact: TaskArtifactUpdateEvent['artifact'] } };
+
+
 /**
  * Client call context for middleware
  */
@@ -180,6 +187,9 @@ export interface Client {
    * Closes the client and releases resources.
    */
   close(): Promise<void> | void;
+
+  sendText(text: string, options?: { contextId?: string; configuration?: any }): Promise<Task>;
+  streamText(text: string, options?: { contextId?: string; configuration?: any }, signal?: { signal?: AbortSignal }): AsyncIterableIterator<StreamEvent>;
 }
 
 /**

@@ -135,7 +135,7 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const agentCard = await clientRef.current.getAgentCard();
+      const agentCard = await clientRef.current.getCard();
       setState(prev => ({
         ...prev,
         connected: true,

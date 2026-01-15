@@ -23,7 +23,7 @@ import { GlassAgentSettings } from './GlassAgentSettings';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
-    onClose?: () => void;   
+    onClose?: () => void;
 }
 
 // ============================================
@@ -2910,6 +2910,30 @@ const CredentialsPanel: React.FC<CredentialsPanelProps> = ({
                 lastUsed: 'System',
                 notes: 'Loaded from .env VITE_GEMINI_API_KEY',
                 data: { tokenType: 'bearer', token: import.meta.env.VITE_GEMINI_API_KEY }
+            });
+        }
+
+        if (import.meta.env.VITE_OPENAI_API_KEY && !exists('env-openai')) {
+            initialCreds.push({
+                id: 'env-openai',
+                name: 'Environment: OpenAI',
+                type: 'api_token',
+                status: 'connected',
+                lastUsed: 'System',
+                notes: 'Loaded from .env VITE_OPENAI_API_KEY',
+                data: { tokenType: 'bearer', token: import.meta.env.VITE_OPENAI_API_KEY }
+            });
+        }
+
+        if (import.meta.env.VITE_GOOGLE_PLACES_API_KEY && !exists('env-google-places')) {
+            initialCreds.push({
+                id: 'env-google-places',
+                name: 'Environment: Google Places',
+                type: 'api_token',
+                status: 'connected',
+                lastUsed: 'System',
+                notes: 'Loaded from .env VITE_GOOGLE_PLACES_API_KEY (used by Restaurant Agent)',
+                data: { tokenType: 'api-key', token: import.meta.env.VITE_GOOGLE_PLACES_API_KEY }
             });
         }
 

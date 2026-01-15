@@ -285,18 +285,26 @@ export const ConnectedA2UIRenderer: React.FC<ConnectedA2UIRendererProps> = ({
             setError(null);
 
             try {
-                const { createA2AClient } = await import('../../a2a/client');
-                const client = createA2AClient(agentUrl, { authToken });
+                const { createA2AClient, a2ui } = await import('@liquidcrypto/a2a-sdk');
+                const client = createA2AClient({
+                    baseUrl: agentUrl,
+                    authToken,
+                    enableA2UI: true
+                });
+
+                // Get capabilities to verify usage
+                await client.getCard();
 
                 const task = await client.sendText(text);
 
                 // Extract A2UI parts from task
-                const a2uiParts = client.extractA2UIParts(task);
-
-                // Collect all A2UI messages
                 const allMessages: A2UIMessage[] = [];
-                for (const part of a2uiParts) {
-                    allMessages.push(...part.a2ui);
+                if (task.artifacts) {
+                    for (const artifact of task.artifacts) {
+                        if (a2ui.isA2UIArtifact(artifact)) {
+                            allMessages.push(...a2ui.extractA2UIMessages(artifact));
+                        }
+                    }
                 }
 
                 setMessages(allMessages);

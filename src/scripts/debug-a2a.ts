@@ -1,5 +1,5 @@
 
-import { createA2AClient } from '../a2a/client';
+import { createA2AClient } from '@liquidcrypto/a2a-sdk';
 
 async function testConnection() {
     console.log('Testing A2A Connection...');
@@ -7,17 +7,18 @@ async function testConnection() {
     console.log(`Connecting to: ${url}`);
 
     try {
-        const client = createA2AClient(url, {
+        const client = createA2AClient({
+            baseUrl: url,
             enableA2UI: true
         });
 
         console.log('Fetching Agent Card...');
-        const card = await client.getAgentCard();
+        const card = await client.getCard();
         console.log('Success! Agent Card:', card);
 
         console.log('\nSending Hello message...');
-        const response = await client.sendText('Hello world');
-        console.log('Response:', response);
+        const task = await client.sendText('Hello world');
+        console.log('Response Task:', task);
     } catch (error) {
         console.error('Connection Failed:', error);
         if (error instanceof Error && 'cause' in error) {

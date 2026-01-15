@@ -15,6 +15,7 @@ interface Restaurant {
     image: string;
     available: boolean;
     address?: string;
+    phoneNumber?: string;
     userRatingCount?: number;
     googleMapsUri?: string;
 }
@@ -31,6 +32,8 @@ interface GooglePlace {
     id: string;
     displayName: { text: string; languageCode: string };
     formattedAddress: string;
+    nationalPhoneNumber?: string;
+    internationalPhoneNumber?: string;
     rating?: number;
     userRatingCount?: number;
     priceLevel?: 'PRICE_LEVEL_FREE' | 'PRICE_LEVEL_INEXPENSIVE' | 'PRICE_LEVEL_MODERATE' | 'PRICE_LEVEL_EXPENSIVE' | 'PRICE_LEVEL_VERY_EXPENSIVE';
@@ -41,21 +44,21 @@ interface GooglePlace {
     currentOpeningHours?: { openNow: boolean };
 }
 
-// Default location: San Francisco downtown
+// Default location: Berlin, Germany (Mitte district)
 const DEFAULT_LOCATION = {
-    latitude: 37.7937,
-    longitude: -122.3965,
+    latitude: 52.5200,
+    longitude: 13.4050,
 };
 
-// Convert Google price level to display format
+// Convert Google price level to display format (using € for Europe)
 function formatPriceLevel(priceLevel?: string): string {
     switch (priceLevel) {
         case 'PRICE_LEVEL_FREE': return 'Free';
-        case 'PRICE_LEVEL_INEXPENSIVE': return '$';
-        case 'PRICE_LEVEL_MODERATE': return '$$';
-        case 'PRICE_LEVEL_EXPENSIVE': return '$$$';
-        case 'PRICE_LEVEL_VERY_EXPENSIVE': return '$$$$';
-        default: return '$$';
+        case 'PRICE_LEVEL_INEXPENSIVE': return '€';
+        case 'PRICE_LEVEL_MODERATE': return '€€';
+        case 'PRICE_LEVEL_EXPENSIVE': return '€€€';
+        case 'PRICE_LEVEL_VERY_EXPENSIVE': return '€€€€';
+        default: return '€€';
     }
 }
 
@@ -78,8 +81,7 @@ async function fetchGooglePlaces(
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
     if (!apiKey) {
-        console.log('[Restaurant Agent] GOOGLE_PLACES_API_KEY not set, using fallback data');
-        return getFallbackRestaurants();
+        throw new Error('GOOGLE_PLACES_API_KEY environment variable is not set. Please configure your Google Places API key to use this agent.');
     }
 
     try {
@@ -138,6 +140,8 @@ async function fetchGooglePlaces(
                     'places.id',
                     'places.displayName',
                     'places.formattedAddress',
+                    'places.nationalPhoneNumber',
+                    'places.internationalPhoneNumber',
                     'places.rating',
                     'places.userRatingCount',
                     'places.priceLevel',
@@ -154,14 +158,14 @@ async function fetchGooglePlaces(
         if (!response.ok) {
             const errorText = await response.text();
             console.error('[Restaurant Agent] Google Places API error:', response.status, errorText);
-            return getFallbackRestaurants();
+            throw new Error(`Google Places API error (${response.status}): ${errorText}`);
         }
 
         const data = await response.json() as GooglePlacesResponse;
 
         if (!data.places?.length) {
-            console.log('[Restaurant Agent] No places found, using fallback data');
-            return getFallbackRestaurants();
+            console.log('[Restaurant Agent] No places found for the given location');
+            return []; // Return empty array - UI will handle "no results" gracefully
         }
 
         // Transform Google Places to our Restaurant format
@@ -172,16 +176,17 @@ async function fetchGooglePlaces(
             rating: place.rating || 4.0,
             userRatingCount: place.userRatingCount,
             priceRange: formatPriceLevel(place.priceLevel),
-            distance: `${(0.1 + index * 0.15).toFixed(1)} mi`, // Approximate based on rank
+            distance: `${(0.1 + index * 0.15).toFixed(1)} km`,
             image: getPhotoUrl(place.photos, apiKey),
             available: place.currentOpeningHours?.openNow ?? true,
             address: place.formattedAddress,
+            phoneNumber: place.internationalPhoneNumber || place.nationalPhoneNumber,
             googleMapsUri: place.googleMapsUri,
         }));
 
     } catch (error) {
         console.error('[Restaurant Agent] Failed to fetch from Google Places:', error);
-        return getFallbackRestaurants();
+        throw error instanceof Error ? error : new Error('Failed to fetch restaurants from Google Places API');
     }
 }
 
@@ -195,16 +200,7 @@ function formatCuisineType(primaryType?: string): string {
         .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Fallback restaurant data when API is not available
-function getFallbackRestaurants(): Restaurant[] {
-    return [
-        { id: '1', name: 'The Glass Kitchen', cuisine: 'Modern European', rating: 4.8, priceRange: '$$$', distance: '0.3 mi', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=300&q=80', available: true },
-        { id: '2', name: 'Sushi Zen', cuisine: 'Japanese', rating: 4.9, priceRange: '$$$$', distance: '0.5 mi', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=300&q=80', available: true },
-        { id: '3', name: 'Pasta & Co', cuisine: 'Italian', rating: 4.5, priceRange: '$$', distance: '0.2 mi', image: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=300&q=80', available: true },
-        { id: '4', name: 'Spice Garden', cuisine: 'Indian', rating: 4.6, priceRange: '$$', distance: '0.7 mi', image: 'https://images.unsplash.com/photo-1585937421612-70a008356c72?auto=format&fit=crop&w=300&q=80', available: true },
-        { id: '5', name: 'Le Petit Bistro', cuisine: 'French', rating: 4.7, priceRange: '$$$', distance: '0.4 mi', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=80', available: true },
-    ];
-}
+// Note: Fallback restaurant data has been removed. This agent now requires a valid GOOGLE_PLACES_API_KEY.
 
 // Cache for storing fetched restaurants (simple in-memory cache)
 let restaurantCache: { data: Restaurant[]; timestamp: number; cuisineFilter?: string } | null = null;
@@ -327,7 +323,7 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     id: 'info-col',
                     component: {
                         Column: {
-                            children: ['name', 'cuisine-rating', 'details-row', 'address-row', 'book-btn'],
+                            children: ['name', 'cuisine-rating', 'details-row', 'address-row', 'phone-row', 'book-btn'],
                             alignment: 'start',
                         },
                     },
@@ -402,6 +398,15 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                     },
                 },
                 {
+                    id: 'phone-row',
+                    component: {
+                        Text: {
+                            text: { path: 'phoneDisplay' },
+                            variant: 'secondary',
+                        },
+                    },
+                },
+                {
                     id: 'book-btn',
                     component: {
                         Button: {
@@ -459,10 +464,13 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
                 restaurants: filtered.map(r => ({
                     ...r,
                     ratingDisplay: r.userRatingCount
-                        ? `${r.rating.toFixed(1)} (${r.userRatingCount.toLocaleString()} reviews)`
-                        : `${r.rating.toFixed(1)}`,
+                        ? `⭐ ${r.rating.toFixed(1)} (${r.userRatingCount.toLocaleString()} reviews)`
+                        : `⭐ ${r.rating.toFixed(1)}`,
                     addressShort: r.address
-                        ? r.address.split(',').slice(0, 2).join(',')
+                        ? `📍 ${r.address.split(',').slice(0, 2).join(',').trim()}`
+                        : '',
+                    phoneDisplay: r.phoneNumber
+                        ? `📞 ${r.phoneNumber}`
                         : '',
                 })),
             },
@@ -797,76 +805,125 @@ export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
 let lastFetchedRestaurants: Restaurant[] = [];
 
 export async function handleRestaurantRequest(params: SendMessageParams): Promise<any> {
-    const prompt = params.message.parts
-        // @ts-ignore
-        .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
-
-    let a2uiMessages: A2UIMessage[];
-    let textResponse: string;
-
-    // Extract cuisine filter if mentioned
-    const cuisines = [
-        'italian', 'japanese', 'french', 'indian', 'chinese', 'mexican', 'thai',
-        'korean', 'vietnamese', 'greek', 'american', 'mediterranean', 'seafood',
-        'steakhouse', 'pizza', 'sushi', 'ramen', 'breakfast', 'brunch', 'cafe', 'bakery'
-    ];
-    const mentionedCuisine = cuisines.find(c => prompt.includes(c));
-
-    // Intent matching
-    if (prompt.includes('confirm') || prompt.includes('yes') || prompt.includes('reserve')) {
-        // User confirming a booking - show confirmation
-        const restaurant = lastFetchedRestaurants[0] || getFallbackRestaurants()[0];
-        a2uiMessages = generateBookingConfirmation(restaurant);
-        textResponse = `Your reservation at ${restaurant.name} has been confirmed!`;
-    } else if (prompt.includes('book')) {
-        // User wants to book a specific restaurant - try to match by name
-        const restaurants = lastFetchedRestaurants.length > 0 ? lastFetchedRestaurants : getFallbackRestaurants();
-
-        // Try to find a matching restaurant from the prompt
-        const restaurant = restaurants.find(r =>
-            prompt.includes(r.name.toLowerCase()) ||
-            r.name.toLowerCase().split(' ').some(word => prompt.includes(word))
-        ) || restaurants[0];
-
-        a2uiMessages = generateBookingForm(restaurant);
-        textResponse = `Great choice! Please fill in your booking details for ${restaurant.name}.`;
-    } else {
-        // Search for restaurants (with optional cuisine filter)
-        const restaurants = await getRestaurants(mentionedCuisine);
-        lastFetchedRestaurants = restaurants;
-
-        const isLiveData = !!process.env.GOOGLE_PLACES_API_KEY;
-        a2uiMessages = generateRestaurantList(restaurants, mentionedCuisine, isLiveData);
-
-        const availableCount = restaurants.filter(r => r.available).length;
-
-        if (mentionedCuisine) {
-            textResponse = availableCount > 0
-                ? `Found ${availableCount} ${mentionedCuisine} restaurant${availableCount > 1 ? 's' : ''} nearby.`
-                : `No ${mentionedCuisine} restaurants found. Showing all restaurants instead.`;
-        } else {
-            textResponse = `Here are the top-rated restaurants near you. ${availableCount} available for booking.`;
-        }
-
-        if (isLiveData) {
-            textResponse += ' (Powered by Google Places)';
-        }
-    }
-
     const taskId = randomUUID();
-    return {
-        id: taskId,
-        contextId: 'restaurant-context',
-        status: { state: 'completed', timestamp: new Date().toISOString() },
-        artifacts: [
-            {
-                name: 'response',
-                parts: [
-                    { type: 'text', text: textResponse },
-                    { type: 'a2ui' as const, a2ui: a2uiMessages }
-                ]
+
+    try {
+        // Null safety: validate params structure
+        if (!params?.message?.parts) {
+            const restaurants = await getRestaurants();
+            const a2uiMessages = generateRestaurantList(restaurants, undefined, true);
+            return {
+                id: taskId,
+                contextId: 'restaurant-context',
+                status: { state: 'completed', timestamp: new Date().toISOString() },
+                artifacts: [
+                    {
+                        name: 'response',
+                        parts: [
+                            { type: 'text', text: 'Here are the top-rated restaurants near you. (Powered by Google Places)' },
+                            { type: 'a2ui' as const, a2ui: a2uiMessages }
+                        ]
+                    }
+                ],
+                history: []
+            };
+        }
+
+        const prompt = params.message.parts
+            // @ts-ignore
+            .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
+
+        let a2uiMessages: A2UIMessage[];
+        let textResponse: string;
+
+        // Extract cuisine filter if mentioned
+        const cuisines = [
+            'italian', 'japanese', 'french', 'indian', 'chinese', 'mexican', 'thai',
+            'korean', 'vietnamese', 'greek', 'american', 'mediterranean', 'seafood',
+            'steakhouse', 'pizza', 'sushi', 'ramen', 'breakfast', 'brunch', 'cafe', 'bakery'
+        ];
+        const mentionedCuisine = cuisines.find(c => prompt.includes(c));
+
+        // Intent matching
+        if (prompt.includes('confirm') || prompt.includes('yes') || prompt.includes('reserve')) {
+            // User confirming a booking - show confirmation
+            if (lastFetchedRestaurants.length === 0) {
+                throw new Error('No restaurants available. Please search for restaurants first.');
             }
-        ],
-        history: []
-    };
+            const restaurant = lastFetchedRestaurants[0];
+            a2uiMessages = generateBookingConfirmation(restaurant);
+            textResponse = `Your reservation at ${restaurant.name} has been confirmed!`;
+        } else if (prompt.includes('book')) {
+            // User wants to book a specific restaurant - try to match by name
+            if (lastFetchedRestaurants.length === 0) {
+                throw new Error('No restaurants available. Please search for restaurants first by saying "show restaurants".');
+            }
+            const restaurants = lastFetchedRestaurants;
+
+            // Try to find a matching restaurant from the prompt
+            const restaurant = restaurants.find(r =>
+                prompt.includes(r.name.toLowerCase()) ||
+                r.name.toLowerCase().split(' ').some(word => prompt.includes(word))
+            ) || restaurants[0];
+
+            a2uiMessages = generateBookingForm(restaurant);
+            textResponse = `Great choice! Please fill in your booking details for ${restaurant.name}.`;
+        } else {
+            // Search for restaurants (with optional cuisine filter)
+            const restaurants = await getRestaurants(mentionedCuisine);
+            lastFetchedRestaurants = restaurants;
+
+            const isLiveData = !!process.env.GOOGLE_PLACES_API_KEY;
+            a2uiMessages = generateRestaurantList(restaurants, mentionedCuisine, isLiveData);
+
+            const availableCount = restaurants.filter(r => r.available).length;
+
+            if (mentionedCuisine) {
+                textResponse = availableCount > 0
+                    ? `Found ${availableCount} ${mentionedCuisine} restaurant${availableCount > 1 ? 's' : ''} nearby.`
+                    : `No ${mentionedCuisine} restaurants found. Showing all restaurants instead.`;
+            } else {
+                textResponse = `Here are the top-rated restaurants near you. ${availableCount} available for booking.`;
+            }
+
+            if (isLiveData) {
+                textResponse += ' (Powered by Google Places)';
+            }
+        }
+
+        return {
+            id: taskId,
+            contextId: 'restaurant-context',
+            status: { state: 'completed', timestamp: new Date().toISOString() },
+            artifacts: [
+                {
+                    name: 'response',
+                    parts: [
+                        { type: 'text', text: textResponse },
+                        { type: 'a2ui' as const, a2ui: a2uiMessages }
+                    ]
+                }
+            ],
+            history: []
+        };
+    } catch (error) {
+        // Return error as a proper A2A response instead of crashing
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        console.error('[Restaurant Agent] Error:', errorMessage);
+
+        return {
+            id: taskId,
+            contextId: 'restaurant-context',
+            status: { state: 'failed', timestamp: new Date().toISOString() },
+            artifacts: [
+                {
+                    name: 'error',
+                    parts: [
+                        { type: 'text', text: `Error: ${errorMessage}` }
+                    ]
+                }
+            ],
+            history: []
+        };
+    }
 }

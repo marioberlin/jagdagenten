@@ -47,6 +47,11 @@ export namespace v1 {
     export type MessageSendConfiguration = Types.MessageSendConfiguration;
     export type JSONValue = Types.JSONValue;
     export type Artifact = Types.Artifact;
+    export type TaskStatus = Types.TaskStatus;
+    export type TaskState = Types.TaskState;
+
+    // Re-export the enum value for runtime access
+    export const TaskState = Types.TaskState;
 
     export function isTextPart(part: any): part is Types.TextPart {
         return part.kind === 'text';
@@ -92,18 +97,37 @@ export namespace a2ui {
     }
 
     export function isA2UIArtifact(artifact: any): boolean {
-        // Real implementation would check extension URI
-        return artifact?.extensions?.some((ext: string) => ext.includes('a2ui')) ?? false;
+        // Check extensions array (official A2A spec format)
+        if (artifact?.extensions?.some((ext: string) => ext.includes('a2ui'))) {
+            return true;
+        }
+        // Check parts for type: 'a2ui' (LiquidCrypto agent format)
+        if (artifact?.parts?.some((p: any) => p.type === 'a2ui')) {
+            return true;
+        }
+        return false;
     }
 
     export function extractA2UIMessages(artifact: any): A2UIMessage[] {
-        // Real implementation would parse the artifact parts
-        if (artifact.parts) {
-            return artifact.parts
-                .filter((p: any) => p.kind === 'data' && p.data && p.data.a2ui_messages)
-                .flatMap((p: any) => p.data.a2ui_messages);
+        if (!artifact.parts) return [];
+
+        // First try: official A2A spec format (data parts with a2ui_messages)
+        const dataMessages = artifact.parts
+            .filter((p: any) => p.kind === 'data' && p.data && p.data.a2ui_messages)
+            .flatMap((p: any) => p.data.a2ui_messages);
+
+        if (dataMessages.length > 0) return dataMessages;
+
+        // Second try: LiquidCrypto agent format (type: 'a2ui' parts)
+        const a2uiParts = artifact.parts.filter((p: any) => p.type === 'a2ui');
+        const messages: A2UIMessage[] = [];
+        for (const part of a2uiParts) {
+            if (Array.isArray(part.a2ui)) {
+                messages.push(...part.a2ui);
+            }
         }
-        return [];
+
+        return messages;
     }
 
     export function isBeginRenderingMessage(msg: A2UIMessage): msg is BeginRenderingMessage {

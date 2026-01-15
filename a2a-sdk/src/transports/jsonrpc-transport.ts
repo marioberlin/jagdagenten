@@ -89,9 +89,14 @@ export class JSONRPCTransport implements ClientTransport {
       params,
     };
 
-    await this.sendStreamingRequest(jsonrpcRequest, context, (event) => {
+    const stream = this.sendStreamingRequest<Message | Task | TaskStatusUpdateEvent | TaskArtifactUpdateEvent>(
+      jsonrpcRequest,
+      context
+    );
+
+    for await (const event of stream) {
       yield event;
-    });
+    }
   }
 
   async getTask(
@@ -190,9 +195,14 @@ export class JSONRPCTransport implements ClientTransport {
       params: request,
     };
 
-    await this.sendStreamingRequest(jsonrpcRequest, context, (event) => {
+    const stream = this.sendStreamingRequest<Task | Message | TaskStatusUpdateEvent | TaskArtifactUpdateEvent>(
+      jsonrpcRequest,
+      context
+    );
+
+    for await (const event of stream) {
       yield event;
-    });
+    }
   }
 
   async getCard(
@@ -244,11 +254,10 @@ export class JSONRPCTransport implements ClientTransport {
     }
   }
 
-  private async sendStreamingRequest<T>(
+  private async *sendStreamingRequest<T>(
     request: JSONRPCRequest,
     context: ClientCallContext | undefined,
-    onEvent: (event: T) => void
-  ): Promise<void> {
+  ): AsyncIterableIterator<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), context?.timeout ?? 30000);
 
@@ -286,7 +295,7 @@ export class JSONRPCTransport implements ClientTransport {
 
           try {
             const event = JSON.parse(line) as T;
-            await onEvent(event);
+            yield event;
           } catch (error) {
             console.error('Error parsing streaming event:', error);
           }

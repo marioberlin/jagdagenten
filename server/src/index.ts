@@ -14,6 +14,7 @@ import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
+import { createArtifactRoutes } from './artifacts/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
 import { templateService } from './services/google/TemplateService.js';
@@ -524,6 +525,9 @@ async function startServer() {
 
         // Container Configuration Routes
         .use(containerRoutes)
+
+        // Artifact Management Routes
+        .use(createArtifactRoutes())
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)

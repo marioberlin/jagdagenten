@@ -1,8 +1,13 @@
-import { defineConfig } from 'vite' // force restart 2
+import { defineConfig } from 'vite' // force restart 3
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/postcss'
 import autoprefixer from 'autoprefixer'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -82,7 +87,9 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            "@": "/src",
+            "@": path.resolve(__dirname, "./src"),
+            "@liquidcrypto/a2a-sdk": path.resolve(__dirname, "./a2a-sdk/src/index.ts"),
+            "a2a-sdk": path.resolve(__dirname, "./a2a-sdk/src/index.ts"),
         },
     },
     server: {

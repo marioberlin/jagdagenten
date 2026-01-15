@@ -675,6 +675,15 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({ env }) => {
             color: 'text-emerald-400',
             getKeyUrl: 'https://platform.openai.com/api-keys',
         },
+        {
+            id: 'google-places',
+            name: 'Google Places (Restaurant Agent)',
+            envVar: 'GOOGLE_PLACES_API_KEY',
+            detected: !!import.meta.env.VITE_GOOGLE_PLACES_API_KEY,
+            icon: <Globe className="text-rose-400" size={18} />,
+            color: 'text-rose-400',
+            getKeyUrl: 'https://console.cloud.google.com/apis/credentials',
+        },
     ];
 
     return (
@@ -714,6 +723,7 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({ env }) => {
                         {'\n'}export ANTHROPIC_API_KEY="sk-ant-..."
                         {'\n'}export GOOGLE_API_KEY="AIza..."
                         {'\n'}export OPENAI_API_KEY="sk-..."
+                        {'\n'}export GOOGLE_PLACES_API_KEY="AIza..."
                         {'\n\n'}# Then reload your shell
                         {'\n'}source ~/.zshrc
                     </code>

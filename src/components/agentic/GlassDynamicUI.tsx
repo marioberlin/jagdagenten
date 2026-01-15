@@ -54,11 +54,13 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                             key={key}
                             className={cn(
                                 'flex',
-                                nodeProps.direction === 'horizontal' ? 'flex-row' : 'flex-col',
-                                `gap-${nodeProps.gap || 4}`,
+                                nodeProps.direction === 'horizontal' ? 'flex-row items-start' : 'flex-col',
                                 nodeProps.className as string
                             )}
-                            style={style}
+                            style={{
+                                ...style,
+                                gap: `${(nodeProps.gap as number) || 4}px`,
+                            }}
                         >
                             {Array.isArray(children)
                                 ? children.map((child, i) => renderNode(child, i))
@@ -143,7 +145,10 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                     return (
                         <GlassCard
                             key={key}
-                            className={nodeProps.className as string}
+                            className={cn(
+                                'rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10',
+                                nodeProps.className as string
+                            )}
                             style={style}
                         >
                             {Array.isArray(children)
