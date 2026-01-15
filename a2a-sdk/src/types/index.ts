@@ -309,7 +309,7 @@ export type TaskEvent = TaskStatusUpdateEvent | TaskArtifactUpdateEvent;
 
 // Error Types
 export interface JSONRPCError {
-  code: number;
+  code: number | -32700 | -32600 | -32601 | -32602 | -32603 | -32001 | -32002 | -32003 | -32004 | -32005 | -32006 | -32007;
   data?: JSONValue;
   message: string;
 }
@@ -423,7 +423,7 @@ export interface GetTaskPushNotificationConfigParams extends TaskIdParams {
   push_notification_config_id?: string;
 }
 
-export interface ListTaskPushNotificationConfigParams extends TaskIdParams {}
+export interface ListTaskPushNotificationConfigParams extends TaskIdParams { }
 
 export interface DeleteTaskPushNotificationConfigParams extends TaskIdParams {
   push_notification_config_id: string;

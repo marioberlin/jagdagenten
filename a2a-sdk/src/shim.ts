@@ -1,5 +1,12 @@
 
-import * as Types from './minimal-types';
+import { ClientFactory } from './client/client-factory';
+import { JSONRPCTransport } from './transports/jsonrpc-transport';
+import * as Types from './types/index';
+import { AgentCard } from './types/index';
+import { Client, ClientConfig } from './client/interfaces';
+
+// Re-export types
+export * from './types/index';
 
 export class A2AClientError extends Error {
     constructor(message: string, public code: number) {
@@ -8,45 +15,30 @@ export class A2AClientError extends Error {
     }
 }
 
-export interface A2AClientConfig {
-    baseUrl: string;
-    authToken?: string;
+export type A2AClient = Client;
+export type A2AClientConfig = ClientConfig & {
     enableA2UI?: boolean;
-    headers?: Record<string, string>;
-    timeout?: number;
-}
-
-export interface A2AClient {
-    getAgentCard(): Promise<Types.AgentCard>;
-    sendText(text: string, options?: any): Promise<Types.Task>;
-    streamText(text: string, options?: any, signalOpt?: any): AsyncIterableIterator<StreamEvent>;
-    cancelTask(taskId: string): Promise<void>;
-    getTask(taskId: string): Promise<Types.Task>;
-    close(): void;
-}
+    baseUrl?: string;
+    authToken?: string;
+};
 
 export const createA2AClient = (config: A2AClientConfig): A2AClient => {
-    return {
-        getAgentCard: async () => ({
-            url: config.baseUrl,
-            name: 'Mock Agent',
-            capabilities: { streaming: true },
-            skills: []
-        }),
-        sendText: async (text) => ({
-            id: 'mock-task',
-            status: { state: 'completed' },
-            context_id: 'ctx',
-            artifacts: []
-        }),
-        streamText: async function* (text) {
-            yield { type: 'status', data: { status: { state: 'working' } } };
-            yield { type: 'complete', task: { id: 'mock', status: { state: 'completed' }, context_id: 'ctx' } };
-        },
-        cancelTask: async () => { },
-        getTask: async () => ({ id: 'mock', status: { state: 'completed' }, context_id: 'ctx' }),
-        close: () => { }
+    // Adapter to match useA2AClient expectation with ClientFactory
+    const card: AgentCard = {
+        url: config.baseUrl || '',
+        name: 'Agent',
+        description: 'Auto-created client',
+        version: '1.0.0',
+        capabilities: {},
+        default_input_modes: [],
+        default_output_modes: [],
+        skills: []
     };
+
+    // In the real SDK, ClientFactory.createClient takes a card. 
+    // We construct a minimal card here to satisfy the signature, 
+    // assuming the client will potentially fetch the real card later or use the URL.
+    return ClientFactory.createClient(card, config);
 };
 
 export namespace v1 {
@@ -100,10 +92,17 @@ export namespace a2ui {
     }
 
     export function isA2UIArtifact(artifact: any): boolean {
-        return artifact?.extensions?.includes('a2ui');
+        // Real implementation would check extension URI
+        return artifact?.extensions?.some((ext: string) => ext.includes('a2ui')) ?? false;
     }
 
     export function extractA2UIMessages(artifact: any): A2UIMessage[] {
+        // Real implementation would parse the artifact parts
+        if (artifact.parts) {
+            return artifact.parts
+                .filter((p: any) => p.kind === 'data' && p.data && p.data.a2ui_messages)
+                .flatMap((p: any) => p.data.a2ui_messages);
+        }
         return [];
     }
 

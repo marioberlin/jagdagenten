@@ -41,4 +41,13 @@
 // export * from './utils/proto-utils';
 
 // Shim for missing types/namespaces
-export * from './shim';
+// Shim for missing types/namespaces
+export {
+    A2AClientError,
+    type A2AClient,
+    type A2AClientConfig,
+    createA2AClient,
+    v1,
+    type StreamEvent,
+    a2ui
+} from './shim';

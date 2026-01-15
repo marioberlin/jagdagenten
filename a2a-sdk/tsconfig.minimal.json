@@ -8,21 +8,14 @@
         "strict": false,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "noEmitOnError": false
     },
     "include": [
-        "src/index.ts",
-        "src/shim.ts",
-        "src/minimal-types.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
-        "src/server",
-        "src/client",
-        "src/transports",
-        "src/types",
-        "src/utils",
-        "src/auth",
-        "src/grpc"
+        "tests"
     ]
 }
