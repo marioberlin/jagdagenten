@@ -2954,7 +2954,8 @@ const CredentialsPanel: React.FC<CredentialsPanelProps> = ({
     const handleAuth = () => {
         // Real OAuth Flow
         // Use backend endpoint to initiate flow
-        const authUrl = `http://localhost:3000/api/v1/auth/google?type=${formData.type}`;
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        const authUrl = `${apiBaseUrl}/api/v1/auth/google?type=${formData.type}`;
         window.open(authUrl, '_blank', 'width=500,height=600');
 
         // Listen for success message from popup
