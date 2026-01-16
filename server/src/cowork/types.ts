@@ -264,12 +264,17 @@ export interface CreateSessionOptions {
     outputPath?: string;
     preferredAgents?: string[];
     maxCost?: number;
-    // Sandbox options
+    /** Enable sandbox mode for isolated file operations */
     useSandbox?: boolean;
+    /** Sandbox configuration */
     sandboxConfig?: {
-        sourceRoot: string;
+        sourceRoot?: string;
         excludePatterns?: string[];
+        maxSizeBytes?: number;
+        secretsHandling?: 'exclude' | 'inject_env' | 'readonly_mount';
+        watchSource?: boolean;
         expiresInHours?: number;
+        expirationHours?: number;
     };
 }
 

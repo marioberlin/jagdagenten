@@ -62,6 +62,7 @@ The following sections from the original plan are **NOT YET IMPLEMENTED**:
 ## 11. Implementation Checklist (Updated)
 
 ### Phase 0: Isolated Staging System ✅
+> **Detailed Plan:** [docs/COWORK_PHASE_0_ISOLATED_STAGING.md](file:///Users/mario/projects/LiquidCrypto/docs/COWORK_PHASE_0_ISOLATED_STAGING.md)
 - [x] Backend: Implement `SandboxManager` service
 - [x] Backend: Implement `BackupManager` and `ConflictDetector`
 - [x] Backend: Implement `AuditLogger` for compliance trail
