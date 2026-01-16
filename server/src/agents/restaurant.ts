@@ -18,6 +18,288 @@ interface Restaurant {
     phoneNumber?: string;
     userRatingCount?: number;
     googleMapsUri?: string;
+    openTableId?: string;  // OpenTable restaurant ID for booking
+    openTableUrl?: string; // Direct OpenTable booking URL
+}
+
+// ============================================================================
+// OpenTable API Integration
+// ============================================================================
+
+interface OpenTableRestaurant {
+    rid: number;
+    name: string;
+    cuisine: string;
+    price_range: number;
+    rating: number;
+    review_count: number;
+    address: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    photo_url: string;
+    availability_url: string;
+}
+
+interface OpenTableSearchResponse {
+    total_results: number;
+    restaurants: OpenTableRestaurant[];
+}
+
+interface OpenTableAvailability {
+    rid: number;
+    timeslots: Array<{
+        time: string;
+        availability_token: string;
+    }>;
+}
+
+interface OpenTableBookingResponse {
+    confirmation_number: string;
+    restaurant_name: string;
+    party_size: number;
+    date: string;
+    time: string;
+    status: 'confirmed' | 'pending' | 'failed';
+}
+
+// OpenTable API client
+const OPENTABLE_BASE_URL = 'https://platform.opentable.com';
+
+// Cache for OpenTable access token
+let openTableToken: { token: string; expiresAt: number } | null = null;
+
+async function getOpenTableToken(): Promise<string | null> {
+    const clientId = process.env.OPENTABLE_CLIENT_ID;
+    const clientSecret = process.env.OPENTABLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+        return null;
+    }
+
+    // Check if we have a valid cached token
+    if (openTableToken && openTableToken.expiresAt > Date.now()) {
+        return openTableToken.token;
+    }
+
+    try {
+        const response = await fetch(`${OPENTABLE_BASE_URL}/oauth/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: clientId,
+                client_secret: clientSecret,
+            }),
+        });
+
+        if (!response.ok) {
+            console.error('[Restaurant Agent] OpenTable auth failed:', response.status);
+            return null;
+        }
+
+        const data = await response.json() as { access_token: string; expires_in: number };
+        openTableToken = {
+            token: data.access_token,
+            expiresAt: Date.now() + (data.expires_in * 1000) - 60000, // Refresh 1 min early
+        };
+
+        return openTableToken.token;
+    } catch (error) {
+        console.error('[Restaurant Agent] OpenTable auth error:', error);
+        return null;
+    }
+}
+
+// Search OpenTable for availability
+async function searchOpenTableAvailability(
+    latitude: number,
+    longitude: number,
+    partySize: number,
+    dateTime: string,
+    cuisineType?: string
+): Promise<OpenTableRestaurant[]> {
+    const token = await getOpenTableToken();
+    if (!token) {
+        console.log('[Restaurant Agent] OpenTable not configured, skipping availability search');
+        return [];
+    }
+
+    try {
+        const params = new URLSearchParams({
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
+            party_size: partySize.toString(),
+            datetime: dateTime,
+            radius: '5', // 5 miles
+        });
+
+        if (cuisineType) {
+            params.append('cuisine', cuisineType);
+        }
+
+        const response = await fetch(
+            `${OPENTABLE_BASE_URL}/api/v1/restaurants/search?${params}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            console.error('[Restaurant Agent] OpenTable search failed:', response.status);
+            return [];
+        }
+
+        const data = await response.json() as OpenTableSearchResponse;
+        return data.restaurants || [];
+    } catch (error) {
+        console.error('[Restaurant Agent] OpenTable search error:', error);
+        return [];
+    }
+}
+
+// Get available time slots for a specific restaurant
+async function getOpenTableTimeslots(
+    restaurantId: number,
+    date: string,
+    partySize: number
+): Promise<OpenTableAvailability | null> {
+    const token = await getOpenTableToken();
+    if (!token) return null;
+
+    try {
+        const params = new URLSearchParams({
+            date,
+            party_size: partySize.toString(),
+        });
+
+        const response = await fetch(
+            `${OPENTABLE_BASE_URL}/api/v1/restaurants/${restaurantId}/availability?${params}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            console.error('[Restaurant Agent] OpenTable availability failed:', response.status);
+            return null;
+        }
+
+        return await response.json() as OpenTableAvailability;
+    } catch (error) {
+        console.error('[Restaurant Agent] OpenTable availability error:', error);
+        return null;
+    }
+}
+
+// Create a booking via OpenTable
+async function createOpenTableBooking(
+    restaurantId: number,
+    availabilityToken: string,
+    partySize: number,
+    guestInfo: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+    }
+): Promise<OpenTableBookingResponse | null> {
+    const token = await getOpenTableToken();
+    if (!token) return null;
+
+    try {
+        const response = await fetch(
+            `${OPENTABLE_BASE_URL}/api/v1/reservations`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId,
+                    availability_token: availabilityToken,
+                    party_size: partySize,
+                    guest: guestInfo,
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Restaurant Agent] OpenTable booking failed:', response.status, errorText);
+            return null;
+        }
+
+        return await response.json() as OpenTableBookingResponse;
+    } catch (error) {
+        console.error('[Restaurant Agent] OpenTable booking error:', error);
+        return null;
+    }
+}
+
+// Match Google Places restaurant to OpenTable (by name/location proximity)
+async function findOpenTableMatch(restaurant: Restaurant): Promise<{ rid: number; url: string } | null> {
+    const token = await getOpenTableToken();
+    if (!token) return null;
+
+    try {
+        // Search by restaurant name near its location
+        const params = new URLSearchParams({
+            name: restaurant.name,
+            latitude: DEFAULT_LOCATION.latitude.toString(),
+            longitude: DEFAULT_LOCATION.longitude.toString(),
+            radius: '1',
+        });
+
+        const response = await fetch(
+            `${OPENTABLE_BASE_URL}/api/v1/restaurants/search?${params}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        if (!response.ok) return null;
+
+        const data = await response.json() as OpenTableSearchResponse;
+
+        // Find best match by name similarity
+        if (data.restaurants?.length > 0) {
+            const match = data.restaurants.find(r =>
+                r.name.toLowerCase().includes(restaurant.name.toLowerCase()) ||
+                restaurant.name.toLowerCase().includes(r.name.toLowerCase())
+            );
+
+            if (match) {
+                return {
+                    rid: match.rid,
+                    url: match.availability_url,
+                };
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error('[Restaurant Agent] OpenTable match error:', error);
+        return null;
+    }
+}
+
+// Check if OpenTable integration is available
+function isOpenTableConfigured(): boolean {
+    return !!(process.env.OPENTABLE_CLIENT_ID && process.env.OPENTABLE_CLIENT_SECRET);
 }
 
 // ============================================================================
@@ -478,13 +760,24 @@ function generateRestaurantList(restaurants: Restaurant[], cuisineFilter?: strin
     ];
 }
 
-function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
+function generateBookingForm(restaurant: Restaurant, timeslots?: Array<{ time: string; token: string }>): A2UIMessage[] {
+    const hasOpenTable = isOpenTableConfigured() && restaurant.openTableId;
+    const headerText = hasOpenTable ? 'Book via OpenTable' : 'Book a Table';
+    const subtitleText = hasOpenTable ? 'Powered by OpenTable' : '';
+
+    const formChildren = ['date-field', 'time-field', 'guests-field', 'name-field'];
+
+    // If we have timeslots from OpenTable, add email/phone fields for booking
+    if (hasOpenTable) {
+        formChildren.push('email-field', 'phone-field');
+    }
+
     return [
         {
             type: 'beginRendering',
             surfaceId: 'booking-form',
             rootComponentId: 'root',
-            styling: { primaryColor: '#f97316' },
+            styling: { primaryColor: hasOpenTable ? '#da3743' : '#f97316' }, // OpenTable red or orange
         },
         {
             type: 'surfaceUpdate',
@@ -494,7 +787,7 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     id: 'root',
                     component: {
                         Card: {
-                            children: ['header', 'restaurant-info', 'address-info', 'divider', 'form-fields', 'submit-row'],
+                            children: ['header', 'booking-source', 'restaurant-info', 'address-info', 'divider', 'form-fields', 'timeslots-section', 'submit-row'],
                         },
                     },
                 },
@@ -502,8 +795,17 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     id: 'header',
                     component: {
                         Text: {
-                            text: { literalString: 'Book a Table' },
+                            text: { literalString: headerText },
                             semantic: 'h2',
+                        },
+                    },
+                },
+                {
+                    id: 'booking-source',
+                    component: {
+                        Text: {
+                            text: { literalString: subtitleText },
+                            variant: 'secondary',
                         },
                     },
                 },
@@ -550,7 +852,7 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     id: 'form-fields',
                     component: {
                         Column: {
-                            children: ['date-field', 'time-field', 'guests-field', 'name-field'],
+                            children: formChildren,
                         },
                     },
                 },
@@ -595,10 +897,73 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     },
                 },
                 {
+                    id: 'email-field',
+                    component: {
+                        TextField: {
+                            label: { literalString: 'Email' },
+                            placeholder: { literalString: 'your@email.com' },
+                            inputType: 'email',
+                        },
+                    },
+                },
+                {
+                    id: 'phone-field',
+                    component: {
+                        TextField: {
+                            label: { literalString: 'Phone Number' },
+                            placeholder: { literalString: '+1 (555) 123-4567' },
+                            inputType: 'tel',
+                        },
+                    },
+                },
+                {
+                    id: 'timeslots-section',
+                    component: {
+                        Column: {
+                            children: timeslots?.length ? ['timeslots-label', 'timeslots-list'] : [],
+                        },
+                    },
+                },
+                {
+                    id: 'timeslots-label',
+                    component: {
+                        Text: {
+                            text: { literalString: 'Available Times' },
+                            variant: 'secondary',
+                        },
+                    },
+                },
+                {
+                    id: 'timeslots-list',
+                    component: {
+                        Row: {
+                            children: (timeslots || []).slice(0, 6).map((_, i) => `slot-${i}`),
+                            alignment: 'start',
+                        },
+                    },
+                },
+                // Generate timeslot buttons dynamically
+                ...(timeslots || []).slice(0, 6).map((slot, i) => ({
+                    id: `slot-${i}`,
+                    component: {
+                        Button: {
+                            label: { literalString: slot.time },
+                            action: {
+                                custom: {
+                                    actionId: 'select_timeslot',
+                                    data: { token: slot.token, time: slot.time },
+                                },
+                            },
+                        },
+                    },
+                })),
+                {
                     id: 'submit-row',
                     component: {
                         Row: {
-                            children: ['cancel-btn', 'submit-btn'],
+                            children: hasOpenTable && restaurant.openTableUrl
+                                ? ['cancel-btn', 'opentable-btn', 'submit-btn']
+                                : ['cancel-btn', 'submit-btn'],
                             alignment: 'end',
                         },
                     },
@@ -615,14 +980,32 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
                     },
                 },
                 {
+                    id: 'opentable-btn',
+                    component: {
+                        Button: {
+                            label: { literalString: 'Book on OpenTable' },
+                            action: {
+                                custom: {
+                                    actionId: 'open_url',
+                                    data: { url: restaurant.openTableUrl || '' },
+                                },
+                            },
+                        },
+                    },
+                },
+                {
                     id: 'submit-btn',
                     component: {
                         Button: {
-                            label: { literalString: 'Confirm Booking' },
+                            label: { literalString: hasOpenTable ? 'Reserve Now' : 'Confirm Booking' },
                             action: {
                                 custom: {
                                     actionId: 'confirm_booking',
-                                    data: { restaurantId: restaurant.id },
+                                    data: {
+                                        restaurantId: restaurant.id,
+                                        openTableId: restaurant.openTableId,
+                                        useOpenTable: hasOpenTable,
+                                    },
                                 },
                             },
                         },
@@ -633,8 +1016,13 @@ function generateBookingForm(restaurant: Restaurant): A2UIMessage[] {
     ];
 }
 
-function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
-    const confirmationNumber = `RES-${Date.now().toString(36).toUpperCase()}`;
+function generateBookingConfirmation(
+    restaurant: Restaurant,
+    openTableConfirmation?: OpenTableBookingResponse | null
+): A2UIMessage[] {
+    const hasOpenTable = !!openTableConfirmation;
+    const confirmationNumber = openTableConfirmation?.confirmation_number
+        || `RES-${Date.now().toString(36).toUpperCase()}`;
 
     return [
         {
@@ -791,13 +1179,19 @@ function generateBookingConfirmation(restaurant: Restaurant): A2UIMessage[] {
 
 export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
     name: 'Restaurant Finder',
-    description: 'Discover and book restaurants near you powered by Google Places API',
+    description: 'Discover and book restaurants near you powered by Google Places API with optional OpenTable reservations',
     url: `${baseUrl}/agents/restaurant`,
-    version: '2.0.0',
+    version: '2.1.0',
+    protocolVersion: '1.0',
+    supportedVersions: ['1.0', '0.3.0'],
     provider: { organization: 'LiquidCrypto Agents' },
     capabilities: { streaming: false, pushNotifications: true },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Image', 'TextField', 'Divider'] }
+        a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Image', 'TextField', 'Divider'] },
+        integrations: {
+            googlePlaces: true,
+            openTable: isOpenTableConfigured(),
+        }
     }
 });
 

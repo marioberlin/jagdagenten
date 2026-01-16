@@ -15,9 +15,12 @@ import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
-import { createArtifactRoutes } from './artifacts/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
+import { getCryptoAdvisorAgentCard, handleCryptoAdvisorRequest } from './agents/crypto-advisor.js';
+import { getNanoBananaAgentCard, handleNanoBananaRequest } from './agents/nanobanana.js';
+import { getDocuMindAgentCard, handleDocuMindRequest } from './agents/documind.js';
+import { getTravelPlannerAgentCard, handleTravelPlannerRequest } from './agents/travel.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -562,17 +565,33 @@ async function startServer() {
         // Restaurant Finder
         .group('/agents/restaurant', app => {
             const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
                 const params = (body as any).params;
-                if ((body as any).method === 'agent/card') {
-                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                // Handle agent card methods (v0.x and v1.0)
+                if (method === 'agent/card' || method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getRestaurantAgentCard(baseUrl) };
                 }
-                const result = await handleRestaurantRequest(params);
-                set.headers['Content-Type'] = 'application/json';
+
+                // Handle message send methods (v1.0: SendMessage, v0.x: message/send)
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleRestaurantRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                // Method not found
+                set.status = 400;
                 return {
                     jsonrpc: '2.0',
                     id: (body as any).id,
-                    result
+                    error: { code: -32601, message: 'Method not found', data: { method } }
                 };
             };
 
@@ -588,17 +607,30 @@ async function startServer() {
         // RizzCharts
         .group('/agents/rizzcharts', app => {
             const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
                 const params = (body as any).params;
-                if ((body as any).method === 'agent/card') {
-                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getRizzChartsAgentCard(baseUrl) };
                 }
-                const result = await handleRizzChartsRequest(params);
-                set.headers['Content-Type'] = 'application/json';
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleRizzChartsRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
                 return {
                     jsonrpc: '2.0',
                     id: (body as any).id,
-                    result
+                    error: { code: -32601, message: 'Method not found', data: { method } }
                 };
             };
 
@@ -606,6 +638,162 @@ async function startServer() {
                 .get('/.well-known/agent.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRizzChartsAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Crypto Advisor
+        .group('/agents/crypto-advisor', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getCryptoAdvisorAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleCryptoAdvisorRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getCryptoAdvisorAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // NanoBanana Pro (AI Image Generation)
+        .group('/agents/nanobanana', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getNanoBananaAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleNanoBananaRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getNanoBananaAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // DocuMind (Document Analysis)
+        .group('/agents/documind', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getDocuMindAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleDocuMindRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getDocuMindAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Travel Planner
+        .group('/agents/travel', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getTravelPlannerAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleTravelPlannerRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getTravelPlannerAgentCard(baseUrl);
                 })
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);

@@ -298,6 +298,8 @@ export const getRizzChartsAgentCard = (baseUrl: string): AgentCard => ({
     description: 'Data visualization and analytics agent with real-time market data',
     url: `${baseUrl}/agents/rizzcharts`,
     version: '1.6.0',
+    protocolVersion: '1.0',
+    supportedVersions: ['1.0', '0.3.0'],
     provider: { organization: 'LiquidCrypto Agents' },
     capabilities: { streaming: false, pushNotifications: false },
     extensions: {
