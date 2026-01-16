@@ -145,6 +145,11 @@ export const GlassSkillsPanel: React.FC<GlassSkillsPanelProps> = () => {
                                                 Vendor
                                             </span>
                                         )}
+                                        {item.author === 'core' && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wide border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                                                Core
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-sm text-white/60 mb-2 line-clamp-2">{item.description}</p>
 

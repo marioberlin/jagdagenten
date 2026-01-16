@@ -7,7 +7,8 @@ import { GlassWindow } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
 import { GlassSettingsPanel } from '@/components/settings/GlassSettingsPanel';
 import { GlassShowcasePanel } from '@/components/settings/GlassShowcasePanel';
-import { Settings, Layout, Command, Zap, Compass, Sparkles } from 'lucide-react';
+import { GlassCoworkPanel } from '@/components/cowork/GlassCoworkPanel';
+import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase } from 'lucide-react';
 
 /**
  * LiquidOSLayout
@@ -19,11 +20,12 @@ export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [showcaseOpen, setShowcaseOpen] = useState(false);
+    const [coworkOpen, setCoworkOpen] = useState(false);
     const [dockVisible, setDockVisible] = useState(true);
     const [dockHovered, setDockHovered] = useState(false);
 
     // Track if any overlay is open
-    const hasOverlay = settingsOpen || showcaseOpen;
+    const hasOverlay = settingsOpen || showcaseOpen || coworkOpen;
 
     // Toggle Dock with Cmd+Space
     React.useEffect(() => {
@@ -62,6 +64,17 @@ export const LiquidOSLayout: React.FC = () => {
             icon: Compass,
             label: 'Agent Hub',
             onClick: () => navigate('/os/agents')
+        },
+        {
+            id: 'cowork-mode',
+            icon: Briefcase,
+            label: 'Cowork Mode',
+            isActive: coworkOpen,
+            onClick: () => {
+                setCoworkOpen(!coworkOpen);
+                if (settingsOpen) setSettingsOpen(false);
+                if (showcaseOpen) setShowcaseOpen(false);
+            }
         },
         {
             id: 'design-system',
@@ -124,6 +137,20 @@ export const LiquidOSLayout: React.FC = () => {
                         onClose={() => setShowcaseOpen(false)}
                     >
                         <GlassShowcasePanel onClose={() => setShowcaseOpen(false)} />
+                    </GlassWindow>
+                )}
+
+                {/* Cowork Mode Overlay Window */}
+                {coworkOpen && (
+                    <GlassWindow
+                        id="cowork-window"
+                        title="Cowork Mode"
+                        initialPosition={{ x: window.innerWidth * 0.05, y: 60 }}
+                        initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                        isActive={true}
+                        onClose={() => setCoworkOpen(false)}
+                    >
+                        <GlassCoworkPanel onClose={() => setCoworkOpen(false)} />
                     </GlassWindow>
                 )}
 

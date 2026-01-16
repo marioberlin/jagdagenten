@@ -14,7 +14,7 @@ import { RushHourLayout } from './layouts/RushHourLayout';
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
 const Settings = lazy(() => import('./pages/Settings').then(mod => ({ default: mod.Settings })));
 const Showcase = lazy(() => import('./pages/Showcase').then(mod => ({ default: mod.Showcase })));
-const SFSymbolsViewer = lazy(() => import('./pages/SfSymbolsBrowser').then(mod => ({ default: mod.default })));
+
 const DesignGuide = lazy(() => import('./pages/DesignGuide').then(mod => ({ default: mod.default })));
 
 // Demos
@@ -38,6 +38,9 @@ const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ def
 
 // Artifacts
 const ArtifactsPage = lazy(() => import('./pages/artifacts/ArtifactsPage').then(mod => ({ default: mod.ArtifactsPage })));
+
+// Cowork Mode
+const CoworkPage = lazy(() => import('./pages/cowork/CoworkPage').then(mod => ({ default: mod.CoworkPage })));
 
 // Docs
 const CopilotDocs = lazy(() => import('./pages/showcase/CopilotDocs').then(mod => ({ default: mod.default })));
@@ -127,9 +130,10 @@ export const AppRouter = () => {
                                 <Route path="/os/settings" element={<Settings />} />
                                 <Route path="/os/design" element={<DesignGuide />} />
                                 <Route path="/os/showcase" element={<Showcase />} />
-                                <Route path="/os/icons" element={<SFSymbolsViewer />} />
+
                                 <Route path="/os/agents" element={<AgentHub />} />
                                 <Route path="/os/artifacts" element={<ArtifactsPage />} />
+                                <Route path="/os/cowork" element={<CoworkPage />} />
 
                                 {/* Demos */}
                                 <Route path="/os/demos" element={<DemosIndex />} />

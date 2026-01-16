@@ -9,18 +9,29 @@ const logger = componentLoggers.http;
 interface Skill {
     id: string;
     name: string;
-    type: 'skill';
+    type: 'skill' | 'plugin';
     description: string;
     enabled: boolean;
-    author: 'community' | 'vendor' | 'user';
+    author: 'community' | 'vendor' | 'core' | 'user';
     path: string;
+    config?: any;
 }
 
 export const skillsRoutes = new Elysia({ prefix: '/api/v1' })
     .get('/skills', async () => {
         try {
             const skills: Skill[] = [];
-            const skillsRoot = join(process.cwd(), 'LiquidSkills');
+            let skillsRoot = join(process.cwd(), 'LiquidSkills');
+
+            // Fix path resolution if running from server directory
+            const serverDirCheck = Bun.file(join(process.cwd(), 'package.json'));
+            if (await serverDirCheck.exists()) {
+                const pkg = await serverDirCheck.json();
+                if (pkg.name === 'liquid-glass-server') {
+                    skillsRoot = join(process.cwd(), '..', 'LiquidSkills');
+                }
+            }
+
             const communityDir = join(skillsRoot, 'community');
             const vendorDir = join(skillsRoot, 'vendor');
 
@@ -37,53 +48,103 @@ export const skillsRoutes = new Elysia({ prefix: '/api/v1' })
             }
 
             // Helper to scan directory
-            const scanDir = async (dir: string, author: 'community' | 'vendor') => {
+            const scanDir = async (dir: string, author: 'community' | 'vendor' | 'core', ignoreDirs: string[] = []) => {
                 try {
                     // check if dir exists first
                     const dirFile = Bun.file(dir);
-                    // readdir throws if format is wrong, but we can verify existence via readdir call wrapper
-                    // actually readdir throws if ENOENT.
+                    if (!(await dirFile.exists()) && !(await readdir(dir).then(() => true).catch(() => false))) return;
 
                     const entries = await readdir(dir, { withFileTypes: true });
+
                     for (const entry of entries) {
                         if (entry.isDirectory()) {
+                            if (ignoreDirs.includes(entry.name) || entry.name.startsWith('.')) continue;
+
                             const skillPath = join(dir, entry.name);
                             const readmePath = join(skillPath, 'SKILL.md');
-                            const readmeFile = Bun.file(readmePath);
+                            const pluginPath = join(skillPath, 'plugin.json');
 
-                            if (await readmeFile.exists()) {
-                                const content = await readmeFile.text();
-                                // Basic parsing of SKILL.md for description
-                                const titleMatch = content.match(/^#\s+(.+)$/m);
-                                // Find first non-header, non-empty line for description
-                                const lines = content.split('\n');
-                                let desc = 'No description';
-                                for (const line of lines) {
-                                    if (line.trim() && !line.startsWith('#') && !line.startsWith('>')) {
-                                        desc = line.trim();
-                                        break;
+                            const readmeFile = Bun.file(readmePath);
+                            const pluginFile = Bun.file(pluginPath);
+
+                            const hasReadme = await readmeFile.exists();
+                            const hasPlugin = await pluginFile.exists();
+
+                            if (hasReadme || hasPlugin) {
+                                let name = entry.name;
+                                let description = '---';
+                                let version = '1.0.0';
+                                let type: 'skill' | 'plugin' = hasPlugin ? 'plugin' : 'skill';
+                                let config = undefined;
+
+                                if (hasPlugin) {
+                                    try {
+                                        const pluginData = await pluginFile.json();
+                                        name = pluginData.name || name;
+                                        description = pluginData.description || description;
+                                        version = pluginData.version || version;
+                                        config = pluginData;
+                                    } catch (e) {
+                                        console.error(`Failed to parse plugin.json for ${entry.name}`, e);
+                                    }
+                                }
+
+                                if (hasReadme) {
+                                    const content = await readmeFile.text();
+                                    // Basic parsing of SKILL.md for description and name if not provided by plugin.json
+                                    const titleMatch = content.match(/^#\s+(.+)$/m);
+                                    if (titleMatch && (!hasPlugin || !config?.name)) {
+                                        name = titleMatch[1].trim();
+                                    }
+
+                                    // Try to extract description from frontmatter or first paragraph if not in plugin.json
+                                    if (!hasPlugin || !config?.description) {
+                                        // simple frontmatter check
+                                        if (content.startsWith('---')) {
+                                            const endFrontmatter = content.indexOf('---', 3);
+                                            if (endFrontmatter !== -1) {
+                                                const frontmatter = content.substring(3, endFrontmatter);
+                                                const descMatch = frontmatter.match(/description:\s*(.+)$/m);
+                                                if (descMatch) description = descMatch[1].trim();
+                                            }
+                                        }
+
+                                        if (description === '---') {
+                                            // Find first non-header, non-empty line
+                                            const lines = content.split('\n');
+                                            for (const line of lines) {
+                                                if (line.trim() && !line.startsWith('#') && !line.startsWith('>') && !line.startsWith('---')) {
+                                                    description = line.trim();
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
                                 skills.push({
-                                    id: entry.name,
-                                    name: titleMatch ? titleMatch[1].trim() : entry.name,
-                                    type: 'skill',
-                                    description: desc.slice(0, 100) + (desc.length > 100 ? '...' : ''),
+                                    id: entry.name, // Use dir name as stable ID
+                                    name,
+                                    type,
+                                    description: description.slice(0, 150) + (description.length > 150 ? '...' : ''),
                                     enabled: !disabledSkills.includes(entry.name),
                                     author,
-                                    path: skillPath
+                                    path: skillPath,
+                                    config
                                 });
                             }
                         }
                     }
-                } catch (e) {
-                    // logger.warn({ dir, error: e }, 'Skills directory not found or scan failed');
+                } catch (error) {
+                    // console.warn(`Failed to scan directory ${dir}:`, error);
                 }
             };
 
-            await scanDir(communityDir, 'community');
-            await scanDir(vendorDir, 'vendor');
+            await Promise.all([
+                scanDir(skillsRoot, 'core', ['community', 'vendor', 'node_modules', '.venv', '.git', 'bin', 'obj', 'lib', '.DS_Store']),
+                scanDir(communityDir, 'community'),
+                scanDir(vendorDir, 'vendor')
+            ]);
 
             return { success: true, data: skills };
         } catch (error) {

@@ -6,7 +6,7 @@ export interface Skill {
     type: 'skill' | 'plugin';
     description: string;
     enabled: boolean;
-    author: 'community' | 'vendor' | 'user';
+    author: 'community' | 'vendor' | 'core' | 'user';
     path?: string; // For markdown skills
     config?: Record<string, any>; // For plugins
 }
@@ -31,7 +31,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
     fetchSkills: async () => {
         set({ isLoading: true, error: null });
         try {
-            const res = await fetch('http://localhost:3000/api/v1/skills');
+            const res = await fetch('/api/v1/skills');
             const data = await res.json();
             if (data.success) {
                 set({ skills: data.data });
@@ -47,7 +47,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
 
     fetchPlugins: async () => {
         try {
-            const res = await fetch('http://localhost:3000/api/v1/plugins');
+            const res = await fetch('/api/v1/plugins');
             const data = await res.json();
             if (data.success) {
                 // Map DB plugins to Skill interface
@@ -74,7 +74,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
                 skills: state.skills.map(s => s.id === id ? { ...s, enabled } : s)
             }));
 
-            const res = await fetch('http://localhost:3000/api/v1/skills/toggle', {
+            const res = await fetch('/api/v1/skills/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, enabled })
@@ -104,7 +104,7 @@ export const useSkillStore = create<SkillStore>((set, get) => ({
                 plugins: state.plugins.map(p => p.id === id ? { ...p, enabled } : p)
             }));
 
-            const res = await fetch(`http://localhost:3000/api/v1/plugins/${id}`, {
+            const res = await fetch(`/api/v1/plugins/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ enabled })
