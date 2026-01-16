@@ -11,7 +11,8 @@ import { runSecurityAudit, securityHeaders } from './security.js';
 import { wsManager } from './websocket.js';
 import { getSentinelStatus } from './sentinel.js';
 import { createA2APlugin } from './a2a/index.js';
-import { coworkRoutes, initCoworkEventForwarding } from './cowork/index.js';
+import { coworkRoutes, sandboxRoutes, initCoworkEventForwarding } from './cowork/index.js';
+import { systemFilesRoutes } from './system/index.js';
 
 // CORS plugin
 const corsPlugin = cors({
@@ -288,7 +289,9 @@ const app = new Elysia({ prefix: '' })
     .use(portfolioPlugin)
     .use(marketPlugin)
     .use(a2aPlugin)
-    .use(coworkRoutes);
+    .use(coworkRoutes)
+    .use(sandboxRoutes)
+    .use(systemFilesRoutes);
 
 // Start server
 const PORT = Number(process.env.PORT) || 3000;

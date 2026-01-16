@@ -18,15 +18,16 @@ This document contains detailed system documentation extracted from AGENTS.md.
 7. [Phase 6: Agent Hub UI](#phase-6-agent-hub-ui)
 8. [Phase 7: Container Runtime](#phase-7-container-runtime)
 9. [Phase 8: SDK Intelligence](#phase-8-sdk-intelligence-system)
-10. [Architecture Summary](#architecture-summary)
-11. [Environment Variables](#environment-variables)
-12. [Test Coverage](#test-coverage)
+10. [Phase 9: Cowork Mode](#phase-9-cowork-mode-deep-work-system)
+11. [Architecture Summary](#architecture-summary)
+12. [Environment Variables](#environment-variables)
+13. [Test Coverage](#test-coverage)
 
 ---
 
 ## Implementation Summary
 
-**All 29 features across 7 phases have been implemented and tested.**
+**All features across 9 phases have been implemented and tested.**
 
 | Phase | Status | Features |
 |-------|--------|----------|
@@ -37,6 +38,8 @@ This document contains detailed system documentation extracted from AGENTS.md.
 | **Phase 5** | ✅ Complete | A2A Protocol, A2UI Rendering, External Agent Communication |
 | **Phase 6** | ✅ Complete | Agent Hub UI, Agent Discovery, Agent Cards, Chat Windows |
 | **Phase 7** | ✅ Complete | Container Runtime, Container Settings UI, Remote Deployment, Provider Presets |
+| **Phase 8** | ✅ Complete | SDK Intelligence, Auto-Configuration, Smart Defaults, Task Analyzer |
+| **Phase 9** | ✅ Complete | Cowork Mode, Task Orchestration, Sandbox System, Agent Manager, Permissions |
 
 ---
 
@@ -251,6 +254,139 @@ The "App Store" for A2A agents.
 **Features:**
 - 6 Configuration Tabs: Placement, Pool, Resources, Network, Secrets, Telemetry
 - 9 Cloud Providers: Hetzner, DigitalOcean, Fly.io, Railway, AWS, GCP, Azure, Bare Metal, Custom
+
+---
+
+## Phase 9: Cowork Mode (Deep Work System)
+
+### 9.1 Cowork Orchestrator
+**Directory:** `server/src/cowork/`
+
+Deep work orchestration enabling complex, multi-step task execution with full visibility and control.
+
+**Core Services:**
+| File | Purpose |
+|------|---------|
+| `orchestrator.ts` | Main coordinator, session lifecycle, task distribution |
+| `planner.ts` | Gemini-powered task planning and decomposition |
+| `executor.ts` | Task execution with sandbox support and streaming output |
+| `permissions.ts` | Security layer with path validation and capability checks |
+| `agent-manager.ts` | Concurrent agent spawning with priority queue |
+| `a2a-bridge.ts` | Remote agent delegation via A2A protocol |
+| `repository.ts` | Database persistence layer |
+
+**Execution Flow:**
+```
+User Input → TaskPlanner → SubTasks → Permission Check → Executor/AgentManager → Artifacts
+                ↓                           ↓
+         Plan Review Modal          Security Validation
+```
+
+### 9.2 Permission Service
+**File:** `server/src/cowork/permissions.ts`
+
+Multi-layer security validation for all file operations.
+
+**Validation Pipeline:**
+1. **Normalize** - Resolve symlinks, canonicalize paths
+2. **Blocked Prefix** - Deny `/etc`, `/var`, `/usr`, `/System`, etc.
+3. **Workspace Boundary** - Enforce project directory limits
+4. **Extension Filter** - Block/whitelist file types
+5. **Capability Check** - read/write/delete/execute permissions
+6. **Size Limit** - Per-file and per-session limits
+7. **Sandbox Isolation** - Enforce sandbox boundaries when active
+
+### 9.3 Agent Manager
+**File:** `server/src/cowork/agent-manager.ts`
+
+Concurrent agent spawning with intelligent scheduling.
+
+**Features:**
+- Priority queue (critical > high > normal > low)
+- Semaphore-based concurrency control (configurable max)
+- Health monitoring with heartbeat detection
+- Retry logic with exponential backoff
+- Pause/resume queue processing
+- Batch spawning for parallel execution
+- Graceful termination (single, session, or all)
+
+### 9.4 File Sandbox System
+**Directory:** `server/src/cowork/sandbox/`
+
+Isolated file staging for safe task execution.
+
+**Components:**
+| File | Purpose |
+|------|---------|
+| `manager.ts` | SandboxManager - Create, commit, rollback sandboxes |
+| `backup.ts` | BackupManager - Original file preservation |
+| `conflicts.ts` | ConflictDetector - Detect file conflicts |
+| `audit.ts` | AuditLogger - Compliance trail |
+| `routes.ts` | Elysia REST endpoints |
+
+### 9.5 A2A Task Bridge
+**File:** `server/src/cowork/a2a-bridge.ts`
+
+Remote agent delegation via A2A protocol.
+
+**Capabilities:**
+- `AgentDiscoveryService` - Probe and discover remote agents
+- Capability matching - Match subtasks to agent skills
+- Message translation - Convert Cowork ↔ A2A formats
+- Polling execution - Monitor remote task progress
+- Result transformation - A2A artifacts → Cowork format
+
+### 9.6 Cowork UI Components
+**Directory:** `src/components/cowork/`
+
+**Components:**
+| Component | Purpose |
+|-----------|---------|
+| `GlassCoworkPanel` | Main 3-column layout |
+| `CoworkInput` | Task input with file picker |
+| `PlanReviewModal` | Review AI-generated plans |
+| `TaskQueuePanel` | Multi-task queue management |
+| `TaskTicket` | Individual task card |
+| `TaskProgress` | Real-time execution progress |
+| `AgentCardsPanel` | Active agent visualization |
+| `ArtifactsPanel` | Generated artifact display |
+| `DiffReviewer` | Review sandbox changes |
+| `SandboxIndicator` | Sandbox status display |
+
+### 9.7 Cowork API Endpoints
+**File:** `server/src/cowork/routes.ts`
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/sessions` | POST | Create new session |
+| `/sessions/:id` | GET | Get session details |
+| `/sessions/:id/plan` | POST | Generate task plan |
+| `/sessions/:id/approve` | POST | Approve plan |
+| `/sessions/:id/cancel` | POST | Cancel session |
+| `/sessions/:id/pause` | POST | Pause execution |
+| `/sessions/:id/resume` | POST | Resume execution |
+| `/queue/batch` | POST | Batch task creation |
+| `/queue/pause` | POST | Pause queue |
+| `/queue/resume` | POST | Resume queue |
+| `/queue/reorder` | POST | Reorder tasks |
+| `/agents/remote/discover` | POST | Discover remote agents |
+| `/agents/remote/:id/delegate` | POST | Delegate to remote agent |
+
+### 9.8 WebSocket Events
+**File:** `server/src/cowork/events.ts`
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `session:created` | Session | New session started |
+| `plan:generated` | Plan | AI plan ready for review |
+| `plan:approved` | Session | Plan execution started |
+| `subtask:started` | SubTask | Task execution began |
+| `subtask:progress` | Progress | Execution progress update |
+| `subtask:completed` | SubTask + Artifacts | Task finished |
+| `session:completed` | Session | All tasks done |
+| `agent:spawned` | Agent | New agent started |
+| `agent:health` | Health | Agent health update |
+| `queue:stats` | Stats | Queue statistics |
 
 ---
 

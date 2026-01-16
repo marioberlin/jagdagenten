@@ -1905,3 +1905,175 @@ Components emit events for interactions:
     }}
 />
 ```
+
+---
+
+## Cowork Mode - Deep Work Orchestration
+
+Cowork is an agentic mode for complex, multi-step task execution with full visibility and control. Users describe an outcome, and the system analyzes, plans, and executes via coordinated sub-agents.
+
+### Cowork Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                         Cowork Architecture                                  │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  User Input                                                                │
+│     │                                                                      │
+│     ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │                    CoworkOrchestrator                                │  │
+│  │  server/src/cowork/orchestrator.ts                                   │  │
+│  │                                                                       │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │  │
+│  │  │ TaskPlanner  │  │ AgentManager │  │   PermissionService      │  │  │
+│  │  │ (Gemini AI)  │  │ (Concurrency)│  │   (Security Layer)       │  │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────────────────┘  │  │
+│  │         │                  │                      │                 │  │
+│  │         ▼                  ▼                      ▼                 │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐   │  │
+│  │  │                    TaskExecutor                              │   │  │
+│  │  │  • Script generation based on task type                      │   │  │
+│  │  │  • Output streaming via EventEmitter                         │   │  │
+│  │  │  • Artifact parsing from execution output                    │   │  │
+│  │  └─────────────────────────────────────────────────────────────┘   │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                              │                                             │
+│              ┌───────────────┼───────────────┐                            │
+│              ▼               ▼               ▼                            │
+│       ┌────────────┐  ┌────────────┐  ┌────────────┐                     │
+│       │  Sandbox   │  │   A2A      │  │  Database  │                     │
+│       │  Manager   │  │  Bridge    │  │  Persist   │                     │
+│       └────────────┘  └────────────┘  └────────────┘                     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cowork Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **Orchestrator** | `server/src/cowork/orchestrator.ts` | Main coordination loop (Analyze → Plan → Execute → Report) |
+| **TaskPlanner** | `server/src/cowork/planner.ts` | AI-powered plan generation (Gemini) |
+| **TaskExecutor** | `server/src/cowork/executor.ts` | Real task execution with streaming output |
+| **AgentManager** | `server/src/cowork/agent-manager.ts` | Concurrent agent spawning, health monitoring, priority queue |
+| **PermissionService** | `server/src/cowork/permissions.ts` | Security validation for file operations |
+| **SandboxManager** | `server/src/cowork/sandbox/manager.ts` | Isolated file staging with conflict detection |
+| **A2ATaskBridge** | `server/src/cowork/a2a-bridge.ts` | Remote agent delegation via A2A protocol |
+| **Repository** | `server/src/cowork/repository.ts` | Database persistence layer |
+
+### Cowork Phases
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                        Cowork Execution Phases                             │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  1. task_analysis    → Analyze user description                           │
+│  2. plan_generation  → AI generates step-by-step plan                     │
+│  3. user_review      → User approves/modifies plan                        │
+│  4. agent_dispatch   → Spawn agents for subtasks                          │
+│  5. parallel_execution → Execute subtasks (local or remote)               │
+│  6. result_aggregation → Combine outputs, create artifacts                │
+│  7. output_delivery  → Present results, apply sandbox changes             │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+### Permission Service Security Layers
+
+| Layer | Check | Example |
+|-------|-------|---------|
+| **1. Normalize** | Path resolution, symlink detection | `../../../etc/passwd` → blocked |
+| **2. Blocked Prefixes** | System directories | `/etc`, `/var`, `/usr` → blocked |
+| **3. Workspace Boundary** | Must be within allowed roots | Outside workspace → blocked |
+| **4. Extension Filter** | Dangerous file types | `.exe`, `.sh` → blocked |
+| **5. Capability** | Operation type allowed | write to read-only → blocked |
+| **6. Size** | File/session limits | 500MB file → blocked |
+| **7. Sandbox** | If active, restrict to sandbox path | Real filesystem → blocked |
+
+### Agent Manager Features
+
+| Feature | Description |
+|---------|-------------|
+| **Priority Queue** | Higher priority tasks execute first |
+| **Concurrency Control** | Semaphore-based slot management |
+| **Health Monitoring** | Heartbeat detection of stuck agents |
+| **Retry Logic** | Configurable retries with exponential backoff |
+| **Graceful Termination** | Per-agent, per-session, or global shutdown |
+| **Event Emissions** | All state transitions emit events |
+
+### Cowork API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/cowork/session` | POST | Create new session |
+| `/api/v1/cowork/session/:id` | GET | Get session status |
+| `/api/v1/cowork/session/:id/approve` | POST | Approve plan |
+| `/api/v1/cowork/session/:id/pause` | POST | Pause execution |
+| `/api/v1/cowork/session/:id/resume` | POST | Resume execution |
+| `/api/v1/cowork/session/:id/cancel` | POST | Cancel session |
+| `/api/v1/cowork/session/:id/steer` | POST | Send guidance |
+| `/api/v1/cowork/queue/*` | Various | Queue management |
+| `/api/v1/cowork/agents/remote/*` | Various | A2A agent management |
+| `/api/v1/cowork/sandbox/*` | Various | Sandbox operations |
+
+### Cowork WebSocket Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `session_created` | `{ sessionId, title }` | New session started |
+| `plan_ready` | `{ sessionId, plan }` | Plan generated |
+| `agent_spawned` | `{ sessionId, agentId, name, task }` | Agent started |
+| `agent_progress` | `{ sessionId, agentId, progress }` | Progress update |
+| `agent_thinking` | `{ sessionId, agentId, thought }` | Agent status |
+| `agent_completed` | `{ sessionId, agentId, success }` | Agent finished |
+| `artifact_produced` | `{ sessionId, artifact }` | Output created |
+| `session_completed` | `{ sessionId, summary, artifacts }` | All done |
+| `sandbox_*` | Various | Sandbox events |
+| `queue_*` | Various | Queue events |
+
+### Directory Structure
+
+```
+server/src/cowork/
+├── index.ts              # Module exports
+├── types.ts              # Type definitions
+├── orchestrator.ts       # Main orchestration service
+├── planner.ts            # AI task planning (Gemini)
+├── executor.ts           # Task execution
+├── agent-manager.ts      # Concurrent agent management
+├── permissions.ts        # Security validation
+├── repository.ts         # Database persistence
+├── routes.ts             # REST API routes
+├── events.ts             # WebSocket event handlers
+├── a2a-bridge.ts         # Remote agent delegation
+└── sandbox/
+    ├── index.ts          # Sandbox exports
+    ├── manager.ts        # Sandbox file management
+    ├── backup.ts         # Backup/restore
+    ├── conflict.ts       # Conflict detection
+    ├── hasher.ts         # File hashing
+    ├── audit.ts          # Audit logging
+    └── routes.ts         # Sandbox API routes
+
+src/components/cowork/
+├── GlassCoworkPanel.tsx  # Main UI shell
+├── CoworkInput.tsx       # Task description input
+├── PlanReviewModal.tsx   # Plan approval UI
+├── TaskProgress.tsx      # Progress visualization
+├── AgentCardsPanel.tsx   # Agent status cards
+├── SteeringControls.tsx  # Guidance input
+├── ArtifactsPanel.tsx    # Output display
+├── TaskQueuePanel.tsx    # Multi-task queue
+├── TaskTicket.tsx        # Individual task card
+└── sandbox/
+    ├── DiffReviewer.tsx  # Diff visualization
+    └── SandboxIndicator.tsx
+```
+
+### Related Documentation
+
+- [Cowork Implementation Plan](./COWORK_IMPLEMENTATION_PLAN.md)
+```

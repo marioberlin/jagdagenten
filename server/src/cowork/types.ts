@@ -4,8 +4,6 @@
  * Type definitions for the deep work orchestration system.
  */
 
-import type { EventEmitter } from 'events';
-
 // ============================================================
 // SESSION TYPES
 // ============================================================
@@ -29,6 +27,9 @@ export interface CoworkSession {
     tokensUsed: number;
     estimatedCost: number;
     currentThought?: string;
+    // Sandbox integration
+    sandboxId?: string;
+    useSandbox?: boolean;
 }
 
 export type CoworkSessionStatus =
@@ -263,6 +264,13 @@ export interface CreateSessionOptions {
     outputPath?: string;
     preferredAgents?: string[];
     maxCost?: number;
+    // Sandbox options
+    useSandbox?: boolean;
+    sandboxConfig?: {
+        sourceRoot: string;
+        excludePatterns?: string[];
+        expiresInHours?: number;
+    };
 }
 
 export interface OrchestratorConfig {
@@ -300,4 +308,39 @@ export type CoworkEvent =
     | { type: 'session_failed'; sessionId: string; error: string }
     | { type: 'steering_sent'; sessionId: string; guidance: string }
     | { type: 'steering_acknowledged'; sessionId: string; agentId: string }
-    | { type: 'error'; sessionId: string; error: string };
+    | { type: 'error'; sessionId: string; error: string }
+    // Sandbox events
+    | { type: 'sandbox_created'; sessionId: string; sandboxId: string }
+    | { type: 'sandbox_conflict_detected'; sessionId: string; sandboxId: string; conflictingFiles: string[] }
+    | { type: 'sandbox_merge_started'; sessionId: string; sandboxId: string }
+    | { type: 'sandbox_merge_completed'; sessionId: string; sandboxId: string; filesApplied: number }
+    | { type: 'sandbox_discarded'; sessionId: string; sandboxId: string }
+    | { type: 'sandbox_rollback'; sessionId: string; sandboxId: string; backupId: string }
+    // Queue/notification events
+    | { type: 'queue_task_added'; sessionId: string; title: string; priority: number }
+    | { type: 'queue_task_started'; sessionId: string; title: string }
+    | { type: 'queue_task_completed'; sessionId: string; title: string; success: boolean; summary?: string }
+    | { type: 'queue_task_failed'; sessionId: string; title: string; error: string }
+    | { type: 'queue_paused'; pausedCount: number }
+    | { type: 'queue_resumed'; resumedCount: number }
+    | { type: 'queue_stats_update'; queuedCount: number; activeCount: number; completedCount: number };
+
+// ============================================================
+// NOTIFICATION TYPES
+// ============================================================
+
+export type NotificationLevel = 'info' | 'success' | 'warning' | 'error';
+
+export interface TaskNotification {
+    id: string;
+    sessionId: string;
+    level: NotificationLevel;
+    title: string;
+    message: string;
+    timestamp: Date;
+    read: boolean;
+    action?: {
+        label: string;
+        type: 'view_session' | 'retry' | 'dismiss';
+    };
+}
