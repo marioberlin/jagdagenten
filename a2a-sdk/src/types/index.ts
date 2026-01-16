@@ -316,62 +316,62 @@ export interface JSONRPCError {
 
 export interface JSONParseError extends JSONRPCError {
   code: -32700;
-  message?: 'Invalid JSON payload';
+  message: string;
 }
 
 export interface InvalidRequestError extends JSONRPCError {
   code: -32600;
-  message?: 'Request payload validation error';
+  message: string;
 }
 
 export interface MethodNotFoundError extends JSONRPCError {
   code: -32601;
-  message?: 'Method not found';
+  message: string;
 }
 
 export interface InvalidParamsError extends JSONRPCError {
   code: -32602;
-  message?: 'Invalid parameters';
+  message: string;
 }
 
 export interface InternalError extends JSONRPCError {
   code: -32603;
-  message?: 'Internal error';
+  message: string;
 }
 
 export interface TaskNotFoundError extends JSONRPCError {
   code: -32001;
-  message?: 'Task not found';
+  message: string;
 }
 
 export interface TaskNotCancelableError extends JSONRPCError {
   code: -32002;
-  message?: 'Task cannot be canceled';
+  message: string;
 }
 
 export interface PushNotificationNotSupportedError extends JSONRPCError {
   code: -32003;
-  message?: 'Push Notification is not supported';
+  message: string;
 }
 
 export interface UnsupportedOperationError extends JSONRPCError {
   code: -32004;
-  message?: 'This operation is not supported';
+  message: string;
 }
 
 export interface ContentTypeNotSupportedError extends JSONRPCError {
   code: -32005;
-  message?: 'Incompatible content types';
+  message: string;
 }
 
 export interface InvalidAgentResponseError extends JSONRPCError {
   code: -32006;
-  message?: 'Invalid agent response';
+  message: string;
 }
 
 export interface AuthenticatedExtendedCardNotConfiguredError extends JSONRPCError {
   code: -32007;
-  message?: 'Authenticated Extended Card is not configured';
+  message: string;
 }
 
 export type A2AError =
@@ -396,18 +396,16 @@ export interface JSONRPCMessage {
 
 export interface JSONRPCRequest extends JSONRPCMessage {
   method: string;
-  params?: Record<string, JSONValue>;
+  params?: unknown;
 }
 
 export interface JSONRPCSuccessResponse extends JSONRPCMessage {
-  result: JSONValue;
+  result: unknown;
 }
 
 export interface JSONRPCErrorResponse extends JSONRPCMessage {
   error: JSONRPCError;
 }
-
-export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse;
 
 // Request/Response Types
 export interface TaskIdParams {

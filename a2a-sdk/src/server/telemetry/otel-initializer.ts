@@ -4,6 +4,10 @@
  * Sets up and configures the OpenTelemetry SDK with appropriate
  * exporters for tracing and metrics. Supports console, OTLP, and
  * Jaeger exporters.
+ *
+ * Note: This module requires optional OpenTelemetry SDK packages
+ * to be installed. If they are not available, initialization will
+ * fail gracefully with a warning.
  */
 
 export interface OpenTelemetryConfig {
@@ -53,19 +57,27 @@ export class OpenTelemetryInitializer {
    */
   async initialize(): Promise<void> {
     try {
-      const { NodeSDK } = await import('@opentelemetry/sdk-node');
-      const { Resource } = await import('@opentelemetry/resources');
-      const { SemanticResourceAttributes } = await import('@opentelemetry/semantic-conventions');
+      // Dynamic imports for optional packages
+      const sdkNodeModule = await import('@opentelemetry/sdk-node').catch(() => null);
+      const resourcesModule = await import('@opentelemetry/resources').catch(() => null);
+
+      if (!sdkNodeModule || !resourcesModule) {
+        console.warn('OpenTelemetry SDK packages not available. Install @opentelemetry/sdk-node and @opentelemetry/resources for full telemetry support.');
+        return;
+      }
+
+      const { NodeSDK } = sdkNodeModule;
+      const { Resource } = resourcesModule;
 
       // Create resource with service information
       const resource = new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
-        [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion,
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: this.config.environment,
+        'service.name': this.config.serviceName,
+        'service.version': this.config.serviceVersion,
+        'deployment.environment': this.config.environment,
       });
 
       // Build SDK configuration
-      const sdkConfig: any = {
+      const sdkConfig: Record<string, unknown> = {
         resource,
         traceExporter: await this.createTraceExporter(),
       };
@@ -77,13 +89,7 @@ export class OpenTelemetryInitializer {
       // Create and start SDK
       const sdk = new NodeSDK(sdkConfig);
 
-      // Configure sampling
-      if (this.config.traceSamplingRate < 1.0) {
-        const { ParentBasedSampler, TraceIdRatioBasedSampler } = await import('@opentelemetry/sdk-trace-web');
-        // Note: For Node.js, use appropriate sampler
-      }
-
-      await sdk.start();
+      sdk.start();
 
       console.log('OpenTelemetry initialized successfully');
 
@@ -98,56 +104,82 @@ export class OpenTelemetryInitializer {
 
     } catch (error) {
       console.warn('Failed to initialize OpenTelemetry:', error);
-      throw error;
+      // Don't throw - allow application to continue without telemetry
     }
   }
 
   /**
    * Create trace exporter based on configuration
+   * Returns any type since exporters vary by OpenTelemetry version
    */
-  private async createTraceExporter(): Promise<any> {
+  private async createTraceExporter(): Promise<unknown> {
     if (this.config.otlpEndpoint) {
-      const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
-      return new OTLPTraceExporter({
-        url: this.config.otlpEndpoint,
-      });
+      try {
+        const module = await import('@opentelemetry/exporter-trace-otlp-http');
+        const { OTLPTraceExporter } = module;
+        return new OTLPTraceExporter({
+          url: this.config.otlpEndpoint,
+        });
+      } catch {
+        console.warn('OTLP trace exporter not available');
+      }
     }
 
     if (this.config.consoleExporter) {
-      const { ConsoleSpanExporter } = await import('@opentelemetry/sdk-trace-base');
-      return new ConsoleSpanExporter();
+      try {
+        const module = await import('@opentelemetry/sdk-trace-base');
+        const { ConsoleSpanExporter } = module;
+        return new ConsoleSpanExporter();
+      } catch {
+        console.warn('Console span exporter not available');
+      }
     }
 
-    // Default to no-op exporter if no configuration
-    return {
-      export(spans: any, resultCallback: any) {
-        resultCallback({ code: 0 });
-      },
-      shutdown() {
-        return Promise.resolve();
-      },
-    };
+    // Default to no-op exporter if no configuration or packages unavailable
+    return this.createNoOpExporter();
   }
 
   /**
    * Create metrics exporter based on configuration
+   * Returns any type since exporters vary by OpenTelemetry version
    */
-  private async createMetricsExporter(): Promise<any> {
+  private async createMetricsExporter(): Promise<unknown> {
     if (this.config.otlpEndpoint) {
-      const { OTLPMetricExporter } = await import('@opentelemetry/exporter-metrics-otlp-http');
-      return new OTLPMetricExporter({
-        url: this.config.otlpEndpoint,
-      });
+      try {
+        // Dynamic import with string expression to avoid TypeScript errors for optional packages
+        const packageName = '@opentelemetry/exporter-metrics-otlp-http';
+        const module = await (Function('p', 'return import(p)')(packageName) as Promise<{ OTLPMetricExporter: new (opts: { url: string }) => unknown }>).catch(() => null);
+        if (module) {
+          const { OTLPMetricExporter } = module;
+          return new OTLPMetricExporter({
+            url: this.config.otlpEndpoint,
+          });
+        }
+      } catch {
+        console.warn('OTLP metrics exporter not available');
+      }
     }
 
     if (this.config.consoleExporter) {
-      const { ConsoleMetricExporter } = await import('@opentelemetry/sdk-metrics-base');
-      return new ConsoleMetricExporter();
+      try {
+        const module = await import('@opentelemetry/sdk-metrics');
+        const { ConsoleMetricExporter } = module;
+        return new ConsoleMetricExporter();
+      } catch {
+        console.warn('Console metrics exporter not available');
+      }
     }
 
-    // Default to no-op exporter if no configuration
+    // Default to no-op exporter if no configuration or packages unavailable
+    return this.createNoOpExporter();
+  }
+
+  /**
+   * Create a no-op exporter
+   */
+  private createNoOpExporter(): unknown {
     return {
-      export(metrics: any, resultCallback: any) {
+      export(_data: unknown, resultCallback: (result: { code: number }) => void) {
         resultCallback({ code: 0 });
       },
       shutdown() {

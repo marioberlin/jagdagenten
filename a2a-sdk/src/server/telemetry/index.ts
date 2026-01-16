@@ -9,18 +9,20 @@
  * - Automatic span creation for A2A operations
  */
 
-// Core telemetry components
+// Core telemetry components - imports for local use
+import { A2ATelemetryWrapper, TelemetryWrapperConfig } from './telemetry-wrapper';
+import { OpenTelemetryInitializer, OpenTelemetryConfig } from './otel-initializer';
+
+// Re-exports
 export { A2ATelemetryProvider } from './telemetry-provider';
 export type { TelemetryConfig, A2ASpanAttributes } from './telemetry-provider';
 
 export { A2AMetricsCollector } from './metrics-collector';
 export type { MetricsConfig } from './metrics-collector';
 
-export { A2ATelemetryWrapper } from './telemetry-wrapper';
-export type { TelemetryWrapperConfig } from './telemetry-wrapper';
+export { A2ATelemetryWrapper, TelemetryWrapperConfig } from './telemetry-wrapper';
 
-export { OpenTelemetryInitializer, initializeOpenTelemetry } from './otel-initializer';
-export type { OpenTelemetryConfig } from './otel-initializer';
+export { OpenTelemetryInitializer, initializeOpenTelemetry, OpenTelemetryConfig } from './otel-initializer';
 
 // Instrumentation
 export { InstrumentedTaskStore, instrumentTaskStore } from './task-store-instrumentation';

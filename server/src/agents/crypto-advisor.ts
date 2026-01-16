@@ -1136,17 +1136,43 @@ function generatePriceView(asset: CryptoAsset): A2UIMessage[] {
 // ============================================================================
 
 export const getCryptoAdvisorAgentCard = (baseUrl: string): AgentCard => ({
+    protocolVersions: ['1.0'],
     name: 'Crypto Advisor',
     description: 'Real-time cryptocurrency market analysis, portfolio tracking, and AI-powered trading signals using Binance data and Gemini AI.',
-    url: `${baseUrl}/agents/crypto-advisor`,
     version: '1.0.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
-    provider: { organization: 'LiquidCrypto Labs' },
+    supportedInterfaces: [
+        { url: `${baseUrl}/agents/crypto-advisor`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: { streaming: true, pushNotifications: true },
+    defaultInputModes: ['text/plain'],
+    defaultOutputModes: ['text/plain', 'application/json'],
+    skills: [
+        {
+            id: 'market-analysis',
+            name: 'Market Analysis',
+            description: 'Analyze cryptocurrency market trends and provide insights',
+            tags: ['crypto', 'market', 'analysis', 'trading'],
+            examples: ['Analyze BTC market', 'What is the ETH trend?'],
+        },
+        {
+            id: 'portfolio-tracking',
+            name: 'Portfolio Tracking',
+            description: 'Track and manage cryptocurrency portfolios',
+            tags: ['portfolio', 'tracking', 'holdings'],
+            examples: ['Show my portfolio', 'Track my holdings'],
+        },
+        {
+            id: 'trading-signals',
+            name: 'Trading Signals',
+            description: 'AI-powered trading signals and recommendations',
+            tags: ['trading', 'signals', 'AI', 'recommendations'],
+            examples: ['Get trading signals', 'Should I buy or sell?'],
+        },
+    ],
+    provider: { organization: 'LiquidCrypto Labs' },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Text', 'Row', 'Column', 'Divider'] }
-    }
+        a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Text', 'Row', 'Column', 'Divider'] },
+    },
 });
 
 export async function handleCryptoAdvisorRequest(params: SendMessageParams): Promise<any> {

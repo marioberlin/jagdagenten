@@ -2,18 +2,23 @@
  * Request handler interface for A2A server
  */
 
-import { AsyncIterableIterator } from 'typescript';
-import {
+import type {
   MessageSendParams,
-  TaskQueryParams,
-  TaskIdParams,
-  TaskPushNotificationConfig,
-  TaskPushNotificationConfigRequest,
-  Message,
   Task,
+  Message,
+  TaskPushNotificationConfig,
+} from '../types/v1';
+
+import type {
   TaskEvent,
-} from '../types';
-import { ServerCallContext } from './context';
+  TaskIdParams,
+  TaskQueryParams,
+  TaskPushNotificationConfigRequest,
+  AgentExecutor,
+  TaskStore,
+  EventQueue,
+  ServerCallContext,
+} from './interfaces';
 
 /**
  * A2A request handler interface
@@ -55,7 +60,7 @@ export interface RequestHandler {
   onMessageSendStream(
     params: MessageSendParams,
     context?: ServerCallContext
-  ): AsyncIterableIterator<TaskEvent>;
+  ): AsyncIterable<TaskEvent>;
 
   /**
    * Handles the 'tasks/resubscribe' method
@@ -64,7 +69,7 @@ export interface RequestHandler {
   onResubscribeToTask(
     params: TaskIdParams,
     context?: ServerCallContext
-  ): AsyncIterableIterator<TaskEvent>;
+  ): AsyncIterable<TaskEvent>;
 
   /**
    * Handles the 'tasks/pushNotificationConfig/get' method
@@ -108,14 +113,14 @@ export interface RequestHandler {
  * Provides basic task management and delegation to agent executor
  */
 export class DefaultRequestHandler implements RequestHandler {
-  private agentExecutor: any; // AgentExecutor type - circular import avoided
-  private taskStore: any; // TaskStore type
-  private eventQueue: any; // EventQueue type
+  private agentExecutor: AgentExecutor;
+  private taskStore: TaskStore;
+  private eventQueue: EventQueue;
 
   constructor(
-    agentExecutor: any,
-    taskStore: any,
-    eventQueue: any
+    agentExecutor: AgentExecutor,
+    taskStore: TaskStore,
+    eventQueue: EventQueue
   ) {
     this.agentExecutor = agentExecutor;
     this.taskStore = taskStore;
@@ -138,10 +143,15 @@ export class DefaultRequestHandler implements RequestHandler {
       return null;
     }
 
-    // Update task status to canceled
-    task.status.state = 'canceled';
-    await this.taskStore.updateTask(params.id, task);
-    return task;
+    // Update task status to cancelled
+    const updatedTask = await this.taskStore.updateTask(params.id, {
+      status: {
+        ...task.status,
+        state: 'cancelled',
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return updatedTask;
   }
 
   async onMessageSend(
@@ -180,7 +190,7 @@ export class DefaultRequestHandler implements RequestHandler {
   async *onMessageSendStream(
     params: MessageSendParams,
     context?: ServerCallContext
-  ): AsyncIterableIterator<TaskEvent> {
+  ): AsyncIterable<TaskEvent> {
     // Create execution context
     const executionContext = {
       requestId: crypto.randomUUID(),
@@ -190,44 +200,63 @@ export class DefaultRequestHandler implements RequestHandler {
     };
 
     // Create a new task
+    const taskId = crypto.randomUUID();
+    const contextId = params.message.contextId || crypto.randomUUID();
     const task: Task = {
-      id: crypto.randomUUID(),
+      id: taskId,
+      contextId,
       status: {
-        state: 'running',
+        state: 'working',
         timestamp: new Date().toISOString(),
       },
-      kind: 'task',
-      messages: [params.message],
+      history: [params.message],
     };
 
     await this.taskStore.createTask(task);
 
     // Emit initial task event
-    await this.eventQueue.enqueue({
-      kind: 'task.status',
-      task_id: task.id,
-      task: task,
-      timestamp: task.status.timestamp,
-    } as any);
+    const initialEvent: TaskEvent = {
+      taskId,
+      contextId,
+      status: task.status,
+      final: false,
+    };
+    await this.eventQueue.enqueue(initialEvent);
+    yield initialEvent;
 
     // Stream events as the agent executes
-    for await (const event of this.agentExecutor.executeStream(
-      params.message,
-      executionContext
-    )) {
-      await this.eventQueue.enqueue(event);
-      yield event;
+    if (this.agentExecutor.executeStream) {
+      for await (const event of this.agentExecutor.executeStream(
+        params.message,
+        executionContext
+      )) {
+        await this.eventQueue.enqueue(event);
+        yield event;
+      }
     }
 
     // Update task status to completed
-    task.status.state = 'completed';
-    await this.taskStore.updateTask(task.id, task);
+    await this.taskStore.updateTask(task.id, {
+      status: {
+        state: 'completed',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Emit final event
+    const finalEvent: TaskEvent = {
+      taskId,
+      contextId,
+      status: { state: 'completed', timestamp: new Date().toISOString() },
+      final: true,
+    };
+    yield finalEvent;
   }
 
   async *onResubscribeToTask(
     params: TaskIdParams,
     context?: ServerCallContext
-  ): AsyncIterableIterator<TaskEvent> {
+  ): AsyncIterable<TaskEvent> {
     const task = await this.taskStore.getTask(params.id);
     if (!task) {
       return;
@@ -261,7 +290,10 @@ export class DefaultRequestHandler implements RequestHandler {
   ): Promise<TaskPushNotificationConfig> {
     // Implementation would save to push notification config store
     // For now, just return the config
-    return params.pushNotificationConfig as TaskPushNotificationConfig;
+    return {
+      taskId: params.taskId,
+      pushNotificationConfig: params.pushNotificationConfig,
+    };
   }
 
   async onListTaskPushNotificationConfig(
@@ -280,3 +312,6 @@ export class DefaultRequestHandler implements RequestHandler {
     return;
   }
 }
+
+// Re-export AgentExecutor for convenience
+export type { AgentExecutor } from './interfaces';

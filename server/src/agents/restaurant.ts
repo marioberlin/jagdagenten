@@ -1178,21 +1178,48 @@ function generateBookingConfirmation(
 // ============================================================================
 
 export const getRestaurantAgentCard = (baseUrl: string): AgentCard => ({
+    // Required v1.0 fields
+    protocolVersions: ['1.0'],
     name: 'Restaurant Finder',
     description: 'Discover and book restaurants near you powered by Google Places API with optional OpenTable reservations',
-    url: `${baseUrl}/agents/restaurant`,
     version: '2.1.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
+    supportedInterfaces: [
+        {
+            url: `${baseUrl}/agents/restaurant`,
+            protocolBinding: 'JSONRPC',
+        },
+    ],
+    capabilities: {
+        streaming: false,
+        pushNotifications: true,
+    },
+    defaultInputModes: ['text/plain'],
+    defaultOutputModes: ['text/plain', 'application/json'],
+    skills: [
+        {
+            id: 'find-restaurants',
+            name: 'Find Restaurants',
+            description: 'Search for restaurants near a location with optional cuisine filtering',
+            tags: ['restaurants', 'food', 'dining', 'search', 'location'],
+            examples: ['Find Italian restaurants nearby', 'Show me sushi places', 'What restaurants are open now?'],
+        },
+        {
+            id: 'book-table',
+            name: 'Book a Table',
+            description: 'Make a restaurant reservation',
+            tags: ['booking', 'reservation', 'table'],
+            examples: ['Book a table for 2 tonight', 'Reserve a spot at this restaurant'],
+        },
+    ],
+    // Optional fields
     provider: { organization: 'LiquidCrypto Agents' },
-    capabilities: { streaming: false, pushNotifications: true },
     extensions: {
         a2ui: { version: '0.8', supportedComponents: ['Card', 'List', 'Button', 'Image', 'TextField', 'Divider'] },
         integrations: {
             googlePlaces: true,
             openTable: isOpenTableConfigured(),
-        }
-    }
+        },
+    },
 });
 
 // Store last fetched restaurants for booking flow

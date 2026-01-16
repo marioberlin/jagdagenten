@@ -2,24 +2,7 @@
  * In-memory event queue implementation
  */
 
-import { TaskEvent } from '../types';
-
-/**
- * Event queue for streaming responses
- */
-export interface EventQueue {
-  /** Enqueues an event */
-  enqueue(event: TaskEvent): Promise<void>;
-
-  /** Dequeues an event */
-  dequeue(taskId: string): Promise<TaskEvent | null>;
-
-  /** Subscribes to events for a task */
-  subscribe(
-    taskId: string,
-    callback: (event: TaskEvent) => void
-  ): () => void;
-}
+import type { TaskEvent, EventQueue } from './interfaces';
 
 /**
  * In-memory event queue
@@ -33,9 +16,9 @@ export class InMemoryEventQueue implements EventQueue {
    * Enqueues an event
    */
   async enqueue(event: TaskEvent): Promise<void> {
-    const taskId = (event as any).task_id;
+    const taskId = event.taskId;
     if (!taskId) {
-      throw new Error('Event must have a task_id');
+      throw new Error('Event must have a taskId');
     }
 
     if (!this.events.has(taskId)) {

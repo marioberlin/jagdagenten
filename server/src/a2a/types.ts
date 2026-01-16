@@ -163,8 +163,11 @@ export interface AgentSkill {
     id: string;
     name: string;
     description: string;
-    tags?: string[];
+    tags: string[];              // Required in v1.0
     examples?: string[];
+    inputModes?: string[];       // Override defaults
+    outputModes?: string[];      // Override defaults
+    security?: Array<Record<string, string[]>>;
 }
 
 export interface AgentCapabilities {
@@ -226,29 +229,48 @@ export interface SecurityScheme {
     };
 }
 
-export interface AgentCard {
-    name: string;
-    description: string;
+/** A2A v1.0 AgentInterface - endpoint declaration */
+export interface AgentInterface {
     url: string;
-    version: string;
-    /** A2A protocol version(s) supported */
-    protocolVersion?: string;
-    supportedVersions?: string[];
-    documentationUrl?: string;
+    protocolBinding: 'JSONRPC' | 'GRPC' | 'HTTP+JSON';
+    tenant?: string;
+}
+
+/**
+ * A2A v1.0 AgentCard - Self-describing agent manifest
+ *
+ * All field names use camelCase as specified in A2A v1.0 spec.
+ * @see https://a2a-protocol.org/latest/specification/#5-agent-discovery-the-agent-card
+ */
+export interface AgentCard {
+    // Required fields (v1.0)
+    protocolVersions: string[];              // Supported A2A versions (e.g., ["1.0"])
+    name: string;                            // Human-readable agent name
+    description: string;                     // Agent purpose description
+    version: string;                         // Agent version (semver)
+    supportedInterfaces: AgentInterface[];   // Ordered list of interfaces
+    capabilities: AgentCapabilities;         // Capability set
+    defaultInputModes: string[];             // Supported input media types
+    defaultOutputModes: string[];            // Supported output media types
+    skills: AgentSkill[];                    // Agent capabilities
+
+    // Optional fields
     provider?: {
         organization: string;
         url?: string;
     };
-    capabilities?: AgentCapabilities;
-    skills?: AgentSkill[];
-    defaultInputModes?: string[];
-    defaultOutputModes?: string[];
-    /** v1.0: Protocol bindings (JSON-RPC, gRPC, REST) */
-    protocols?: ProtocolBindings;
+    documentationUrl?: string;
+    iconUrl?: string;
     /** v1.0: Security/authentication schemes */
     securitySchemes?: Record<string, SecurityScheme>;
     /** Required security scheme names */
-    security?: string[];
+    security?: Array<Record<string, string[]>>;
+    /** Card signatures for authenticity verification */
+    signatures?: Array<{
+        protected: string;
+        signature: string;
+        header?: Record<string, unknown>;
+    }>;
     extensions?: {
         a2ui?: A2UIExtension;
         [key: string]: unknown;

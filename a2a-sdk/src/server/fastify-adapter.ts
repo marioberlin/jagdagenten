@@ -1,16 +1,16 @@
 /**
- * Fastify adapter for A2A server
+ * Fastify adapter for A2A server (v1.0)
+ * Provides Fastify integration for the A2A Protocol
  */
 
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { AgentExecutor } from './interfaces';
-import { AgentCard } from '../types';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { AgentCard, JSONRPCRequest } from '../types/v1';
+import type { AgentExecutor } from './interfaces';
 import { DefaultRequestHandler } from './request-handler';
 import { InMemoryTaskStore } from './task-store';
 import { InMemoryEventQueue } from './event-queue';
 import { JSONRPCHandler } from './jsonrpc-handler';
 import { DefaultServerCallContext } from './context';
-import { ServerError } from '../utils/errors';
 
 export interface FastifyA2AConfig {
   /** Agent card describing the agent */
@@ -30,7 +30,7 @@ export interface FastifyA2AConfig {
 }
 
 /**
- * Creates a Fastify server for A2A protocol
+ * Creates a Fastify server for A2A protocol (v1.0)
  */
 export class FastifyA2AServer {
   private fastify: FastifyInstance;
@@ -54,6 +54,8 @@ export class FastifyA2AServer {
       this.requestHandler
     );
 
+    // Dynamic import to avoid bundling issues
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     this.fastify = require('fastify')({
       logger: {
         level: config.logLevel || 'info',
@@ -64,27 +66,99 @@ export class FastifyA2AServer {
   }
 
   /**
-   * Sets up the Fastify routes
+   * Sets up the Fastify routes for A2A v1.0 methods
    */
   private setupRoutes(): void {
-    // JSON-RPC endpoint
+    // JSON-RPC endpoint (A2A v1.0)
     this.fastify.post('/a2a/v1', async (
       request: FastifyRequest,
       reply: FastifyReply
     ) => {
       try {
-        const body = request.body as any;
-        const requestId = body?.id || null;
+        const body = request.body as JSONRPCRequest;
+        const requestId = body?.id ?? null;
 
         // Build context
         const context = new DefaultServerCallContext({
           headers: request.headers as Record<string, string>,
         });
 
-        // Route based on method
+        // Route based on method (v1.0 PascalCase methods)
         const method = body?.method;
 
         switch (method) {
+          // v1.0 Methods
+          case 'SendMessage': {
+            const response = await this.jsonrpcHandler.onSendMessage(body, context);
+            return reply.send(response);
+          }
+
+          case 'StreamMessage': {
+            reply.raw.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              Connection: 'keep-alive',
+            });
+
+            for await (const event of this.jsonrpcHandler.onStreamMessage(body, context)) {
+              reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+            }
+
+            reply.raw.end();
+            return reply;
+          }
+
+          case 'GetTask': {
+            const response = await this.jsonrpcHandler.onGetTask(body, context);
+            return reply.send(response);
+          }
+
+          case 'CancelTask': {
+            const response = await this.jsonrpcHandler.onCancelTask(body, context);
+            return reply.send(response);
+          }
+
+          case 'SubscribeToTask': {
+            reply.raw.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              Connection: 'keep-alive',
+            });
+
+            for await (const event of this.jsonrpcHandler.onSubscribeToTask(body, context)) {
+              reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+            }
+
+            reply.raw.end();
+            return reply;
+          }
+
+          case 'SetTaskPushNotificationConfig': {
+            const response = await this.jsonrpcHandler.onSetPushNotificationConfig(body, context);
+            return reply.send(response);
+          }
+
+          case 'GetTaskPushNotificationConfig': {
+            const response = await this.jsonrpcHandler.onGetPushNotificationConfig(body, context);
+            return reply.send(response);
+          }
+
+          case 'ListTaskPushNotificationConfig': {
+            const response = await this.jsonrpcHandler.onListPushNotificationConfig(body, context);
+            return reply.send(response);
+          }
+
+          case 'DeleteTaskPushNotificationConfig': {
+            const response = await this.jsonrpcHandler.onDeletePushNotificationConfig(body, context);
+            return reply.send(response);
+          }
+
+          case 'GetExtendedAgentCard': {
+            const response = await this.jsonrpcHandler.onGetExtendedAgentCard(body, context);
+            return reply.send(response);
+          }
+
+          // Legacy methods (backward compatibility)
           case 'message/send': {
             const response = await this.jsonrpcHandler.onMessageSend(body, context);
             return reply.send(response);
@@ -98,7 +172,7 @@ export class FastifyA2AServer {
             });
 
             for await (const event of this.jsonrpcHandler.onMessageSendStream(body, context)) {
-              reply.raw.write(`data: ${JSON.stringify(event.root)}\n\n`);
+              reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
             }
 
             reply.raw.end();
@@ -123,7 +197,7 @@ export class FastifyA2AServer {
             });
 
             for await (const event of this.jsonrpcHandler.onResubscribeToTask(body, context)) {
-              reply.raw.write(`data: ${JSON.stringify(event.root)}\n\n`);
+              reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
             }
 
             reply.raw.end();
@@ -157,12 +231,11 @@ export class FastifyA2AServer {
 
           default: {
             return reply.send({
-              root: {
-                id: requestId,
-                error: {
-                  code: -32601,
-                  message: 'Method not found',
-                },
+              jsonrpc: '2.0',
+              id: requestId,
+              error: {
+                code: -32601,
+                message: 'Method not found',
               },
             });
           }
@@ -170,26 +243,25 @@ export class FastifyA2AServer {
       } catch (error) {
         request.log.error(error);
         return reply.send({
-          root: {
-            id: (request.body as any)?.id || null,
-            error: {
-              code: -32000,
-              message: error instanceof Error ? error.message : 'Internal error',
-            },
+          jsonrpc: '2.0',
+          id: (request.body as JSONRPCRequest)?.id ?? null,
+          error: {
+            code: -32603,
+            message: error instanceof Error ? error.message : 'Internal error',
           },
         });
       }
     });
 
-    // Agent card endpoint
+    // Agent card endpoint (v1.0 standard location)
     this.fastify.get('/.well-known/agent.json', async (
-      request: FastifyRequest,
+      _request: FastifyRequest,
       reply: FastifyReply
     ) => {
       return reply.send(this.config.agentCard);
     });
 
-    // Previous agent card endpoint (deprecated)
+    // Legacy agent card endpoint (deprecated)
     this.fastify.get('/agentCard', async (
       request: FastifyRequest,
       reply: FastifyReply
@@ -211,7 +283,7 @@ export class FastifyA2AServer {
       this.fastify.log.info(`A2A server listening on port ${this.config.port || 3000}`);
     } catch (error) {
       this.fastify.log.error(error);
-      process.exit(1);
+      throw error;
     }
   }
 

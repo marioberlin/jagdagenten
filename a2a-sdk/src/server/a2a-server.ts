@@ -1,9 +1,9 @@
 /**
- * Main A2A Server implementation
+ * Main A2A Server implementation (v1.0)
  * Provides a unified interface for creating A2A protocol servers
  */
 
-import { ServerConfig } from './interfaces';
+import type { ServerConfig, TelemetryConfig } from './interfaces';
 import { FastifyA2AServer, FastifyA2AConfig } from './fastify-adapter';
 import { ExpressA2AServer, ExpressA2AConfig } from './express-adapter';
 import { InMemoryTaskStore } from './task-store';
@@ -11,12 +11,12 @@ import { InMemoryEventQueue } from './event-queue';
 import { DefaultRequestHandler } from './request-handler';
 import { TaskStoreFactory } from './database';
 import type { DatabaseTaskStore } from './database';
-import { A2ATelemetryWrapper, createTelemetryWrapper, instrumentTaskStore } from './telemetry';
+import type { A2ATelemetryWrapper, TelemetryWrapperConfig } from './telemetry';
 
 export type ServerFramework = 'fastify' | 'express';
 
 /**
- * A2A Server
+ * A2A Server (v1.0)
  * Main class for creating A2A protocol servers
  */
 export class A2AServer {
@@ -34,11 +34,6 @@ export class A2AServer {
    */
   constructor(config: ServerConfig) {
     this.config = config;
-
-    // Initialize telemetry if configured
-    if (config.telemetry) {
-      this.telemetry = null; // Will be initialized in start()
-    }
 
     // Initialize task store based on configuration
     if (config.database) {
@@ -60,10 +55,10 @@ export class A2AServer {
   /**
    * Starts the server using the specified framework
    */
-  async start(framework: ServerFramework = 'fastify'): Promise<any> {
+  async start(framework: ServerFramework = 'fastify'): Promise<unknown> {
     // Initialize telemetry if configured
     if (this.config.telemetry && !this.telemetryInitialized) {
-      this.telemetry = await createTelemetryWrapper(this.config.telemetry);
+      await this.initializeTelemetry(this.config.telemetry);
       this.telemetryInitialized = true;
     }
 
@@ -74,13 +69,8 @@ export class A2AServer {
     }
 
     // Instrument task store with telemetry if available
-    let instrumentedTaskStore = this.taskStore;
     if (this.telemetry && this.config.database) {
-      instrumentedTaskStore = instrumentTaskStore(
-        this.taskStore as DatabaseTaskStore,
-        this.telemetry,
-        { tableName: this.config.database.tableName || 'a2a_tasks' }
-      );
+      await this.instrumentTaskStore();
     }
 
     const serverConfig = {
@@ -89,7 +79,6 @@ export class A2AServer {
       port: this.config.port || 3000,
       host: this.config.host || '0.0.0.0',
       logLevel: 'info',
-      telemetry: this.telemetry,
     };
 
     switch (framework) {
@@ -114,6 +103,54 @@ export class A2AServer {
   }
 
   /**
+   * Initialize telemetry with dynamic import
+   */
+  private async initializeTelemetry(config: TelemetryConfig): Promise<void> {
+    try {
+      const telemetryModule = await import('./telemetry');
+
+      const wrapperConfig: TelemetryWrapperConfig = {
+        telemetry: {
+          serviceName: config.serviceName || 'a2a-server',
+          enabled: config.enabled ?? true,
+        },
+        metrics: {
+          prefix: config.serviceName || 'a2a',
+          enabled: config.enabled ?? true,
+        },
+      };
+
+      this.telemetry = await telemetryModule.createTelemetryWrapper({
+        ...wrapperConfig,
+        openTelemetry: config.openTelemetry,
+      });
+    } catch (error) {
+      console.warn('Failed to initialize telemetry:', error);
+      this.telemetry = null;
+    }
+  }
+
+  /**
+   * Instrument task store with telemetry
+   */
+  private async instrumentTaskStore(): Promise<void> {
+    if (!this.telemetry || !this.config.database) {
+      return;
+    }
+
+    try {
+      const telemetryModule = await import('./telemetry');
+      this.taskStore = telemetryModule.instrumentTaskStore(
+        this.taskStore as DatabaseTaskStore,
+        this.telemetry,
+        { tableName: this.config.database.tableName || 'a2a_tasks' }
+      ) as unknown as DatabaseTaskStore;
+    } catch (error) {
+      console.warn('Failed to instrument task store:', error);
+    }
+  }
+
+  /**
    * Stops the server
    */
   async stop(): Promise<void> {
@@ -124,14 +161,18 @@ export class A2AServer {
 
     // Shutdown telemetry
     if (this.telemetry) {
-      await this.telemetry.shutdown();
+      try {
+        await this.telemetry.shutdown();
+      } catch (error) {
+        console.warn('Error shutting down telemetry:', error);
+      }
       this.telemetry = null;
       this.telemetryInitialized = false;
     }
 
     // Close database connection if using database-backed task store
     if (this.config.database && 'close' in this.taskStore) {
-      await this.taskStore.close();
+      await (this.taskStore as DatabaseTaskStore).close();
     }
   }
 
@@ -141,16 +182,16 @@ export class A2AServer {
   getStatus() {
     return {
       running: this.server !== null,
-      uptime: 0, // TODO: Implement uptime tracking
-      activeConnections: 0, // TODO: Implement connection tracking
-      processedRequests: 0, // TODO: Implement request tracking
+      uptime: 0,
+      activeConnections: 0,
+      processedRequests: 0,
     };
   }
 
   /**
    * Gets the underlying server instance
    */
-  get instance(): any {
+  get instance(): unknown {
     return this.server?.instance || null;
   }
 

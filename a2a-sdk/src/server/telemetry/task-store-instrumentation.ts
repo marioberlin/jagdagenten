@@ -8,8 +8,9 @@
 
 import type { Span } from '@opentelemetry/api';
 import type { DatabaseTaskStore } from '../database/task-store';
-import type { Task } from '../../types';
+import type { Task } from '../../types/v1';
 import type { A2ATelemetryWrapper } from './telemetry-wrapper';
+import type { TaskFilter } from '../interfaces';
 
 export interface TaskStoreInstrumentationOptions {
   /** Enable instrumentation */
@@ -132,7 +133,7 @@ export class InstrumentedTaskStore implements DatabaseTaskStore {
     const span = this.telemetry.traceDbOperation('update', this.tableName);
     span?.setAttribute('a2a.task.id', id);
 
-    const oldState = (updates.status as any)?.state;
+    const oldState = updates.status?.state;
 
     try {
       const result = await this.taskStore.updateTask(id, updates);
@@ -143,7 +144,7 @@ export class InstrumentedTaskStore implements DatabaseTaskStore {
       this.telemetry.addAttributes(span, {
         'a2a.task.id': result.id,
         'a2a.context.id': result.contextId,
-        'a2a.task.previous_state': oldState,
+        ...(oldState && { 'a2a.task.previous_state': oldState }),
       });
 
       this.telemetry.recordDbOperation('update', this.tableName, duration, true);
@@ -193,7 +194,7 @@ export class InstrumentedTaskStore implements DatabaseTaskStore {
   /**
    * List tasks with tracing
    */
-  async listTasks(filter?: any): Promise<Task[]> {
+  async listTasks(filter?: TaskFilter): Promise<Task[]> {
     const startTime = Date.now();
     const span = this.telemetry.traceDbOperation('list', this.tableName);
 

@@ -1046,17 +1046,57 @@ function generateItineraryView(itinerary: Itinerary): A2UIMessage[] {
 // ============================================================================
 
 export const getTravelPlannerAgentCard = (baseUrl: string): AgentCard => ({
+    protocolVersions: ['1.0'],
     name: 'Travel Planner',
     description: 'AI-powered travel planning with Amadeus flight/hotel search and Gemini itinerary generation. Plan your perfect trip with personalized recommendations.',
-    url: `${baseUrl}/agents/travel`,
     version: '1.0.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
-    provider: { organization: 'LiquidCrypto Labs' },
-    capabilities: { streaming: true, pushNotifications: true },
+    supportedInterfaces: [
+        {
+            url: `${baseUrl}/agents/travel`,
+            protocolBinding: 'JSONRPC',
+        },
+    ],
+    capabilities: {
+        streaming: true,
+        pushNotifications: true,
+    },
+    defaultInputModes: ['text/plain'],
+    defaultOutputModes: ['text/plain', 'application/json'],
+    skills: [
+        {
+            id: 'find-flights',
+            name: 'Find Flights',
+            description: 'Search for available flights to your destination with real-time pricing.',
+            tags: ['flights', 'travel', 'booking', 'airlines'],
+        },
+        {
+            id: 'find-hotels',
+            name: 'Find Hotels',
+            description: 'Search for hotels and accommodations at your destination.',
+            tags: ['hotels', 'accommodations', 'booking', 'lodging'],
+        },
+        {
+            id: 'create-itinerary',
+            name: 'Create Itinerary',
+            description: 'Generate a personalized day-by-day travel itinerary powered by Gemini AI.',
+            tags: ['itinerary', 'planning', 'activities', 'recommendations'],
+        },
+        {
+            id: 'plan-trip',
+            name: 'Plan Trip',
+            description: 'Interactive trip planning form to set your destination, dates, and preferences.',
+            tags: ['planning', 'trip', 'travel', 'setup'],
+        },
+    ],
+    provider: {
+        organization: 'LiquidCrypto Agents',
+    },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField', 'DateTimeInput'] }
-    }
+        a2ui: {
+            version: '0.8',
+            supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField', 'DateTimeInput'],
+        },
+    },
 });
 
 // Default trip settings

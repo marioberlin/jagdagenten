@@ -294,17 +294,36 @@ function generateMarketOverview(stats: MarketStats): A2UIMessage[] {
 }
 
 export const getRizzChartsAgentCard = (baseUrl: string): AgentCard => ({
+    protocolVersions: ['1.0'],
     name: 'RizzCharts Analytics',
     description: 'Data visualization and analytics agent with real-time market data',
-    url: `${baseUrl}/agents/rizzcharts`,
     version: '1.6.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
-    provider: { organization: 'LiquidCrypto Agents' },
+    supportedInterfaces: [
+        { url: `${baseUrl}/agents/rizzcharts`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: { streaming: false, pushNotifications: false },
+    defaultInputModes: ['text/plain'],
+    defaultOutputModes: ['text/plain', 'application/json'],
+    skills: [
+        {
+            id: 'market-overview',
+            name: 'Market Overview',
+            description: 'Get real-time crypto market data and statistics',
+            tags: ['crypto', 'market', 'analytics', 'data'],
+            examples: ['Show market overview', 'What are the top cryptocurrencies?'],
+        },
+        {
+            id: 'price-charts',
+            name: 'Price Charts',
+            description: 'Visualize cryptocurrency price trends',
+            tags: ['charts', 'visualization', 'prices'],
+            examples: ['Show BTC price chart', 'ETH price history'],
+        },
+    ],
+    provider: { organization: 'LiquidCrypto Agents' },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'Text', 'Row', 'Column', 'Button', 'Divider'] }
-    }
+        a2ui: { version: '0.8', supportedComponents: ['Card', 'Text', 'Row', 'Column', 'Button', 'Divider'] },
+    },
 });
 
 export async function handleRizzChartsRequest(params: SendMessageParams): Promise<any> {

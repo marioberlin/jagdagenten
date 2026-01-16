@@ -1,40 +1,43 @@
 /**
  * gRPC Server Adapter for the A2A server.
+ *
+ * NOTE: To use gRPC, you need to:
+ * 1. Install @grpc/grpc-js: npm install @grpc/grpc-js
+ * 2. Generate proto types from the official A2A proto file
+ * 3. Provide the generated service definition
  */
 
-import type { AgentExecutor } from './request-handler.js';
-import type { AgentCard } from '../types/index.js';
-import { DefaultRequestHandler } from './request-handler.js';
-import { GrpcHandler } from './grpc-handler.js';
-import { InMemoryTaskStore } from './task-store.js';
-import { InMemoryEventQueue } from './event-queue.js';
+import type { AgentExecutor, TaskStore, EventQueue, DatabaseConfig } from './interfaces';
+import type { AgentCard } from '../types/v1';
+import { DefaultRequestHandler } from './request-handler';
+import { InMemoryTaskStore } from './task-store';
+import { InMemoryEventQueue } from './event-queue';
 import { TaskStoreFactory } from './database';
-import type { DatabaseTaskStore } from './database';
-import type { DatabaseConfig } from './interfaces';
-
-import type { Server } from '@grpc/grpc-js';
-import type {
-  ServerCredentials,
-  ServiceDefinition,
-} from '@grpc/grpc-js';
 
 export interface GrpcServerConfig {
   agentCard: AgentCard;
   executor: AgentExecutor;
   port: number;
   host?: string;
-  credentials?: ServerCredentials;
-  serviceDefinition?: ServiceDefinition;
+  /** gRPC credentials - if not provided, uses insecure credentials */
+  credentials?: unknown;
+  /** Generated gRPC service definition from proto file */
+  serviceDefinition?: unknown;
   database?: DatabaseConfig;
 }
 
+/**
+ * gRPC A2A Server
+ *
+ * Provides a gRPC transport for the A2A protocol as defined in the
+ * official A2A v1.0 specification.
+ */
 export class GrpcA2AServer {
   private readonly config: GrpcServerConfig;
-  private server?: Server;
+  private server?: unknown;
   private requestHandler: DefaultRequestHandler;
-  private grpcHandler: GrpcHandler;
-  private taskStore: InMemoryTaskStore | DatabaseTaskStore;
-  private eventQueue: InMemoryEventQueue;
+  private taskStore: TaskStore;
+  private eventQueue: EventQueue;
   private databaseInitialized = false;
 
   constructor(config: GrpcServerConfig) {
@@ -46,7 +49,7 @@ export class GrpcA2AServer {
     // Initialize task store based on configuration
     if (config.database) {
       // Database-backed task store
-      this.taskStore = TaskStoreFactory.create(config.database);
+      this.taskStore = TaskStoreFactory.create(config.database) as TaskStore;
     } else {
       // In-memory task store (default)
       this.taskStore = new InMemoryTaskStore();
@@ -58,10 +61,20 @@ export class GrpcA2AServer {
       this.taskStore,
       this.eventQueue
     );
-    this.grpcHandler = new GrpcHandler({
-      agentCard: this.config.agentCard,
-      requestHandler: this.requestHandler,
-    });
+  }
+
+  /**
+   * Get the request handler for custom gRPC implementations
+   */
+  getRequestHandler(): DefaultRequestHandler {
+    return this.requestHandler;
+  }
+
+  /**
+   * Get the agent card
+   */
+  getAgentCard(): AgentCard {
+    return this.config.agentCard;
   }
 
   async start(): Promise<void> {
@@ -69,33 +82,37 @@ export class GrpcA2AServer {
 
     // Initialize database if configured
     if (this.config.database && !this.databaseInitialized) {
-      await this.taskStore.initialize();
+      if (this.taskStore.initialize) {
+        await this.taskStore.initialize();
+      }
       this.databaseInitialized = true;
     }
 
-    this.server = new grpc.Server();
+    const server = new grpc.Server();
+    this.server = server;
+
+    if (!this.config.serviceDefinition) {
+      throw new Error(
+        'gRPC service definition is required. ' +
+        'Generate it from the official A2A proto file: ' +
+        'https://github.com/a2aproject/A2A/blob/main/specification/grpc/a2a.proto'
+      );
+    }
 
     // Add service to server
-    // In a real implementation, you'd use the generated service definition
-    this.server.addService(
-      this.config.serviceDefinition || ({} as ServiceDefinition),
-      {
-        sendMessage: this.grpcHandler.sendMessage.bind(this.grpcHandler),
-        sendStreamingMessage: this.grpcHandler.sendStreamingMessage.bind(this.grpcHandler),
-        getTask: this.grpcHandler.getTask.bind(this.grpcHandler),
-        cancelTask: this.grpcHandler.cancelTask.bind(this.grpcHandler),
-        taskSubscription: this.grpcHandler.taskSubscription.bind(this.grpcHandler),
-        getAgentCard: this.grpcHandler.getAgentCard.bind(this.grpcHandler),
-        getTaskPushNotificationConfig: this.grpcHandler.getTaskPushNotificationConfig.bind(this.grpcHandler),
-        createTaskPushNotificationConfig: this.grpcHandler.createTaskPushNotificationConfig.bind(this.grpcHandler),
-      },
+    // The service definition and implementation types depend on the generated proto
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    server.addService(
+      this.config.serviceDefinition as any,
+      this.createServiceImplementation() as any
     );
 
     return new Promise((resolve, reject) => {
-      this.server!.bindAsync(
+      const credentials = this.config.credentials || grpc.ServerCredentials.createInsecure();
+      server.bindAsync(
         `${this.config.host}:${this.config.port}`,
-        this.config.credentials || grpc.ServerCredentials.createInsecure(),
-        (error, port) => {
+        credentials as any,
+        (error: Error | null, port: number) => {
           if (error) {
             reject(error);
           } else {
@@ -107,12 +124,64 @@ export class GrpcA2AServer {
     });
   }
 
+  /**
+   * Create the gRPC service implementation
+   * Override this method to provide custom implementations
+   */
+  protected createServiceImplementation(): Record<string, unknown> {
+    // These methods should be implemented based on the generated proto types
+    // The implementation will depend on the generated types from the proto file
+    return {
+      sendMessage: async (_call: unknown, callback: (error: Error | null, response?: unknown) => void) => {
+        try {
+          callback(new Error('Proto types not generated. Please generate from a2a.proto'));
+        } catch (error) {
+          callback(error as Error);
+        }
+      },
+
+      sendStreamingMessage: async (_call: unknown) => {
+        console.warn('Proto types not generated. Please generate from a2a.proto');
+      },
+
+      getTask: async (_call: unknown, callback: (error: Error | null, response?: unknown) => void) => {
+        try {
+          callback(new Error('Proto types not generated. Please generate from a2a.proto'));
+        } catch (error) {
+          callback(error as Error);
+        }
+      },
+
+      cancelTask: async (_call: unknown, callback: (error: Error | null, response?: unknown) => void) => {
+        try {
+          callback(new Error('Proto types not generated. Please generate from a2a.proto'));
+        } catch (error) {
+          callback(error as Error);
+        }
+      },
+
+      subscribeToTask: async (_call: unknown) => {
+        console.warn('Proto types not generated. Please generate from a2a.proto');
+      },
+
+      getAgentCard: async (_call: unknown, callback: (error: Error | null, response?: unknown) => void) => {
+        try {
+          // Return the agent card (this doesn't depend on proto types)
+          callback(null, this.config.agentCard);
+        } catch (error) {
+          callback(error as Error);
+        }
+      },
+    };
+  }
+
   async stop(): Promise<void> {
     return new Promise(async (resolve) => {
-      if (this.server) {
-        this.server.tryShutdown(async () => {
+      const server = this.server as { tryShutdown?: (callback: () => void) => void };
+      if (server && server.tryShutdown) {
+        server.tryShutdown(async () => {
           // Close database connection if using database-backed task store
-          if (this.config.database && 'close' in this.taskStore) {
+          if (this.config.database && this.taskStore.close) {
             await this.taskStore.close();
           }
           console.log('gRPC server shutdown complete');

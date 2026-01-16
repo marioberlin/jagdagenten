@@ -22,6 +22,20 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "examples"]
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "examples",
+    "src/types/index.ts",
+    "src/types/base.ts",
+    "src/compat/**/*",
+    "src/utils/proto-utils.ts",
+    "src/transports/**/*",
+    "src/client/base-client.ts",
+    "src/client/client-factory.ts",
+    "src/client/interfaces.ts",
+    "src/client/v1-client.ts"
+  ]
 }

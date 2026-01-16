@@ -6,30 +6,26 @@
  */
 
 import mysql from 'mysql2/promise';
-import { Task } from '../../types';
+import type { Task } from '../../types/v1';
 import { BaseDatabaseTaskStore, DatabaseConfig } from './task-store';
+
+/**
+ * MySQL connection configuration
+ */
+export interface MysqlConnectionConfig {
+  host: string;
+  port?: number;
+  user: string;
+  password: string;
+  database: string;
+}
 
 /**
  * MySQL-specific configuration
  */
-export interface MysqlConfig extends DatabaseConfig {
+export interface MysqlConfig extends Omit<DatabaseConfig, 'connection'> {
   /** MySQL connection configuration */
-  connection: {
-    host: string;
-    port?: number;
-    user: string;
-    password: string;
-    database: string;
-  };
-
-  /** Enable SSL for connections (default: false) */
-  ssl?: boolean;
-
-  /** Connection retry attempts (default: 3) */
-  retryAttempts?: number;
-
-  /** Delay between retry attempts in ms (default: 1000) */
-  retryDelay?: number;
+  connection: MysqlConnectionConfig;
 }
 
 /**
@@ -44,34 +40,35 @@ export interface MysqlConfig extends DatabaseConfig {
  */
 export class MysqlTaskStore extends BaseDatabaseTaskStore {
   private pool: mysql.Pool;
+  private mysqlConfig: MysqlConfig;
 
   constructor(config: MysqlConfig) {
-    super(config);
-    this.config = {
+    super({ ...config, connection: config.connection as unknown as string });
+    this.mysqlConfig = {
       retryAttempts: 3,
       retryDelay: 1000,
       ssl: false,
       ...config,
     };
 
+    const conn = this.mysqlConfig.connection;
+
     // Initialize connection pool
     this.pool = mysql.createPool({
-      host: this.config.connection.host,
-      port: this.config.connection.port || 3306,
-      user: this.config.connection.user,
-      password: this.config.connection.password,
-      database: this.config.connection.database,
-      ssl: this.config.ssl ? { rejectUnauthorized: false } : undefined,
-      connectionLimit: this.config.maxConnections,
+      host: conn.host,
+      port: conn.port || 3306,
+      user: conn.user,
+      password: conn.password,
+      database: conn.database,
+      ssl: this.mysqlConfig.ssl ? { rejectUnauthorized: false } : undefined,
+      connectionLimit: this.mysqlConfig.maxConnections || 10,
       waitForConnections: true,
       queueLimit: 0,
-      acquireTimeout: this.config.timeout,
-      timeout: this.config.timeout,
     });
 
     // Handle pool errors
-    this.pool.on('error', (err) => {
-      console.error('MySQL pool error:', err);
+    this.pool.on('connection', () => {
+      // Connection acquired
     });
   }
 
@@ -90,9 +87,9 @@ export class MysqlTaskStore extends BaseDatabaseTaskStore {
           status_state VARCHAR(100),
           status_message TEXT,
           status_timestamp TIMESTAMP(3),
-          artifacts JSON DEFAULT '[]',
-          history JSON DEFAULT '[]',
-          metadata JSON DEFAULT '{}',
+          artifacts JSON DEFAULT ('[]'),
+          history JSON DEFAULT ('[]'),
+          metadata JSON DEFAULT ('{}'),
           created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
           updated_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
           INDEX idx_context_id (context_id),
@@ -206,13 +203,13 @@ export class MysqlTaskStore extends BaseDatabaseTaskStore {
     const [rows] = await this.pool.query(
       `SELECT * FROM ${this.tableName} WHERE id = ?`,
       [id]
-    ) as [any[], any];
+    ) as [mysql.RowDataPacket[], mysql.FieldPacket[]];
 
     if (rows.length === 0) {
       return null;
     }
 
-    return this.deserializeTask(rows[0]);
+    return this.deserializeTask(rows[0] as Record<string, unknown>);
   }
 
   /**
@@ -245,9 +242,9 @@ export class MysqlTaskStore extends BaseDatabaseTaskStore {
       ${this.buildPaginationClause(filter)}
     `;
 
-    const [rows] = await this.pool.query(query, params) as [any[], any];
+    const [rows] = await this.pool.query(query, params) as [mysql.RowDataPacket[], mysql.FieldPacket[]];
 
-    return rows.map(row => this.deserializeTask(row));
+    return rows.map(row => this.deserializeTask(row as Record<string, unknown>));
   }
 
   /**
@@ -262,15 +259,17 @@ export class MysqlTaskStore extends BaseDatabaseTaskStore {
    */
   private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
     let lastError: Error | null = null;
+    const retryAttempts = this.mysqlConfig.retryAttempts || 3;
+    const retryDelay = this.mysqlConfig.retryDelay || 1000;
 
-    for (let attempt = 1; attempt <= this.config.retryAttempts!; attempt++) {
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error as Error;
 
-        if (attempt < this.config.retryAttempts!) {
-          const delay = this.config.retryDelay! * Math.pow(2, attempt - 1);
+        if (attempt < retryAttempts) {
+          const delay = retryDelay * Math.pow(2, attempt - 1);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }

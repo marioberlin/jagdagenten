@@ -9,7 +9,7 @@
  * - Database operation metrics
  */
 
-import type { Span } from '@opentelemetry/api';
+// OpenTelemetry types are imported dynamically
 
 export interface MetricsConfig {
   /** Enable metrics collection */
@@ -57,12 +57,10 @@ export class A2AMetricsCollector {
 
     try {
       const api = await import('@opentelemetry/api');
-      const { MeterProvider } = await import('@opentelemetry/api');
 
-      const meterProvider = new MeterProvider();
-      api.metrics.setGlobalMeterProvider(meterProvider);
-
-      const meter = meterProvider.getMeter(
+      // Get the global meter provider (assumes SDK is already configured)
+      // If SDK is not configured, getMeter will return a no-op meter
+      const meter = api.metrics.getMeter(
         this.config.prefix,
         '1.0.0'
       );
@@ -71,7 +69,7 @@ export class A2AMetricsCollector {
       this.metrics.taskExecutionDuration = this.config.enableHistograms
         ? meter.createHistogram(`${this.config.prefix}.task.execution.duration`, {
             description: 'Task execution duration in seconds',
-            boundaries: this.config.durationBuckets,
+            advice: { explicitBucketBoundaries: this.config.durationBuckets },
           })
         : meter.createCounter(`${this.config.prefix}.task.execution.duration`, {
             description: 'Task execution duration in seconds',
@@ -96,7 +94,7 @@ export class A2AMetricsCollector {
       this.metrics.dbOperationDuration = this.config.enableHistograms
         ? meter.createHistogram(`${this.config.prefix}.db.operation.duration`, {
             description: 'Database operation duration in seconds',
-            boundaries: this.config.durationBuckets,
+            advice: { explicitBucketBoundaries: this.config.durationBuckets },
           })
         : meter.createCounter(`${this.config.prefix}.db.operation.duration`, {
             description: 'Database operation duration in seconds',
@@ -116,7 +114,7 @@ export class A2AMetricsCollector {
       this.metrics.requestDuration = this.config.enableHistograms
         ? meter.createHistogram(`${this.config.prefix}.request.duration`, {
             description: 'Request duration in seconds',
-            boundaries: this.config.durationBuckets,
+            advice: { explicitBucketBoundaries: this.config.durationBuckets },
           })
         : meter.createCounter(`${this.config.prefix}.request.duration`, {
             description: 'Request duration in seconds',
@@ -245,8 +243,8 @@ export class A2AMetricsCollector {
 
     try {
       const api = await import('@opentelemetry/api');
-      const provider = api.metrics.getMeterProvider();
-      if (provider && 'shutdown' in provider) {
+      const provider = api.metrics.getMeterProvider() as any;
+      if (provider && typeof provider.shutdown === 'function') {
         await provider.shutdown();
       }
     } catch (error) {

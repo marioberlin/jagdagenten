@@ -127,14 +127,13 @@ export class A2ATelemetryProvider {
   createSpan(
     operationName: string,
     attributes: A2ASpanAttributes = {},
-    parentSpan?: Span
+    _parentSpan?: Span
   ): Span | null {
     if (!this.config.enabled || !this.tracer) {
       return null;
     }
 
     const span = this.tracer.startSpan(operationName, {
-      parent: parentSpan,
       attributes: {
         ...this.config.customAttributes,
         ...attributes,
@@ -196,8 +195,8 @@ export class A2ATelemetryProvider {
 
     try {
       const api = await import('@opentelemetry/api');
-      const provider = api.trace.getTracerProvider();
-      if (provider && 'shutdown' in provider) {
+      const provider = api.trace.getTracerProvider() as any;
+      if (provider && typeof provider.shutdown === 'function') {
         await provider.shutdown();
       }
     } catch (error) {

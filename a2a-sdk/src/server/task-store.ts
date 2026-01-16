@@ -2,42 +2,29 @@
  * In-memory task store implementation
  */
 
-import { Task } from '../types';
-import { ServerCallContext } from './context';
-
-/**
- * Task filter for listing tasks
- */
-export interface TaskFilter {
-  /** Filter by status */
-  status?: string;
-
-  /** Filter by context ID */
-  contextId?: string;
-
-  /** Maximum number of results */
-  limit?: number;
-
-  /** Offset for pagination */
-  offset?: number;
-}
+import type { Task } from '../types/v1';
+import type { TaskStore, TaskFilter } from './interfaces';
 
 /**
  * In-memory task store
  * Stores task objects in memory. Data is lost when the server process stops.
  */
-export class InMemoryTaskStore {
+export class InMemoryTaskStore implements TaskStore {
   private tasks: Map<string, Task> = new Map();
-  private lock: Promise<Mutex> | null = null;
+  private lockPromise: Promise<void> | null = null;
+  private lockResolve: (() => void) | null = null;
 
   /**
    * Creates a new task
    */
   async createTask(task: Task): Promise<Task> {
     await this.acquireLock();
-    this.tasks.set(task.id, task);
-    this.releaseLock();
-    return task;
+    try {
+      this.tasks.set(task.id, task);
+      return task;
+    } finally {
+      this.releaseLock();
+    }
   }
 
   /**
@@ -45,17 +32,19 @@ export class InMemoryTaskStore {
    */
   async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
     await this.acquireLock();
-    const existingTask = this.tasks.get(id);
+    try {
+      const existingTask = this.tasks.get(id);
 
-    if (!existingTask) {
+      if (!existingTask) {
+        throw new Error(`Task with id ${id} not found`);
+      }
+
+      const updatedTask = { ...existingTask, ...updates };
+      this.tasks.set(id, updatedTask);
+      return updatedTask;
+    } finally {
       this.releaseLock();
-      throw new Error(`Task with id ${id} not found`);
     }
-
-    const updatedTask = { ...existingTask, ...updates };
-    this.tasks.set(id, updatedTask);
-    this.releaseLock();
-    return updatedTask;
   }
 
   /**
@@ -70,15 +59,17 @@ export class InMemoryTaskStore {
    */
   async deleteTask(id: string): Promise<void> {
     await this.acquireLock();
-    this.tasks.delete(id);
-    this.releaseLock();
+    try {
+      this.tasks.delete(id);
+    } finally {
+      this.releaseLock();
+    }
   }
 
   /**
    * Lists tasks with optional filtering
    */
   async listTasks(filter?: TaskFilter): Promise<Task[]> {
-    await this.acquireLock();
     let tasks = Array.from(this.tasks.values());
 
     if (filter?.status) {
@@ -97,36 +88,26 @@ export class InMemoryTaskStore {
       tasks = tasks.slice(0, filter.limit);
     }
 
-    this.releaseLock();
     return tasks;
   }
 
   private async acquireLock(): Promise<void> {
-    // Simple mutex implementation for demonstration
-    // In production, consider using a proper async mutex library
-    while (this.lock) {
-      await this.lock;
+    // Simple mutex implementation
+    while (this.lockPromise) {
+      await this.lockPromise;
     }
 
-    let resolveLock: (() => void) | null = null;
-    this.lock = new Promise<Mutex>(resolve => {
-      resolveLock = resolve;
+    this.lockPromise = new Promise<void>(resolve => {
+      this.lockResolve = resolve;
     });
-
-    // Store the mutex with its release function
-    (this.lock as any).release = () => {
-      this.lock = null;
-      resolveLock!();
-    };
   }
 
   private releaseLock(): void {
-    if (this.lock && (this.lock as any).release) {
-      (this.lock as any).release();
+    const resolve = this.lockResolve;
+    this.lockPromise = null;
+    this.lockResolve = null;
+    if (resolve) {
+      resolve();
     }
   }
-}
-
-interface Mutex {
-  release(): void;
 }

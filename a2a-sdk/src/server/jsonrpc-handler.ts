@@ -1,48 +1,24 @@
 /**
- * JSON-RPC handler for A2A server
+ * JSON-RPC handler for A2A server (v1.0)
  * Maps incoming JSON-RPC requests to appropriate handler methods
+ * Compliant with A2A Protocol v1.0 specification
  */
 
-import {
+import type {
   AgentCard,
-  SendMessageRequest,
-  SendMessageResponse,
-  SendStreamingMessageRequest,
-  SendStreamingMessageResponse,
-  GetTaskRequest,
-  GetTaskResponse,
-  CancelTaskRequest,
-  CancelTaskResponse,
-  TaskResubscriptionRequest,
-  TaskPushNotificationConfigRequest,
-  TaskPushNotificationConfigResponse,
-  GetAuthenticatedExtendedCardRequest,
-  GetAuthenticatedExtendedCardResponse,
-  JSONRPCErrorResponse,
-  SendMessageSuccessResponse,
-  SendStreamingMessageSuccessResponse,
-  GetTaskSuccessResponse,
-  CancelTaskSuccessResponse,
-  GetTaskPushNotificationConfigRequest,
-  SetTaskPushNotificationConfigRequest,
-  ListTaskPushNotificationConfigRequest,
-  DeleteTaskPushNotificationConfigRequest,
-  GetTaskPushNotificationConfigSuccessResponse,
-  SetTaskPushNotificationConfigSuccessResponse,
-  ListTaskPushNotificationConfigSuccessResponse,
-  DeleteTaskPushNotificationConfigSuccessResponse,
-  GetAuthenticatedExtendedCardSuccessResponse,
-  Task,
-  Message,
-  TaskArtifactUpdateEvent,
-  TaskStatusUpdateEvent,
-  InternalError,
-  TaskNotFoundError,
-} from '../types';
-import { RequestHandler } from './request-handler';
-import { ServerCallContext } from './context';
-import { prepareResponseObject } from '../utils/response-helpers';
-import { ServerError } from '../utils/errors';
+  JSONRPCRequest,
+  JSONRPCResponse,
+  MessageSendParams,
+  JSONValue,
+} from '../types/v1';
+
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from '../types/v1';
+
+import type { RequestHandler } from './request-handler';
+import type { ServerCallContext, TaskIdParams, TaskQueryParams, TaskPushNotificationConfigRequest } from './interfaces';
 
 /**
  * Maps incoming JSON-RPC requests to the appropriate request handler method
@@ -69,314 +45,228 @@ export class JSONRPCHandler {
   }
 
   /**
-   * Handles the 'message/send' JSON-RPC method
+   * Handles the 'SendMessage' JSON-RPC method (v1.0)
    */
-  async onMessageSend(
-    request: SendMessageRequest,
+  async onSendMessage(
+    request: JSONRPCRequest,
     context?: ServerCallContext
-  ): Promise<SendMessageResponse> {
+  ): Promise<JSONRPCResponse> {
     try {
-      const taskOrMessage = await this.requestHandler.onMessageSend(
-        request.params,
-        context
-      );
+      const params = request.params as unknown as MessageSendParams;
+      const taskOrMessage = await this.requestHandler.onMessageSend(params, context);
 
-      return prepareResponseObject(
-        request.id,
-        taskOrMessage,
-        [Task, Message],
-        SendMessageSuccessResponse,
-        SendMessageResponse
-      );
+      return createSuccessResponse(request.id, taskOrMessage as unknown as JSONValue);
     } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
     }
   }
 
   /**
-   * Handles the 'message/stream' JSON-RPC method
+   * Handles the 'StreamMessage' JSON-RPC method (v1.0)
    */
-  async *onMessageSendStream(
-    request: SendStreamingMessageRequest,
+  async *onStreamMessage(
+    request: JSONRPCRequest,
     context?: ServerCallContext
-  ): AsyncIterable<SendStreamingMessageResponse> {
+  ): AsyncIterable<JSONRPCResponse> {
     try {
       // Validate streaming capability
       if (!this.agentCard.capabilities?.streaming) {
-        throw new ServerError(new Error('Streaming is not supported by the agent'));
+        yield createErrorResponse(request.id, -32004, 'Streaming is not supported by the agent');
+        return;
       }
 
-      for await (const event of this.requestHandler.onMessageSendStream(
-        request.params,
-        context
-      )) {
-        yield prepareResponseObject(
-          request.id,
-          event,
-          [Task, Message, TaskArtifactUpdateEvent, TaskStatusUpdateEvent],
-          SendStreamingMessageSuccessResponse,
-          SendStreamingMessageResponse
-        );
+      const params = request.params as unknown as MessageSendParams;
+
+      for await (const event of this.requestHandler.onMessageSendStream(params, context)) {
+        yield createSuccessResponse(request.id, event as unknown as JSONValue);
       }
     } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      yield {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
-    }
-  }
-
-  /**
-   * Handles the 'tasks/cancel' JSON-RPC method
-   */
-  async onCancelTask(
-    request: CancelTaskRequest,
-    context?: ServerCallContext
-  ): Promise<CancelTaskResponse> {
-    try {
-      const task = await this.requestHandler.onCancelTask(request.params, context);
-
-      if (task) {
-        return prepareResponseObject(
-          request.id,
-          task,
-          [Task],
-          CancelTaskSuccessResponse,
-          CancelTaskResponse
-        );
-      }
-
-      return {
-        root: {
-          id: request.id,
-          error: new TaskNotFoundError(),
-        } as JSONRPCErrorResponse,
-      };
-    } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
-    }
-  }
-
-  /**
-   * Handles the 'tasks/resubscribe' JSON-RPC method
-   */
-  async *onResubscribeToTask(
-    request: TaskResubscriptionRequest,
-    context?: ServerCallContext
-  ): AsyncIterable<SendStreamingMessageResponse> {
-    try {
-      for await (const event of this.requestHandler.onResubscribeToTask(
-        request.params,
-        context
-      )) {
-        yield prepareResponseObject(
-          request.id,
-          event,
-          [Task, Message, TaskArtifactUpdateEvent, TaskStatusUpdateEvent],
-          SendStreamingMessageSuccessResponse,
-          SendStreamingMessageResponse
-        );
-      }
-    } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      yield {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
-    }
-  }
-
-  /**
-   * Handles the 'tasks/pushNotificationConfig/get' JSON-RPC method
-   */
-  async getPushNotificationConfig(
-    request: GetTaskPushNotificationConfigRequest,
-    context?: ServerCallContext
-  ): Promise<TaskPushNotificationConfigResponse> {
-    try {
-      const config = await this.requestHandler.onGetTaskPushNotificationConfig(
-        request.params,
-        context
-      );
-
-      return prepareResponseObject(
+      yield createErrorResponse(
         request.id,
-        config,
-        [TaskPushNotificationConfigRequest],
-        GetTaskPushNotificationConfigSuccessResponse,
-        TaskPushNotificationConfigResponse
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
       );
-    } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
     }
   }
 
   /**
-   * Handles the 'tasks/pushNotificationConfig/set' JSON-RPC method
-   */
-  async setPushNotificationConfig(
-    request: SetTaskPushNotificationConfigRequest,
-    context?: ServerCallContext
-  ): Promise<TaskPushNotificationConfigResponse> {
-    try {
-      // Validate push notification capability
-      if (!this.agentCard.capabilities?.push_notifications) {
-        throw new ServerError(new Error('Push notifications are not supported by the agent'));
-      }
-
-      const config = await this.requestHandler.onSetTaskPushNotificationConfig(
-        request.params,
-        context
-      );
-
-      return prepareResponseObject(
-        request.id,
-        config,
-        [TaskPushNotificationConfigRequest],
-        SetTaskPushNotificationConfigSuccessResponse,
-        TaskPushNotificationConfigResponse
-      );
-    } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
-    }
-  }
-
-  /**
-   * Handles the 'tasks/get' JSON-RPC method
+   * Handles the 'GetTask' JSON-RPC method (v1.0)
    */
   async onGetTask(
-    request: GetTaskRequest,
+    request: JSONRPCRequest,
     context?: ServerCallContext
-  ): Promise<GetTaskResponse> {
+  ): Promise<JSONRPCResponse> {
     try {
-      const task = await this.requestHandler.onGetTask(request.params, context);
+      const params = request.params as unknown as TaskQueryParams;
+      const task = await this.requestHandler.onGetTask(params, context);
 
       if (task) {
-        return prepareResponseObject(
-          request.id,
-          task,
-          [Task],
-          GetTaskSuccessResponse,
-          GetTaskResponse
-        );
+        return createSuccessResponse(request.id, task as unknown as JSONValue);
       }
 
-      return {
-        root: {
-          id: request.id,
-          error: new TaskNotFoundError(),
-        } as JSONRPCErrorResponse,
-      };
+      return createErrorResponse(request.id, -32001, 'Task not found');
     } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
-    }
-  }
-
-  /**
-   * Handles the 'tasks/pushNotificationConfig/list' JSON-RPC method
-   */
-  async listPushNotificationConfig(
-    request: ListTaskPushNotificationConfigRequest,
-    context?: ServerCallContext
-  ): Promise<TaskPushNotificationConfigResponse> {
-    try {
-      const configs = await this.requestHandler.onListTaskPushNotificationConfig(
-        request.params,
-        context
-      );
-
-      return prepareResponseObject(
+      return createErrorResponse(
         request.id,
-        configs,
-        [Array],
-        ListTaskPushNotificationConfigSuccessResponse,
-        TaskPushNotificationConfigResponse
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
       );
-    } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
     }
   }
 
   /**
-   * Handles the 'tasks/pushNotificationConfig/delete' JSON-RPC method
+   * Handles the 'CancelTask' JSON-RPC method (v1.0)
    */
-  async deletePushNotificationConfig(
-    request: DeleteTaskPushNotificationConfigRequest,
+  async onCancelTask(
+    request: JSONRPCRequest,
     context?: ServerCallContext
-  ): Promise<TaskPushNotificationConfigResponse> {
+  ): Promise<JSONRPCResponse> {
     try {
-      await this.requestHandler.onDeleteTaskPushNotificationConfig(
-        request.params,
-        context
-      );
+      const params = request.params as unknown as TaskIdParams;
+      const task = await this.requestHandler.onCancelTask(params, context);
 
-      return {
-        root: {
-          id: request.id,
-          result: null,
-        } as DeleteTaskPushNotificationConfigSuccessResponse,
-      };
+      if (task) {
+        return createSuccessResponse(request.id, task as unknown as JSONValue);
+      }
+
+      return createErrorResponse(request.id, -32001, 'Task not found');
     } catch (error) {
-      const serverError = error instanceof ServerError ? error : new ServerError(error as Error);
-      return {
-        root: {
-          id: request.id,
-          error: serverError.error || new InternalError(),
-        } as JSONRPCErrorResponse,
-      };
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
     }
   }
 
   /**
-   * Handles the 'agent/authenticatedExtendedCard' JSON-RPC method
+   * Handles the 'SubscribeToTask' JSON-RPC method (v1.0)
    */
-  async getAuthenticatedExtendedCard(
-    request: GetAuthenticatedExtendedCardRequest,
+  async *onSubscribeToTask(
+    request: JSONRPCRequest,
     context?: ServerCallContext
-  ): Promise<GetAuthenticatedExtendedCardResponse> {
-    if (!this.agentCard.supports_authenticated_extended_card) {
-      throw new ServerError(new Error('Authenticated card not supported'));
+  ): AsyncIterable<JSONRPCResponse> {
+    try {
+      const params = request.params as unknown as TaskIdParams;
+
+      for await (const event of this.requestHandler.onResubscribeToTask(params, context)) {
+        yield createSuccessResponse(request.id, event as unknown as JSONValue);
+      }
+    } catch (error) {
+      yield createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
+    }
+  }
+
+  /**
+   * Handles the 'GetTaskPushNotificationConfig' JSON-RPC method (v1.0)
+   */
+  async onGetPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    try {
+      const params = request.params as unknown as TaskQueryParams;
+      const config = await this.requestHandler.onGetTaskPushNotificationConfig(params, context);
+
+      if (config) {
+        return createSuccessResponse(request.id, config as unknown as JSONValue);
+      }
+
+      return createErrorResponse(request.id, -32001, 'Push notification config not found');
+    } catch (error) {
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
+    }
+  }
+
+  /**
+   * Handles the 'SetTaskPushNotificationConfig' JSON-RPC method (v1.0)
+   */
+  async onSetPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    try {
+      // Validate push notification capability
+      if (!this.agentCard.capabilities?.pushNotifications) {
+        return createErrorResponse(request.id, -32003, 'Push notifications are not supported by the agent');
+      }
+
+      const params = request.params as unknown as TaskPushNotificationConfigRequest;
+      const config = await this.requestHandler.onSetTaskPushNotificationConfig(params, context);
+
+      return createSuccessResponse(request.id, config as unknown as JSONValue);
+    } catch (error) {
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
+    }
+  }
+
+  /**
+   * Handles the 'ListTaskPushNotificationConfig' JSON-RPC method (v1.0)
+   */
+  async onListPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    try {
+      const params = request.params as unknown as TaskQueryParams;
+      const configs = await this.requestHandler.onListTaskPushNotificationConfig(params, context);
+
+      return createSuccessResponse(request.id, configs as unknown as JSONValue);
+    } catch (error) {
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
+    }
+  }
+
+  /**
+   * Handles the 'DeleteTaskPushNotificationConfig' JSON-RPC method (v1.0)
+   */
+  async onDeletePushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    try {
+      const params = request.params as unknown as TaskIdParams;
+      await this.requestHandler.onDeleteTaskPushNotificationConfig(params, context);
+
+      return createSuccessResponse(request.id, null);
+    } catch (error) {
+      return createErrorResponse(
+        request.id,
+        -32603,
+        error instanceof Error ? error.message : 'Internal error'
+      );
+    }
+  }
+
+  /**
+   * Handles the 'GetExtendedAgentCard' JSON-RPC method (v1.0)
+   */
+  async onGetExtendedAgentCard(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    if (!this.agentCard.capabilities?.extendedAgentCard) {
+      return createErrorResponse(request.id, -32007, 'Extended agent card not configured');
     }
 
     const baseCard = this.extendedAgentCard || this.agentCard;
@@ -388,11 +278,74 @@ export class JSONRPCHandler {
       cardToServe = this.cardModifier(baseCard);
     }
 
-    return {
-      root: {
-        id: request.id,
-        result: cardToServe,
-      } as GetAuthenticatedExtendedCardSuccessResponse,
-    };
+    return createSuccessResponse(request.id, cardToServe as unknown as JSONValue);
+  }
+
+  // =========================================================================
+  // Legacy method aliases (for backwards compatibility with old adapters)
+  // =========================================================================
+
+  /** @deprecated Use onSendMessage instead */
+  async onMessageSend(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onSendMessage(request, context);
+  }
+
+  /** @deprecated Use onStreamMessage instead */
+  async *onMessageSendStream(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): AsyncIterable<JSONRPCResponse> {
+    yield* this.onStreamMessage(request, context);
+  }
+
+  /** @deprecated Use onSubscribeToTask instead */
+  async *onResubscribeToTask(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): AsyncIterable<JSONRPCResponse> {
+    yield* this.onSubscribeToTask(request, context);
+  }
+
+  /** @deprecated Use onGetPushNotificationConfig instead */
+  async getPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onGetPushNotificationConfig(request, context);
+  }
+
+  /** @deprecated Use onSetPushNotificationConfig instead */
+  async setPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onSetPushNotificationConfig(request, context);
+  }
+
+  /** @deprecated Use onListPushNotificationConfig instead */
+  async listPushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onListPushNotificationConfig(request, context);
+  }
+
+  /** @deprecated Use onDeletePushNotificationConfig instead */
+  async deletePushNotificationConfig(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onDeletePushNotificationConfig(request, context);
+  }
+
+  /** @deprecated Use onGetExtendedAgentCard instead */
+  async getAuthenticatedExtendedCard(
+    request: JSONRPCRequest,
+    context?: ServerCallContext
+  ): Promise<JSONRPCResponse> {
+    return this.onGetExtendedAgentCard(request, context);
   }
 }

@@ -845,17 +845,43 @@ function generateAskPrompt(doc: Document): A2UIMessage[] {
 // ============================================================================
 
 export const getDocuMindAgentCard = (baseUrl: string): AgentCard => ({
+    protocolVersions: ['1.0'],
     name: 'DocuMind',
     description: 'AI-powered document analysis and knowledge extraction. Upload PDFs or text and get instant summaries, key insights, and answers to your questions.',
-    url: `${baseUrl}/agents/documind`,
     version: '1.0.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
-    provider: { organization: 'LiquidCrypto Labs' },
+    supportedInterfaces: [
+        { url: `${baseUrl}/agents/documind`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: { streaming: true, pushNotifications: false },
+    defaultInputModes: ['text/plain', 'application/pdf'],
+    defaultOutputModes: ['text/plain', 'application/json'],
+    skills: [
+        {
+            id: 'summarize-document',
+            name: 'Summarize Document',
+            description: 'Generate concise summaries of documents',
+            tags: ['document', 'summary', 'analysis', 'PDF'],
+            examples: ['Summarize this PDF', 'Give me the key points'],
+        },
+        {
+            id: 'extract-insights',
+            name: 'Extract Insights',
+            description: 'Extract key insights and findings from documents',
+            tags: ['insights', 'extraction', 'knowledge'],
+            examples: ['What are the main findings?', 'Extract key data'],
+        },
+        {
+            id: 'question-answering',
+            name: 'Question Answering',
+            description: 'Answer questions about uploaded documents',
+            tags: ['Q&A', 'questions', 'answers'],
+            examples: ['What does the document say about X?', 'Find information about Y'],
+        },
+    ],
+    provider: { organization: 'LiquidCrypto Labs' },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField'] }
-    }
+        a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField'] },
+    },
 });
 
 // Keep track of current document for Q&A

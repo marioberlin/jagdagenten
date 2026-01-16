@@ -1,19 +1,19 @@
-# A2A TypeScript SDK
+# A2A TypeScript SDK v1.0
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![A2A Protocol](https://img.shields.io/badge/A2A_Protocol-v1.0-purple.svg)](https://a2a-protocol.org)
 
-A TypeScript library for building agentic applications that follow the [Agent2Agent (A2A) Protocol](https://a2a-protocol.org).
-
-This is a TypeScript/JavaScript port of the [A2A Python SDK](https://github.com/a2aproject/a2a-python).
+A TypeScript library for building agentic applications that follow the [Agent2Agent (A2A) Protocol v1.0](https://a2a-protocol.org/latest/specification/).
 
 ## ✨ Features
 
-- **A2A Protocol Compliant**: Build agentic applications that adhere to the Agent2Agent (A2A) Protocol
-- **Type-Safe**: Full TypeScript support with comprehensive type definitions
-- **Transport Agnostic**: Support for multiple transport protocols (JSON-RPC, gRPC, HTTP+JSON)
-- **Async/Await**: Modern asynchronous JavaScript patterns
+- **A2A Protocol v1.0 Compliant**: Full compliance with the A2A Protocol v1.0 Draft Specification
+- **A2UI Support**: Built-in support for [Agent-to-User Interface (A2UI)](https://github.com/google/a2ui) declarative UI generation
+- **Type-Safe**: Full TypeScript support with comprehensive type definitions using camelCase naming
+- **Transport Agnostic**: Support for multiple transport protocols (JSON-RPC, gRPC, HTTP+SSE)
+- **Async/Await**: Modern asynchronous JavaScript patterns with streaming support
 - **Extensible**: Easy to extend with custom transports, middleware, and integrations
 
 ## 🚀 Getting Started
@@ -26,275 +26,317 @@ This is a TypeScript/JavaScript port of the [A2A Python SDK](https://github.com/
 ### Installation
 
 ```bash
-npm install a2a-sdk
+npm install @liquidcrypto/a2a-sdk
 # or
-yarn add a2a-sdk
-# or
-pnpm add a2a-sdk
+bun add @liquidcrypto/a2a-sdk
 ```
 
 ### Basic Usage
 
-#### Creating a Client
+#### Creating a Client (v1.0)
 
 ```typescript
-import { ClientFactory, ClientConfig } from 'a2a-sdk';
+import { createA2AClient, type A2AClientConfig } from '@liquidcrypto/a2a-sdk';
 
-// Create a client from an agent URL
-const config: ClientConfig = {
-  streaming: true,
+// Create a v1.0 client
+const config: A2AClientConfig = {
+  baseUrl: 'https://api.example.com/a2a/v1',
+  authToken: 'your-auth-token', // Optional
   timeout: 30000,
 };
 
-const client = await ClientFactory.createClientFromUrl(
-  'https://api.example.com/a2a/v1',
-  config
-);
+const client = createA2AClient(config);
 
-// Send a message
-const message = {
-  kind: 'message',
-  message_id: 'msg-123',
-  role: 'user',
-  parts: [
-    {
-      kind: 'text',
-      text: 'Hello, agent!',
-    },
-  ],
-};
+// Send a simple text message
+const task = await client.sendText('Hello, agent!');
+console.log('Task ID:', task.id);
+console.log('Status:', task.status.state);
 
-for await (const event of client.sendMessage(message)) {
-  if ('message' in event) {
-    console.log('Received message:', event.message);
-  } else if (event && event[0]) {
-    console.log('Task update:', event[0]);
+// Or stream responses
+for await (const event of client.streamText('Tell me a story')) {
+  switch (event.type) {
+    case 'status':
+      console.log('Status update:', event.data.status.state);
+      break;
+    case 'artifact':
+      console.log('Artifact:', event.data.artifact);
+      break;
+    case 'complete':
+      console.log('Task completed:', event.task);
+      break;
   }
 }
 ```
 
-#### Creating a Simple Agent
+#### Creating a Simple Agent Server
 
 ```typescript
-import { A2AServer, AgentExecutor, ServerConfig } from 'a2a-sdk';
+import { ExpressA2AServer, type AgentExecutor, type AgentCard } from '@liquidcrypto/a2a-sdk';
+import { textPart, userMessage, agentMessage } from '@liquidcrypto/a2a-sdk';
 
-class MyAgentExecutor implements AgentExecutor {
-  async execute(
-    message: Message,
-    context: AgentExecutionContext
-  ): Promise<AgentExecutionResult> {
-    // Implement your agent logic here
-    const response: Message = {
-      kind: 'message',
-      message_id: 'resp-456',
-      role: 'agent',
-      parts: [
-        {
-          kind: 'text',
-          text: `Hello! You said: ${message.parts[0]?.text}`,
-        },
-      ],
-    };
+// Define your agent executor
+const executor: AgentExecutor = {
+  async execute(message, context) {
+    const userText = message.parts.find(p => p.text)?.text || '';
 
     return {
-      message: response,
+      message: agentMessage([
+        textPart(`Hello! You said: ${userText}`)
+      ]),
     };
   }
-}
-
-const serverConfig: ServerConfig = {
-  agentCard: {
-    name: 'My Agent',
-    description: 'A simple greeting agent',
-    version: '1.0.0',
-    url: 'https://api.example.com/a2a/v1',
-    capabilities: {
-      streaming: true,
-      push_notifications: false,
-      state_transition_history: true,
-    },
-    skills: [],
-    default_input_modes: ['text/plain'],
-    default_output_modes: ['text/plain'],
-  },
-  executor: new MyAgentExecutor(),
-  port: 3000,
 };
 
-const server = new A2AServer(serverConfig);
+// Define your agent card (v1.0 format)
+const agentCard: AgentCard = {
+  name: 'My Agent',
+  description: 'A simple greeting agent',
+  version: '1.0.0',
+  url: 'https://api.example.com',
+  protocolVersions: ['1.0'],
+  capabilities: {
+    streaming: true,
+    pushNotifications: false,
+  },
+  skills: [{
+    id: 'greeting',
+    name: 'Greeting',
+    description: 'Responds to greetings',
+    tags: ['greeting', 'hello'],
+  }],
+  defaultInputModes: ['text/plain'],
+  defaultOutputModes: ['text/plain'],
+};
+
+// Start the server
+const server = new ExpressA2AServer({
+  agentCard,
+  executor,
+  port: 3000,
+});
+
+await server.start();
+console.log('Agent running at http://localhost:3000');
+```
+
+## 📐 A2A Protocol v1.0
+
+This SDK implements the A2A Protocol v1.0 Draft Specification with:
+
+### Type System
+
+All types use **camelCase** naming convention per v1.0 spec:
+
+```typescript
+import type {
+  Task,           // Task with id, contextId, status, artifacts, history
+  TaskStatus,     // Status with state, timestamp, message
+  TaskState,      // 'submitted' | 'working' | 'completed' | 'failed' | etc.
+  Message,        // Message with messageId, role, parts
+  Part,           // TextPart | FilePart | DataPart
+  Artifact,       // Output artifacts with artifactId, name, parts
+  AgentCard,      // Agent metadata and capabilities
+} from '@liquidcrypto/a2a-sdk';
+```
+
+### JSON-RPC 2.0 Methods
+
+v1.0 uses PascalCase method names:
+
+| Method | Description |
+|--------|-------------|
+| `SendMessage` | Send a message to an agent |
+| `StreamMessage` | Stream a message with SSE events |
+| `GetTask` | Retrieve task by ID |
+| `CancelTask` | Cancel a running task |
+| `SubscribeToTask` | Subscribe to task updates |
+| `SetTaskPushNotificationConfig` | Configure push notifications |
+| `GetTaskPushNotificationConfig` | Get push notification config |
+
+### Task States
+
+```typescript
+type TaskState =
+  | 'submitted'      // Task submitted, waiting to be processed
+  | 'working'        // Agent is processing the task
+  | 'completed'      // Task completed successfully
+  | 'failed'         // Task failed
+  | 'cancelled'      // Task was cancelled
+  | 'input-required' // Agent needs more input
+  | 'auth-required'  // Authentication required
+  | 'rejected';      // Task was rejected
+```
+
+## 🎨 A2UI Support
+
+The SDK includes full support for [A2UI (Agent-to-User Interface)](https://github.com/google/a2ui), enabling agents to generate rich, interactive user interfaces through declarative JSON.
+
+### A2UI Components
+
+```typescript
+import { a2ui } from '@liquidcrypto/a2a-sdk';
+
+// Create UI components
+const card = a2ui.card('card-1', [
+  a2ui.text('title', 'Welcome!'),
+  a2ui.button('btn-1', 'Click Me', a2ui.callback('button-clicked')),
+]);
+
+// Create A2UI messages
+const messages = [
+  a2ui.beginRendering('surface-1', 'root'),
+  a2ui.surfaceUpdate('surface-1', [card]),
+];
+
+// Create an A2UI artifact part
+const uiPart = a2ui.createA2UIPart(messages);
+```
+
+### Available A2UI Components
+
+The SDK supports 50+ A2UI component types:
+
+- **Layout**: `container`, `row`, `column`, `grid`, `stack`
+- **Text**: `text`, `heading`, `paragraph`, `markdown`, `code-block`
+- **Input**: `text-field`, `text-area`, `select`, `checkbox`, `radio`, `switch`, `slider`
+- **Display**: `card`, `list`, `table`, `image`, `icon`, `badge`, `avatar`
+- **Data**: `chart`, `map`, `progress`
+- **Interactive**: `button`, `link`, `tabs`, `accordion`, `carousel`
+- **Feedback**: `alert`, `dialog`, `tooltip`, `spinner`
+- **Media**: `video`, `audio`, `iframe`
+
+### A2UI Type Guards
+
+```typescript
+import { a2ui } from '@liquidcrypto/a2a-sdk';
+
+// Check if an artifact contains A2UI content
+if (a2ui.isA2UIArtifact(artifact)) {
+  const messages = a2ui.extractA2UIMessages(artifact);
+
+  for (const msg of messages) {
+    if (a2ui.isBeginRenderingMessage(msg)) {
+      console.log('Begin rendering surface:', msg.surfaceId);
+    } else if (a2ui.isSurfaceUpdateMessage(msg)) {
+      console.log('Components:', msg.components);
+    }
+  }
+}
+```
+
+## 🔌 Server Adapters
+
+### Express Adapter
+
+```typescript
+import { ExpressA2AServer } from '@liquidcrypto/a2a-sdk';
+
+const server = new ExpressA2AServer({
+  agentCard,
+  executor,
+  port: 3000,
+});
+
 await server.start();
 ```
 
-## 📚 API Reference
-
-### Client API
-
-#### `ClientFactory`
-
-- `createClient(agentCard, config)`: Creates a client from an AgentCard
-- `createClientFromUrl(agentUrl, config)`: Creates a client from a URL
-- `fetchAgentCard(agentUrl)`: Fetches the AgentCard from a URL
-
-#### `Client`
-
-The `Client` interface provides methods for:
-
-- `sendMessage()`: Send a message to an agent
-- `getTask()`: Retrieve task status
-- `cancelTask()`: Cancel a running task
-- `setTaskCallback()`: Configure push notifications
-- `getCard()`: Get agent card
-- `resubscribe()`: Resubscribe to task updates
-
-### Transport Protocols
-
-#### JSON-RPC (Default)
-
-The JSON-RPC transport uses standard HTTP POST requests with JSON payloads.
+### Fastify Adapter
 
 ```typescript
-import { JSONRPCTransport } from 'a2a-sdk';
+import { FastifyA2AServer } from '@liquidcrypto/a2a-sdk';
 
-const transport = new JSONRPCTransport('https://api.example.com/a2a/v1', {
-  'Authorization': 'Bearer YOUR_TOKEN',
-});
-```
-
-#### gRPC
-
-gRPC provides high-performance bidirectional streaming communication for A2A agents.
-
-**Installation:**
-```bash
-npm install @grpc/grpc-js @grpc/proto-loader
-```
-
-**Generate Protocol Buffer Types:**
-```bash
-npm run build:grpc
-```
-
-**Client Example:**
-```typescript
-import { Client, GrpcTransport } from 'a2a-sdk';
-
-const grpcChannelFactory = (url: string) => {
-  const { ChannelCredentials } = require('@grpc/grpc-js');
-  return new require('@grpc/grpc-js').Client(
-    url,
-    ChannelCredentials.createInsecure()
-  );
-};
-
-const transport = GrpcTransport.create(agentCard, 'localhost:50051', {
-  grpcChannelFactory,
+const server = new FastifyA2AServer({
+  agentCard,
+  executor,
+  port: 3000,
+  logLevel: 'info',
 });
 
-const client = new Client(transport);
+await server.start();
 ```
 
-**Server Example:**
+### gRPC Adapter
+
 ```typescript
-import { GrpcA2AServer } from 'a2a-sdk';
+import { GrpcA2AServer } from '@liquidcrypto/a2a-sdk';
 
 const server = new GrpcA2AServer({
-  agentCard: {...},
-  executor: new MyAgentExecutor(),
+  agentCard,
+  executor,
   port: 50051,
 });
 
 await server.start();
 ```
 
-See [GRPC.md](./GRPC.md) for complete documentation.
+See [GRPC.md](./GRPC.md) for complete gRPC documentation.
 
-#### HTTP+JSON (Coming Soon)
+## 💾 Database Support
 
-HTTP+JSON transport support is planned for a future release.
-
-### Server API
-
-#### `A2AServer`
-
-The `A2AServer` class provides a unified interface for creating A2A protocol servers:
-
-- `start(framework)`: Starts the server using Fastify or Express
-- `stop()`: Stops the server
-- `getStatus()`: Gets the current server status
-- `instance`: Gets the underlying server instance
-
-#### `AgentExecutor`
-
-Interface for implementing agent logic:
+The SDK includes database adapters for task persistence:
 
 ```typescript
-interface AgentExecutor {
-  execute(
-    message: Message,
-    context: AgentExecutionContext
-  ): Promise<AgentExecutionResult>;
+import { PostgresTaskStore, MySQLTaskStore, SQLiteTaskStore } from '@liquidcrypto/a2a-sdk';
 
-  executeStream?(
-    message: Message,
-    context: AgentExecutionContext
-  ): AsyncIterableIterator<TaskEvent>;
-}
+// PostgreSQL
+const pgStore = new PostgresTaskStore({
+  connectionString: 'postgresql://user:pass@localhost/db',
+  tableName: 'a2a_tasks',
+});
+
+// MySQL
+const mysqlStore = new MySQLTaskStore({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'a2a',
+});
+
+// SQLite
+const sqliteStore = new SQLiteTaskStore({
+  filename: './tasks.db',
+});
+
+await pgStore.initialize();
 ```
 
-#### Server Adapters
+See [DATABASE.md](./DATABASE.md) for complete database documentation.
 
-##### Fastify Adapter
+## 📊 Telemetry
+
+OpenTelemetry integration for observability:
 
 ```typescript
-import { FastifyA2AServer, FastifyA2AConfig } from 'a2a-sdk';
+import { A2AServer } from '@liquidcrypto/a2a-sdk';
 
-const config: FastifyA2AConfig = {
-  agentCard: { ... },
-  executor: new MyAgentExecutor(),
-  port: 3000,
-};
-
-const server = new FastifyA2AServer(config);
-await server.start();
+const server = new A2AServer({
+  agentCard,
+  executor,
+  telemetry: {
+    serviceName: 'my-agent',
+    enabled: true,
+    openTelemetry: {
+      serviceName: 'my-agent',
+      serviceVersion: '1.0.0',
+      traceExporterUrl: 'http://localhost:4318/v1/traces',
+      metricsExporterUrl: 'http://localhost:4318/v1/metrics',
+    },
+  },
+});
 ```
 
-##### Express Adapter
-
-```typescript
-import { ExpressA2AServer, ExpressA2AConfig } from 'a2a-sdk';
-
-const config: ExpressA2AConfig = {
-  agentCard: { ... },
-  executor: new MyAgentExecutor(),
-  port: 3001,
-};
-
-const server = new ExpressA2AServer(config);
-await server.start();
-```
-
-#### Task Management
-
-The SDK provides in-memory implementations for task management:
-
-- `InMemoryTaskStore`: Stores tasks in memory
-- `InMemoryEventQueue`: Manages event streaming
+See [TELEMETRY.md](./TELEMETRY.md) for complete telemetry documentation.
 
 ## 🔧 Configuration
 
 ### Client Configuration
 
 ```typescript
-interface ClientConfig {
-  streaming?: boolean;              // Enable streaming (default: true)
-  polling?: boolean;                // Use polling instead of streaming (default: false)
-  acceptedOutputModes?: string[];   // Accepted output MIME types
-  pushNotificationConfigs?: PushNotificationConfig[];
-  extensions?: string[];            // Supported extension URIs
-  preferredTransport?: string;       // Preferred transport protocol
-  useClientPreference?: boolean;    // Use client preferences over server
-  timeout?: number;                 // Request timeout in ms (default: 30000)
-  headers?: Record<string, string>; // Default headers
+interface A2AClientConfig {
+  baseUrl: string;                    // Agent endpoint URL
+  authToken?: string;                 // Bearer token for authentication
+  headers?: Record<string, string>;   // Additional headers
+  timeout?: number;                   // Request timeout in ms (default: 30000)
 }
 ```
 
@@ -302,14 +344,15 @@ interface ClientConfig {
 
 ```typescript
 interface ServerConfig {
-  agentCard: AgentCard;             // Agent description
-  executor: AgentExecutor;          // Agent logic implementation
-  port?: number;                    // Server port (default: 3000)
-  host?: string;                    // Server host (default: 'localhost')
-  ssl?: SSLConfig;                  // SSL configuration
-  cors?: CORSConfig;                // CORS configuration
-  timeout?: number;                 // Request timeout in ms
-  maxConcurrency?: number;          // Maximum concurrent requests
+  agentCard: AgentCard;               // Agent description (v1.0 format)
+  executor: AgentExecutor;            // Agent logic implementation
+  port?: number;                      // Server port (default: 3000)
+  host?: string;                      // Server host (default: '0.0.0.0')
+  ssl?: SSLConfig;                    // SSL configuration
+  cors?: CORSConfig;                  // CORS configuration
+  timeout?: number;                   // Request timeout in ms
+  database?: DatabaseConfig;          // Database for task persistence
+  telemetry?: TelemetryConfig;        // OpenTelemetry configuration
 }
 ```
 
@@ -317,23 +360,24 @@ interface ServerConfig {
 
 ```
 src/
-├── types/              # Core type definitions
-├── client/             # Client interfaces and implementations
-├── server/             # Server interfaces and implementations
-├── transports/         # Transport implementations
-├── utils/              # Utility functions
-└── index.ts           # Main entry point
+├── types/
+│   ├── v1.ts           # A2A Protocol v1.0 types (camelCase)
+│   └── a2ui.ts         # A2UI component types
+├── server/
+│   ├── express-adapter.ts
+│   ├── fastify-adapter.ts
+│   ├── grpc-adapter.ts
+│   ├── jsonrpc-handler.ts
+│   ├── request-handler.ts
+│   └── database/       # Database adapters
+├── shim.ts             # Main client and exports
+└── index.ts            # Entry point
 ```
 
 ## 🧪 Testing
 
 ```bash
 npm test
-```
-
-Run tests with coverage:
-
-```bash
 npm run test:coverage
 ```
 
@@ -341,71 +385,40 @@ npm run test:coverage
 
 ```bash
 npm run build
-```
-
-Build with watch mode:
-
-```bash
 npm run build:watch
-```
-
-Generate documentation:
-
-```bash
 npm run build:docs
 ```
 
-## 🤝 Migration from Python SDK
+## 🔄 Migration from Legacy Format
 
-For detailed migration guidance, see [MIGRATION.md](./MIGRATION.md).
+See [MIGRATION.md](./MIGRATION.md) for migrating from snake_case to v1.0 camelCase types.
 
-### Key Differences
+### Key Changes in v1.0
 
-1. **Async/Await**: TypeScript uses async/await instead of asyncio
-2. **Type System**: Uses TypeScript's static type system instead of Pydantic
-3. **Transports**: JSON-RPC transport uses fetch API instead of httpx
-4. **Error Handling**: Uses try/catch instead of exception handling
-5. **Event Streams**: Uses AsyncIterableIterator instead of AsyncIterator
-
-## 🆚 Python SDK Compatibility
-
-This SDK aims to provide feature parity with the [A2A Python SDK](https://github.com/a2aproject/a2a-python). The core types and protocol implementations are designed to be compatible.
-
-## 📄 License
-
-This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more details.
-
-## 🙏 Acknowledgments
-
-- [A2A Protocol](https://a2a-protocol.org) - The Agent2Agent Protocol specification
-- [A2A Python SDK](https://github.com/a2aproject/a2a-python) - Original Python implementation
-- [TypeScript](https://www.typescriptlang.org/) - Type safety for JavaScript
+1. **Type naming**: All types use camelCase (`messageId` not `message_id`)
+2. **Task states**: Use kebab-case (`input-required` not `input_required`)
+3. **Method names**: PascalCase (`SendMessage` not `message/send`)
+4. **Agent card**: `protocolVersions` array, `capabilities` object with camelCase
 
 ## 📚 Resources
 
-- [A2A Protocol Documentation](https://a2a-protocol.org)
-- [A2A Python SDK](https://github.com/a2aproject/a2a-python)
+- [A2A Protocol v1.0 Specification](https://a2a-protocol.org/latest/specification/)
+- [A2UI Specification](https://github.com/google/a2ui)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [Node.js Documentation](https://nodejs.org/docs/)
 
-## 🤝 Contributing
+## 📄 License
 
-Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
 ## 📢 Status
 
-This SDK is in active development. The core types, client, and server implementations are now functional:
-
-- ✅ Core types and interfaces
-- ✅ JSON-RPC transport (basic implementation)
-- ✅ Server implementations (Fastify & Express adapters)
-- ✅ Task management (in-memory store)
-- ✅ Event queue (in-memory)
-- ✅ Request handlers
-- 🔄 gRPC transport
-- 🔄 Database integrations
-- 🔄 Telemetry/OpenTelemetry integration
+- ✅ A2A Protocol v1.0 types (camelCase)
+- ✅ JSON-RPC 2.0 client and server
+- ✅ A2UI declarative UI support
+- ✅ Server adapters (Express, Fastify)
+- ✅ Database adapters (PostgreSQL, MySQL, SQLite)
+- ✅ OpenTelemetry integration
+- ✅ gRPC transport
+- ✅ SSE streaming support
 - 🔄 Comprehensive test suite
-- 🔄 Documentation and examples
-
-For the latest updates, see [CHANGELOG.md](./CHANGELOG.md).
+- 🔄 Additional examples

@@ -2,46 +2,41 @@
  * Server interfaces and types for the A2A TypeScript SDK
  */
 
-import {
+import type {
   AgentCard,
-  GetTaskPushNotificationConfigParams,
   Message,
   PushNotificationConfig,
   Task,
-  TaskArtifactUpdateEvent,
-  TaskEvent,
-  TaskIdParams,
   TaskPushNotificationConfig,
-  TaskQueryParams,
   TaskStatusUpdateEvent,
-} from '../types';
-import type { TelemetryWrapperConfig, OpenTelemetryConfig } from './telemetry';
+  TaskArtifactUpdateEvent,
+} from '../types/v1';
 
-// Re-export telemetry types for convenience
-export type {
-  TelemetryConfig,
-  A2ASpanAttributes,
-} from './telemetry/telemetry-provider';
+// Event type union
+export type TaskEvent = TaskStatusUpdateEvent | TaskArtifactUpdateEvent;
 
-export type {
-  MetricsConfig,
-} from './telemetry/metrics-collector';
+/**
+ * Task ID parameters
+ */
+export interface TaskIdParams {
+  id: string;
+  metadata?: Record<string, unknown>;
+}
 
-export type {
-  TelemetryWrapperConfig,
-} from './telemetry/telemetry-wrapper';
+/**
+ * Task query parameters
+ */
+export interface TaskQueryParams extends TaskIdParams {
+  historyLength?: number;
+}
 
-export type {
-  OpenTelemetryConfig,
-} from './telemetry/otel-initializer';
-
-export type {
-  TaskStoreInstrumentationOptions,
-} from './telemetry/task-store-instrumentation';
-
-export type {
-  TelemetryMiddlewareOptions,
-} from './telemetry/http-middleware';
+/**
+ * Push notification config request
+ */
+export interface TaskPushNotificationConfigRequest {
+  taskId: string;
+  pushNotificationConfig: PushNotificationConfig;
+}
 
 /**
  * Agent executor interface for implementing agent logic
@@ -54,6 +49,14 @@ export interface AgentExecutor {
     message: Message,
     context: AgentExecutionContext
   ): Promise<AgentExecutionResult>;
+
+  /**
+   * Executes a task with streaming responses
+   */
+  executeStream?(
+    message: Message,
+    context: AgentExecutionContext
+  ): AsyncIterable<TaskEvent>;
 }
 
 /**
@@ -81,7 +84,7 @@ export interface AgentExecutionContext {
   user?: User;
 
   /** Additional metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   /** Cancellation signal */
   signal?: AbortSignal;
@@ -94,8 +97,11 @@ export interface User {
   /** User ID */
   id: string;
 
+  /** User type */
+  type?: string;
+
   /** User metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -136,6 +142,25 @@ export interface DatabaseConfig {
   cacheSize?: number;
 }
 
+/** Telemetry configuration for server */
+export interface TelemetryConfig {
+  /** Service name for telemetry */
+  serviceName?: string;
+
+  /** Enable telemetry */
+  enabled?: boolean;
+
+  /** OpenTelemetry exporter configuration */
+  openTelemetry?: {
+    serviceName: string;
+    serviceVersion?: string;
+    environment?: string;
+    traceExporterUrl?: string;
+    metricsExporterUrl?: string;
+    metricsInterval?: number;
+  };
+}
+
 /**
  * Server configuration
  */
@@ -167,10 +192,8 @@ export interface ServerConfig {
   /** Database configuration for task persistence */
   database?: DatabaseConfig;
 
-  /** Telemetry configuration for observability */
-  telemetry?: TelemetryWrapperConfig & {
-    openTelemetry?: OpenTelemetryConfig;
-  };
+  /** Telemetry configuration */
+  telemetry?: TelemetryConfig;
 }
 
 /**
@@ -205,6 +228,9 @@ export interface CORSConfig {
  * Task store interface for persisting tasks
  */
 export interface TaskStore {
+  /** Initialize the store */
+  initialize?(): Promise<void>;
+
   /** Creates a new task */
   createTask(task: Task): Promise<Task>;
 
@@ -219,6 +245,9 @@ export interface TaskStore {
 
   /** Lists tasks with optional filtering */
   listTasks(filter?: TaskFilter): Promise<Task[]>;
+
+  /** Closes the store */
+  close?(): Promise<void>;
 }
 
 /**
@@ -295,4 +324,24 @@ export interface ServerStatus {
 
   /** Number of processed requests */
   processedRequests: number;
+}
+
+/**
+ * Server call context
+ */
+export interface ServerCallContext {
+  /** User information */
+  user?: User;
+
+  /** Additional state */
+  state?: Record<string, unknown>;
+
+  /** Requested extensions */
+  requested_extensions?: string[];
+
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
+
+  /** Cancellation signal */
+  signal?: AbortSignal;
 }

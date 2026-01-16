@@ -6,13 +6,13 @@
  */
 
 import Database from 'better-sqlite3';
-import { Task } from '../../types';
+import type { Task } from '../../types/v1';
 import { BaseDatabaseTaskStore, DatabaseConfig } from './task-store';
 
 /**
  * SQLite-specific configuration
  */
-export interface SQLiteConfig extends DatabaseConfig {
+export interface SQLiteConfig extends Omit<DatabaseConfig, 'connection'> {
   /** Database file path (default: './a2a-tasks.db') */
   connection: string;
 
@@ -24,9 +24,6 @@ export interface SQLiteConfig extends DatabaseConfig {
 
   /** Cache size (default: 2000 pages) */
   cacheSize?: number;
-
-  /** Connection timeout in ms (default: 30000) */
-  timeout?: number;
 }
 
 /**
@@ -42,17 +39,18 @@ export interface SQLiteConfig extends DatabaseConfig {
  */
 export class SQLiteTaskStore extends BaseDatabaseTaskStore {
   private db: Database.Database;
+  private sqliteConfig: SQLiteConfig;
 
   // Prepared statements for performance
-  private insertStmt: Database.Statement;
-  private selectStmt: Database.Statement;
-  private selectAllStmt: Database.Statement;
-  private updateStmt: Database.Statement;
-  private deleteStmt: Database.Statement;
+  private insertStmt!: Database.Statement;
+  private selectStmt!: Database.Statement;
+  private selectAllStmt!: Database.Statement;
+  private updateStmt!: Database.Statement;
+  private deleteStmt!: Database.Statement;
 
   constructor(config: SQLiteConfig) {
     super(config);
-    this.config = {
+    this.sqliteConfig = {
       walMode: true,
       foreignKeys: true,
       cacheSize: 2000,
@@ -60,56 +58,20 @@ export class SQLiteTaskStore extends BaseDatabaseTaskStore {
     };
 
     // Initialize database connection
-    this.db = new Database(this.config.connection, {
-      timeout: this.config.timeout,
+    this.db = new Database(this.sqliteConfig.connection, {
+      timeout: this.sqliteConfig.timeout || 30000,
     });
 
     // Configure database
-    if (this.config.walMode) {
+    if (this.sqliteConfig.walMode) {
       this.db.pragma('journal_mode = WAL');
     }
 
-    if (this.config.foreignKeys) {
+    if (this.sqliteConfig.foreignKeys) {
       this.db.pragma('foreign_keys = ON');
     }
 
-    this.db.pragma('cache_size = ' + this.config.cacheSize);
-
-    // Prepare statements
-    this.insertStmt = this.db.prepare(`
-      INSERT INTO ${this.tableName} (
-        id, context_id, status_state, status_message, status_timestamp,
-        artifacts, history, metadata, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `);
-
-    this.selectStmt = this.db.prepare(`
-      SELECT * FROM ${this.tableName} WHERE id = ?
-    `);
-
-    this.selectAllStmt = this.db.prepare(`
-      SELECT * FROM ${this.tableName}
-      WHERE (? IS NULL OR status_state = ?)
-        AND (? IS NULL OR context_id = ?)
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `);
-
-    this.updateStmt = this.db.prepare(`
-      UPDATE ${this.tableName}
-      SET status_state = ?,
-          status_message = ?,
-          status_timestamp = ?,
-          artifacts = ?,
-          history = ?,
-          metadata = ?,
-          updated_at = datetime('now')
-      WHERE id = ?
-    `);
-
-    this.deleteStmt = this.db.prepare(`
-      DELETE FROM ${this.tableName} WHERE id = ?
-    `);
+    this.db.pragma('cache_size = ' + (this.sqliteConfig.cacheSize || 2000));
   }
 
   /**
@@ -146,6 +108,42 @@ export class SQLiteTaskStore extends BaseDatabaseTaskStore {
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_${this.tableName}_created_at
       ON ${this.tableName} (created_at)
+    `);
+
+    // Prepare statements
+    this.insertStmt = this.db.prepare(`
+      INSERT INTO ${this.tableName} (
+        id, context_id, status_state, status_message, status_timestamp,
+        artifacts, history, metadata, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `);
+
+    this.selectStmt = this.db.prepare(`
+      SELECT * FROM ${this.tableName} WHERE id = ?
+    `);
+
+    this.selectAllStmt = this.db.prepare(`
+      SELECT * FROM ${this.tableName}
+      WHERE (? IS NULL OR status_state = ?)
+        AND (? IS NULL OR context_id = ?)
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `);
+
+    this.updateStmt = this.db.prepare(`
+      UPDATE ${this.tableName}
+      SET status_state = ?,
+          status_message = ?,
+          status_timestamp = ?,
+          artifacts = ?,
+          history = ?,
+          metadata = ?,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `);
+
+    this.deleteStmt = this.db.prepare(`
+      DELETE FROM ${this.tableName} WHERE id = ?
     `);
 
     console.log(`SQLite task store initialized: ${this.tableName}`);
@@ -219,7 +217,7 @@ export class SQLiteTaskStore extends BaseDatabaseTaskStore {
    * Gets a task by ID
    */
   async getTask(id: string): Promise<Task | null> {
-    const row = this.selectStmt.get(id) as any;
+    const row = this.selectStmt.get(id) as Record<string, unknown> | undefined;
 
     if (!row) {
       return null;
@@ -258,7 +256,7 @@ export class SQLiteTaskStore extends BaseDatabaseTaskStore {
       filter?.contextId || null,
       limit,
       offset
-    ) as any[];
+    ) as Record<string, unknown>[];
 
     return rows.map(row => this.deserializeTask(row));
   }

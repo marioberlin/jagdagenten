@@ -5,7 +5,7 @@
  * This provides a unified interface for PostgreSQL, MySQL, and SQLite implementations.
  */
 
-import { Task } from '../../types';
+import type { Task, TaskState } from '../../types/v1';
 
 /**
  * Database configuration
@@ -25,6 +25,21 @@ export interface DatabaseConfig {
 
   /** Enable SSL for connections (default: false) */
   ssl?: boolean;
+
+  /** Connection retry attempts (default: 3) */
+  retryAttempts?: number;
+
+  /** Delay between retry attempts in ms (default: 1000) */
+  retryDelay?: number;
+
+  /** Enable WAL mode for SQLite (default: true) */
+  walMode?: boolean;
+
+  /** Enable foreign key constraints for SQLite (default: true) */
+  foreignKeys?: boolean;
+
+  /** Cache size for SQLite (default: 2000 pages) */
+  cacheSize?: number;
 }
 
 /**
@@ -86,6 +101,8 @@ export abstract class BaseDatabaseTaskStore implements DatabaseTaskStore {
       timeout: 30000,
       maxConnections: 10,
       ssl: false,
+      retryAttempts: 3,
+      retryDelay: 1000,
       ...config,
     };
     this.tableName = this.config.tableName!;
@@ -105,14 +122,14 @@ export abstract class BaseDatabaseTaskStore implements DatabaseTaskStore {
   abstract close(): Promise<void>;
 
   /**
-   * Serialize Task to database row
+   * Serialize Task to database row (v1 uses camelCase)
    */
-  protected serializeTask(task: Task): any {
+  protected serializeTask(task: Task): Record<string, unknown> {
     return {
       id: task.id,
-      context_id: task.context_id,
+      context_id: task.contextId,
       status_state: task.status?.state,
-      status_message: task.status?.message,
+      status_message: task.status?.message ? JSON.stringify(task.status.message) : null,
       status_timestamp: task.status?.timestamp,
       artifacts: JSON.stringify(task.artifacts || []),
       history: JSON.stringify(task.history || []),
@@ -123,30 +140,33 @@ export abstract class BaseDatabaseTaskStore implements DatabaseTaskStore {
   }
 
   /**
-   * Deserialize database row to Task
+   * Deserialize database row to Task (v1 uses camelCase)
    */
-  protected deserializeTask(row: any): Task {
+  protected deserializeTask(row: Record<string, unknown>): Task {
+    const statusMessage = row.status_message
+      ? (typeof row.status_message === 'string' ? JSON.parse(row.status_message) : row.status_message)
+      : undefined;
+
     return {
-      id: row.id,
-      context_id: row.context_id,
-      kind: 'task',
+      id: row.id as string,
+      contextId: row.context_id as string,
       status: {
-        state: row.status_state || 'unknown',
-        message: row.status_message,
-        timestamp: row.status_timestamp || new Date().toISOString(),
+        state: (row.status_state as TaskState) || 'submitted',
+        message: statusMessage,
+        timestamp: (row.status_timestamp as string) || new Date().toISOString(),
       },
-      artifacts: row.artifacts ? JSON.parse(row.artifacts) : [],
-      history: row.history ? JSON.parse(row.history) : [],
-      metadata: row.metadata ? JSON.parse(row.metadata) : {},
+      artifacts: row.artifacts ? JSON.parse(row.artifacts as string) : [],
+      history: row.history ? JSON.parse(row.history as string) : [],
+      metadata: row.metadata ? JSON.parse(row.metadata as string) : {},
     };
   }
 
   /**
    * Build WHERE clause from filter
    */
-  protected buildWhereClause(filter: any): { clause: string; params: any[] } {
+  protected buildWhereClause(filter: Record<string, unknown> | undefined): { clause: string; params: unknown[] } {
     const conditions: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filter?.status) {
       conditions.push('status_state = ?');
@@ -175,9 +195,9 @@ export abstract class BaseDatabaseTaskStore implements DatabaseTaskStore {
   /**
    * Get LIMIT/OFFSET clause for pagination
    */
-  protected buildPaginationClause(filter: any): string {
-    const limit = filter?.limit || 100;
-    const offset = filter?.offset || 0;
+  protected buildPaginationClause(filter: Record<string, unknown> | undefined): string {
+    const limit = (filter?.limit as number) || 100;
+    const offset = (filter?.offset as number) || 0;
     return `LIMIT ${limit} OFFSET ${offset}`;
   }
 }

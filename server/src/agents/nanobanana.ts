@@ -797,17 +797,36 @@ function generateHistoryView(history: GeneratedImage[]): A2UIMessage[] {
 // ============================================================================
 
 export const getNanoBananaAgentCard = (baseUrl: string): AgentCard => ({
+    protocolVersions: ['1.0'],
     name: 'NanoBanana Pro',
     description: 'AI-powered image generation using Google Gemini. Create stunning artwork, product mockups, and illustrations from text descriptions.',
-    url: `${baseUrl}/agents/nanobanana`,
     version: '1.0.0',
-    protocolVersion: '1.0',
-    supportedVersions: ['1.0', '0.3.0'],
-    provider: { organization: 'LiquidCrypto Labs' },
+    supportedInterfaces: [
+        { url: `${baseUrl}/agents/nanobanana`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: { streaming: true, pushNotifications: false },
+    defaultInputModes: ['text/plain'],
+    defaultOutputModes: ['text/plain', 'image/png', 'application/json'],
+    skills: [
+        {
+            id: 'generate-image',
+            name: 'Generate Image',
+            description: 'Create images from text descriptions using AI',
+            tags: ['image', 'generation', 'AI', 'art', 'creative'],
+            examples: ['Create a futuristic city at sunset', 'Generate a logo for a coffee shop'],
+        },
+        {
+            id: 'edit-image',
+            name: 'Edit Image',
+            description: 'Modify and enhance existing images',
+            tags: ['image', 'editing', 'enhancement'],
+            examples: ['Make this image more colorful', 'Add a background'],
+        },
+    ],
+    provider: { organization: 'LiquidCrypto Labs' },
     extensions: {
-        a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField', 'Image'] }
-    }
+        a2ui: { version: '0.8', supportedComponents: ['Card', 'Button', 'Text', 'Row', 'Column', 'TextField', 'Image'] },
+    },
 });
 
 export async function handleNanoBananaRequest(params: SendMessageParams): Promise<any> {

@@ -1,19 +1,12 @@
 /**
- * Elysia A2A Adapter
+ * Elysia A2A Adapter (v1.0 Only)
  *
  * Bridges the @liquidcrypto/a2a-sdk to Elysia HTTP framework.
- * Handles protocol version detection, request normalization, and response formatting.
+ * Implements A2A Protocol v1.0 Draft Specification.
  */
 
 import { randomUUID } from 'crypto';
-import {
-  v1,
-  detectRequestVersion,
-  normalizeRequestToV1,
-  normalizeResponseToV0,
-  getProtocolVersionHeader,
-  type ProtocolVersion,
-} from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@liquidcrypto/a2a-sdk';
 
 // ============================================================================
 // Types
@@ -32,7 +25,6 @@ export interface AgentExecutor {
 export interface AgentExecutionContext {
   taskId: string;
   contextId: string;
-  requestVersion: ProtocolVersion;
   metadata?: Record<string, v1.JSONValue>;
 }
 
@@ -206,10 +198,10 @@ const JSON_RPC_ERRORS = {
 } as const;
 
 const TERMINAL_STATES: v1.TaskState[] = [
-  v1.TaskState.COMPLETED,
-  v1.TaskState.CANCELED,
-  v1.TaskState.FAILED,
-  v1.TaskState.REJECTED,
+  'completed',
+  'cancelled',
+  'failed',
+  'rejected',
 ];
 
 // ============================================================================
@@ -239,7 +231,7 @@ export class ElysiaA2AAdapter {
   // ==========================================================================
 
   /**
-   * Handle a JSON-RPC request
+   * Handle a JSON-RPC request (v1.0 only)
    */
   async handleRequest(
     body: unknown,
@@ -251,43 +243,23 @@ export class ElysiaA2AAdapter {
       token: headers?.authorization?.replace(/^Bearer\s+/i, ''),
     };
 
-    // Detect protocol version
-    const requestVersion = detectRequestVersion(headers, body);
-
-    // Normalize request to v1.0 format
-    const normalizedBody = requestVersion === '0.x'
-      ? normalizeRequestToV1(body)
-      : body;
-
-    // Process the request
-    const response = await this.processRequest(normalizedBody as v1.JSONRPCRequest);
-
-    // Normalize response back to request version
-    if (requestVersion === '0.x') {
-      return normalizeResponseToV0(response) as v1.JSONRPCResponse;
-    }
-
-    return response;
+    // Process the request directly (v1.0 only, no version detection)
+    return this.processRequest(body as v1.JSONRPCRequest);
   }
 
   /**
-   * Handle a streaming request (SSE)
+   * Handle a streaming request (SSE) - v1.0 only
    */
   async *handleStreamRequest(
     body: unknown,
-    headers?: Record<string, string | undefined>
+    _headers?: Record<string, string | undefined>
   ): AsyncGenerator<string> {
-    const requestVersion = detectRequestVersion(headers, body);
-    const normalizedBody = requestVersion === '0.x'
-      ? normalizeRequestToV1(body)
-      : body;
-
-    const request = normalizedBody as v1.JSONRPCRequest;
+    const request = body as v1.JSONRPCRequest;
     const method = request.method;
 
     // Handle Resubscribe streaming method
     if (method === 'Resubscribe') {
-      yield* this.handleResubscribe(request, requestVersion);
+      yield* this.handleResubscribe(request);
       return;
     }
 
@@ -311,7 +283,7 @@ export class ElysiaA2AAdapter {
       id: taskId,
       contextId,
       status: {
-        state: v1.TaskState.SUBMITTED,
+        state: 'submitted',
         timestamp: new Date().toISOString(),
       },
       artifacts: [],
@@ -329,13 +301,13 @@ export class ElysiaA2AAdapter {
         contextId,
         status: task.status,
       },
-    }, requestVersion);
+    });
 
     // Execute and stream updates
     try {
       // Update to working state
       task.status = {
-        state: v1.TaskState.WORKING,
+        state: 'working',
         timestamp: new Date().toISOString(),
       };
       await this.taskStore.set(task);
@@ -348,7 +320,7 @@ export class ElysiaA2AAdapter {
           taskId,
           status: task.status,
         },
-      }, requestVersion);
+      });
 
       // Execute agent
       const message = params?.message;
@@ -359,7 +331,6 @@ export class ElysiaA2AAdapter {
       const result = await this.executor.execute(message, {
         taskId,
         contextId,
-        requestVersion,
         metadata: params?.metadata,
       });
 
@@ -377,13 +348,13 @@ export class ElysiaA2AAdapter {
               taskId,
               artifact,
             },
-          }, requestVersion);
+          });
         }
       }
 
       // Complete task
       task.status = {
-        state: result.status ?? v1.TaskState.COMPLETED,
+        state: result.status ?? 'completed',
         message: result.message,
         timestamp: new Date().toISOString(),
       };
@@ -398,18 +369,18 @@ export class ElysiaA2AAdapter {
           status: task.status,
           final: true,
         },
-      }, requestVersion);
+      });
 
     } catch (error) {
       // Handle error
       task.status = {
-        state: v1.TaskState.FAILED,
+        state: 'failed',
         timestamp: new Date().toISOString(),
       };
       await this.taskStore.set(task);
 
       const errorResponse = this.formatError(request.id, error);
-      yield this.formatSSE(errorResponse, requestVersion);
+      yield this.formatSSE(errorResponse);
     }
   }
 
@@ -421,12 +392,12 @@ export class ElysiaA2AAdapter {
   }
 
   /**
-   * Get response headers with protocol version
+   * Get response headers (v1.0 only)
    */
-  getResponseHeaders(requestVersion: ProtocolVersion): Record<string, string> {
+  getResponseHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
-      'A2A-Protocol-Version': getProtocolVersionHeader(requestVersion),
+      'A2A-Protocol-Version': '1.0',
     };
   }
 
@@ -534,7 +505,7 @@ export class ElysiaA2AAdapter {
       id: taskId,
       contextId,
       status: {
-        state: v1.TaskState.SUBMITTED,
+        state: 'submitted',
         timestamp: new Date().toISOString(),
       },
       artifacts: [],
@@ -545,7 +516,7 @@ export class ElysiaA2AAdapter {
 
     // Update to working
     task.status = {
-      state: v1.TaskState.WORKING,
+      state: 'working',
       timestamp: new Date().toISOString(),
     };
     await this.taskStore.set(task);
@@ -558,7 +529,6 @@ export class ElysiaA2AAdapter {
     const result = await this.executor.execute(message, {
       taskId,
       contextId,
-      requestVersion: '1.0',
       metadata: params?.metadata,
     });
 
@@ -573,7 +543,7 @@ export class ElysiaA2AAdapter {
 
     // Update status
     task.status = {
-      state: result.status ?? v1.TaskState.COMPLETED,
+      state: result.status ?? 'completed',
       message: result.message,
       timestamp: new Date().toISOString(),
     };
@@ -612,7 +582,7 @@ export class ElysiaA2AAdapter {
     }
 
     task.status = {
-      state: v1.TaskState.CANCELED,
+      state: 'cancelled',
       timestamp: new Date().toISOString(),
     };
 
@@ -717,11 +687,6 @@ export class ElysiaA2AAdapter {
       throw JSON_RPC_ERRORS.AUTHENTICATED_EXTENDED_CARD_NOT_CONFIGURED;
     }
 
-    // Check if agent card advertises this capability
-    if (!this.agentCard.supportsAuthenticatedExtendedCard) {
-      throw JSON_RPC_ERRORS.AUTHENTICATED_EXTENDED_CARD_NOT_CONFIGURED;
-    }
-
     // Get extended card with auth context
     return this.authenticatedExtendedCardProvider.getExtendedCard(this.authContext ?? {});
   }
@@ -731,8 +696,7 @@ export class ElysiaA2AAdapter {
   // ==========================================================================
 
   private async *handleResubscribe(
-    request: v1.JSONRPCRequest,
-    requestVersion: ProtocolVersion
+    request: v1.JSONRPCRequest
   ): AsyncGenerator<string> {
     const params = request.params as { id: string } | undefined;
 
@@ -741,7 +705,7 @@ export class ElysiaA2AAdapter {
         jsonrpc: '2.0',
         id: request.id,
         error: { ...JSON_RPC_ERRORS.INVALID_PARAMS, data: 'Task ID is required' },
-      }, requestVersion);
+      });
       return;
     }
 
@@ -752,7 +716,7 @@ export class ElysiaA2AAdapter {
         jsonrpc: '2.0',
         id: request.id,
         error: { ...JSON_RPC_ERRORS.TASK_NOT_FOUND, data: { taskId: params.id } },
-      }, requestVersion);
+      });
       return;
     }
 
@@ -767,7 +731,7 @@ export class ElysiaA2AAdapter {
         status: task.status,
         final: TERMINAL_STATES.includes(task.status.state as v1.TaskState),
       },
-    }, requestVersion);
+    });
 
     // If task is already in terminal state, we're done
     if (TERMINAL_STATES.includes(task.status.state as v1.TaskState)) {
@@ -783,7 +747,7 @@ export class ElysiaA2AAdapter {
           jsonrpc: '2.0',
           id: request.id,
           result: event,
-        }, requestVersion);
+        });
 
         // Check if this is a final status
         if ('status' in event && TERMINAL_STATES.includes(event.status.state as v1.TaskState)) {
@@ -803,10 +767,12 @@ export class ElysiaA2AAdapter {
     id: string | number | undefined,
     error: unknown
   ): v1.JSONRPCErrorResponse {
+    const normalizedId = id ?? null;
+
     if (typeof error === 'object' && error !== null && 'code' in error) {
       return {
         jsonrpc: '2.0',
-        id,
+        id: normalizedId,
         error: error as v1.JSONRPCError,
       };
     }
@@ -814,7 +780,7 @@ export class ElysiaA2AAdapter {
     console.error('[ElysiaA2AAdapter] Error:', error);
     return {
       jsonrpc: '2.0',
-      id,
+      id: normalizedId,
       error: {
         ...JSON_RPC_ERRORS.INTERNAL_ERROR,
         data: error instanceof Error ? error.message : String(error),
@@ -822,11 +788,8 @@ export class ElysiaA2AAdapter {
     };
   }
 
-  private formatSSE(data: unknown, requestVersion: ProtocolVersion): string {
-    const normalized = requestVersion === '0.x'
-      ? normalizeResponseToV0(data)
-      : data;
-    return `data: ${JSON.stringify(normalized)}\n\n`;
+  private formatSSE(data: unknown): string {
+    return `data: ${JSON.stringify(data)}\n\n`;
   }
 }
 

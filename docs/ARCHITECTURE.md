@@ -467,7 +467,9 @@ class LiquidClient {
 
 ## A2A Protocol Integration
 
-LiquidCrypto implements Google's Agent-to-Agent (A2A) protocol for interoperability with external AI agents and supports A2UI rendering for declarative UI generation.
+LiquidCrypto implements Google's Agent-to-Agent (A2A) Protocol v1.0 for interoperability with external AI agents and supports A2UI rendering for declarative UI generation.
+
+> **SDK Version**: The A2A SDK has been updated to v1.0 compliance with camelCase type naming, PascalCase JSON-RPC methods, and full A2UI support. See `a2a-sdk/README.md` for detailed documentation.
 
 ### A2A Architecture Overview
 
@@ -523,15 +525,20 @@ LiquidCrypto implements Google's Agent-to-Agent (A2A) protocol for interoperabil
 | `/a2a` | POST | JSON-RPC 2.0 A2A requests |
 | `/a2a/stream` | POST | SSE streaming for A2UI updates |
 
-### A2A JSON-RPC Methods
+### A2A JSON-RPC Methods (v1.0)
 
-| Method | Description |
-|--------|-------------|
-| `agent/card` | Get agent metadata |
-| `message/send` | Send message to create task |
-| `tasks/get` | Get task by ID |
-| `tasks/list` | List tasks for context |
-| `tasks/cancel` | Cancel running task |
+v1.0 uses PascalCase method names. Legacy methods are supported for backward compatibility.
+
+| v1.0 Method | Legacy Method | Description |
+|-------------|---------------|-------------|
+| `SendMessage` | `message/send` | Send message to create task |
+| `StreamMessage` | `message/stream` | Stream message with SSE events |
+| `GetTask` | `tasks/get` | Get task by ID |
+| `CancelTask` | `tasks/cancel` | Cancel running task |
+| `SubscribeToTask` | `tasks/resubscribe` | Subscribe to task updates |
+| `SetTaskPushNotificationConfig` | `tasks/pushNotificationConfig/set` | Configure push notifications |
+| `GetTaskPushNotificationConfig` | `tasks/pushNotificationConfig/get` | Get push notification config |
+| `GetExtendedAgentCard` | `agent/authenticatedExtendedCard` | Get extended agent card |
 
 ### A2UI Component Mapping
 
@@ -570,11 +577,13 @@ A2UI supports three binding types for dynamic data:
 { template: "Welcome, {{user.name}}!" }
 ```
 
-### Task Lifecycle
+### Task Lifecycle (v1.0)
+
+v1.0 uses kebab-case for task states:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    A2A Task State Machine                        │
+│                 A2A Task State Machine (v1.0)                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌───────────┐                                                  │
@@ -586,13 +595,21 @@ A2UI supports three binding types for dynamic data:
 │  │  working  │ ──► Agent processing, may send A2UI updates      │
 │  └─────┬─────┘                                                  │
 │        │                                                         │
-│   ┌────┴────┐                                                   │
-│   ▼         ▼                                                   │
-│ ┌─────┐  ┌────────┐                                             │
-│ │done │  │ failed │                                             │
-│ └─────┘  └────────┘                                             │
+│   ┌────┴────┬──────────┐                                        │
+│   ▼         ▼          ▼                                        │
+│ ┌─────────┐ ┌────────┐ ┌────────────────┐                       │
+│ │completed│ │ failed │ │ input-required │                       │
+│ └─────────┘ └────────┘ └────────────────┘                       │
 │                                                                  │
-│  Additional states: input_required, cancelled                    │
+│  All v1.0 Task States:                                          │
+│  • submitted      - Task created, waiting to start              │
+│  • working        - Agent actively processing                   │
+│  • completed      - Task finished successfully                  │
+│  • failed         - Task encountered error                      │
+│  • cancelled      - Task was cancelled by user                  │
+│  • input-required - Agent needs more input (kebab-case!)        │
+│  • auth-required  - Authentication needed (kebab-case!)         │
+│  • rejected       - Task was rejected by agent                  │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -697,11 +714,50 @@ src/components/agentic/
 └── GlassA2UIRenderer.stories.tsx # Storybook stories
 ```
 
+### v1.0 Type Naming Convention
+
+All A2A SDK types now use **camelCase** per the v1.0 specification:
+
+| v1.0 (camelCase) | Legacy (snake_case) |
+|------------------|---------------------|
+| `messageId` | `message_id` |
+| `taskId` | `task_id` |
+| `contextId` | `context_id` |
+| `artifactId` | `artifact_id` |
+| `protocolVersions` | `protocol_versions` |
+| `pushNotifications` | `push_notifications` |
+| `defaultInputModes` | `default_input_modes` |
+
+### A2UI Integration
+
+The SDK includes comprehensive A2UI support via the `a2ui` namespace:
+
+```typescript
+import { a2ui } from '@liquidcrypto/a2a-sdk';
+
+// Create UI components
+const ui = a2ui.card('card-1', [
+  a2ui.text('title', 'Dashboard'),
+  a2ui.button('btn', 'Refresh', a2ui.callback('refresh')),
+]);
+
+// Create messages for streaming
+const messages = [
+  a2ui.beginRendering('surface-1', 'root'),
+  a2ui.surfaceUpdate('surface-1', [ui]),
+];
+
+// Check for A2UI in artifacts
+if (a2ui.isA2UIArtifact(artifact)) {
+  const a2uiMessages = a2ui.extractA2UIMessages(artifact);
+}
+```
+
 ### References
 
-- [A2A Protocol Specification](https://a2a-protocol.org)
-- [A2UI Specification](https://a2ui.org)
-- [A2UI v0.8 Changelog](https://a2ui.org/changelog)
+- [A2A Protocol v1.0 Specification](https://a2a-protocol.org/latest/specification/)
+- [A2UI Specification](https://github.com/google/a2ui)
+- [A2A SDK Documentation](../a2a-sdk/README.md)
 
 ---
 

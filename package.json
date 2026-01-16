@@ -5,7 +5,7 @@
   "type": "module",
   "sideEffects": false,
   "workspaces": [
-    "packages/*",
+    "a2a-sdk",
     "server"
   ],
   "main": "./dist/liquid-glass.umd.cjs",

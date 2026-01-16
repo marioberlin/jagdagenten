@@ -6,24 +6,15 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import { Task } from '../../types';
+import type { Task } from '../../types/v1';
 import { BaseDatabaseTaskStore, DatabaseConfig } from './task-store';
 
 /**
  * PostgreSQL-specific configuration
  */
-export interface PostgresConfig extends DatabaseConfig {
+export interface PostgresConfig extends Omit<DatabaseConfig, 'connection'> {
   /** PostgreSQL connection string */
   connection: string;
-
-  /** Enable SSL for connections (default: false) */
-  ssl?: boolean;
-
-  /** Connection retry attempts (default: 3) */
-  retryAttempts?: number;
-
-  /** Delay between retry attempts in ms (default: 1000) */
-  retryDelay?: number;
 }
 
 /**
@@ -39,10 +30,11 @@ export interface PostgresConfig extends DatabaseConfig {
 export class PostgresTaskStore extends BaseDatabaseTaskStore {
   private pool: Pool;
   private client: PoolClient | null = null;
+  private postgresConfig: PostgresConfig;
 
   constructor(config: PostgresConfig) {
     super(config);
-    this.config = {
+    this.postgresConfig = {
       retryAttempts: 3,
       retryDelay: 1000,
       ssl: false,
@@ -51,11 +43,11 @@ export class PostgresTaskStore extends BaseDatabaseTaskStore {
 
     // Initialize connection pool
     this.pool = new Pool({
-      connectionString: this.config.connection,
-      ssl: this.config.ssl ? { rejectUnauthorized: false } : undefined,
-      max: this.config.maxConnections,
-      idleTimeoutMillis: this.config.timeout,
-      connectionTimeoutMillis: this.config.timeout,
+      connectionString: this.postgresConfig.connection,
+      ssl: this.postgresConfig.ssl ? { rejectUnauthorized: false } : undefined,
+      max: this.postgresConfig.maxConnections || 10,
+      idleTimeoutMillis: this.postgresConfig.timeout || 30000,
+      connectionTimeoutMillis: this.postgresConfig.timeout || 30000,
     });
 
     // Handle pool errors
@@ -215,7 +207,7 @@ export class PostgresTaskStore extends BaseDatabaseTaskStore {
       return null;
     }
 
-    return this.deserializeTask(result.rows[0]);
+    return this.deserializeTask(result.rows[0] as Record<string, unknown>);
   }
 
   /**
@@ -239,18 +231,34 @@ export class PostgresTaskStore extends BaseDatabaseTaskStore {
     limit?: number;
     offset?: number;
   }): Promise<Task[]> {
-    const { clause, params } = this.buildWhereClause(filter);
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
+    if (filter?.status) {
+      conditions.push(`status_state = $${paramIndex++}`);
+      params.push(filter.status);
+    }
+
+    if (filter?.contextId) {
+      conditions.push(`context_id = $${paramIndex++}`);
+      params.push(filter.contextId);
+    }
+
+    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+    const limit = filter?.limit || 100;
+    const offset = filter?.offset || 0;
 
     const query = `
       SELECT * FROM ${this.tableName}
-      ${clause}
-      ${this.getOrderClause()}
-      ${this.buildPaginationClause(filter)}
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
     `;
 
     const result = await this.pool.query(query, params);
 
-    return result.rows.map(row => this.deserializeTask(row));
+    return result.rows.map(row => this.deserializeTask(row as Record<string, unknown>));
   }
 
   /**
@@ -265,15 +273,17 @@ export class PostgresTaskStore extends BaseDatabaseTaskStore {
    */
   private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
     let lastError: Error | null = null;
+    const retryAttempts = this.postgresConfig.retryAttempts || 3;
+    const retryDelay = this.postgresConfig.retryDelay || 1000;
 
-    for (let attempt = 1; attempt <= this.config.retryAttempts!; attempt++) {
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error as Error;
 
-        if (attempt < this.config.retryAttempts!) {
-          const delay = this.config.retryDelay! * Math.pow(2, attempt - 1);
+        if (attempt < retryAttempts) {
+          const delay = retryDelay * Math.pow(2, attempt - 1);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }

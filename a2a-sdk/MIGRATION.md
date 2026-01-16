@@ -1,25 +1,245 @@
-# Migration Guide: Python SDK to TypeScript SDK
+# Migration Guide
 
-This guide helps you migrate from the [A2A Python SDK](https://github.com/a2aproject/a2a-python) to the A2A TypeScript SDK.
+This guide covers migrations for the A2A TypeScript SDK:
 
-## Table of Contents
+1. [Python SDK to TypeScript SDK](#python-sdk-to-typescript-sdk)
+2. [Legacy Types to v1.0 Types](#legacy-types-to-v10-types)
 
-- [Overview](#overview)
-- [Key Differences](#key-differences)
-- [Type System Migration](#type-system-migration)
-- [Client Migration](#client-migration)
-- [Server Migration](#server-migration)
-- [Transports](#transports)
-- [Common Patterns](#common-patterns)
-- [Examples](#examples)
+---
 
-## Overview
+## Legacy Types to v1.0 Types
 
-The TypeScript SDK is designed to provide feature parity with the Python SDK while leveraging TypeScript's type system and JavaScript's async/await patterns.
+The A2A SDK v1.0 introduces significant naming convention changes to align with the official A2A Protocol v1.0 Draft Specification.
 
-## Key Differences
+### Summary of Changes
 
-### 1. Async Programming Model
+| Category | Legacy Format | v1.0 Format |
+|----------|--------------|-------------|
+| Field names | `snake_case` | `camelCase` |
+| Task states | `input_required` | `input-required` (kebab-case) |
+| JSON-RPC methods | `message/send` | `SendMessage` (PascalCase) |
+| Type exports | `types/index.ts` | `types/v1.ts` |
+
+### Type Field Name Changes
+
+```typescript
+// Legacy (snake_case)
+interface Message {
+  message_id: string;
+  context_id?: string;
+  task_id?: string;
+}
+
+// v1.0 (camelCase)
+interface Message {
+  messageId: string;
+  contextId?: string;
+  taskId?: string;
+}
+```
+
+Complete field mapping:
+
+| Legacy Field | v1.0 Field |
+|--------------|------------|
+| `message_id` | `messageId` |
+| `context_id` | `contextId` |
+| `task_id` | `taskId` |
+| `artifact_id` | `artifactId` |
+| `push_notifications` | `pushNotifications` |
+| `state_transition_history` | `stateTransitionHistory` |
+| `default_input_modes` | `defaultInputModes` |
+| `default_output_modes` | `defaultOutputModes` |
+| `protocol_versions` | `protocolVersions` |
+| `documentation_url` | `documentationUrl` |
+| `history_length` | `historyLength` |
+
+### Task State Changes
+
+```typescript
+// Legacy (snake_case)
+type TaskState = 'submitted' | 'working' | 'completed' | 'failed' | 'input_required' | 'cancelled';
+
+// v1.0 (kebab-case for multi-word states)
+type TaskState =
+  | 'submitted'
+  | 'working'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'input-required'  // Changed from input_required
+  | 'auth-required'   // New state
+  | 'rejected';       // New state
+```
+
+### JSON-RPC Method Changes
+
+```typescript
+// Legacy method names (slash notation)
+const LEGACY_METHODS = {
+  'message/send': 'Send a message',
+  'message/stream': 'Stream a message',
+  'tasks/get': 'Get task by ID',
+  'tasks/cancel': 'Cancel a task',
+  'tasks/resubscribe': 'Resubscribe to task',
+  'agent/card': 'Get agent card',
+};
+
+// v1.0 method names (PascalCase)
+const V1_METHODS = {
+  'SendMessage': 'Send a message',
+  'StreamMessage': 'Stream a message',
+  'GetTask': 'Get task by ID',
+  'CancelTask': 'Cancel a task',
+  'SubscribeToTask': 'Subscribe to task updates',
+  'SetTaskPushNotificationConfig': 'Configure push notifications',
+  'GetTaskPushNotificationConfig': 'Get push notification config',
+  'GetExtendedAgentCard': 'Get extended agent card',
+};
+```
+
+### Import Path Changes
+
+```typescript
+// Legacy
+import { Message, Task, AgentCard } from 'a2a-sdk/types';
+import { Role, TaskState } from 'a2a-sdk/types/base';
+
+// v1.0
+import { Message, Task, AgentCard, Role, TaskState } from '@liquidcrypto/a2a-sdk';
+// Or import from types/v1 directly
+import type { Message, Task } from '@liquidcrypto/a2a-sdk/types/v1';
+```
+
+### Client API Changes
+
+```typescript
+// Legacy client creation
+import { ClientFactory } from 'a2a-sdk';
+const client = await ClientFactory.createClientFromUrl(url, config);
+
+// v1.0 client creation
+import { createA2AClient } from '@liquidcrypto/a2a-sdk';
+const client = createA2AClient({
+  baseUrl: url,
+  authToken: 'optional-token',
+  timeout: 30000,
+});
+
+// Legacy sending
+const message = { kind: 'message', message_id: 'msg-1', ... };
+const result = await client.sendMessage(message);
+
+// v1.0 sending (simplified)
+const task = await client.sendText('Hello!');
+// Or with options
+const task = await client.sendText('Hello!', {
+  contextId: 'ctx-1',
+  blocking: true,
+});
+```
+
+### Agent Card Changes
+
+```typescript
+// Legacy AgentCard
+const agentCard = {
+  name: 'My Agent',
+  url: 'https://...',
+  capabilities: {
+    streaming: true,
+    push_notifications: false,
+    state_transition_history: true,
+  },
+  default_input_modes: ['text/plain'],
+  default_output_modes: ['text/plain'],
+  skills: [],
+};
+
+// v1.0 AgentCard
+const agentCard: AgentCard = {
+  name: 'My Agent',
+  url: 'https://...',
+  protocolVersions: ['1.0'],  // New required field
+  capabilities: {
+    streaming: true,
+    pushNotifications: false,     // camelCase
+    stateTransitionHistory: true, // camelCase
+  },
+  defaultInputModes: ['text/plain'],   // camelCase
+  defaultOutputModes: ['text/plain'],  // camelCase
+  skills: [],
+};
+```
+
+### Utility Function Changes
+
+```typescript
+// Legacy helper functions
+import { createTextPart, createUserMessage } from 'a2a-sdk';
+
+const part = createTextPart('Hello');
+const message = createUserMessage([part], { context_id: 'ctx-1' });
+
+// v1.0 helper functions
+import { textPart, userMessage } from '@liquidcrypto/a2a-sdk';
+
+const part = textPart('Hello');
+const message = userMessage([part], { contextId: 'ctx-1' });
+```
+
+### A2UI Integration (New in v1.0)
+
+```typescript
+// A2UI is new in v1.0
+import { a2ui } from '@liquidcrypto/a2a-sdk';
+
+// Create UI components
+const card = a2ui.card('card-1', [
+  a2ui.text('title', 'Welcome!'),
+  a2ui.button('btn-1', 'Click', a2ui.callback('clicked')),
+]);
+
+// Create A2UI messages for streaming
+const messages = [
+  a2ui.beginRendering('surface-1', 'root'),
+  a2ui.surfaceUpdate('surface-1', [card]),
+];
+
+// Check artifacts for A2UI content
+if (a2ui.isA2UIArtifact(artifact)) {
+  const a2uiMessages = a2ui.extractA2UIMessages(artifact);
+}
+```
+
+### Migration Checklist
+
+- [ ] Update imports to use `@liquidcrypto/a2a-sdk`
+- [ ] Change all `snake_case` fields to `camelCase`
+- [ ] Update task state checks for kebab-case (`input-required`, `auth-required`)
+- [ ] Replace `createTextPart`/`createUserMessage` with `textPart`/`userMessage`
+- [ ] Add `protocolVersions: ['1.0']` to agent cards
+- [ ] Update JSON-RPC method names if using low-level API
+
+### Backward Compatibility
+
+The SDK server adapters support both legacy and v1.0 method names:
+
+```typescript
+// Both work on the server
+'message/send'  // Legacy - still supported
+'SendMessage'   // v1.0 - preferred
+```
+
+---
+
+## Python SDK to TypeScript SDK
+
+This section helps you migrate from the [A2A Python SDK](https://github.com/a2aproject/a2a-python) to the A2A TypeScript SDK.
+
+### Key Differences
+
+#### 1. Async Programming Model
 
 **Python (asyncio):**
 ```python
@@ -30,21 +250,20 @@ async def send_message(self, request: Message):
 
 **TypeScript (async/await):**
 ```typescript
-async *sendMessage(request: Message): AsyncIterableIterator<ClientEvent> {
-  for await (const event of client.sendMessage(request)) {
+async function sendMessage(request: Message) {
+  for await (const event of client.streamText(request.text)) {
     processEvent(event);
   }
 }
 ```
 
-### 2. Type Definitions
+#### 2. Type Definitions
 
 **Python (Pydantic):**
 ```python
 from pydantic import BaseModel
 
 class Message(BaseModel):
-    kind: Literal['message']
     message_id: str
     role: Role
     parts: list[Part]
@@ -53,14 +272,13 @@ class Message(BaseModel):
 **TypeScript (Interfaces):**
 ```typescript
 interface Message {
-  kind: 'message';
-  message_id: string;
+  messageId: string;  // v1.0 camelCase
   role: Role;
   parts: Part[];
 }
 ```
 
-### 3. Error Handling
+#### 3. Error Handling
 
 **Python:**
 ```python
@@ -75,87 +293,16 @@ except TaskNotFoundError as e:
 try {
   const result = await client.getTask(taskId);
 } catch (error) {
-  if (error instanceof TaskNotFoundError) {
-    handleError(error);
+  if (error instanceof A2AClientError && error.code === -32001) {
+    handleTaskNotFound(error);
   }
 }
 ```
-
-### 4. Configuration
-
-**Python (Dataclasses):**
-```python
-@dataclasses.dataclass
-class ClientConfig:
-    streaming: bool = True
-    polling: bool = False
-    httpx_client: httpx.AsyncClient | None = None
-```
-
-**TypeScript (Interfaces):**
-```typescript
-interface ClientConfig {
-  streaming?: boolean;
-  polling?: boolean;
-  httpxClient?: any;
-}
-```
-
-## Type System Migration
-
-### Base Models
-
-**Python:**
-```python
-from a2a._base import A2ABaseModel
-
-class Message(A2ABaseModel):
-    kind: Literal['message'] = 'message'
-    message_id: str
-    # ...
-```
-
-**TypeScript:**
-```typescript
-import { Message } from 'a2a-sdk';
-
-// Interfaces are directly used
-const message: Message = {
-  kind: 'message',
-  message_id: 'msg-123',
-  // ...
-};
-```
-
-### Enums
-
-**Python:**
-```python
-from enum import Enum
-
-class Role(str, Enum):
-    USER = 'user'
-    AGENT = 'agent'
-```
-
-**TypeScript:**
-```typescript
-enum Role {
-  USER = 'user',
-  AGENT = 'agent',
-}
-
-// Or as const enum for string literals
-type Role = 'user' | 'agent';
-```
-
-## Client Migration
 
 ### Creating a Client
 
 **Python:**
 ```python
-from a2a.client.client import A2AClient
 from a2a.client.client_factory import ClientFactory
 
 client = await ClientFactory.create_client(
@@ -166,15 +313,12 @@ client = await ClientFactory.create_client(
 
 **TypeScript:**
 ```typescript
-import { ClientFactory, ClientConfig } from 'a2a-sdk';
+import { createA2AClient } from '@liquidcrypto/a2a-sdk';
 
-const client = await ClientFactory.createClient(
-  agentCard,
-  {
-    streaming: true,
-    timeout: 30000,
-  } as ClientConfig
-);
+const client = createA2AClient({
+  baseUrl: 'https://agent.example.com/a2a/v1',
+  timeout: 30000,
+});
 ```
 
 ### Sending Messages
@@ -182,113 +326,23 @@ const client = await ClientFactory.createClient(
 **Python:**
 ```python
 message = Message(
-    kind='message',
     message_id='msg-123',
     role=Role.USER,
-    parts=[TextPart(kind='text', text='Hello')]
+    parts=[TextPart(text='Hello')]
 )
 
 async for event in client.send_message(message):
-    if isinstance(event, tuple):
-        task, update = event
-        print(f"Task update: {task.status.state}")
-    else:
-        print(f"Message: {event}")
+    print(f"Event: {event}")
 ```
 
 **TypeScript:**
 ```typescript
-const message: Message = {
-  kind: 'message',
-  message_id: 'msg-123',
-  role: Role.USER,
-  parts: [
-    {
-      kind: 'text',
-      text: 'Hello',
-    },
-  ],
-};
+// Simple text sending
+const task = await client.sendText('Hello');
 
-for await (const event of client.sendMessage(message)) {
-  if (Array.isArray(event)) {
-    const [task, update] = event;
-    console.log(`Task update: ${task.status.state}`);
-  } else {
-    console.log(`Message: ${event}`);
-  }
-}
-```
-
-### Getting Tasks
-
-**Python:**
-```python
-task = await client.get_task(
-    request=TaskQueryParams(id='task-123', history_length=10)
-)
-print(f"Task state: {task.status.state}")
-```
-
-**TypeScript:**
-```typescript
-const task = await client.getTask({
-  id: 'task-123',
-  historyLength: 10,
-});
-
-console.log(`Task state: ${task.status.state}`);
-```
-
-## Server Migration
-
-### Creating an Agent Executor
-
-**Python:**
-```python
-from a2a.server.agent_execution import AgentExecutor
-from a2a.types import Message, AgentExecutionResult
-
-class MyAgentExecutor(AgentExecutor):
-    async def execute(
-        self,
-        message: Message,
-        context: AgentExecutionContext
-    ) -> AgentExecutionResult:
-        response = Message(
-            kind='message',
-            message_id=str(uuid.uuid4()),
-            role=Role.AGENT,
-            parts=[TextPart(kind='text', text=f"Echo: {message.parts[0].text}")]
-        )
-        return AgentExecutionResult(message=response)
-```
-
-**TypeScript:**
-```typescript
-import { AgentExecutor, AgentExecutionResult, Message, AgentExecutionContext } from 'a2a-sdk';
-
-class MyAgentExecutor implements AgentExecutor {
-  async execute(
-    message: Message,
-    context: AgentExecutionContext
-  ): Promise<AgentExecutionResult> {
-    const response: Message = {
-      kind: 'message',
-      message_id: crypto.randomUUID(),
-      role: Role.AGENT,
-      parts: [
-        {
-          kind: 'text',
-          text: `Echo: ${(message.parts[0] as any).text}`,
-        },
-      ],
-    };
-
-    return {
-      message: response,
-    };
-  }
+// Streaming
+for await (const event of client.streamText('Hello')) {
+  console.log('Event:', event);
 }
 ```
 
@@ -297,185 +351,50 @@ class MyAgentExecutor implements AgentExecutor {
 **Python:**
 ```python
 from a2a.server.apps import A2AServerApp
-from a2a.types import AgentCard
+
+class MyExecutor(AgentExecutor):
+    async def execute(self, message, context):
+        return AgentExecutionResult(
+            message=Message(...)
+        )
 
 server = A2AServerApp(
     agent_card=AgentCard(...),
-    executor=MyAgentExecutor(),
+    executor=MyExecutor(),
 )
 await server.serve()
 ```
 
 **TypeScript:**
 ```typescript
-import { A2AServer, ServerConfig } from 'a2a-sdk';
+import { ExpressA2AServer } from '@liquidcrypto/a2a-sdk';
 
-const serverConfig: ServerConfig = {
-  agentCard: {
-    name: 'My Agent',
-    description: 'Echo agent',
-    version: '1.0.0',
-    url: 'http://localhost:3000/a2a/v1',
-    // ... other properties
-  },
-  executor: new MyAgentExecutor(),
-  port: 3000,
+const executor: AgentExecutor = {
+  async execute(message, context) {
+    return {
+      message: agentMessage([textPart('Response')]),
+    };
+  }
 };
 
-const server = new A2AServer(serverConfig);
+const server = new ExpressA2AServer({
+  agentCard: { ... },
+  executor,
+  port: 3000,
+});
+
 await server.start();
 ```
 
-## Transports
+### Known Differences
 
-### JSON-RPC Transport
-
-**Python:**
-```python
-from a2a.client.transports import JSONRPCTransport
-
-transport = JSONRPCTransport(
-    base_url='https://api.example.com/a2a/v1',
-    httpx_client=httpx.AsyncClient()
-)
-```
-
-**TypeScript:**
-```typescript
-import { JSONRPCTransport } from 'a2a-sdk';
-
-const transport = new JSONRPCTransport(
-  'https://api.example.com/a2a/v1',
-  {
-    'Authorization': 'Bearer token',
-  }
-);
-```
-
-### Custom Middleware
-
-**Python:**
-```python
-from a2a.client.middleware import ClientCallInterceptor
-
-class LoggingMiddleware(ClientCallInterceptor):
-    async def intercept(
-        self,
-        request: Any,
-        context: ClientCallContext,
-        call_next: Callable[[], Awaitable[Any]]
-    ) -> Any:
-        print(f"Request: {request}")
-        result = await call_next()
-        print(f"Response: {result}")
-        return result
-```
-
-**TypeScript:**
-```typescript
-import { ClientCallInterceptor, ClientCallContext } from 'a2a-sdk';
-
-class LoggingMiddleware implements ClientCallInterceptor {
-  async intercept(
-    request: any,
-    context: ClientCallContext,
-    next: () => Promise<any>
-  ): Promise<any> {
-    console.log(`Request: ${JSON.stringify(request)}`);
-    const result = await next();
-    console.log(`Response: ${JSON.stringify(result)}`);
-    return result;
-  }
-}
-```
-
-## Common Patterns
-
-### Task Management
-
-**Python:**
-```python
-# Create and monitor a task
-task = await client.send_message(message)
-task_id = task.id
-
-# Get task updates
-while True:
-    updated_task = await client.get_task(TaskQueryParams(id=task_id))
-    if updated_task.status.state in ['completed', 'failed', 'canceled']:
-        break
-    await asyncio.sleep(1)
-```
-
-**TypeScript:**
-```typescript
-// Create and monitor a task
-const result = await client.sendMessage(message);
-const task = result[0]; // or result as Task
-const taskId = task.id;
-
-// Get task updates
-let updatedTask: Task;
-do {
-  updatedTask = await client.getTask({ id: taskId });
-  if (['completed', 'failed', 'canceled'].includes(updatedTask.status.state)) {
-    break;
-  }
-  await new Promise(resolve => setTimeout(resolve, 1000));
-} while (true);
-```
-
-### Error Handling
-
-**Python:**
-```python
-from a2a.types import TaskNotFoundError
-
-try:
-    task = await client.get_task(TaskQueryParams(id='invalid-id'))
-except TaskNotFoundError as e:
-    print(f"Task not found: {e.message}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
-```
-
-**TypeScript:**
-```typescript
-try {
-  const task = await client.getTask({ id: 'invalid-id' });
-} catch (error) {
-  if (error.code === -32001) { // TaskNotFoundError code
-    console.log(`Task not found: ${error.message}`);
-  } else {
-    console.log(`Unexpected error: ${error}`);
-  }
-}
-```
-
-## Examples
-
-### Complete Client Example
-
-See [examples/client-example.ts](./examples/client-example.ts)
-
-### Complete Server Example
-
-See [examples/server-example.ts](./examples/server-example.ts)
-
-## Known Limitations
-
-1. **gRPC Transport**: Not yet implemented (planned)
-2. **Database Integrations**: Not yet implemented (planned)
-3. **Telemetry**: Basic OpenTelemetry support (planned)
-4. **Streaming**: Limited to JSON-RPC for now
+1. **Package name**: Python uses `a2a-sdk`, TypeScript uses `@liquidcrypto/a2a-sdk`
+2. **Naming**: Python uses `snake_case`, TypeScript v1.0 uses `camelCase`
+3. **Streaming**: TypeScript uses `AsyncIterableIterator`, Python uses `async for`
+4. **Server frameworks**: TypeScript supports Express, Fastify, Elysia; Python uses ASGI
 
 ## Getting Help
 
-- Check the [README](./README.md) for basic usage
-- Review the [examples](./examples/) directory
-- Open an [issue](https://github.com/a2aproject/a2a-typescript/issues) on GitHub
-- Join the [A2A community](https://a2a-protocol.org/community)
-
-## Status
-
-This SDK is actively being developed. For the latest status, see the [main README](./README.md).
+- Review the [README](./README.md) for current API documentation
+- Check the [examples](./examples/) directory
+- Open an issue on GitHub
