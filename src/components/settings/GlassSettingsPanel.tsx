@@ -20,6 +20,7 @@ import {
 import { AIWallpaperGenerator } from '@/pages/settings-components/AIWallpaperGenerator';
 import { GlassContainerSettings } from './GlassContainerSettings';
 import { GlassAgentSettings } from './GlassAgentSettings';
+import { GlassSkillsPanel } from './GlassSkillsPanel';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
@@ -35,7 +36,7 @@ const tabs = [
     { id: 'ai-agents', label: 'AI Agents', icon: Brain, description: 'SDK preferences, API keys, auto-config' },
     { id: 'agent', label: 'Agent', icon: Cpu, description: 'LLM provider, context strategy' },
     { id: 'knowledge', label: 'Knowledge', icon: Book, description: 'Agent knowledge base' },
-    { id: 'plugins', label: 'Plugins', icon: Puzzle, description: 'Extensions & MCP servers' },
+    { id: 'plugins', label: 'Skills & Plugins', icon: Puzzle, description: 'Manage capabilities & extensions' },
     { id: 'containers', label: 'Containers', icon: Server, description: 'Remote deployment, pool settings' },
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
@@ -311,7 +312,9 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
 
                         {/* === PLUGINS === */}
                         {activeTab === 'plugins' && (
-                            <PluginsPanel />
+                            <div className="max-w-4xl mx-auto">
+                                <GlassSkillsPanel />
+                            </div>
                         )}
 
                         {/* === CONTAINERS === */}

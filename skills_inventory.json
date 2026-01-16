@@ -1,0 +1,376 @@
+{
+  "timestamp": "2026-01-16T09:52:28.077Z",
+  "totalSkills": 26,
+  "withManifest": 18,
+  "missingManifest": 8,
+  "bySource": {
+    "ClaudeSkills": 16,
+    "ClaudePlugins": 7,
+    "LiquidSkills": 3
+  },
+  "skills": [
+    {
+      "name": "theme-factory",
+      "path": "ClaudeSkills/skills/theme-factory",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "doc-coauthoring",
+      "path": "ClaudeSkills/skills/doc-coauthoring",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration, and verify the doc works for readers. Trigger when user mentions writing docs, creating proposals, drafting specs, or similar documentation tasks.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "xlsx",
+      "path": "ClaudeSkills/skills/xlsx",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "\"Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas\"",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "pdf",
+      "path": "ClaudeSkills/skills/pdf",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Comprehensive PDF manipulation toolkit for extracting text and tables, creating new PDFs, merging/splitting documents, and handling forms. When Claude needs to fill in a PDF form or programmatically process, generate, or analyze PDF documents at scale.",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "algorithmic-art",
+      "path": "ClaudeSkills/skills/algorithmic-art",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "internal-comms",
+      "path": "ClaudeSkills/skills/internal-comms",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.).",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "skill-creator",
+      "path": "ClaudeSkills/skills/skill-creator",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "canvas-design",
+      "path": "ClaudeSkills/skills/canvas-design",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "pptx",
+      "path": "ClaudeSkills/skills/pptx",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "\"Presentation creation, editing, and analysis. When Claude needs to work with presentations (.pptx files) for: (1) Creating new presentations, (2) Modifying or editing content, (3) Working with layouts, (4) Adding comments or speaker notes, or any other presentation tasks\"",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "slack-gif-creator",
+      "path": "ClaudeSkills/skills/slack-gif-creator",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a GIF of X doing Y for Slack.\"",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "webapp-testing",
+      "path": "ClaudeSkills/skills/webapp-testing",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "frontend-design",
+      "path": "ClaudeSkills/skills/frontend-design",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or when styling/beautifying any web UI). Generates creative, polished code and UI design that avoids generic AI aesthetics.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "mcp-builder",
+      "path": "ClaudeSkills/skills/mcp-builder",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "brand-guidelines",
+      "path": "ClaudeSkills/skills/brand-guidelines",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "docx",
+      "path": "ClaudeSkills/skills/docx",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "\"Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks\"",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "web-artifacts-builder",
+      "path": "ClaudeSkills/skills/web-artifacts-builder",
+      "type": "skill",
+      "source": "ClaudeSkills",
+      "hasManifest": true,
+      "manifestType": "SKILL.md",
+      "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts.",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "README.md"
+      ]
+    },
+    {
+      "name": "vercel",
+      "path": "ClaudePlugins/external/vercel",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Vercel Deploy Plugin for Claude Code",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "Notion",
+      "path": "ClaudePlugins/external/Notion",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Notion Plugin for Claude Code",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "pinecone",
+      "path": "ClaudePlugins/external/pinecone",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Pinecone Plugin for Claude Code",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "figma",
+      "path": "ClaudePlugins/external/figma",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Figma MCP Server Guide",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "atlassian",
+      "path": "ClaudePlugins/external/atlassian",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Atlassian MCP Server",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "sentry",
+      "path": "ClaudePlugins/external/sentry",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Sentry Claude Code Plugin",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "huggingface-skills",
+      "path": "ClaudePlugins/external/huggingface-skills",
+      "type": "plugin",
+      "source": "ClaudePlugins",
+      "hasManifest": false,
+      "manifestType": "none",
+      "description": "Hugging Face Skills",
+      "hasPythonScripts": true,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "liquid-design",
+      "path": "LiquidSkills/liquid-design",
+      "type": "skill",
+      "source": "LiquidSkills",
+      "hasManifest": true,
+      "manifestType": "plugin.json",
+      "description": "Premium Glassmorphism Design System & Scaffolding",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": true,
+      "missingFiles": []
+    },
+    {
+      "name": "vendor",
+      "path": "LiquidSkills/vendor",
+      "type": "skill",
+      "source": "LiquidSkills",
+      "hasManifest": false,
+      "manifestType": "none",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": [
+        "plugin.json or SKILL.md"
+      ]
+    },
+    {
+      "name": "liquid-agency",
+      "path": "LiquidSkills/liquid-agency",
+      "type": "skill",
+      "source": "LiquidSkills",
+      "hasManifest": true,
+      "manifestType": "plugin.json",
+      "description": "Agent Orchestration, 3-Layer Architecture & Protocol Enforcement",
+      "hasPythonScripts": false,
+      "hasTypeScriptScripts": false,
+      "missingFiles": []
+    }
+  ],
+  "recommendations": [
+    "Create manifests for 8 skills: vercel, Notion, pinecone, figma, atlassian...",
+    "Integrate 16 ClaudeSkills into LiquidSkills registry"
+  ]
+}

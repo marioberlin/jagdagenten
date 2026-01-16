@@ -9,6 +9,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } from './schemas/chat.js';
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
+import { skillsRoutes } from './routes/skills.js';
 import { containerRoutes } from './routes/container.js';
 import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
@@ -326,6 +327,7 @@ async function startServer() {
     const app = new Elysia()
         .use(cors())
         .use(pluginRoutes)
+        .use(skillsRoutes)
         .use(authRoutes)
         .use(createArtifactRoutes())
         .use(createAgentsRoutes())
@@ -517,6 +519,23 @@ async function startServer() {
                 logger.error({ error }, 'Failed to create smart sheet');
                 set.status = 500;
                 return { error: 'Failed to create smart sheet' };
+            }
+        })
+
+        // Share Master Template (for client-side copy)
+        .post('/api/v1/sheets/share-template', async ({ body, set }) => {
+            const { email } = body as { email: string };
+            if (!email) {
+                set.status = 400;
+                return { error: 'Email is required' };
+            }
+            try {
+                const result = await templateService.shareMasterTemplate(email);
+                return { success: true, data: result };
+            } catch (error) {
+                logger.error({ error }, 'Failed to share template');
+                set.status = 500;
+                return { error: 'Failed to share template' };
             }
         })
 

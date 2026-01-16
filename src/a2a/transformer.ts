@@ -117,6 +117,7 @@ function resolvePath(obj: Record<string, unknown>, path: string): unknown {
 
 /**
  * Maps A2UI component types to Glass UINode types
+ * v1.0: Added MultipleChoice, DateTimeInput, Video, AudioPlayer, Modal
  */
 const A2UI_TO_GLASS_TYPE: Record<string, UINodeType> = {
     Text: 'text',
@@ -128,7 +129,12 @@ const A2UI_TO_GLASS_TYPE: Record<string, UINodeType> = {
     Column: 'stack',
     Card: 'card',
     Divider: 'divider',
-    // Extended mappings handled specially
+    // v1.0 component mappings
+    MultipleChoice: 'radiogroup',
+    DateTimeInput: 'datepicker',
+    Video: 'video',
+    AudioPlayer: 'audio',
+    Modal: 'modal',
 };
 
 /**
@@ -193,6 +199,22 @@ export function transformComponent(
 
         case 'Tabs':
             return transformTabs(component.id, props, surfaceState, dataModel, onAction);
+
+        // v1.0 new components
+        case 'MultipleChoice':
+            return transformMultipleChoice(component.id, props, dataModel, templateContext);
+
+        case 'DateTimeInput':
+            return transformDateTimeInput(component.id, props, dataModel, templateContext);
+
+        case 'Video':
+            return transformVideo(component.id, props, dataModel, templateContext);
+
+        case 'AudioPlayer':
+            return transformAudioPlayer(component.id, props, dataModel, templateContext);
+
+        case 'Modal':
+            return transformModal(component.id, props, surfaceState, dataModel, onAction);
 
         default:
             console.warn(`[A2UI Transformer] Unknown component type: ${typeName}`);
@@ -544,6 +566,137 @@ function transformTabs(
         type: 'stack',
         id,
         props: { direction: 'vertical', gap: 4 },
+        children,
+    };
+}
+
+// ============================================================================
+// v1.0 Component Transforms
+// ============================================================================
+
+function transformMultipleChoice(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext);
+    const options = props.options as Array<{ value: string; label: DataBinding<string> }> || [];
+    const selected = resolveBinding(props.selected as DataBinding<string>, dataModel, templateContext);
+
+    // Render as radio group
+    return {
+        type: 'radiogroup',
+        id,
+        props: {
+            label,
+            value: selected,
+            options: options.map(opt => ({
+                value: opt.value,
+                label: resolveBinding(opt.label, dataModel, templateContext) || opt.value,
+            })),
+        },
+    };
+}
+
+function transformDateTimeInput(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext);
+    const value = resolveBinding(props.value as DataBinding<string>, dataModel, templateContext);
+    const mode = props.mode as 'date' | 'datetime' | 'time' || 'date';
+
+    return {
+        type: 'datepicker',
+        id,
+        props: {
+            label,
+            value,
+            mode,
+            className: 'w-full',
+        },
+    };
+}
+
+function transformVideo(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const src = resolveBinding(props.src as DataBinding<string>, dataModel, templateContext);
+    const poster = resolveBinding(props.poster as DataBinding<string>, dataModel, templateContext);
+    const autoplay = props.autoplay as boolean || false;
+    const controls = props.controls as boolean ?? true;
+
+    return {
+        type: 'video',
+        id,
+        props: {
+            src,
+            poster,
+            autoplay,
+            controls,
+            className: 'rounded-xl overflow-hidden',
+        },
+        style: {
+            width: props.width as number || '100%',
+            height: props.height as number || 'auto',
+        },
+    };
+}
+
+function transformAudioPlayer(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const src = resolveBinding(props.src as DataBinding<string>, dataModel, templateContext);
+    const title = resolveBinding(props.title as DataBinding<string>, dataModel, templateContext);
+
+    return {
+        type: 'audio',
+        id,
+        props: {
+            src,
+            title,
+            controls: true,
+            className: 'w-full',
+        },
+    };
+}
+
+function transformModal(
+    id: string,
+    props: Record<string, unknown>,
+    surfaceState: SurfaceState,
+    dataModel: Record<string, unknown>,
+    onAction?: (actionId: string, data?: unknown) => void
+): UINode {
+    const title = resolveBinding(props.title as DataBinding<string>, dataModel);
+    const isOpen = props.isOpen as boolean ?? true;
+    const childIds = props.children as string[] || [];
+
+    const children = childIds
+        .map(childId => {
+            const childComponent = surfaceState.components.get(childId);
+            if (!childComponent) return null;
+            return transformComponent(childComponent, surfaceState, dataModel, undefined, onAction);
+        })
+        .filter((c): c is UINode => c !== null);
+
+    return {
+        type: 'modal',
+        id,
+        props: {
+            title,
+            isOpen,
+            className: 'bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl',
+        },
         children,
     };
 }

@@ -31,6 +31,17 @@ LiquidSkills supports both **Claude Skills** (instructions) and **Claude Plugins
 | **code-simplifier** | [Vendor] Automated Logic Refinement | Bun/TS | `vendor/code-simplifier/` |
 | **frontend-design**| [Vendor] Design Philosophy & Guidelines | Doc | `vendor/frontend-design/` |
 
+## Community Skills
+These skills are migrated from the Claude ecosystem and are available for agent use.
+
+| Skill | Description | Language | Path |
+| :--- | :--- | :--- | :--- |
+| **brand-guidelines** | Official LiquidCrypto Brand Voice & Visuals | Doc | `community/brand-guidelines/` |
+| **algorithmic-art** | Generative Art Utilities | Python | `community/algorithmic-art/` |
+| **canvas-design** | Canvas Generation Templates | Plugin | `community/canvas-design/` |
+| **mcp-builder** | Model Context Protocol Tool Builder | TS | `community/mcp-builder/` |
+| **webapp-testing** | E2E Testing Utilities | TS | `community/webapp-testing/` |
+
 ## Architecture Standard
 LiquidSkills follows the **Claude Plugin Standard**:
 - **Manifest**: Every skill has a `plugin.json` (or `skill.json`) in its root or `.claude-plugin/` folder.

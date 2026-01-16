@@ -8,7 +8,9 @@ import { FileSpreadsheet, FolderOpen } from 'lucide-react';
 export const SheetsDemo = () => {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [filesOpen, setFilesOpen] = useState(false);
-    const [currentDocId, setCurrentDocId] = useState('1BxiMvs0XRA5nFMdKvBdBZjGMUUqptlbs74OgvE2upms'); // Demo default
+    const [currentDocId, setCurrentDocId] = useState(
+        import.meta.env.VITE_GOOGLE_MASTER_TEMPLATE_ID || '1XjNGCjk2szcnZVB2T1iZpnVN95Bq2dsXo2mFiXjxzb0'
+    ); // Uses template ID from env or fallback
     const [currentTitle, setCurrentTitle] = useState('Demo Smart Sheet');
 
     const handleFileSelect = (file: { id: string, name: string }) => {

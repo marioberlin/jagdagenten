@@ -49,10 +49,14 @@ npm run build        # Verify build succeeds
    - Set `displayName` for debugging
 
 2. **Implement with semantic styling**
-   - Use `text-primary`, `text-secondary`, `text-tertiary` for text
+   - Use semantic tokens from `src/styles/design-tokens.ts`:
+     - `APPLE_SYSTEM_COLORS` for system colors
+     - `GLASS_BLUR` for blur strength
+     - `text-primary`, `text-secondary`, `text-tertiary` for text
    - Use `bg-glass-surface` variants for backgrounds
    - Use `border-[var(--glass-border)]` for borders
    - NO hardcoded colors like `text-white` or `bg-blue-500`
+   - **NO Emojis**: Use icons from `lucide-react` instead.
 
 3. **Export from index**
    - Add to `src/components/index.ts`
@@ -63,6 +67,10 @@ npm run build        # Verify build succeeds
    npm run lint
    npm run build
    ```
+
+5. **Verify Motion**
+   - Ensure specific easing `cubic-bezier(0.42, 0.0, 0.58, 1.0)` is used for transitions.
+   - Check press/hover states match `liquid-glass-design` skill guidelines.
 
 5. **Test in dev mode**
    ```bash
@@ -89,6 +97,7 @@ npm run build        # Verify build succeeds
 ## Learning Notes
 - Components should always use semantic tokens for theme consistency
 - `forwardRef` is required for components that accept refs (most UI primitives)
+- Always refer to `LiquidSkills/community/liquid-glass-design/SKILL.md` for visual guidelines.
 
 ---
 

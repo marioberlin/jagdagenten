@@ -6,10 +6,16 @@ import { GlassBadge } from '../data-display/GlassBadge';
 import { GlassCard } from '../data-display/GlassCard';
 import { GlassSlider } from '../forms/GlassSlider';
 import { GlassSwitch } from '../forms/GlassSwitch';
+import { GlassRadioGroup, GlassRadioGroupItem } from '../forms/GlassRadioGroup';
+import { GlassDatePicker } from '../forms/GlassDatePicker';
+import { GlassVideo } from '../media/GlassVideo';
+import { GlassAudio } from '../media/GlassAudio';
+import { GlassModal } from '../overlays/GlassModal';
 import { cn } from '@/utils/cn';
 
 // Schema types for dynamic UI generation
-type UINodeType = 'container' | 'stack' | 'grid' | 'text' | 'button' | 'input' | 'badge' | 'card' | 'divider' | 'slider' | 'toggle' | 'checkbox';
+// v1.0: Added radiogroup, datepicker, video, audio, modal
+type UINodeType = 'container' | 'stack' | 'grid' | 'text' | 'button' | 'input' | 'badge' | 'card' | 'divider' | 'slider' | 'toggle' | 'checkbox' | 'radiogroup' | 'datepicker' | 'video' | 'audio' | 'modal';
 
 interface UINode {
     type: UINodeType;
@@ -17,6 +23,10 @@ interface UINode {
     props?: Record<string, unknown>;
     children?: UINode[] | string;
     style?: React.CSSProperties;
+    /** Animation style for the element entrance */
+    motion?: 'fade' | 'slide' | 'scale' | 'glass-morph';
+    /** Sound to play on interaction (if applicable) */
+    sound?: 'tap' | 'success' | 'alert';
 }
 
 interface GlassDynamicUIProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,15 +39,40 @@ interface GlassDynamicUIProps extends React.HTMLAttributes<HTMLDivElement> {
 export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIProps>(
     ({ className, schema, onAction, ...props }, ref) => {
 
+        // Simple sound player helper
+        const playSound = (type?: 'tap' | 'success' | 'alert') => {
+            if (!type) return;
+            // In a real app, this would play an Audio file.
+            // For now, we utilize the browser's interaction feedback if available or log it.
+            console.log(`[GlassDynamicUI] Playing sound: ${type}`);
+        };
+
+        const getMotionClass = (motion?: string) => {
+            switch (motion) {
+                case 'fade': return 'animate-fade-in duration-500 ease-out';
+                case 'slide': return 'animate-slide-up duration-500 cubic-bezier(0.42, 0.0, 0.58, 1.0)';
+                case 'scale': return 'animate-scale-in duration-300 cubic-bezier(0.42, 0.0, 0.58, 1.0)';
+                case 'glass-morph': return 'transition-all duration-700 hover:backdrop-blur-3xl';
+                default: return '';
+            }
+        };
+
         const renderNode = (node: UINode, key?: string | number): React.ReactNode => {
-            const { type, id, props: nodeProps = {}, children, style } = node;
+            const { type, id, props: nodeProps = {}, children, style, motion, sound } = node;
+            const motionClass = getMotionClass(motion);
+
+            // Wrap onAction to play sound if defined
+            const handleAction = (actionId: string, data?: unknown) => {
+                if (sound) playSound(sound);
+                onAction?.(actionId, data);
+            };
 
             switch (type) {
                 case 'container':
                     return (
                         <GlassContainer
                             key={key}
-                            className={cn('p-4', nodeProps.className as string)}
+                            className={cn('p-4', motionClass, nodeProps.className as string)}
                             style={style}
                             material={nodeProps.material as 'thin' | 'regular' | 'thick' | undefined}
                         >
@@ -98,6 +133,7 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                                 nodeProps.variant === 'h2' && 'text-xl font-semibold text-primary',
                                 nodeProps.variant === 'h3' && 'text-lg font-medium text-primary',
                                 !nodeProps.variant && 'text-base text-secondary',
+                                motionClass,
                                 nodeProps.className as string
                             )}
                             style={style}
@@ -113,7 +149,8 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                             key={key}
                             variant={nodeProps.variant as 'primary' | 'secondary' | 'ghost'}
                             size={nodeProps.size as 'sm' | 'md' | 'lg'}
-                            onClick={() => id && onAction?.(id, nodeProps.data)}
+                            onClick={() => id && handleAction(id, nodeProps.data)}
+                            className={motionClass}
                             style={style}
                         >
                             {children as string}
@@ -147,6 +184,7 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                             key={key}
                             className={cn(
                                 'rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10',
+                                motionClass,
                                 nodeProps.className as string
                             )}
                             style={style}
@@ -175,7 +213,7 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                                 defaultValue={typeof nodeProps.value === 'number' ? nodeProps.value : 50}
                                 max={(nodeProps.max as number) || 100}
                                 step={(nodeProps.step as number) || 1}
-                                onValueChange={(val) => id && onAction?.(id, val)}
+                                onValueChange={(val) => id && handleAction(id, val)}
                             />
                         </div>
                     );
@@ -185,11 +223,85 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                         <div key={key} className={cn("flex items-center gap-2", nodeProps.className as string)} style={style}>
                             <GlassSwitch
                                 checked={nodeProps.checked as boolean}
-                                onCheckedChange={(checked) => id && onAction?.(id, checked)}
+                                onCheckedChange={(checked) => id && handleAction(id, checked)}
                             />
                             {(nodeProps.label as string) && <span className="text-sm text-primary">{nodeProps.label as string}</span>}
                         </div>
                     );
+
+                // v1.0 new components
+                case 'radiogroup': {
+                    const options = (nodeProps.options as Array<{ value: string; label: string }>) || [];
+                    return (
+                        <div key={key} className={cn("space-y-2", nodeProps.className as string)} style={style}>
+                            {(nodeProps.label as string) && <label className="text-sm text-secondary mb-2 block">{nodeProps.label as string}</label>}
+                            <GlassRadioGroup
+                                value={nodeProps.value as string}
+                                onValueChange={(val) => id && handleAction(id, val)}
+                            >
+                                {options.map((opt, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <GlassRadioGroupItem value={opt.value} className={`id-${opt.value}`}>
+                                            {opt.label}
+                                        </GlassRadioGroupItem>
+                                    </div>
+                                ))}
+                            </GlassRadioGroup>
+                        </div>
+                    );
+                }
+
+                case 'datepicker':
+                    return (
+                        <div key={key} className={cn("w-full", nodeProps.className as string)} style={style}>
+                            {(nodeProps.label as string) && <label className="text-sm text-secondary mb-2 block">{nodeProps.label as string}</label>}
+                            <GlassDatePicker
+                                date={nodeProps.value ? new Date(nodeProps.value as string) : undefined}
+                                onSelect={(date) => id && handleAction(id, date.toISOString())}
+                            />
+                        </div>
+                    );
+
+                case 'video':
+                    return (
+                        <GlassVideo
+                            key={key}
+                            src={nodeProps.src as string}
+                            poster={nodeProps.poster as string}
+                            autoPlay={nodeProps.autoplay as boolean}
+                            controls={nodeProps.controls as boolean ?? true}
+                            className={cn('rounded-xl overflow-hidden', nodeProps.className as string)}
+                            style={style}
+                        />
+                    );
+
+                case 'audio':
+                    return (
+                        <GlassAudio
+                            key={key}
+                            src={nodeProps.src as string}
+                            title={nodeProps.title as string}
+                            className={cn('w-full', nodeProps.className as string)}
+                            style={style}
+                        />
+                    );
+
+                case 'modal': {
+                    const isOpen = nodeProps.isOpen as boolean ?? true;
+                    return (
+                        <GlassModal
+                            key={key}
+                            isOpen={isOpen}
+                            onClose={() => id && handleAction(id, { open: false })}
+                            title={nodeProps.title as string}
+                        >
+                            {Array.isArray(children)
+                                ? children.map((child, i) => renderNode(child, i))
+                                : children
+                            }
+                        </GlassModal>
+                    );
+                }
 
                 default:
                     console.warn(`Unknown node type: ${type}`);

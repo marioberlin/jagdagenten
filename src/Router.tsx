@@ -31,6 +31,7 @@ const AIResearcherDemo = lazy(() => import('./pages/demos/AIResearcherDemo').the
 const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mod => ({ default: mod.default })));
 const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
 const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
+const DemosIndex = lazy(() => import('./pages/demos/DemosIndex').then(mod => ({ default: mod.DemosIndex })));
 
 // Agent Hub
 const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
@@ -131,6 +132,7 @@ export const AppRouter = () => {
                                 <Route path="/os/artifacts" element={<ArtifactsPage />} />
 
                                 {/* Demos */}
+                                <Route path="/os/demos" element={<DemosIndex />} />
                                 <Route path="/os/demos/generative" element={<GenerativeShowcase />} />
                                 <Route path="/os/demos/generative-extensions" element={<GenerativeExtensions />} />
                                 <Route path="/os/demos/copilot-form" element={<CopilotFormDemo />} />

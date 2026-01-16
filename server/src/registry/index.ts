@@ -9,4 +9,6 @@
 export * from './types.js';
 export * from './store.js';
 export * from './validator.js';
+export * from './local-plugins.js';
 export { createRegistryRoutes, default as createRoutes } from './routes.js';
+

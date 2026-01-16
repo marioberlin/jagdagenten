@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GlassSheet } from '@/components/overlays/GlassSheet';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
-import { FileSpreadsheet, Clock, HardDrive, Loader2, Sparkles } from 'lucide-react';
+import { FileSpreadsheet, Clock, HardDrive, Loader2, Sparkles, LogIn, LogOut } from 'lucide-react';
 
 interface ParsedFile {
     id: string;
@@ -22,7 +22,15 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
     onClose,
     onFileOpen,
 }) => {
-    const { openPicker, isApiLoaded, error: driveError } = useGoogleDrive();
+    const {
+        openPicker,
+        isApiLoaded,
+        error: driveError,
+        isAuthenticated,
+        signIn,
+        signOut,
+        isAuthLoading
+    } = useGoogleDrive();
     const [recentFiles, setRecentFiles] = useState<ParsedFile[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
@@ -61,36 +69,64 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
         setIsCreating(true);
         setCreateError(null);
         try {
-            // In a real app, you'd get the user's email from the auth context
-            // For now, prompt or hardcode for demo
-            const userEmail = prompt('Enter your Google Email to share the sheet with:', 'user@example.com');
+            if (!isAuthenticated || !accessToken) {
+                signIn();
+                throw new Error("Please sign in to Google Drive first.");
+            }
+
+            const userEmail = prompt('Enter your Google Email (to ensure template access):', 'user@example.com');
             if (!userEmail) {
                 setIsCreating(false);
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/v1/sheets/create', {
+            // 1. Ensure access to Master Template (Backend shares it with user)
+            try {
+                const shareResponse = await fetch('http://localhost:3000/api/v1/sheets/share-template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                if (!shareResponse.ok) console.warn("Share template warning:", await shareResponse.text());
+            } catch (e) {
+                console.warn("Share template failed, proceeding anyway...", e);
+            }
+
+            // 2. Client-side Copy (User copies to their own Drive)
+            const templateId = import.meta.env.VITE_GOOGLE_MASTER_TEMPLATE_ID;
+            if (!templateId) throw new Error("Template ID not configured in environment");
+
+            const metadata = {
+                name: `LiquidCrypto Smart Sheet - ${new Date().toLocaleDateString()}`,
+                mimeType: 'application/vnd.google-apps.spreadsheet'
+            };
+
+            const copyRes = await fetch(`https://www.googleapis.com/drive/v3/files/${templateId}/copy`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, title: 'New Smart Sheet' })
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(metadata)
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to create sheet');
+            if (!copyRes.ok) {
+                const errData = await copyRes.json();
+                throw new Error(errData.error?.message || "Failed to copy file to your Drive");
             }
+
+            const newFile = await copyRes.json();
 
             // Successfully created, open it
             handleFileSelect({
-                id: result.data.id,
-                name: result.data.name,
-                url: result.data.url
+                id: newFile.id,
+                name: newFile.name,
+                url: `https://docs.google.com/spreadsheets/d/${newFile.id}/edit`
             });
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('Create failed', err);
-            setCreateError(err instanceof Error ? err.message : 'Failed to create sheet');
+            setCreateError(err.message || 'Failed to create sheet');
         } finally {
             setIsCreating(false);
         }
@@ -151,10 +187,42 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
                 )}
 
                 {driveError && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-                        Error loading Drive API: {driveError}. Check .env configuration.
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs">
+                        {driveError}
                     </div>
                 )}
+
+                {/* Google Account Status */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-400' : 'bg-orange-400'}`} />
+                        <span className="text-sm text-white/70">
+                            {isAuthenticated ? 'Connected to Google Drive' : 'Sign in to browse your Drive'}
+                        </span>
+                    </div>
+                    {isAuthenticated ? (
+                        <GlassButton
+                            variant="secondary"
+                            size="sm"
+                            onClick={signOut}
+                            className="text-xs gap-1"
+                        >
+                            <LogOut size={14} />
+                            Sign Out
+                        </GlassButton>
+                    ) : (
+                        <GlassButton
+                            variant="primary"
+                            size="sm"
+                            onClick={signIn}
+                            disabled={isAuthLoading}
+                            className="text-xs gap-1"
+                        >
+                            {isAuthLoading ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
+                            Sign In
+                        </GlassButton>
+                    )}
+                </div>
 
                 {/* Recent Files */}
                 <div className="flex-1 overflow-y-auto">

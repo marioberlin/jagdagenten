@@ -70,7 +70,8 @@ export const componentLoggers = {
     websocket: logger.child({ component: 'websocket' }),
     security: logger.child({ component: 'security' }),
     http: logger.child({ component: 'http' }),
-    graphql: logger.child({ component: 'graphql' })
+    graphql: logger.child({ component: 'graphql' }),
+    db: logger.child({ component: 'db' })
 };
 
 /**
