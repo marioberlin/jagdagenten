@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useThemeStore } from '@/stores/themeStore';
-import { useAgentConfig } from '@/context/AgentConfigContext';
+import { useAgentConfig, FileSearchConfig } from '@/context/AgentConfigContext';
 
 import { Backgrounds } from '../Backgrounds/BackgroundRegistry';
 import {
@@ -17,10 +18,14 @@ import {
     Lightbulb, Type, Layers, Layout, Settings2, Move, Minimize2, Info, Key,
     Mail, Calendar, ChevronLeft,
 } from 'lucide-react';
-import { AIWallpaperGenerator } from '@/pages/settings-components/AIWallpaperGenerator';
+import { AIWallpaperGenerator } from './AIWallpaperGenerator';
 import { GlassContainerSettings } from './GlassContainerSettings';
 import { GlassAgentSettings } from './GlassAgentSettings';
-import { GlassSkillsPanel } from './GlassSkillsPanel';
+import { GlassCapabilitiesPanel } from './capabilities';
+import { GlassVaultPanel } from './vault';
+import { GlassFileSearch } from '@/components/generative/GlassFileSearch';
+import { GeminiService } from '@/services/gemini';
+import { useOptionalLiquidClient } from '@/liquid-engine/react';
 import { cn } from '@/utils/cn';
 
 interface GlassSettingsPanelProps {
@@ -33,17 +38,16 @@ interface GlassSettingsPanelProps {
 
 const tabs = [
     { id: 'visual', label: 'Appearance', icon: Palette, description: 'Themes, backgrounds, glass effects' },
+    { id: 'vault', label: 'Vault', icon: Shield, description: 'Entity context & autofill' },
     { id: 'ai-agents', label: 'AI Agents', icon: Brain, description: 'SDK preferences, API keys, auto-config' },
     { id: 'agent', label: 'Agent', icon: Cpu, description: 'LLM provider, context strategy' },
     { id: 'knowledge', label: 'Knowledge', icon: Book, description: 'Agent knowledge base' },
-    { id: 'plugins', label: 'Skills & Plugins', icon: Puzzle, description: 'Manage capabilities & extensions' },
+    { id: 'plugins', label: 'Capabilities', icon: Puzzle, description: 'Skills, plugins & integrations' },
     { id: 'containers', label: 'Containers', icon: Server, description: 'Remote deployment, pool settings' },
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
     { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
-    { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
-    { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
     { id: 'system', label: 'System', icon: Monitor, description: 'Rate limits, environment' },
 ];
 
@@ -52,9 +56,30 @@ const tabs = [
 // ============================================
 
 export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
-    const [activeTab, setActiveTab] = useState('visual');
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Extract tab from URL
+    const currentTab = location.pathname.split('/').pop() || 'visual';
+    const initialTab = tabs.find(t => t.id === currentTab) ? currentTab : 'visual';
+
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [visualSubTab, setVisualSubTab] = useState<'themes' | 'backgrounds' | 'glass' | 'customization'>('themes');
     const [backgroundFilter, setBackgroundFilter] = useState<'all' | 'element' | 'image' | 'video' | 'ai'>('all');
+
+    // Sync state with URL when it changes
+    useEffect(() => {
+        const tab = location.pathname.split('/').pop();
+        if (tab && tabs.find(t => t.id === tab)) {
+            setActiveTab(tab);
+        }
+    }, [location.pathname]);
+
+    // Update URL when state changes
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId);
+        navigate(`/os/settings/${tabId}`);
+    };
 
     // Global Theme State
     const {
@@ -130,7 +155,7 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => handleTabChange(tab.id)}
                                 className={cn(
                                     "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left",
                                     activeTab === tab.id
@@ -280,6 +305,13 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                             </div>
                         )}
 
+                        {/* === VAULT === */}
+                        {activeTab === 'vault' && (
+                            <div className="max-w-5xl mx-auto">
+                                <GlassVaultPanel />
+                            </div>
+                        )}
+
                         {activeTab === 'agent' && (
                             <AgentConfigPanel
                                 llmProvider={llmProvider}
@@ -310,10 +342,10 @@ export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
                             <KnowledgeBasePanel />
                         )}
 
-                        {/* === PLUGINS === */}
+                        {/* === CAPABILITIES (Skills, Integrations, Marketplace) === */}
                         {activeTab === 'plugins' && (
                             <div className="max-w-4xl mx-auto">
-                                <GlassSkillsPanel />
+                                <GlassCapabilitiesPanel />
                             </div>
                         )}
 
@@ -1093,9 +1125,112 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 // Agent Config Panel (COMPREHENSIVE)
 // ============================================
 
+// JSON-LD Editor Component for structured knowledge editing
+const JsonCodeEditor: React.FC<{
+    value: string;
+    onChange: (val: string) => void;
+    onRemove: () => void;
+    onRefine: (refinement: string) => Promise<void>;
+}> = ({ value, onChange, onRemove, onRefine }) => {
+    const [copied, setCopied] = useState(false);
+    const [showRefine, setShowRefine] = useState(false);
+    const [refineText, setRefineText] = useState('');
+    const [isRefining, setIsRefining] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleRefineSubmit = async () => {
+        if (!refineText.trim()) return;
+        setIsRefining(true);
+        await onRefine(refineText);
+        setIsRefining(false);
+        setRefineText('');
+        setShowRefine(false);
+    };
+
+    return (
+        <div className="flex gap-2 items-start w-full">
+            <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+                    <span className="text-xs text-white/40 font-mono">JSON-LD Context</span>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setShowRefine(!showRefine)}
+                            className={cn(
+                                'p-1.5 rounded-md transition-colors',
+                                showRefine ? 'bg-[var(--glass-accent)]/20 text-white' : 'hover:bg-white/10 text-white/40 hover:text-white'
+                            )}
+                            title="Refine with AI"
+                        >
+                            <Wand2 size={12} />
+                        </button>
+                        <button
+                            onClick={handleCopy}
+                            className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-white/40 hover:text-white"
+                            title="Copy JSON"
+                        >
+                            {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Refinement Input */}
+                <AnimatePresence>
+                    {showRefine && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="p-2 border-b border-white/10 bg-white/5 flex gap-2">
+                                <input
+                                    autoFocus
+                                    value={refineText}
+                                    onChange={(e) => setRefineText(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleRefineSubmit()}
+                                    placeholder="Add more context (e.g. 'Also, he lives in Berlin')..."
+                                    className="flex-1 h-8 text-xs bg-black/30 border border-white/10 rounded px-2 text-white focus:outline-none focus:border-[var(--glass-accent)]"
+                                />
+                                <button
+                                    onClick={handleRefineSubmit}
+                                    disabled={isRefining}
+                                    className="h-8 px-3 rounded bg-[var(--glass-accent)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                                >
+                                    {isRefining ? <RotateCcw className="animate-spin w-3 h-3" /> : <Bot className="w-3 h-3" />}
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Editor Area */}
+                <textarea
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="JSON-LD Content..."
+                    className="w-full font-mono text-xs min-h-[150px] bg-transparent border-0 focus:outline-none focus:ring-0 rounded-none resize-y p-4 text-gray-300"
+                />
+            </div>
+            <button
+                onClick={onRemove}
+                className="p-2 mt-2 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-lg transition-colors"
+            >
+                <X className="w-4 h-4" />
+            </button>
+        </div>
+    );
+};
+
 interface PageConfig {
     systemPrompt?: string;
     knowledge?: string[];
+    fileSearch?: FileSearchConfig;
 }
 
 interface RouteConfigItem {
@@ -1151,18 +1286,40 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     const [selectedRoute, setSelectedRoute] = useState(DEMO_ROUTES[0].route);
     const [systemPrompt, setSystemPrompt] = useState('');
     const [knowledge, setKnowledge] = useState<string[]>([]);
+    const [fileSearchConfig, setFileSearchConfig] = useState<FileSearchConfig | undefined>(undefined);
     const [hasChanges, setHasChanges] = useState(false);
+
+    // GeminiService for RAG and Schema operations
+    const client = useOptionalLiquidClient();
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+
+    const geminiService = useMemo(() => {
+        if (!apiKey) return null;
+        const targetClient = client || ({
+            getActions: () => [],
+            buildContextPrompt: () => "",
+            ingest: () => { },
+            executeAction: async () => ({})
+        } as any);
+        try {
+            return new GeminiService(apiKey, targetClient);
+        } catch (e) {
+            console.error("Failed to init GeminiService:", e);
+            return null;
+        }
+    }, [apiKey, client]);
 
     // Load config when route changes
     useEffect(() => {
         const config = getConfigForRoute(selectedRoute);
         setSystemPrompt(config.systemPrompt || '');
         setKnowledge(config.knowledge || []);
+        setFileSearchConfig(config.fileSearch);
         setHasChanges(false);
     }, [selectedRoute, getConfigForRoute]);
 
     const handleSave = () => {
-        updatePageConfig(selectedRoute, { systemPrompt, knowledge });
+        updatePageConfig(selectedRoute, { systemPrompt, knowledge, fileSearch: fileSearchConfig });
         setHasChanges(false);
     };
 
@@ -1170,6 +1327,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         const config = getConfigForRoute(selectedRoute);
         setSystemPrompt(config.systemPrompt || '');
         setKnowledge(config.knowledge || []);
+        setFileSearchConfig(config.fileSearch);
         setHasChanges(false);
     };
 
@@ -1565,22 +1723,103 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
                                         No custom knowledge added.
                                     </div>
                                 ) : (
-                                    knowledge.map((item, idx) => (
-                                        <div key={idx} className="flex gap-2 items-start">
-                                            <textarea
-                                                value={item}
-                                                onChange={(e) => updateKnowledgeItem(idx, e.target.value)}
-                                                placeholder="e.g. The user prefers dark mode..."
-                                                className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white min-h-[70px] resize-y focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]"
-                                            />
-                                            <button
-                                                onClick={() => removeKnowledgeItem(idx)}
-                                                className="p-2 mt-1 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-lg transition-colors"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    ))
+                                    knowledge.map((item, idx) => {
+                                        const isJson = item.trim().startsWith('{');
+
+                                        if (isJson) {
+                                            return (
+                                                <JsonCodeEditor
+                                                    key={idx}
+                                                    value={item}
+                                                    onChange={(val) => updateKnowledgeItem(idx, val)}
+                                                    onRemove={() => removeKnowledgeItem(idx)}
+                                                    onRefine={async (refinement) => {
+                                                        if (!geminiService) return;
+                                                        try {
+                                                            const schemaRes = await fetch('/src/assets/schema.json');
+                                                            const schemaJson = await schemaRes.text();
+                                                            const updatedJson = await geminiService.updateSchema(item, refinement, schemaJson);
+                                                            updateKnowledgeItem(idx, updatedJson);
+                                                        } catch (e) {
+                                                            console.error("Failed to refine schema", e);
+                                                        }
+                                                    }}
+                                                />
+                                            );
+                                        }
+
+                                        return (
+                                            <div key={idx} className="flex gap-2 items-start">
+                                                <div className="flex-1 relative group">
+                                                    <textarea
+                                                        value={item}
+                                                        onChange={(e) => updateKnowledgeItem(idx, e.target.value)}
+                                                        placeholder="e.g. The user prefers dark mode..."
+                                                        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white min-h-[70px] resize-y focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]"
+                                                    />
+                                                    {/* Schema Conversion Button */}
+                                                    {geminiService && item.length > 10 && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const schemaRes = await fetch('/src/assets/schema.json');
+                                                                    const schemaJson = await schemaRes.text();
+                                                                    updateKnowledgeItem(idx, "Converting to Schema...");
+                                                                    const jsonLd = await geminiService.convertTextToSchema(item, schemaJson);
+                                                                    updateKnowledgeItem(idx, jsonLd);
+                                                                } catch (e) {
+                                                                    console.error("Schema conversion failed", e);
+                                                                    updateKnowledgeItem(idx, item);
+                                                                }
+                                                            }}
+                                                            className="absolute right-2 top-2 p-1.5 rounded-md bg-[var(--glass-accent)]/10 text-[var(--glass-accent)] hover:bg-[var(--glass-accent)]/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                            title="Convert to Schema.org JSON-LD"
+                                                        >
+                                                            <Wand2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={() => removeKnowledgeItem(idx)}
+                                                    className="p-2 mt-1 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-lg transition-colors"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {/* File Search (RAG) Section */}
+                            <div className="space-y-3 pt-4 border-t border-white/5">
+                                <div>
+                                    <label className="text-sm font-medium text-white">File Search (RAG)</label>
+                                    <p className="text-xs text-white/50">
+                                        Select a Knowledge Store to enable RAG capabilities for this page.
+                                    </p>
+                                </div>
+                                {geminiService ? (
+                                    <div className="bg-black/20 rounded-xl overflow-hidden border border-white/5">
+                                        <GlassFileSearch
+                                            geminiService={geminiService}
+                                            onConfigChange={(config) => {
+                                                setFileSearchConfig(config);
+                                                setHasChanges(true);
+                                            }}
+                                        />
+                                        {fileSearchConfig?.enabled && (
+                                            <div className="px-4 py-2 bg-[var(--glass-accent)]/10 text-[var(--glass-accent)] text-xs flex items-center gap-2">
+                                                <Check size={12} />
+                                                <span>File Search enabled with store: {fileSearchConfig.stores.join(', ')}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-red-400 p-3 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center gap-2">
+                                        <Lock size={14} />
+                                        Gemini Service not available (Check API Key)
+                                    </div>
                                 )}
                             </div>
                         </div>

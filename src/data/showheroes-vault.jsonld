@@ -1,0 +1,1472 @@
+{
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "Person",
+            "@id": "#mario-tiedemann",
+            "name": "Mario Tiedemann",
+            "jobTitle": "CFO/COO",
+            "worksFor": {
+                "@id": "#showheroes-se"
+            },
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Leibnizstr. 102",
+                "postalCode": "10625",
+                "addressLocality": "Berlin",
+                "addressCountry": "DE"
+            }
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-se",
+            "legalName": "ShowHeroes SE",
+            "name": "ShowHeroes SE",
+            "url": "https://showheroes.com",
+            "vatID": "DE326016486",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "HRB",
+                    "value": "HRB 207722 B"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Brunnenstr. 154",
+                "postalCode": "10115",
+                "addressLocality": "Berlin",
+                "addressCountry": "DE",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "subOrganization": [
+                {
+                    "@id": "#showheroes-uk"
+                },
+                {
+                    "@id": "#showheroes-italy"
+                },
+                {
+                    "@id": "#agon-digital-italy"
+                },
+                {
+                    "@id": "#showheroes-usa"
+                },
+                {
+                    "@id": "#showheroes-nordics-ab"
+                },
+                {
+                    "@id": "#showheroes-ab"
+                },
+                {
+                    "@id": "#showheroes-norway"
+                },
+                {
+                    "@id": "#showheroes-finland"
+                },
+                {
+                    "@id": "#showheroes-denmark"
+                },
+                {
+                    "@id": "#showheroes-spain"
+                },
+                {
+                    "@id": "#showheroes-chile"
+                },
+                {
+                    "@id": "#showheroes-mexico"
+                },
+                {
+                    "@id": "#showheroes-peru"
+                },
+                {
+                    "@id": "#showheroes-colombia"
+                },
+                {
+                    "@id": "#showheroes-brasil"
+                },
+                {
+                    "@id": "#showheroes-argentina"
+                },
+                {
+                    "@id": "#ivideosmart-singapore"
+                },
+                {
+                    "@id": "#ivs-marketplace-singapore"
+                }
+            ],
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "entityType",
+                    "value": "headquarters"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE",
+                    "bankName": "HypoVereinsbank",
+                    "iban": "DE14100208900026016274"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE",
+                    "bankName": "HypoVereinsbank",
+                    "iban": "DE87100208900026121175"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE",
+                    "bankName": "HypoVereinsbank",
+                    "iban": "DE46700202700015203481"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE",
+                    "bankName": "JPMorgan",
+                    "iban": "DE27501108006161550733"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE",
+                    "bankName": "JPMorgan",
+                    "iban": "829701686"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-uk",
+            "legalName": "ShowHeroes Limited",
+            "name": "ShowHeroes UK",
+            "vatID": "1486917210",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "CompanyNumber",
+                    "value": "12457361"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "17 Manor Road",
+                "addressLocality": "East Molesey",
+                "addressRegion": "Surrey",
+                "postalCode": "KT8 9JU",
+                "addressCountry": "GB",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-01-21"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Limited",
+                    "bankName": "Lloyds Bank",
+                    "iban": "GB54 LOYD 3096 2660 0892 68"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Limited",
+                    "bankName": "JPMorgan",
+                    "iban": "GB35CHAS60924276921781"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-italy",
+            "legalName": "ShowHeroes S.r.l. a socio unico",
+            "name": "ShowHeroes Italy",
+            "vatID": "IT06355790483",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "06355790483"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Via Santo Spirito 14",
+                "postalCode": "50125",
+                "addressLocality": "Firenze",
+                "addressCountry": "IT",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2020-12-16"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Showheroes SRL",
+                    "bankName": "JPMorgan",
+                    "iban": "IT91W0349401600000060100940"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Showheroes SRL",
+                    "bankName": "INTESA SANPAOLO SPA",
+                    "iban": "IT41 L0306902923100000003193"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Showheroes SRL",
+                    "bankName": "INTESA SANPAOLO SPA",
+                    "iban": "IT72 Y0306902923161009302439"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#agon-digital-italy",
+            "legalName": "Agon Digital S.r.l. a socio unico",
+            "name": "Agon Digital Italy",
+            "vatID": "IT06355790483",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "06355790483"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Viale Spartaco Lavagnini n.7",
+                "postalCode": "50129",
+                "addressLocality": "Firenze",
+                "addressCountry": "IT",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2020-12-16"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionNote",
+                    "value": "51% acquired 2020-12-16; remaining 49% acquired 2020-01-03"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Agon Digital SRL",
+                    "bankName": "INTESA SANPAOLO SPA",
+                    "iban": "IT36Y0306902923100000004801"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-usa",
+            "legalName": "ShowHeroes Inc.",
+            "name": "ShowHeroes USA",
+            "taxID": "87-4192130",
+            "vatID": "87-4192130",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "EIN",
+                    "value": "87-4192130"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "9 East Loockerman St Ste 202",
+                "addressLocality": "Dover",
+                "addressRegion": "DE",
+                "postalCode": "19901",
+                "addressCountry": "US",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-14"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Inc.",
+                    "bankName": "JPMorgan",
+                    "iban": "869307634"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-nordics-ab",
+            "legalName": "ShowHeroes Nordics AB",
+            "name": "ShowHeroes Nordics",
+            "alternateName": "PlayAd Media Group International AB",
+            "vatID": "SE556689349001",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "OrgNo",
+                    "value": "556689-3490"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Grev Turegatan 27",
+                "postalCode": "114 38",
+                "addressLocality": "Stockholm",
+                "addressCountry": "SE",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-15"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Nordics"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Nordics AB",
+                    "bankName": "SEB",
+                    "iban": "SE8350000000052551004535"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Nordics AB",
+                    "bankName": "SEB",
+                    "iban": "SE5250000000052733331434"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-ab",
+            "legalName": "ShowHeroes AB",
+            "name": "ShowHeroes Sweden",
+            "alternateName": "PlayAd Media Group Sweden AB",
+            "vatID": "SE556858426101",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "OrgNo",
+                    "value": "556858-4261"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Grev Turegatan 27",
+                "postalCode": "114 38",
+                "addressLocality": "Stockholm",
+                "addressCountry": "SE",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-15"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Nordics"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeores AB",
+                    "bankName": "SEB",
+                    "iban": "SE9150000000052011166896"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-norway",
+            "legalName": "ShowHeroes AS",
+            "name": "ShowHeroes Norway",
+            "alternateName": "PlayAd Media Group AS",
+            "vatID": "NO912755878",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "OrgNo",
+                    "value": "912.755.878"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Henrik Ibsens Gate",
+                "postalCode": "0255",
+                "addressLocality": "Oslo",
+                "addressCountry": "NO",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-15"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Nordics"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes AS",
+                    "bankName": "SEB",
+                    "iban": "NO1497500650447"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes AS",
+                    "bankName": "SEB",
+                    "iban": "NO2097500860344"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-finland",
+            "legalName": "ShowHeroes Oy",
+            "name": "ShowHeroes Finland",
+            "alternateName": "PlayAd Media Oy",
+            "vatID": "FI26298394",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "BusinessID",
+                    "value": "2629839-4"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Fredriikinkatu 42, 3 Kerros",
+                "postalCode": "00100",
+                "addressLocality": "Helsinki",
+                "addressCountry": "FI",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-15"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Nordics"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Oy",
+                    "bankName": "SEB",
+                    "iban": "FI6533010001142033"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Oy",
+                    "bankName": "SEB",
+                    "iban": "SE1950000000054948201995"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-denmark",
+            "legalName": "ShowHeroes ApS",
+            "name": "ShowHeroes Denmark",
+            "alternateName": "PlayAd Media Group Danmark ApS",
+            "vatID": "DK36044969",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "CVR",
+                    "value": "36044969"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Studiestræde 7",
+                "postalCode": "1455",
+                "addressLocality": "København K",
+                "addressCountry": "DK",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-15"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Nordics"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes ApS",
+                    "bankName": "SEB",
+                    "iban": "DK2452950010041643"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-spain",
+            "legalName": "ShowHeroes Group S.L.U.",
+            "name": "ShowHeroes Spain",
+            "vatID": "B-87246773",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "NIF",
+                    "value": "B87246773"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Avenida Europa, 19, Building 2, 1st Floor",
+                "postalCode": "28224",
+                "addressLocality": "Pozuelo de Alarcón, Madrid",
+                "addressCountry": "ES",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Group S.L.U.",
+                    "bankName": "Bankinter",
+                    "iban": "ES5301286116050100000255"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Showheroes Group S.L.U.",
+                    "bankName": "Santander",
+                    "iban": "ES7300496702672916199936"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-chile",
+            "legalName": "ShowHeroes Chile SpA",
+            "name": "ShowHeroes Chile",
+            "taxID": "76.960.515-0",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "45.254"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RUT",
+                    "value": "76.960.515-0"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Avenida Américo Vespucio, 100",
+                "addressLocality": "Las Condes, Santiago",
+                "addressCountry": "CL",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Chile SPA",
+                    "bankName": "Santander",
+                    "iban": "005100323631"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Chile SPA",
+                    "bankName": "ITAU",
+                    "iban": "1200242337"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Chile SPA",
+                    "bankName": "ITAU",
+                    "iban": "1200242327"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Chile SPA",
+                    "bankName": "Santander",
+                    "iban": "000073913136"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Chile SPA",
+                    "bankName": "ITAU",
+                    "iban": "214550211"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-mexico",
+            "legalName": "ShowHeroes Mexico SAPI de C.V.",
+            "name": "ShowHeroes Mexico",
+            "taxID": "SME110919TF9",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "468327-1"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RFC",
+                    "value": "SME110919TF9"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Oriente 180 n.378 Moctezuma 2da Sección",
+                "addressLocality": "Venustiano Carranza",
+                "postalCode": "15530",
+                "addressRegion": "Mexico City",
+                "addressCountry": "MX",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Santander",
+                    "iban": "65504049396"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Santander",
+                    "iban": "65508046696"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Santander",
+                    "iban": "82500972013"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Santander",
+                    "iban": "82500631990"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Bankinter",
+                    "iban": "ES8701286116010160000062"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Mexico S.A.P.I. de C.V.",
+                    "bankName": "Santander",
+                    "iban": "ES7700496702672916200543"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-peru",
+            "legalName": "ShowHeroes Peru S.A.C.",
+            "name": "ShowHeroes Peru",
+            "taxID": "20603021763",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "14043433"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RUC",
+                    "value": "20603021763"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "3, calle Las Begonias",
+                "addressLocality": "Distrito San Isidro",
+                "postalCode": "150131",
+                "addressRegion": "Lima",
+                "addressCountry": "PE",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Peru S.A.C.",
+                    "bankName": "BCP",
+                    "iban": "193-2503893-1-57"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Peru S.A.C.",
+                    "bankName": "BCP",
+                    "iban": "193-2506269-0-47"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-colombia",
+            "legalName": "ShowHeroes Colombia S.A.S.",
+            "name": "ShowHeroes Colombia",
+            "taxID": "901.145.198-0",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "02904148"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "NIT",
+                    "value": "901.145.198-0"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Cr 72 131 19, Ap 1308 Ed Gratamira 131",
+                "addressLocality": "Bogotá D.C.",
+                "addressCountry": "CO",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Colombia S.A.S.",
+                    "bankName": "Banco de Bogota",
+                    "iban": "50163773"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Colombia S.A.S.",
+                    "bankName": "Santander",
+                    "iban": "100-00683-2"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-brasil",
+            "legalName": "ShowHeroes Brasil Ltda.",
+            "name": "ShowHeroes Brasil",
+            "taxID": "17.253.553/0001-59",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "CNPJ",
+                    "value": "17.253.553/0001-59"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Avenida Luis Carlos Berrini, 1461",
+                "addressLocality": "São Paulo",
+                "addressCountry": "BR",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Brasil Ltda.",
+                    "bankName": "Santander",
+                    "iban": "BR1690400888022710130316851C1"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes Brasil Ltda.",
+                    "bankName": "Itau",
+                    "iban": "BR6460701190007420000050206C1"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-argentina",
+            "legalName": "ShowHeroes Argentina S.A.",
+            "name": "ShowHeroes Argentina",
+            "taxID": "30-71600200-0",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "1.924.654"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "CUIT",
+                    "value": "30-71600200-0"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Calle Esmeralda, 1320, 4 piso, oficina B",
+                "addressLocality": "Buenos Aires",
+                "addressCountry": "AR",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2021-12-28"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "LATAM"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Smartclip Argentina SA",
+                    "bankName": "Santander",
+                    "iban": "00720000006000365552"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Smartclip Argentina SA",
+                    "bankName": "Santander",
+                    "iban": "0720000720000003655072"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#ivideosmart-singapore",
+            "legalName": "Ivideosmart Pte Ltd",
+            "name": "Ivideosmart Singapore",
+            "taxID": "201602746R",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "UEN",
+                    "value": "201602746R"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "20A Tanjong Pagar Road",
+                "postalCode": "088443",
+                "addressLocality": "Singapore",
+                "addressCountry": "SG",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2023-05-17"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Asia"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Ivideosmart Pte. Ltd.",
+                    "bankName": "OCBC",
+                    "iban": "695319244001"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "Ivideosmart Pte. Ltd.",
+                    "bankName": "OCBC",
+                    "iban": "503353161301"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#ivs-marketplace-singapore",
+            "legalName": "IVS Marketplace Pte Ltd",
+            "name": "IVS Marketplace Singapore",
+            "taxID": "2022090076W",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "UEN",
+                    "value": "2022090076W"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "20A Tanjong Pagar Road",
+                "postalCode": "088443",
+                "addressLocality": "Singapore",
+                "addressCountry": "SG",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "ownershipPercentage",
+                    "value": "100"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "acquisitionDate",
+                    "value": "2023-05-17"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "region",
+                    "value": "Asia"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-branch-nl",
+            "legalName": "ShowHeroes SE",
+            "name": "ShowHeroes Netherlands (Branch)",
+            "vatID": "860551271",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "KVK",
+                    "value": "76223884"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Moermanskkade 313",
+                "postalCode": "1013",
+                "addressLocality": "Amsterdam",
+                "addressCountry": "NL",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "entityType",
+                    "value": "branch"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (Dutch branch)",
+                    "bankName": "ING Bank Amsterdam",
+                    "iban": "NL51 INGB 0006 4822 91"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (Dutch branch)",
+                    "bankName": "JPMorgan",
+                    "iban": "NL39CHAS0626002749"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (Dutch branch)",
+                    "bankName": "Rabobank",
+                    "iban": "NL14 RABO 1025 1706 87"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (Dutch branch)",
+                    "bankName": "Rabobank",
+                    "iban": "NL89 RABO 0139 4523 46"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-branch-fr",
+            "legalName": "ShowHeroes SE",
+            "name": "ShowHeroes France (Branch)",
+            "vatID": "FR34879465219",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "SIRET",
+                    "value": "879 465 219"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "128 Rue La Boétie",
+                "postalCode": "75008",
+                "addressLocality": "Paris",
+                "addressCountry": "FR",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "entityType",
+                    "value": "branch"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (French branch)",
+                    "bankName": "BNP PARIBAS LYON LAFAYETTE",
+                    "iban": "FR76 3000 4006 2600 0101 5922 395"
+                },
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (French branch)",
+                    "bankName": "JPMorgan",
+                    "iban": "FR7630628000010060900208193"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-branch-lv",
+            "legalName": "ShowHeroes SE",
+            "name": "ShowHeroes Latvia (Branch)",
+            "vatID": "40103990424",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "RegNo",
+                    "value": "40103990424"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Berzaunes iela 1",
+                "postalCode": "LV-1039",
+                "addressLocality": "Riga",
+                "addressCountry": "LV",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "entityType",
+                    "value": "branch"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE \"AKF\" (Latvian branch)",
+                    "bankName": "Revolut UAB",
+                    "iban": "LT053250073721998761"
+                }
+            ]
+        },
+        {
+            "@type": "Organization",
+            "@id": "#showheroes-branch-be",
+            "legalName": "ShowHeroes SE",
+            "name": "ShowHeroes Belgium (Branch)",
+            "vatID": "BE0791452692",
+            "identifier": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "BCE",
+                    "value": "0791.452.692"
+                }
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Av. Arnaud Fraiteur 15/23",
+                "postalCode": "1050",
+                "addressLocality": "Ixelles",
+                "addressCountry": "BE",
+                "additionalProperty": {
+                    "@type": "PropertyValue",
+                    "propertyID": "purpose",
+                    "value": "registered"
+                }
+            },
+            "parentOrganization": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "entityType",
+                    "value": "branch"
+                }
+            ],
+            "bankAccount": [
+                {
+                    "@type": "BankAccount",
+                    "accountHolder": "ShowHeroes SE (branch)",
+                    "bankName": "JPMorgan",
+                    "iban": "BE84549100952459"
+                }
+            ]
+        },
+        {
+            "@type": "Role",
+            "@id": "#role-mario-cfo-coo",
+            "roleName": "CFO/COO",
+            "member": {
+                "@id": "#mario-tiedemann"
+            },
+            "memberOf": {
+                "@id": "#showheroes-se"
+            },
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "authorityLevel",
+                    "value": "executive"
+                },
+                {
+                    "@type": "PropertyValue",
+                    "propertyID": "canApprove",
+                    "value": "banking,contracts,vendor-onboarding"
+                }
+            ]
+        }
+    ]
+}

@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { liquidClient } from '../services/liquid';
+import { vaultService, VaultFillPack, FormField, FormSuggestion } from '../services/vaultService';
+import { SensitivityTier } from '../types/vaultTypes';
 
 export interface FileSearchConfig {
     enabled: boolean;
@@ -35,6 +37,11 @@ interface AgentConfigContextType {
     setSecurityBlacklist: (blacklist: string[]) => void;
     updatePageConfig: (route: string, updates: Partial<PageConfig>) => void;
     getConfigForRoute: (route: string) => PageConfig;
+    // Vault context methods for AI agents
+    getVaultContext: (domain?: string, maxTier?: SensitivityTier) => VaultFillPack[];
+    getVaultSuggestions: (formFields: FormField[], entityId?: string) => FormSuggestion[];
+    requestVaultUnlock: (compartment: 'banking' | 'documents', reason?: string) => Promise<boolean>;
+    isVaultCompartmentUnlocked: (compartment: 'banking' | 'documents') => boolean;
 }
 
 const AgentConfigContext = createContext<AgentConfigContextType | undefined>(undefined);
@@ -169,6 +176,23 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return config[route] || { ...DEFAULT_CONFIG };
     }, [config]);
 
+    // Vault context methods
+    const getVaultContext = useCallback((domain?: string, maxTier: SensitivityTier = 3): VaultFillPack[] => {
+        return vaultService.getContextForAgent(domain, maxTier);
+    }, []);
+
+    const getVaultSuggestions = useCallback((formFields: FormField[], entityId?: string): FormSuggestion[] => {
+        return vaultService.getSuggestionsForForm(formFields, entityId);
+    }, []);
+
+    const requestVaultUnlock = useCallback(async (compartment: 'banking' | 'documents', reason?: string): Promise<boolean> => {
+        return vaultService.requestUnlock(compartment, reason);
+    }, []);
+
+    const isVaultCompartmentUnlocked = useCallback((compartment: 'banking' | 'documents'): boolean => {
+        return vaultService.isCompartmentUnlocked(compartment);
+    }, []);
+
     const contextValue = React.useMemo(() => ({
         config,
         contextStrategy,
@@ -184,8 +208,12 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setClaudeApiKey,
         setSecurityBlacklist,
         updatePageConfig,
-        getConfigForRoute
-    }), [config, contextStrategy, runtimeMode, nlwebMode, llmProvider, claudeApiKey, securityBlacklist, setContextStrategy, setRuntimeMode, setNLWebMode, setLLMProvider, setClaudeApiKey, setSecurityBlacklist, updatePageConfig, getConfigForRoute]);
+        getConfigForRoute,
+        getVaultContext,
+        getVaultSuggestions,
+        requestVaultUnlock,
+        isVaultCompartmentUnlocked,
+    }), [config, contextStrategy, runtimeMode, nlwebMode, llmProvider, claudeApiKey, securityBlacklist, setContextStrategy, setRuntimeMode, setNLWebMode, setLLMProvider, setClaudeApiKey, setSecurityBlacklist, updatePageConfig, getConfigForRoute, getVaultContext, getVaultSuggestions, requestVaultUnlock, isVaultCompartmentUnlocked]);
 
     return (
         <AgentConfigContext.Provider value={contextValue}>
