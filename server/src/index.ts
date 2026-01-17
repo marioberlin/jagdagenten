@@ -27,6 +27,7 @@ import { getDashboardBuilderAgentCard, handleDashboardBuilderRequest } from './a
 import { getResearchCanvasAgentCard, handleResearchCanvasRequest } from './agents/research-canvas.js';
 import { getAIResearcherCard, handleAIResearcherRequest } from './agents/ai-researcher.js';
 import { getQAAgentCard, handleQAAgentRequest } from './agents/qa-agent.js';
+import { getStateMachineAgentCard, handleStateMachineRequest } from './agents/state-machine.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -878,6 +879,37 @@ async function startServer() {
                 .post('/', handleRpc);
         })
 
+        // State Machine Agent
+        .group('/agents/state-machine', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getStateMachineAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleStateMachineRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
 
         // A2A Protocol Plugin (with PostgreSQL persistence if DATABASE_URL is set)
         .use(createA2APlugin({

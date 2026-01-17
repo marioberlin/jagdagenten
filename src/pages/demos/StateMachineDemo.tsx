@@ -1,29 +1,43 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useCallback } from 'react';
 import { GlassContainer, GlassButton, GlassInput, GlassSelect } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
-import { LiquidProvider, useLiquidReadable, useLiquidAction, useFlowState } from '../../liquid-engine/react';
+import { LiquidProvider } from '../../liquid-engine/react';
 import { Car, User, CreditCard, Check, ArrowRight, ArrowLeft, CircleDot, Book } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
+import { StateMachineService } from '../../services/a2a/StateMachineService';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();
 
 // Flow data type
 interface CarPurchaseData {
-    // Contact
     name: string;
     email: string;
     phone: string;
-    // Car Selection
     model: string;
     color: string;
     trim: string;
-    // Payment
     paymentMethod: string;
     cardNumber: string;
 }
+
+interface FlowStage {
+    id: string;
+    name: string;
+    description: string;
+    next: string[];
+}
+
+const STAGES: FlowStage[] = [
+    { id: 'contact', name: 'Contact Info', description: 'Collect customer details', next: ['car'] },
+    { id: 'car', name: 'Car Selection', description: 'Configure dream car', next: ['payment'] },
+    { id: 'payment', name: 'Payment', description: 'Process payment', next: ['confirm'] },
+    { id: 'confirm', name: 'Confirmation', description: 'Order complete', next: [] }
+];
 
 // Reusable field wrapper
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
@@ -37,69 +51,68 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 
 // Inner component with hooks
 function StateMachineContent() {
-    const flow = useFlowState<CarPurchaseData>({
-        stages: [
-            { id: 'contact', name: 'Contact Info', description: 'Collect customer details', next: ['car'] },
-            { id: 'car', name: 'Car Selection', description: 'Configure dream car', next: ['payment'] },
-            { id: 'payment', name: 'Payment', description: 'Process payment', next: ['confirm'] },
-            { id: 'confirm', name: 'Confirmation', description: 'Order complete', next: [] }
-        ],
-        initialStage: 'contact',
-        initialData: {
+    const [currentStage, setCurrentStage] = useState('contact');
+    const [history, setHistory] = useState<string[]>(['contact']);
+    const [data, setData] = useState<CarPurchaseData>({
+        name: '', email: '', phone: '',
+        model: '', color: '', trim: '',
+        paymentMethod: '', cardNumber: ''
+    });
+    const [sessionId] = useState(() => uuidv4());
+
+    // Handle data updates from A2A agent
+    const handleDataUpdate = useCallback((agentData: any) => {
+        if (agentData.data) {
+            setData(prev => ({ ...prev, ...agentData.data }));
+        }
+        if (agentData.updates) {
+            setData(prev => ({ ...prev, ...agentData.updates }));
+        }
+        if (agentData.currentStage) {
+            setCurrentStage(agentData.currentStage);
+        }
+        if (agentData.history) {
+            setHistory(agentData.history);
+        }
+    }, []);
+
+    // Create A2A service (for sidebar integration)
+    const _agentService = useMemo(
+        () => new StateMachineService(sessionId, handleDataUpdate),
+        [sessionId, handleDataUpdate]
+    );
+
+    const stage = STAGES.find(s => s.id === currentStage)!;
+    const nextStages = STAGES.filter(s => stage.next.includes(s.id));
+
+    const updateField = (field: keyof CarPurchaseData, value: string) => {
+        setData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const goTo = (stageId: string) => {
+        setCurrentStage(stageId);
+        if (!history.includes(stageId)) {
+            setHistory(prev => [...prev, stageId]);
+        }
+    };
+
+    const goBack = () => {
+        if (history.length > 1) {
+            const newHistory = [...history];
+            newHistory.pop();
+            setHistory(newHistory);
+            setCurrentStage(newHistory[newHistory.length - 1]);
+        }
+    };
+
+    const reset = () => {
+        setCurrentStage('contact');
+        setHistory(['contact']);
+        setData({
             name: '', email: '', phone: '',
             model: '', color: '', trim: '',
             paymentMethod: '', cardNumber: ''
-        }
-    });
-
-    // Make flow state readable to AI
-    useLiquidReadable({
-        description: "Car Purchase Flow - Current stage and collected data",
-        value: {
-            currentStage: flow.currentStage,
-            stageName: flow.stage.name,
-            stageDescription: flow.stage.description,
-            data: flow.data,
-            isComplete: flow.isComplete,
-            availableNextStages: flow.nextStages.map(s => s.id)
-        }
-    });
-
-    // Update data action
-    useLiquidAction({
-        name: "update_purchase_data",
-        description: "Update the car purchase form data. Use this to fill in customer info, car selection, or payment details.",
-        parameters: [
-            { name: "name", type: "string", description: "Customer name", required: false },
-            { name: "email", type: "string", description: "Customer email", required: false },
-            { name: "phone", type: "string", description: "Customer phone", required: false },
-            { name: "model", type: "string", description: "Car model: sedan, suv, truck, coupe", required: false },
-            { name: "color", type: "string", description: "Car color: white, black, silver, blue, red", required: false },
-            { name: "trim", type: "string", description: "Trim level: base, sport, luxury, performance", required: false },
-            { name: "paymentMethod", type: "string", description: "Payment method: credit, debit, financing, cash", required: false },
-            { name: "cardNumber", type: "string", description: "Card number (last 4 digits)", required: false }
-        ],
-        handler: (args: Partial<CarPurchaseData>) => {
-            flow.updateData(args);
-            return { success: true, updatedFields: Object.keys(args) };
-        }
-    });
-
-    // Navigate between stages
-    useLiquidAction({
-        name: "navigate_stage",
-        description: "Move to a different stage in the purchase flow",
-        parameters: [
-            { name: "targetStage", type: "string", description: "Stage to navigate to: contact, car, payment, confirm", required: true }
-        ],
-        handler: (args: { targetStage: string }) => {
-            flow.goTo(args.targetStage);
-            return { success: true, newStage: args.targetStage };
-        }
-    });
-
-    const updateField = (field: keyof CarPurchaseData, value: string) => {
-        flow.updateData({ [field]: value } as Partial<CarPurchaseData>);
+        });
     };
 
     return (
@@ -107,8 +120,8 @@ function StateMachineContent() {
             {/* Flow Visualizer */}
             <div className="flex items-center justify-center gap-4 py-6">
                 {['contact', 'car', 'payment', 'confirm'].map((stageId, i) => {
-                    const isActive = flow.currentStage === stageId;
-                    const isPast = flow.history.includes(stageId) && !isActive;
+                    const isActive = currentStage === stageId;
+                    const isPast = history.includes(stageId) && !isActive;
 
                     return (
                         <div key={stageId} className="flex items-center">
@@ -145,12 +158,12 @@ function StateMachineContent() {
 
             {/* Stage Content */}
             <GlassContainer className="p-6" border material="thin">
-                {flow.currentStage === 'contact' && (
+                {currentStage === 'contact' && (
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-white mb-4">Contact Information</h2>
                         <FormField label="Full Name">
                             <GlassInput
-                                value={flow.data.name}
+                                value={data.name}
                                 onChange={(e) => updateField('name', e.target.value)}
                                 placeholder="John Doe"
                             />
@@ -159,14 +172,14 @@ function StateMachineContent() {
                             <FormField label="Email">
                                 <GlassInput
                                     type="email"
-                                    value={flow.data.email}
+                                    value={data.email}
                                     onChange={(e) => updateField('email', e.target.value)}
                                     placeholder="john@example.com"
                                 />
                             </FormField>
                             <FormField label="Phone">
                                 <GlassInput
-                                    value={flow.data.phone}
+                                    value={data.phone}
                                     onChange={(e) => updateField('phone', e.target.value)}
                                     placeholder="(555) 123-4567"
                                 />
@@ -175,12 +188,12 @@ function StateMachineContent() {
                     </div>
                 )}
 
-                {flow.currentStage === 'car' && (
+                {currentStage === 'car' && (
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-white mb-4">Build Your Dream Car</h2>
                         <FormField label="Model">
                             <GlassSelect
-                                value={flow.data.model}
+                                value={data.model}
                                 onValueChange={(v) => updateField('model', v)}
                                 placeholder="Select model..."
                                 options={[
@@ -194,7 +207,7 @@ function StateMachineContent() {
                         <div className="grid grid-cols-2 gap-4">
                             <FormField label="Color">
                                 <GlassSelect
-                                    value={flow.data.color}
+                                    value={data.color}
                                     onValueChange={(v) => updateField('color', v)}
                                     placeholder="Select color..."
                                     options={[
@@ -208,7 +221,7 @@ function StateMachineContent() {
                             </FormField>
                             <FormField label="Trim">
                                 <GlassSelect
-                                    value={flow.data.trim}
+                                    value={data.trim}
                                     onValueChange={(v) => updateField('trim', v)}
                                     placeholder="Select trim..."
                                     options={[
@@ -223,12 +236,12 @@ function StateMachineContent() {
                     </div>
                 )}
 
-                {flow.currentStage === 'payment' && (
+                {currentStage === 'payment' && (
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-white mb-4">Payment Information</h2>
                         <FormField label="Payment Method">
                             <GlassSelect
-                                value={flow.data.paymentMethod}
+                                value={data.paymentMethod}
                                 onValueChange={(v) => updateField('paymentMethod', v)}
                                 placeholder="Select payment method..."
                                 options={[
@@ -239,10 +252,10 @@ function StateMachineContent() {
                                 ]}
                             />
                         </FormField>
-                        {(flow.data.paymentMethod === 'credit' || flow.data.paymentMethod === 'debit') && (
+                        {(data.paymentMethod === 'credit' || data.paymentMethod === 'debit') && (
                             <FormField label="Card Number (Last 4)">
                                 <GlassInput
-                                    value={flow.data.cardNumber}
+                                    value={data.cardNumber}
                                     onChange={(e) => updateField('cardNumber', e.target.value)}
                                     placeholder="1234"
                                     maxLength={4}
@@ -252,35 +265,35 @@ function StateMachineContent() {
                     </div>
                 )}
 
-                {flow.currentStage === 'confirm' && (
+                {currentStage === 'confirm' && (
                     <div className="text-center py-8">
                         <div className="w-16 h-16 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center mx-auto mb-4">
                             <Check size={32} />
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-2">Order Confirmed!</h2>
                         <p className="text-secondary mb-4">
-                            Thank you, {flow.data.name}! Your {flow.data.color} {flow.data.model} ({flow.data.trim}) is being prepared.
+                            Thank you, {data.name}! Your {data.color} {data.model} ({data.trim}) is being prepared.
                         </p>
-                        <GlassButton onClick={flow.reset} variant="ghost">
+                        <GlassButton onClick={reset} variant="ghost">
                             Start Over
                         </GlassButton>
                     </div>
                 )}
 
                 {/* Navigation */}
-                {flow.currentStage !== 'confirm' && (
+                {currentStage !== 'confirm' && (
                     <div className="flex justify-between mt-6 pt-6 border-t border-white/10">
                         <GlassButton
                             variant="ghost"
-                            onClick={flow.goBack}
-                            disabled={flow.history.length <= 1}
+                            onClick={goBack}
+                            disabled={history.length <= 1}
                         >
                             <ArrowLeft size={16} className="mr-2" />
                             Back
                         </GlassButton>
                         <GlassButton
-                            onClick={() => flow.goTo(flow.nextStages[0]?.id || '')}
-                            disabled={flow.nextStages.length === 0}
+                            onClick={() => goTo(nextStages[0]?.id || '')}
+                            disabled={nextStages.length === 0}
                         >
                             Continue
                             <ArrowRight size={16} className="ml-2" />
