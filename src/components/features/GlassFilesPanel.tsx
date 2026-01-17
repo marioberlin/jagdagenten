@@ -29,7 +29,8 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
         isAuthenticated,
         signIn,
         signOut,
-        isAuthLoading
+        isAuthLoading,
+        accessToken
     } = useGoogleDrive();
     const [recentFiles, setRecentFiles] = useState<ParsedFile[]>([]);
     const [isCreating, setIsCreating] = useState(false);

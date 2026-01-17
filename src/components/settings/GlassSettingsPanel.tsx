@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useThemeStore } from '@/stores/themeStore';
 import { useAgentConfig, FileSearchConfig } from '@/context/AgentConfigContext';
 
@@ -2062,137 +2062,7 @@ const KnowledgeBasePanel: React.FC = () => {
     );
 };
 
-// ============================================
-// Plugins Panel (NEW)
-// ============================================
 
-interface Plugin {
-    id: string;
-    name: string;
-    description: string;
-    version: string;
-    author: string;
-    type: 'claude-plugin' | 'mcp-server';
-    isInstalled: boolean;
-    isVerified: boolean;
-}
-
-const MOCK_MCP_SERVERS: Plugin[] = [
-    { id: 'mcp-filesystem', name: 'filesystem', description: 'File system operations', version: '1.0.0', author: 'modelcontextprotocol', type: 'mcp-server', isInstalled: false, isVerified: true },
-    { id: 'mcp-github', name: 'github', description: 'GitHub API integration', version: '1.0.0', author: 'modelcontextprotocol', type: 'mcp-server', isInstalled: true, isVerified: true },
-    { id: 'mcp-postgres', name: 'postgres', description: 'PostgreSQL database', version: '1.0.0', author: 'modelcontextprotocol', type: 'mcp-server', isInstalled: false, isVerified: true },
-    { id: 'mcp-puppeteer', name: 'puppeteer', description: 'Browser automation', version: '1.0.0', author: 'modelcontextprotocol', type: 'mcp-server', isInstalled: false, isVerified: true },
-];
-
-const PluginsPanel: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'claude' | 'mcp' | 'installed'>('mcp');
-    const [plugins, setPlugins] = useState<Plugin[]>(MOCK_MCP_SERVERS);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const filteredPlugins = useMemo(() => {
-        let result = plugins;
-        if (activeTab === 'installed') result = result.filter(p => p.isInstalled);
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
-        }
-        return result;
-    }, [plugins, activeTab, searchQuery]);
-
-    const toggleInstall = (id: string) => {
-        setPlugins(prev => prev.map(p => p.id === id ? { ...p, isInstalled: !p.isInstalled } : p));
-    };
-
-    return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <Section title="Plugins & Extensions" icon={<Puzzle size={18} />} />
-                <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
-                    {[
-                        { id: 'mcp', label: 'MCP Servers', icon: Server },
-                        { id: 'claude', label: 'Claude Plugins', icon: Package },
-                        { id: 'installed', label: 'Installed', icon: Check },
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                                activeTab === tab.id ? "bg-[var(--glass-accent)] text-white" : "text-white/60 hover:text-white"
-                            )}
-                        >
-                            <tab.icon size={12} />
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search plugins..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[var(--glass-accent)]"
-                />
-            </div>
-
-            {/* Plugin Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredPlugins.length === 0 ? (
-                    <div className="col-span-2 text-center py-12 text-white/40">
-                        <Package size={32} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">{activeTab === 'installed' ? 'No plugins installed' : 'No plugins found'}</p>
-                    </div>
-                ) : (
-                    filteredPlugins.map((plugin) => (
-                        <div key={plugin.id} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
-                            <div className="flex items-start gap-3">
-                                <div className={cn(
-                                    "w-10 h-10 rounded-lg flex items-center justify-center",
-                                    plugin.type === 'mcp-server' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                                )}>
-                                    {plugin.type === 'mcp-server' ? <Server size={20} /> : <Package size={20} />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-medium text-sm">{plugin.name}</h4>
-                                        {plugin.isVerified && <ShieldCheck size={14} className="text-blue-400" />}
-                                    </div>
-                                    <p className="text-xs text-white/50 mt-1">{plugin.description}</p>
-                                    <div className="text-xs text-white/30 mt-2">v{plugin.version} by {plugin.author}</div>
-                                </div>
-                                <button
-                                    onClick={() => toggleInstall(plugin.id)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                                        plugin.isInstalled
-                                            ? "bg-emerald-500/20 text-emerald-400"
-                                            : "bg-[var(--glass-accent)] text-white hover:bg-[var(--glass-accent)]/80"
-                                    )}
-                                >
-                                    {plugin.isInstalled ? 'Installed' : 'Install'}
-                                </button>
-                            </div>
-                            {plugin.isInstalled && (
-                                <div className="mt-3 pt-3 border-t border-white/10">
-                                    <div className="text-xs text-white/30 mb-1">Command:</div>
-                                    <code className="block p-2 rounded bg-black/30 text-xs text-emerald-400 font-mono">
-                                        npx -y @modelcontextprotocol/server-{plugin.name}
-                                    </code>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-    );
-};
 
 // ============================================
 // Accessibility Panel

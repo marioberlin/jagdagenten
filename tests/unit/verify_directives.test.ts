@@ -3,7 +3,7 @@
  * @see docs/IMPLEMENTATION_PLAN.md - Item 3.4
  */
 
-import { describe, it, expect, beforeEach, afterEach, afterAll } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import { mkdir, writeFile, rm, readFile } from 'fs/promises';
 import { join } from 'path';
 import { createHash } from 'crypto';

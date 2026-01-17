@@ -1,13 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useGoogleAuth } from "./useGoogleAuth";
 
-// Types for Google Picker API
-declare global {
-    interface Window {
-        gapi: any;
-        google: any;
-    }
-}
+
 
 interface PickerOptions {
     onSelect: (file: { id: string, name: string, url: string }) => void;
@@ -95,25 +89,25 @@ export const useGoogleDrive = (): UseGoogleDriveResult => {
         }
 
         try {
-            const view = new window.google.picker.View(window.google.picker.ViewId.SPREADSHEETS);
+            const view = new window.google!.picker!.View(window.google!.picker!.ViewId.SPREADSHEETS);
             view.setMimeTypes("application/vnd.google-apps.spreadsheet");
 
-            const picker = new window.google.picker.PickerBuilder()
-                .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
-                .enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED)
+            const picker = new window.google!.picker!.PickerBuilder()
+                .enableFeature(window.google!.picker!.Feature.NAV_HIDDEN)
+                .enableFeature(window.google!.picker!.Feature.MULTISELECT_ENABLED)
                 .setAppId(clientId.split('-')[0]) // Extract project number from client ID
                 .setOAuthToken(accessToken) // Use the real OAuth token
                 .addView(view)
                 .setDeveloperKey(apiKey)
                 .setCallback((data: any) => {
-                    if (data[window.google.picker.Response.ACTION] === window.google.picker.Action.PICKED) {
-                        const doc = data[window.google.picker.Response.DOCUMENTS][0];
+                    if (data[window.google!.picker!.Response.ACTION] === window.google!.picker!.Action.PICKED) {
+                        const doc = data[window.google!.picker!.Response.DOCUMENTS][0];
                         options.onSelect({
-                            id: doc[window.google.picker.Document.ID],
-                            name: doc[window.google.picker.Document.NAME],
-                            url: doc[window.google.picker.Document.URL],
+                            id: doc[window.google!.picker!.Document.ID],
+                            name: doc[window.google!.picker!.Document.NAME],
+                            url: doc[window.google!.picker!.Document.URL],
                         });
-                    } else if (data[window.google.picker.Response.ACTION] === window.google.picker.Action.CANCEL) {
+                    } else if (data[window.google!.picker!.Response.ACTION] === window.google!.picker!.Action.CANCEL) {
                         options.onCancel?.();
                     }
                 })

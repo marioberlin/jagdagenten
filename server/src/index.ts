@@ -23,6 +23,7 @@ import { getCryptoAdvisorAgentCard, handleCryptoAdvisorRequest } from './agents/
 import { getNanoBananaAgentCard, handleNanoBananaRequest } from './agents/nanobanana.js';
 import { getDocuMindAgentCard, handleDocuMindRequest } from './agents/documind.js';
 import { getTravelPlannerAgentCard, handleTravelPlannerRequest } from './agents/travel.js';
+import { getDashboardBuilderAgentCard, handleDashboardBuilderRequest } from './agents/dashboard-builder.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -730,6 +731,49 @@ async function startServer() {
                 .get('/', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getTravelPlannerAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Dashboard Builder
+        .group('/agents/dashboard-builder', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getDashboardBuilderAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleDashboardBuilderRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getDashboardBuilderAgentCard(baseUrl);
+                })
+                .get('/', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getDashboardBuilderAgentCard(baseUrl);
                 })
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);

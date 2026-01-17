@@ -62,7 +62,7 @@ const DEFAULT_CONFIG: PageConfig = {
 export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [config, setConfig] = useState<AgentConfig>({});
     const [contextStrategy, setStrategyState] = useState<ContextStrategyType>('flat');
-    const [runtimeMode, setRuntimeModeState] = useState<RuntimeMode>('demo');
+    const [runtimeMode, setRuntimeModeState] = useState<RuntimeMode>('production');
     const [nlwebMode, setNLWebModeState] = useState<NLWebMode>('standard');
     const [llmProvider, setLLMProviderState] = useState<LLMProvider>('gemini');
     const [claudeApiKey, setClaudeApiKeyState] = useState<string>('');

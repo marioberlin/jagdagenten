@@ -4,7 +4,7 @@
  * Tests for A2A protocol support and A2UI transformation.
  */
 
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import type {
     A2UIMessage,
     A2UIComponent,

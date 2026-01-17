@@ -15,11 +15,7 @@ import {
     AlertTriangle,
     Check,
     X,
-    ChevronDown,
-    ChevronRight,
     RotateCcw,
-    Eye,
-    Code,
     Loader2,
 } from 'lucide-react';
 import { useSandboxStore, FileChange, FileDecision } from '@/stores/sandboxStore';
@@ -41,25 +37,7 @@ function formatBytes(bytes: number): string {
     return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
-function getLanguageFromPath(filePath: string): string {
-    const ext = filePath.split('.').pop()?.toLowerCase();
-    const languageMap: Record<string, string> = {
-        ts: 'typescript',
-        tsx: 'typescript',
-        js: 'javascript',
-        jsx: 'javascript',
-        json: 'json',
-        md: 'markdown',
-        css: 'css',
-        scss: 'scss',
-        html: 'html',
-        py: 'python',
-        rs: 'rust',
-        go: 'go',
-        sql: 'sql',
-    };
-    return languageMap[ext ?? ''] ?? 'plaintext';
-}
+
 
 // ============================================================================
 // File Icon Component
@@ -125,11 +103,10 @@ function FileListItem({
                             e.stopPropagation();
                             onApprove();
                         }}
-                        className={`p-1 rounded transition-colors ${
-                            decision?.action === 'apply'
+                        className={`p-1 rounded transition-colors ${decision?.action === 'apply'
                                 ? 'bg-green-600'
                                 : 'hover:bg-white/10'
-                        }`}
+                            }`}
                         title="Apply this change"
                     >
                         <Check className="w-3.5 h-3.5" />
@@ -139,11 +116,10 @@ function FileListItem({
                             e.stopPropagation();
                             onReject();
                         }}
-                        className={`p-1 rounded transition-colors ${
-                            decision?.action === 'reject'
+                        className={`p-1 rounded transition-colors ${decision?.action === 'reject'
                                 ? 'bg-red-600'
                                 : 'hover:bg-white/10'
-                        }`}
+                            }`}
                         title="Reject this change"
                     >
                         <X className="w-3.5 h-3.5" />
@@ -201,31 +177,28 @@ function ConflictResolver({ change, onResolve }: ConflictResolverProps) {
             <div className="flex items-center gap-2 mb-3">
                 <button
                     onClick={() => setMode('ours')}
-                    className={`px-3 py-1 text-sm rounded transition-colors ${
-                        mode === 'ours'
+                    className={`px-3 py-1 text-sm rounded transition-colors ${mode === 'ours'
                             ? 'bg-blue-600'
                             : 'bg-white/10 hover:bg-white/20'
-                    }`}
+                        }`}
                 >
                     Keep My Changes
                 </button>
                 <button
                     onClick={() => setMode('theirs')}
-                    className={`px-3 py-1 text-sm rounded transition-colors ${
-                        mode === 'theirs'
+                    className={`px-3 py-1 text-sm rounded transition-colors ${mode === 'theirs'
                             ? 'bg-blue-600'
                             : 'bg-white/10 hover:bg-white/20'
-                    }`}
+                        }`}
                 >
                     Keep Source Changes
                 </button>
                 <button
                     onClick={() => setMode('manual')}
-                    className={`px-3 py-1 text-sm rounded transition-colors ${
-                        mode === 'manual'
+                    className={`px-3 py-1 text-sm rounded transition-colors ${mode === 'manual'
                             ? 'bg-blue-600'
                             : 'bg-white/10 hover:bg-white/20'
-                    }`}
+                        }`}
                 >
                     Manual Merge
                 </button>
@@ -278,21 +251,19 @@ function DiffView({ change }: DiffViewProps) {
             <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
                 <button
                     onClick={() => setViewMode('split')}
-                    className={`px-2 py-1 text-xs rounded ${
-                        viewMode === 'split'
+                    className={`px-2 py-1 text-xs rounded ${viewMode === 'split'
                             ? 'bg-white/20'
                             : 'bg-white/5 hover:bg-white/10'
-                    }`}
+                        }`}
                 >
                     Split View
                 </button>
                 <button
                     onClick={() => setViewMode('unified')}
-                    className={`px-2 py-1 text-xs rounded ${
-                        viewMode === 'unified'
+                    className={`px-2 py-1 text-xs rounded ${viewMode === 'unified'
                             ? 'bg-white/20'
                             : 'bg-white/5 hover:bg-white/10'
-                    }`}
+                        }`}
                 >
                     Unified View
                 </button>
@@ -443,9 +414,8 @@ export function DiffReviewer() {
                         title="Refresh diff"
                     >
                         <RotateCcw
-                            className={`w-4 h-4 ${
-                                isLoadingDiff ? 'animate-spin' : ''
-                            }`}
+                            className={`w-4 h-4 ${isLoadingDiff ? 'animate-spin' : ''
+                                }`}
                         />
                     </button>
                     <button
@@ -468,7 +438,7 @@ export function DiffReviewer() {
                     </button>
                     <button
                         onClick={handleApply}
-                        disabled={isMerging || hasConflicts}
+                        disabled={isMerging || !!hasConflicts}
                         className="px-4 py-1.5 text-sm bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isMerging ? (

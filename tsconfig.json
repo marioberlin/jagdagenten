@@ -35,8 +35,13 @@
         }
     },
     "include": [
-        "src",
-        "packages/ui"
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "packages",
+        "server",
+        "dist"
     ],
     "references": [
         {

@@ -3,7 +3,7 @@
  * @see docs/IMPLEMENTATION_PLAN.md - Item 4.4
  */
 
-import { describe, it, expect, beforeEach, afterAll } from 'bun:test';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 
 // Test the validator module
 describe('Plugin Validator', () => {

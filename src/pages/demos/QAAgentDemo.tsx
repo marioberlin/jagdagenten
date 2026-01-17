@@ -12,9 +12,6 @@ import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 // Initialize the engine client
 const liquidClient = new LiquidClient();
 
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 interface Answer {
     id: string;
     question: string;
@@ -287,7 +284,7 @@ export default function QAAgentDemo() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar apiKey={API_KEY} />
+                <AgSidebar />
             </div>
         </LiquidProvider>
     );

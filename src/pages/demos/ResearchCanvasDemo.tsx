@@ -11,9 +11,6 @@ import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 // Initialize the engine client
 const liquidClient = new LiquidClient();
 
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 type ContentBlockType = 'text' | 'quote' | 'source';
 
 interface ContentBlock {
@@ -295,7 +292,7 @@ export default function ResearchCanvasDemo() {
                 </div >
 
                 {/* Sidebar */}
-                < AgSidebar apiKey={API_KEY} />
+                < AgSidebar />
             </div >
         </LiquidProvider >
     );

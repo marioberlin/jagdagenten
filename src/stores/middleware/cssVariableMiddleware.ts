@@ -3,6 +3,7 @@ import { ThemeStore, ThemeActions } from '../types';
 
 // Helper to set CSS ref
 const setCSS = (prop: string, value: string | number | null) => {
+    if (typeof document === 'undefined') return;
     if (value === null) {
         document.documentElement.style.removeProperty(prop);
     } else {
@@ -14,6 +15,8 @@ export const initializeCSSVariableSubscriber = (
     store: StoreApi<ThemeStore & ThemeActions>
 ) => {
     const applyState = (state: ThemeStore) => {
+        if (typeof document === 'undefined') return;
+
         // === Mode ===
         if (state.mode === 'dark') {
             document.documentElement.classList.add('dark');

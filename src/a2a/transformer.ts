@@ -95,16 +95,25 @@ export function resolveBinding<T>(
 }
 
 /**
- * Resolves a dot-notation path from an object
+ * Resolves a dot-notation or slash-notation path from an object
  */
 function resolvePath(obj: Record<string, unknown>, path: string): unknown {
     // Handle leading slash
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    const parts = cleanPath.split('.');
+    // Split by dot OR slash to handle both notations
+    const parts = cleanPath.split(/[./]/).filter(part => part !== '');
 
     let current: unknown = obj;
     for (const part of parts) {
         if (current === null || current === undefined) return undefined;
+        // Handle array indices
+        if (Array.isArray(current)) {
+            const index = parseInt(part, 10);
+            if (isNaN(index)) return undefined;
+            current = current[index];
+            continue;
+        }
+
         if (typeof current !== 'object') return undefined;
         current = (current as Record<string, unknown>)[part];
     }
@@ -158,7 +167,7 @@ export function transformComponent(
     templateContext?: Record<string, unknown>,
     onAction?: (actionId: string, data?: unknown) => void
 ): UINode | null {
-    const [typeName, props] = Object.entries(component.component)[0] as [string, Record<string, unknown>];
+    const [typeName, props] = Object.entries((component as A2UIComponent).component)[0] as [string, Record<string, unknown>];
 
     switch (typeName) {
         case 'Text':
@@ -715,18 +724,22 @@ export function processA2UIMessage(
 ): void {
     switch (message.type) {
         case 'beginRendering':
-            processBeginRendering(message, state);
+            processBeginRendering(message as BeginRenderingMessage, state);
             break;
 
         case 'surfaceUpdate':
-            processSurfaceUpdate(message, state);
+            processSurfaceUpdate(message as SurfaceUpdateMessage, state);
             break;
 
-        // SDK uses 'setModel', handle it here
+        // SDK usa 'setModel', handle it here
         case 'setModel':
         // Legacy/LiquidCrypto agents use 'dataModelUpdate'
         case 'dataModelUpdate':
-            processSetModel(message, state);
+            processSetModel(message as DataModelUpdateMessage, state);
+            break;
+
+        case 'deleteSurface':
+            processDeleteSurface(message as any, state);
             break;
 
         // SDK's actionResponse and endRendering - acknowledge but no-op for now
@@ -734,6 +747,15 @@ export function processA2UIMessage(
         case 'endRendering':
             // These are informational, no state update needed
             break;
+    }
+}
+
+function processDeleteSurface(message: { surfaceId: string }, state: TransformerState): void {
+    if (state.surfaces.has(message.surfaceId)) {
+        state.surfaces.delete(message.surfaceId);
+    }
+    if (state.dataModels.has(message.surfaceId)) {
+        state.dataModels.delete(message.surfaceId);
     }
 }
 
@@ -844,7 +866,8 @@ export function validateA2UIPayload(
 
     for (const message of messages) {
         if (message.type === 'surfaceUpdate') {
-            for (const component of message.components) {
+            const updateMsg = message as SurfaceUpdateMessage;
+            for (const component of updateMsg.components) {
                 componentCount++;
                 if (componentCount > MAX_COMPONENTS) {
                     errors.push(`Too many components: max ${MAX_COMPONENTS}`);
@@ -853,7 +876,8 @@ export function validateA2UIPayload(
 
                 // Validate component has at least one type defined
                 // Note: We allow all A2UI types, they get transformed to Glass equivalents
-                void Object.keys(component.component)[0];
+                // Cast to A2UIComponent to access the component property
+                void Object.keys((component as A2UIComponent).component)[0];
             }
         }
     }

@@ -64,15 +64,15 @@ export const GlassSankey = ({
         const src = nodeMap.get(l.source);
         const tgt = nodeMap.get(l.target);
         if (src && tgt) {
-            // @ts-expect-error - d3 sankey layout mutates nodes
+
             src.sourceLinks.push(l);
-            // @ts-expect-error - d3 sankey layout mutates nodes
+
             tgt.targetLinks.push(l);
-            // @ts-expect-error - d3 sankey layout mutates nodes
+
             src.value += l.value;
-            // @ts-expect-error - d3 sankey layout mutates nodes
+
             tgt.value += l.value;
-            // @ts-expect-error - d3 sankey layout mutates nodes
+
             if (tgt.col <= src.col) tgt.col = src.col + 1;
         }
     });

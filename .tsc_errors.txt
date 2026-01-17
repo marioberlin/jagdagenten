@@ -1,0 +1,42 @@
+src/a2a/transformer.ts(161,75): error TS2339: Property 'component' does not exist on type 'A2UIComponentBase'.
+src/a2a/transformer.ts(858,63): error TS2339: Property 'component' does not exist on type 'A2UIComponentBase'.
+src/a2a/types.ts(13,18): error TS6133: 'a2uiModule' is declared but its value is never read.
+src/components/cowork/sandbox/DiffReviewer.tsx(9,1): error TS6192: All imports in import declaration are unused.
+src/components/cowork/sandbox/SandboxIndicator.tsx(9,42): error TS6133: 'Check' is declared but its value is never read.
+src/components/cowork/sandbox/SandboxIndicator.tsx(9,49): error TS6133: 'X' is declared but its value is never read.
+src/components/cowork/TaskPrioritySelector.tsx(11,5): error TS6133: 'Zap' is declared but its value is never read.
+src/components/cowork/TaskPrioritySelector.tsx(17,5): error TS6133: 'Clock' is declared but its value is never read.
+src/components/cowork/TaskTicket.tsx(32,1): error TS6192: All imports in import declaration are unused.
+src/components/data-display/GlassSankey.tsx(67,13): error TS2578: Unused '@ts-expect-error' directive.
+src/components/data-display/GlassSankey.tsx(69,13): error TS2578: Unused '@ts-expect-error' directive.
+src/components/data-display/GlassSankey.tsx(71,13): error TS2578: Unused '@ts-expect-error' directive.
+src/components/data-display/GlassSankey.tsx(73,13): error TS2578: Unused '@ts-expect-error' directive.
+src/components/data-display/GlassSankey.tsx(75,13): error TS2578: Unused '@ts-expect-error' directive.
+src/components/settings/GlassSettingsPanel.tsx(3,36): error TS6133: 'useParams' is declared but its value is never read.
+src/components/settings/GlassSettingsPanel.tsx(2087,7): error TS6133: 'PluginsPanel' is declared but its value is never read.
+src/components/settings/GlassSkillsPanel.tsx(2,18): error TS6133: 'AnimatePresence' is declared but its value is never read.
+src/components/settings/GlassSkillsPanel.tsx(5,28): error TS6133: 'Check' is declared but its value is never read.
+src/components/settings/GlassSkillsPanel.tsx(5,50): error TS6133: 'ExternalLink' is declared but its value is never read.
+src/components/settings/GlassSkillsPanel.tsx(6,30): error TS6133: 'Download' is declared but its value is never read.
+src/components/settings/GlassSkillsPanel.tsx(6,40): error TS6133: 'Power' is declared but its value is never read.
+src/hooks/useA2AClient.ts(294,20): error TS2345: Argument of type '(prev: UseA2AClientState) => { error: { code: number; message: string; data?: unknown; }; connected: boolean; loading: boolean; agentCard: AgentCard | null; messages: A2AMessage[]; currentTask: Task | null; isStreaming: boolean; }' is not assignable to parameter of type 'SetStateAction<UseA2AClientState>'.
+src/hooks/useGoogleAuth.ts(6,9): error TS2687: All declarations of 'google' must have identical modifiers.
+src/hooks/useGoogleDrive.ts(8,9): error TS2687: All declarations of 'google' must have identical modifiers.
+src/hooks/useGoogleDrive.ts(8,9): error TS2717: Subsequent property declarations must have the same type.  Property 'google' must be of type '{ accounts: { oauth2: { initTokenClient: (config: TokenClientConfig) => TokenClient; }; }; picker?: any; } | undefined', but here has type 'any'.
+src/hooks/useGoogleDrive.ts(98,30): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(98,56): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(101,32): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(102,32): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(103,32): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(109,30): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(109,72): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(110,42): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(112,37): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(113,39): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(114,38): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(116,37): error TS18048: 'window.google' is possibly 'undefined'.
+src/hooks/useGoogleDrive.ts(116,79): error TS18048: 'window.google' is possibly 'undefined'.
+src/pages/demos/DemosIndex.tsx(4,1): error TS6133: 'GlassCard' is declared but its value is never read.
+src/services/trpc.ts(7,66): error TS2307: Cannot find module '@trpc/react-query' or its corresponding type declarations.
+src/stores/skillStore.ts(25,55): error TS6133: 'get' is declared but its value is never read.
+src/stores/vaultStore.ts(123,56): error TS2304: Cannot find name 'VaultBankAccount'.

@@ -18,9 +18,6 @@ import { cn } from '@/utils/cn';
 // Initialize the engine client
 const liquidClient = new LiquidClient();
 
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 type DemoTab = 'spreadsheet' | 'map';
 
 export default function GenerativeExtensions() {
@@ -120,7 +117,7 @@ export default function GenerativeExtensions() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar apiKey={API_KEY} />
+                <AgSidebar />
             </div>
         </LiquidProvider>
     );

@@ -42,11 +42,23 @@ export type TextPart = v1Types.TextPart;
 export type FilePart = v1Types.FilePart;
 export type DataPart = v1Types.DataPart;
 
-/** Agent capabilities */
-export type AgentCapabilities = v1Types.AgentCapabilities;
+/** Agent capabilities (defined locally - SDK uses different structure) */
+export interface AgentCapabilities {
+    streaming?: boolean;
+    pushNotifications?: boolean;
+    stateTransitionHistory?: boolean;
+    extensions?: string[];
+}
 
-/** Agent skill definition */
-export type AgentSkill = v1Types.AgentSkill;
+/** Agent skill definition (defined locally - SDK uses different structure) */
+export interface AgentSkill {
+    id: string;
+    name: string;
+    description?: string;
+    tags?: string[];
+    examples?: string[];
+    inputSchema?: Record<string, unknown>;
+}
 
 /** Message role */
 export type MessageRole = 'user' | 'agent';
@@ -55,7 +67,7 @@ export type MessageRole = 'user' | 'agent';
 export const TERMINAL_STATES: v1Types.TaskState[] = [
     v1Module.TaskState.COMPLETED,
     v1Module.TaskState.FAILED,
-    v1Module.TaskState.CANCELED,
+    v1Module.TaskState.CANCELLED,
     v1Module.TaskState.REJECTED,
 ];
 
@@ -127,18 +139,18 @@ export type A2UIMessage = a2uiTypes.A2UIMessage;
 /**
  * Begin rendering message - initializes a new UI surface
  */
-export type BeginRenderingMessage = a2uiTypes.A2UIBeginRenderingMessage;
+export type BeginRenderingMessage = a2uiTypes.BeginRenderingMessage;
 
 /**
  * Surface update message - updates component tree
  */
-export type SurfaceUpdateMessage = a2uiTypes.A2UISurfaceUpdateMessage;
+export type SurfaceUpdateMessage = a2uiTypes.SurfaceUpdateMessage;
 
 /**
  * Set model message - updates data bindings
  * (Note: SDK uses 'setModel', legacy used 'dataModelUpdate')
  */
-export type DataModelUpdateMessage = a2uiTypes.A2UISetModelMessage;
+export type DataModelUpdateMessage = a2uiTypes.SetModelMessage;
 
 /**
  * A2UI Component - re-exported from SDK
@@ -151,9 +163,15 @@ export type A2UIComponent = a2uiTypes.A2UIComponent;
 export type ComponentType = a2uiTypes.A2UIComponentProps;
 
 /**
- * Text value binding type from SDK
+ * Text value binding type (defined locally - matches SDK pattern)
  */
-export type A2UITextValue = a2uiTypes.A2UITextValue;
+export type A2UITextValue =
+    | string
+    | { literalString: string }
+    | { literalNumber: number }
+    | { literalBoolean: boolean }
+    | { path: string }
+    | { template: string };
 
 // ============================================================================
 // Data Binding Types (Legacy Compatibility Layer)
@@ -181,9 +199,9 @@ export interface TemplateBinding {
 export type DataBinding<T = string> = LiteralBinding<T> | PathBinding | TemplateBinding;
 
 /**
- * Convert SDK A2UITextValue to legacy DataBinding format
+ * Convert A2UITextValue to legacy DataBinding format
  */
-export function textValueToDataBinding(value: a2uiTypes.A2UITextValue): DataBinding<string> {
+export function textValueToDataBinding(value: A2UITextValue): DataBinding<string> {
     if (typeof value === 'string') {
         return { literalString: value };
     }
@@ -193,14 +211,32 @@ export function textValueToDataBinding(value: a2uiTypes.A2UITextValue): DataBind
     if ('path' in value) {
         return { path: value.path };
     }
+    if ('template' in value) {
+        return { template: value.template };
+    }
     return { literalString: '' };
 }
 
 /**
  * Resolve an A2UI text value to a string
- * Re-exported from SDK for convenience
  */
-export const resolveTextValue = a2uiModule.resolveTextValue;
+export function resolveTextValue(value: A2UITextValue, model?: Record<string, unknown>): string {
+    if (typeof value === 'string') return value;
+    if ('literalString' in value) return value.literalString;
+    if ('literalNumber' in value) return String(value.literalNumber);
+    if ('literalBoolean' in value) return String(value.literalBoolean);
+    if ('path' in value && model) {
+        const parts = value.path.split('.');
+        let result: unknown = model;
+        for (const part of parts) {
+            if (result && typeof result === 'object') {
+                result = (result as Record<string, unknown>)[part];
+            }
+        }
+        return String(result ?? '');
+    }
+    return '';
+}
 
 // ============================================================================
 // Legacy Component Type Aliases
@@ -219,7 +255,7 @@ export type Distribution = 'start' | 'center' | 'end' | 'spaceBetween' | 'spaceA
 /**
  * Text semantic hints
  */
-export type TextSemantic = a2uiTypes.A2UITextSemantic;
+export type TextSemantic = 'body' | 'heading' | 'subheading' | 'caption' | 'label' | 'code' | 'emphasis' | 'strong';
 
 /**
  * TextField input types

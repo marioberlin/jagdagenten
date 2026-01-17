@@ -242,7 +242,7 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
     try {
       const task = await clientRef.current.sendText(text, {
         contextId: options?.contextId,
-        configuration: options?.configuration,
+        configuration: options?.configuration as unknown as Record<string, unknown>,
       });
 
       addAgentMessage(task);
@@ -280,7 +280,7 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
     try {
       const generator = clientRef.current.streamText(text, {
         contextId: options?.contextId,
-        configuration: options?.configuration,
+        configuration: options?.configuration as unknown as Record<string, unknown>,
       }, {
         signal: abortControllerRef.current.signal,
       });
@@ -295,10 +295,10 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
         } else if (event.type === 'status') {
           setState(prev => ({
             ...prev,
-            currentTask: prev.currentTask ? {
+            currentTask: prev.currentTask ? ({
               ...prev.currentTask,
               status: event.data.status,
-            } : null,
+            } as v1.Task) : null,
           }));
         } else if (event.type === 'artifact') {
           setState(prev => ({
@@ -334,7 +334,11 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
     }
 
     try {
-      await clientRef.current.cancelTask(state.currentTask.id);
+      if (clientRef.current.cancelTask) {
+        await clientRef.current.cancelTask(state.currentTask.id);
+      } else {
+        throw new Error('Client does not support cancelTask');
+      }
       setState(prev => ({
         ...prev,
         isStreaming: false,
@@ -359,6 +363,9 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
   const getTask = useCallback(async (taskId: string): Promise<v1.Task> => {
     if (!clientRef.current) {
       throw new A2AClientError('Client not initialized', -32000);
+    }
+    if (!clientRef.current.getTask) {
+      throw new A2AClientError('Client does not support getTask', -32001);
     }
     return clientRef.current.getTask(taskId);
   }, []);
@@ -412,7 +419,7 @@ export function useA2UIRenderer(messages: a2ui.A2UIMessage[]) {
       } else if (a2ui.isSetModelMessage(msg)) {
         const surface = newSurfaces.get(msg.surfaceId);
         if (surface) {
-          surface.model = { ...surface.model, ...msg.model };
+          surface.model = { ...surface.model, ...(msg.model as Record<string, v1.JSONValue>) };
         }
       }
     }

@@ -103,4 +103,51 @@ export default defineConfig({
             },
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: (id) => {
+                    // Vendor chunks - large dependencies that rarely change
+                    if (id.includes('node_modules')) {
+                        // React ecosystem
+                        if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                            return 'vendor-react';
+                        }
+                        // Animation library
+                        if (id.includes('framer-motion')) {
+                            return 'vendor-motion';
+                        }
+                        // Charting libraries
+                        if (id.includes('chart.js') || id.includes('react-chartjs') || id.includes('uplot')) {
+                            return 'vendor-charts';
+                        }
+                        // Icons
+                        if (id.includes('lucide-react')) {
+                            return 'vendor-icons';
+                        }
+                        // Other large dependencies
+                        if (id.includes('zustand') || id.includes('zod')) {
+                            return 'vendor-state';
+                        }
+                    }
+
+                    // Feature chunks - lazy-loaded application features
+                    if (id.includes('/src/components/trading/')) {
+                        return 'feat-trading';
+                    }
+                    if (id.includes('/src/components/agents/') || id.includes('/src/pages/agents/')) {
+                        return 'feat-agents';
+                    }
+                    if (id.includes('/src/components/generative/') || id.includes('/src/liquid-engine/')) {
+                        return 'feat-agentic';
+                    }
+                    if (id.includes('/src/pages/demos/')) {
+                        return 'feat-demos';
+                    }
+                }
+            }
+        },
+        // Increase chunk size warning limit
+        chunkSizeWarningLimit: 1000
+    }
 })

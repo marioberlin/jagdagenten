@@ -83,6 +83,8 @@ export const AGENT_CATEGORIES: AgentCategoryInfo[] = [
     { id: 'communication', name: 'Communication', icon: MessageSquare, description: 'Chat, email, and messaging', color: '#14B8A6' },
 ];
 
+const LayoutDashboard = BarChart; // Fallback or import if available (Lucide export check later)
+
 /**
  * Curated list of verified A2A agents
  * In production, this would come from a server API
@@ -207,6 +209,27 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         capabilities: { streaming: true, a2ui: true, pushNotifications: true, fileUpload: false },
         authentication: 'none',
         color: '#0EA5E9',
+        color: '#0EA5E9',
+    },
+    {
+        id: 'dashboard-builder',
+        name: 'Dashboard Builder',
+        description: 'AI-powered dashboard creation agent. Create, update, and manage SaaS dashboards with natural language. perfect for business reviews and monitoring.',
+        shortDescription: 'AI-powered dashboard creation',
+        url: 'http://127.0.0.1:3000/agents/dashboard-builder',
+        version: '1.0.0',
+        icon: LayoutDashboard,
+        category: 'productivity',
+        tags: ['dashboard', 'ui', 'widgets', 'saas'],
+        featured: true,
+        verified: true,
+        rating: 5.0,
+        reviewCount: 1,
+        addedAt: '2026-01-17',
+        provider: { name: 'LiquidCrypto Labs', verified: true },
+        capabilities: { streaming: false, a2ui: true, pushNotifications: false, fileUpload: false },
+        authentication: 'none',
+        color: '#3B82F6',
     },
 ];
 

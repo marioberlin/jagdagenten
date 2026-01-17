@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSkillStore } from '@/stores/skillStore';
 import {
-    Brain, Puzzle, Search, Check, AlertTriangle, ExternalLink,
-    RefreshCw, Filter, Book, Download, Power
+    Brain, Puzzle, Search, AlertTriangle,
+    RefreshCw, Filter, Book
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

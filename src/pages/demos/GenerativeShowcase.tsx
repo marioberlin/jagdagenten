@@ -9,12 +9,7 @@ import { LiquidProvider } from '../../liquid-engine/react';
 
 import { liquidClient } from '../../services/liquid';
 
-// Initialize the engine client
 // Using singleton instance for global context sharing
-
-
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export default function GenerativeShowcase() {
     const navigate = useNavigate();
@@ -85,7 +80,7 @@ export default function GenerativeShowcase() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar key="v4-gemini3" apiKey={API_KEY} />
+                <AgSidebar key="v4-gemini3" />
             </div>
         </LiquidProvider>
     );

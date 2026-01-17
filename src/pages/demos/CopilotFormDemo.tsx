@@ -10,9 +10,6 @@ import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 // Initialize the engine client
 const liquidClient = new LiquidClient();
 
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
 // Form data type
 interface IncidentFormData {
     reporterName: string;
@@ -281,7 +278,7 @@ export default function CopilotFormDemo() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar apiKey={API_KEY} />
+                <AgSidebar />
             </div>
         </LiquidProvider>
     );

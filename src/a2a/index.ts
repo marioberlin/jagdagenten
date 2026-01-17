@@ -12,19 +12,33 @@
 // Types
 export * from './types';
 
-// Client
+// Client (from a2a-sdk)
 export {
-    A2AClient,
-    A2AError,
     createA2AClient,
-    discoverAgent,
-    useA2AClient,
+    A2AClientError as A2AError,
+    type A2AClient,
     type A2AClientConfig,
-    type TaskStreamEvent,
-    type TaskStatusUpdateEvent,
-    type TaskArtifactUpdateEvent,
-    type TaskMessageEvent,
-} from './client';
+    type StreamEvent as TaskStreamEvent,
+} from '@liquidcrypto/a2a-sdk';
+
+// Event types from SDK
+export type { TaskStatusUpdateEvent, TaskArtifactUpdateEvent } from '@liquidcrypto/a2a-sdk';
+
+// Custom event type for backward compatibility
+export type TaskMessageEvent = {
+    type: 'message';
+    content: string;
+};
+
+// Hook (from local hooks)
+export { useA2AClient } from '../hooks/useA2AClient';
+
+// Agent discovery utility
+export const discoverAgent = async (url: string) => {
+    const response = await fetch(`${url}/.well-known/agent.json`);
+    if (!response.ok) throw new Error(`Failed to discover agent at ${url}`);
+    return response.json();
+};
 
 // Transformer
 export {

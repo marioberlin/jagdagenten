@@ -11,12 +11,7 @@ import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 
 import { liquidClient } from '../../services/liquid';
 
-// Initialize the engine client
 // Using singleton instance for global context sharing
-
-
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 interface SearchResult {
     id: string;
@@ -314,7 +309,7 @@ export default function AIResearcherDemo() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar apiKey={API_KEY} />
+                <AgSidebar />
             </div>
         </LiquidProvider>
     );

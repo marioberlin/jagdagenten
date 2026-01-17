@@ -4,7 +4,7 @@
  * Tests for the container pool manager, scheduler, and related components.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
     loadConfig,
     getDefaultConfig,

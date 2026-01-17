@@ -1,19 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { GlassContainer } from '@/components';
 import { GlassButton } from '../../components/primitives/GlassButton';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
 import { LiquidProvider, useLiquidReadable, useLiquidAction } from '../../liquid-engine/react';
 import { LayoutDashboard, Plus, TrendingUp, TrendingDown, Users, DollarSign, ShoppingCart, Activity, Trash2, Book } from 'lucide-react';
+import { DashboardAgentService } from "../../services/a2a/DashboardAgentService";
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();
-
-// Get API Key from Vite env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // Widget types
 type WidgetType = 'metric' | 'chart' | 'list';
@@ -38,13 +36,8 @@ const ICON_MAP: Record<string, any> = {
 };
 
 // Inner component with hooks
-function DashboardContent() {
-    const [widgets, setWidgets] = useState<DashboardWidget[]>([
-        { id: '1', type: 'metric', title: 'Total Revenue', value: '$124,500', change: 12.5, icon: 'dollar', color: 'green' },
-        { id: '2', type: 'metric', title: 'Active Users', value: '8,420', change: -2.3, icon: 'users', color: 'blue' },
-        { id: '3', type: 'metric', title: 'Orders', value: '1,247', change: 8.1, icon: 'cart', color: 'purple' },
-        { id: '4', type: 'metric', title: 'Conversion Rate', value: '3.24%', change: 0.5, icon: 'activity', color: 'orange' }
-    ]);
+function DashboardContent({ widgets, setWidgets }: { widgets: DashboardWidget[], setWidgets: React.Dispatch<React.SetStateAction<DashboardWidget[]>> }) {
+
 
     // Make dashboard state readable to AI
     useLiquidReadable({
@@ -191,6 +184,12 @@ function DashboardContent() {
 
 export default function DynamicDashboardDemo() {
     const navigate = useNavigate();
+    const [widgets, setWidgets] = useState<DashboardWidget[]>([
+        { id: '1', type: 'metric', title: 'Total Revenue', value: '$124,500', change: 12.5, icon: 'dollar', color: 'green' },
+        { id: '2', type: 'metric', title: 'Active Users', value: '8,420', change: -2.3, icon: 'users', color: 'blue' },
+        { id: '3', type: 'metric', title: 'Orders', value: '1,247', change: 8.1, icon: 'cart', color: 'purple' },
+        { id: '4', type: 'metric', title: 'Conversion Rate', value: '3.24%', change: 0.5, icon: 'activity', color: 'orange' }
+    ]);
     return (
         <LiquidProvider client={liquidClient}>
             <div className="h-screen bg-glass-base flex overflow-hidden">
@@ -232,12 +231,16 @@ export default function DynamicDashboardDemo() {
 
                     {/* Dashboard Area */}
                     <main className="flex-1 p-6 pt-0 overflow-auto">
-                        <DashboardContent />
+                        <DashboardContent widgets={widgets} setWidgets={setWidgets} />
                     </main>
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar apiKey={API_KEY} />
+                <AgSidebar customService={useMemo(() => new DashboardAgentService('http://localhost:3000', (data) => {
+                    if (Array.isArray(data)) {
+                        setWidgets(data);
+                    }
+                }), [])} />
             </div>
         </LiquidProvider>
     );

@@ -4,6 +4,7 @@ import { Send, Bot } from 'lucide-react';
 import { GeminiService } from '../../services/gemini';
 import { GeminiProxyService } from '../../services/proxy/gemini';
 import { ClaudeService, CLAUDE_MODELS, ClaudeModelId } from '../../services/claude';
+import { ClaudeProxyService } from '../../services/proxy/claude';
 import { useLiquidClient } from '../../liquid-engine/react';
 import { useLocation } from 'react-router-dom';
 import { useAgentConfig } from '../../context/AgentConfigContext';
@@ -23,12 +24,15 @@ type GeminiModelId = keyof typeof GEMINI_MODELS;
 
 interface AgSidebarProps {
     apiKey?: string;
+    apiKey?: string;
     claudeApiKey?: string;
+    customService?: any; // Allow injecting a custom service (like an A2A agent client)
 }
 
 export const AgSidebar: React.FC<AgSidebarProps> = ({
-    apiKey = import.meta.env.VITE_GEMINI_API_KEY || '',
-    claudeApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+    apiKey = '',
+    claudeApiKey = '',
+    customService
 }) => {
     const client = useLiquidClient();
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
@@ -82,13 +86,13 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
     }, [apiKey, client, runtimeMode]);
 
     const claudeService = useMemo(() => {
-        if (!claudeApiKey) return null;
         try {
-            // Note: Claude Proxy not implemented yet, fallback to Demo or null
             if (runtimeMode === 'production') {
-                console.warn("Claude Proxy not implemented. Switch to Demo mode for Claude.");
-                return null;
+                // Use secure proxy - no API key needed in browser
+                return new ClaudeProxyService(client, "http://localhost:3000");
             }
+            // Demo mode requires API key
+            if (!claudeApiKey) return null;
             return new ClaudeService(claudeApiKey, client);
         } catch (e) {
             console.error("Failed to init ClaudeService:", e);
@@ -98,8 +102,8 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
 
     // Get current service and model
-    const currentService = provider === 'gemini' ? geminiService : claudeService;
-    const currentApiKey = provider === 'gemini' ? apiKey : claudeApiKey;
+    const currentService = customService || (provider === 'gemini' ? geminiService : claudeService);
+    const currentApiKey = customService ? 'custom' : (provider === 'gemini' ? apiKey : claudeApiKey);
 
 
     // Update service models when selection changes
@@ -131,9 +135,16 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
     const handleSend = async () => {
         if (!inputValue.trim() || isSending) return;
-        if (!currentService || !currentApiKey) {
+
+        // In production mode, we use proxy (no API key needed in browser)
+        // In demo mode, we need API keys
+        const needsApiKey = runtimeMode === 'demo';
+        if (!currentService || (needsApiKey && !currentApiKey)) {
             setMessages(prev => [...prev, { role: 'user', text: inputValue }]);
-            setMessages(prev => [...prev, { role: 'model', text: `Error: No ${provider === 'gemini' ? 'Gemini' : 'Anthropic'} API Key found.` }]);
+            const errorMsg = runtimeMode === 'production'
+                ? `Error: Failed to initialize ${provider} service. Check server connection.`
+                : `Error: No ${provider === 'gemini' ? 'Gemini' : 'Anthropic'} API Key found.`;
+            setMessages(prev => [...prev, { role: 'model', text: errorMsg }]);
             setInputValue('');
             return;
         }
@@ -205,10 +216,10 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 text-sm mt-10">
-                        {!currentApiKey ? (
+                        {runtimeMode === 'demo' && !currentApiKey ? (
                             <div className="text-red-400">
                                 No {provider === 'gemini' ? 'VITE_GEMINI_API_KEY' : 'VITE_ANTHROPIC_API_KEY'} found.<br />
-                                Please add it to your .env file.
+                                Please add it to your .env file or switch to Production mode.
                             </div>
                         ) : (
                             <>

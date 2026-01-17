@@ -2,7 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Loader2, CheckCircle, XCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import type { AgentCard } from '@/a2a/types';
+import type { AgentCard as BaseAgentCard } from '@/a2a/types';
+
+// Extend AgentCard to include optional url (often present in JSON but not in strict spec)
+type AgentCard = BaseAgentCard & { url?: string };
 
 interface AgentProbeProps {
     onAgentDiscovered?: (url: string, card: AgentCard) => void;

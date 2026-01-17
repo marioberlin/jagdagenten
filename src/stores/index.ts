@@ -1,5 +1,6 @@
 export * from './types';
 export * from './themeStore';
+export * from './settingsStore';
 export * from './slices/modeSlice';
 export * from './slices/glassSlice';
 export * from './slices/visualSlice';
