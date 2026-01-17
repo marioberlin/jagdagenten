@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { GlassContainer } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
-import { LiquidProvider, useLiquidReadable, useLiquidAction } from '../../liquid-engine/react';
+import { LiquidProvider } from '../../liquid-engine/react';
 import { GlassButton } from '../../components/primitives/GlassButton';
 import { Search, MessageCircle, Lightbulb, Book, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
+import { QAAgentService } from '../../services/a2a/QAAgentService';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();
@@ -26,55 +28,32 @@ function QAContent() {
     const [question, setQuestion] = useState('');
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [sessionId] = useState(() => uuidv4());
 
-    // Make Q&A state readable to AI
-    useLiquidReadable({
-        description: "Q&A Agent - Current question and answer history",
-        value: {
-            currentQuestion: question,
-            answerCount: answers.length,
-            recentAnswers: answers.slice(-5).map(a => ({
-                question: a.question,
-                answer: a.answer.substring(0, 200) + '...'
-            }))
+    // Handle data updates from A2A agent
+    const handleDataUpdate = useCallback((data: any) => {
+        if (data.allAnswers) {
+            setAnswers(data.allAnswers.map((a: any) => ({
+                ...a,
+                timestamp: new Date(a.timestamp)
+            })));
+        } else if (data.answer) {
+            setAnswers(prev => {
+                const exists = prev.find(a => a.id === data.answer.id);
+                if (exists) return prev;
+                return [...prev, {
+                    ...data.answer,
+                    timestamp: new Date(data.answer.timestamp)
+                }];
+            });
         }
-    });
+    }, []);
 
-    // Answer question action
-    useLiquidAction({
-        name: "answer_question",
-        description: "Provide an answer to the user's question with optional sources",
-        parameters: [
-            { name: "question", type: "string", description: "The question being answered", required: true },
-            { name: "answer", type: "string", description: "The comprehensive answer", required: true },
-            { name: "sources", type: "array", description: "List of source URLs or references", required: false, items: { type: 'string' } }
-        ],
-        handler: (args: { question: string; answer: string; sources?: string[] }) => {
-            const newAnswer: Answer = {
-                id: Date.now().toString(),
-                question: args.question,
-                answer: args.answer,
-                sources: args.sources,
-                timestamp: new Date()
-            };
-            setAnswers(prev => [...prev, newAnswer]);
-            setQuestion('');
-            setIsLoading(false);
-            return { success: true, answerId: newAnswer.id };
-        }
-    });
-
-    // Suggest related questions action
-    useLiquidAction({
-        name: "suggest_questions",
-        description: "Suggest related follow-up questions based on the topic",
-        parameters: [
-            { name: "suggestions", type: "array", description: "List of suggested follow-up questions", required: true, items: { type: 'string' } }
-        ],
-        handler: () => {
-            return { success: true };
-        }
-    });
+    // Create A2A service
+    const agentService = useMemo(
+        () => new QAAgentService(sessionId, handleDataUpdate),
+        [sessionId, handleDataUpdate]
+    );
 
     const handleMarkHelpful = (id: string, helpful: boolean) => {
         setAnswers(prev => prev.map(a =>
@@ -89,6 +68,17 @@ function QAContent() {
         "What are the best practices for TypeScript?"
     ];
 
+    const handleQuickQuestion = async (q: string) => {
+        setQuestion(q);
+        setIsLoading(true);
+        try {
+            await agentService.sendMessage(q);
+        } finally {
+            setIsLoading(false);
+            setQuestion('');
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Search Bar */}
@@ -99,6 +89,11 @@ function QAContent() {
                         type="text"
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && question.trim()) {
+                                handleQuickQuestion(question);
+                            }
+                        }}
                         placeholder="Ask a question..."
                         className={cn(
                             "w-full pl-12 pr-4 py-4 rounded-xl",
@@ -118,7 +113,7 @@ function QAContent() {
                             {sampleQuestions.map((q, i) => (
                                 <button
                                     key={i}
-                                    onClick={() => setQuestion(q)}
+                                    onClick={() => handleQuickQuestion(q)}
                                     className="px-3 py-1.5 rounded-full bg-white/5 text-xs text-secondary hover:bg-white/10 hover:text-white transition-colors"
                                 >
                                     {q}
