@@ -72,29 +72,19 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
     // Initialize services (Factory Pattern)
     const geminiService = useMemo(() => {
-        // In Production Mode, we don't strictly need the API key client-side, 
-        // but we check it for Demo mode.
-        if (runtimeMode === 'demo' && !apiKey) return null;
-
-        try {
-            if (runtimeMode === 'production') {
-                return new GeminiProxyService(client, "http://localhost:3000");
-            }
-            return new GeminiService(apiKey, client);
-        } catch (e) {
-            console.error("Failed to init GeminiService:", e);
-            return null;
-        }
-    }, [apiKey, client, runtimeMode]);
+        // Updated to prefer Server Proxy for all modes (Demo & Production) to avoid exposing VITE keys
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        return new GeminiProxyService(client, baseUrl);
+    }, [client]);
 
     const claudeService = useMemo(() => {
         try {
-            if (runtimeMode === 'production') {
-                // Use secure proxy - no API key needed in browser
-                return new ClaudeProxyService(client, "http://localhost:3000");
+            // Default to Proxy if no key provided, or if in production
+            if (!claudeApiKey || runtimeMode === 'production') {
+                const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+                return new ClaudeProxyService(client, baseUrl);
             }
-            // Demo mode requires API key
-            if (!claudeApiKey) return null;
+            // If key is explicitly provided, use client-side service (legacy/fallback)
             return new ClaudeService(claudeApiKey, client);
         } catch (e) {
             console.error("Failed to init ClaudeService:", e);
@@ -138,15 +128,11 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
     const handleSend = async () => {
         if (!inputValue.trim() || isSending) return;
 
-        // In production mode, we use proxy (no API key needed in browser)
-        // In demo mode, we need API keys
-        const needsApiKey = runtimeMode === 'demo';
-        if (!currentService || (needsApiKey && !currentApiKey)) {
+        // We now default to Proxy, so we don't strictly need a client-side API key.
+        // If the service is initialized (which it should be via Proxy), we proceed.
+        if (!currentService) {
             setMessages(prev => [...prev, { role: 'user', text: inputValue }]);
-            const errorMsg = runtimeMode === 'production'
-                ? `Error: Failed to initialize ${provider} service. Check server connection.`
-                : `Error: No ${provider === 'gemini' ? 'Gemini' : 'Anthropic'} API Key found.`;
-            setMessages(prev => [...prev, { role: 'model', text: errorMsg }]);
+            setMessages(prev => [...prev, { role: 'model', text: "Error: Service not initialized. Check server connection." }]);
             setInputValue('');
             return;
         }
@@ -218,17 +204,10 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 text-sm mt-10">
-                        {runtimeMode === 'demo' && !currentApiKey ? (
-                            <div className="text-red-400">
-                                No {provider === 'gemini' ? 'VITE_GEMINI_API_KEY' : 'VITE_ANTHROPIC_API_KEY'} found.<br />
-                                Please add it to your .env file or switch to Production mode.
-                            </div>
-                        ) : (
-                            <>
-                                Ask {provider === 'gemini' ? 'Gemini' : 'Claude'} to help.<br />
-                                Try: "Fill the form with sample data"
-                            </>
-                        )}
+                        <>
+                            Ask {provider === 'gemini' ? 'Gemini' : 'Claude'} to help.<br />
+                            Try: "Fill the form with sample data"
+                        </>
                     </div>
                 )}
 

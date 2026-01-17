@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { GlassContainer, GlassButton, GlassInput, GlassSelect, GlassTextarea } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
-import { LiquidProvider, useLiquidReadable, useLiquidAction } from '../../liquid-engine/react';
+import { LiquidProvider } from '../../liquid-engine/react';
 import { FileWarning, Send, CheckCircle2, Book } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
+import { CopilotFormService } from '../../services/a2a/CopilotFormService';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();
@@ -50,35 +52,18 @@ function FormField({ label, required, children }: { label: string; required?: bo
 function FormContent() {
     const [formData, setFormData] = useState<IncidentFormData>(initialFormData);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [sessionId] = useState(() => uuidv4());
 
-    // Make form data readable to AI
-    useLiquidReadable({
-        description: "Security Incident Report Form - Current field values",
-        value: formData
-    });
+    // Handle data updates from A2A agent
+    const handleDataUpdate = useCallback((data: Partial<IncidentFormData>) => {
+        setFormData(prev => ({ ...prev, ...data }));
+    }, []);
 
-    // Register action for AI to fill form
-    useLiquidAction({
-        name: "fill_incident_form",
-        description: "Fill out the security incident report form with the provided information. Use this when the user describes an incident.",
-        parameters: [
-            { name: "reporterName", type: "string", description: "Name of the person reporting", required: true },
-            { name: "reporterEmail", type: "string", description: "Email of the reporter", required: true },
-            { name: "incidentDate", type: "string", description: "Date of the incident (YYYY-MM-DD format)", required: true },
-            { name: "incidentType", type: "string", description: "Type of incident: data_breach, phishing, malware, unauthorized_access, other", required: true },
-            { name: "severity", type: "string", description: "Severity level: low, medium, high, critical", required: true },
-            { name: "description", type: "string", description: "Detailed description of the incident", required: true },
-            { name: "affectedSystems", type: "string", description: "Systems affected by the incident", required: false },
-            { name: "actionsTaken", type: "string", description: "Immediate actions taken to address the incident", required: false }
-        ],
-        handler: (args: Partial<IncidentFormData>) => {
-            setFormData(prev => ({
-                ...prev,
-                ...args
-            }));
-            return { success: true, message: "Form filled successfully" };
-        }
-    });
+    // Create A2A service for AgSidebar
+    const agentService = useMemo(
+        () => new CopilotFormService(sessionId, handleDataUpdate),
+        [sessionId, handleDataUpdate]
+    );
 
     const updateField = (field: keyof IncidentFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -107,119 +92,124 @@ function FormContent() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Reporter Info */}
-            <GlassContainer className="p-6 space-y-4" border material="thin">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">1</span>
-                    Reporter Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField label="Your Name" required>
-                        <GlassInput
-                            value={formData.reporterName}
-                            onChange={(e) => updateField('reporterName', e.target.value)}
-                            placeholder="John Doe"
+        <>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Reporter Info */}
+                <GlassContainer className="p-6 space-y-4" border material="thin">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">1</span>
+                        Reporter Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label="Your Name" required>
+                            <GlassInput
+                                value={formData.reporterName}
+                                onChange={(e) => updateField('reporterName', e.target.value)}
+                                placeholder="John Doe"
+                            />
+                        </FormField>
+                        <FormField label="Email" required>
+                            <GlassInput
+                                type="email"
+                                value={formData.reporterEmail}
+                                onChange={(e) => updateField('reporterEmail', e.target.value)}
+                                placeholder="john@company.com"
+                            />
+                        </FormField>
+                    </div>
+                </GlassContainer>
+
+                {/* Incident Details */}
+                <GlassContainer className="p-6 space-y-4" border material="thin">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">2</span>
+                        Incident Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField label="Incident Date" required>
+                            <GlassInput
+                                type="date"
+                                value={formData.incidentDate}
+                                onChange={(e) => updateField('incidentDate', e.target.value)}
+                            />
+                        </FormField>
+                        <FormField label="Incident Type" required>
+                            <GlassSelect
+                                value={formData.incidentType}
+                                onValueChange={(v) => updateField('incidentType', v)}
+                                placeholder="Select type..."
+                                options={[
+                                    { value: 'data_breach', label: 'Data Breach' },
+                                    { value: 'phishing', label: 'Phishing Attack' },
+                                    { value: 'malware', label: 'Malware/Ransomware' },
+                                    { value: 'unauthorized_access', label: 'Unauthorized Access' },
+                                    { value: 'other', label: 'Other' }
+                                ]}
+                            />
+                        </FormField>
+                        <FormField label="Severity" required>
+                            <GlassSelect
+                                value={formData.severity}
+                                onValueChange={(v) => updateField('severity', v)}
+                                placeholder="Select severity..."
+                                options={[
+                                    { value: 'low', label: 'Low' },
+                                    { value: 'medium', label: 'Medium' },
+                                    { value: 'high', label: 'High' },
+                                    { value: 'critical', label: 'Critical' }
+                                ]}
+                            />
+                        </FormField>
+                    </div>
+                    <FormField label="Description" required>
+                        <GlassTextarea
+                            value={formData.description}
+                            onChange={(e) => updateField('description', e.target.value)}
+                            placeholder="Describe what happened in detail..."
+                            rows={4}
                         />
                     </FormField>
-                    <FormField label="Email" required>
-                        <GlassInput
-                            type="email"
-                            value={formData.reporterEmail}
-                            onChange={(e) => updateField('reporterEmail', e.target.value)}
-                            placeholder="john@company.com"
+                </GlassContainer>
+
+                {/* Impact & Response */}
+                <GlassContainer className="p-6 space-y-4" border material="thin">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">3</span>
+                        Impact & Response
+                    </h3>
+                    <FormField label="Affected Systems">
+                        <GlassTextarea
+                            value={formData.affectedSystems}
+                            onChange={(e) => updateField('affectedSystems', e.target.value)}
+                            placeholder="List any affected systems, databases, or services..."
+                            rows={2}
                         />
                     </FormField>
+                    <FormField label="Actions Taken">
+                        <GlassTextarea
+                            value={formData.actionsTaken}
+                            onChange={(e) => updateField('actionsTaken', e.target.value)}
+                            placeholder="Describe any immediate actions taken to contain or resolve the incident..."
+                            rows={2}
+                        />
+                    </FormField>
+                </GlassContainer>
+
+                {/* Submit */}
+                <div className="flex gap-4">
+                    <GlassButton type="submit" className="flex-1">
+                        <Send className="w-4 h-4 mr-2" />
+                        Submit Report
+                    </GlassButton>
+                    <GlassButton type="button" variant="ghost" onClick={handleReset}>
+                        Clear Form
+                    </GlassButton>
                 </div>
-            </GlassContainer>
+            </form>
 
-            {/* Incident Details */}
-            <GlassContainer className="p-6 space-y-4" border material="thin">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">2</span>
-                    Incident Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField label="Incident Date" required>
-                        <GlassInput
-                            type="date"
-                            value={formData.incidentDate}
-                            onChange={(e) => updateField('incidentDate', e.target.value)}
-                        />
-                    </FormField>
-                    <FormField label="Incident Type" required>
-                        <GlassSelect
-                            value={formData.incidentType}
-                            onValueChange={(v) => updateField('incidentType', v)}
-                            placeholder="Select type..."
-                            options={[
-                                { value: 'data_breach', label: 'Data Breach' },
-                                { value: 'phishing', label: 'Phishing Attack' },
-                                { value: 'malware', label: 'Malware/Ransomware' },
-                                { value: 'unauthorized_access', label: 'Unauthorized Access' },
-                                { value: 'other', label: 'Other' }
-                            ]}
-                        />
-                    </FormField>
-                    <FormField label="Severity" required>
-                        <GlassSelect
-                            value={formData.severity}
-                            onValueChange={(v) => updateField('severity', v)}
-                            placeholder="Select severity..."
-                            options={[
-                                { value: 'low', label: 'Low' },
-                                { value: 'medium', label: 'Medium' },
-                                { value: 'high', label: 'High' },
-                                { value: 'critical', label: 'Critical' }
-                            ]}
-                        />
-                    </FormField>
-                </div>
-                <FormField label="Description" required>
-                    <GlassTextarea
-                        value={formData.description}
-                        onChange={(e) => updateField('description', e.target.value)}
-                        placeholder="Describe what happened in detail..."
-                        rows={4}
-                    />
-                </FormField>
-            </GlassContainer>
-
-            {/* Impact & Response */}
-            <GlassContainer className="p-6 space-y-4" border material="thin">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs flex items-center justify-center">3</span>
-                    Impact & Response
-                </h3>
-                <FormField label="Affected Systems">
-                    <GlassTextarea
-                        value={formData.affectedSystems}
-                        onChange={(e) => updateField('affectedSystems', e.target.value)}
-                        placeholder="List any affected systems, databases, or services..."
-                        rows={2}
-                    />
-                </FormField>
-                <FormField label="Actions Taken">
-                    <GlassTextarea
-                        value={formData.actionsTaken}
-                        onChange={(e) => updateField('actionsTaken', e.target.value)}
-                        placeholder="Describe any immediate actions taken to contain or resolve the incident..."
-                        rows={2}
-                    />
-                </FormField>
-            </GlassContainer>
-
-            {/* Submit */}
-            <div className="flex gap-4">
-                <GlassButton type="submit" className="flex-1">
-                    <Send className="w-4 h-4 mr-2" />
-                    Submit Report
-                </GlassButton>
-                <GlassButton type="button" variant="ghost" onClick={handleReset}>
-                    Clear Form
-                </GlassButton>
-            </div>
-        </form>
+            {/* Pass A2A service to sidebar */}
+            <AgSidebar initialService={agentService} />
+        </>
     );
 }
 
@@ -276,9 +266,6 @@ export default function CopilotFormDemo() {
                         </div>
                     </main>
                 </div>
-
-                {/* Sidebar */}
-                <AgSidebar />
             </div>
         </LiquidProvider>
     );

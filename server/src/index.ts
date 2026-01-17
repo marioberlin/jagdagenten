@@ -28,6 +28,7 @@ import { getResearchCanvasAgentCard, handleResearchCanvasRequest } from './agent
 import { getAIResearcherCard, handleAIResearcherRequest } from './agents/ai-researcher.js';
 import { getQAAgentCard, handleQAAgentRequest } from './agents/qa-agent.js';
 import { getStateMachineAgentCard, handleStateMachineRequest } from './agents/state-machine.js';
+import { getCopilotFormAgentCard, handleCopilotFormRequest } from './agents/copilot-form.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -907,6 +908,38 @@ async function startServer() {
 
             return app
                 .get('/.well-known/agent.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Copilot Form Agent
+        .group('/agents/copilot-form', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getCopilotFormAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleCopilotFormRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
