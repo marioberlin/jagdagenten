@@ -206,12 +206,15 @@ export class ToProto {
       case 'completed':
         return TaskState.TASK_STATE_COMPLETED;
       case 'canceled':
+      case 'cancelled':  // Support both spellings
         return TaskState.TASK_STATE_CANCELLED;
       case 'failed':
         return TaskState.TASK_STATE_FAILED;
-      case 'input_required':
+      case 'input-required':  // A2A v1.0 kebab-case
+      case 'input_required':  // Legacy support
         return TaskState.TASK_STATE_INPUT_REQUIRED;
-      case 'auth_required':
+      case 'auth-required':   // A2A v1.0 kebab-case
+      case 'auth_required':   // Legacy support
         return TaskState.TASK_STATE_AUTH_REQUIRED;
       default:
         return TaskState.TASK_STATE_UNSPECIFIED;
@@ -519,15 +522,15 @@ export class FromProto {
       case TaskState.TASK_STATE_COMPLETED:
         return 'completed';
       case TaskState.TASK_STATE_CANCELLED:
-        return 'canceled';
+        return 'cancelled';  // A2A v1.0 uses 'cancelled'
       case TaskState.TASK_STATE_FAILED:
         return 'failed';
       case TaskState.TASK_STATE_INPUT_REQUIRED:
-        return 'input_required';
+        return 'input-required';  // A2A v1.0 kebab-case
       case TaskState.TASK_STATE_AUTH_REQUIRED:
-        return 'auth_required';
+        return 'auth-required';   // A2A v1.0 kebab-case
       default:
-        return 'unknown';
+        return 'submitted';  // Default to submitted for unknown states
     }
   }
 

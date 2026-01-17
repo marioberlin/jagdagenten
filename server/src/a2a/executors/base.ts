@@ -102,9 +102,11 @@ export abstract class BaseA2UIExecutor implements AgentExecutor {
       name,
       parts: [{
         data: {
-          type: 'a2ui',
-          a2ui: messages as unknown as v1.JSONValue[],
-        },
+          data: {
+            type: 'a2ui',
+            a2ui: messages as unknown as v1.JSONValue[],
+          },
+        } as v1.DataPart,
       }],
     };
   }

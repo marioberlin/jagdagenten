@@ -85,26 +85,25 @@ function toProtoMessage(message: v1.Message): unknown {
 }
 
 function toProtoPart(part: v1.Part): unknown {
-  const proto: Record<string, unknown> = { metadata: (part as v1.TextPart).metadata };
+  const proto: Record<string, unknown> = { metadata: part.metadata };
 
-  if ('text' in part) {
-    proto.text = (part as v1.TextPart).text;
-  } else if ('file' in part) {
-    const filePart = part as v1.FilePart;
+  if (part.text !== undefined) {
+    proto.text = part.text;
+  } else if (part.file) {
     proto.file = {
-      mime_type: filePart.file.mimeType,
-      name: filePart.file.name,
+      mime_type: part.file.mediaType,
+      name: part.file.name,
     };
-    if ('uri' in filePart.file) {
-      (proto.file as Record<string, unknown>).file_with_uri = filePart.file.uri;
-    } else if ('bytes' in filePart.file) {
+    if (part.file.fileWithUri) {
+      (proto.file as Record<string, unknown>).file_with_uri = part.file.fileWithUri;
+    } else if (part.file.fileWithBytes) {
       (proto.file as Record<string, unknown>).file_with_bytes = Buffer.from(
-        (filePart.file as v1.FileWithBytes).bytes,
+        part.file.fileWithBytes,
         'base64'
       );
     }
-  } else if ('data' in part) {
-    proto.data = { data: (part as v1.DataPart).data };
+  } else if (part.data) {
+    proto.data = { data: part.data.data };
   }
 
   return proto;
@@ -122,29 +121,32 @@ function toProtoArtifact(artifact: v1.Artifact): unknown {
 }
 
 function toProtoAgentCard(card: v1.AgentCard): unknown {
+  // Get primary URL from supportedInterfaces (or fallback for legacy)
+  const primaryUrl = card.supportedInterfaces?.[0]?.url || '';
+
   return {
     name: card.name,
     description: card.description,
-    url: card.url,
+    url: primaryUrl,  // Proto may still expect url field
     version: card.version,
     documentation_url: card.documentationUrl,
     provider: card.provider
       ? {
-          organization: card.provider.organization,
-          url: card.provider.url || '',
-        }
+        organization: card.provider.organization,
+        url: card.provider.url || '',
+      }
       : undefined,
     capabilities: card.capabilities
       ? {
-          streaming: card.capabilities.streaming,
-          push_notifications: card.capabilities.pushNotifications,
-          extensions: card.capabilities.extensions?.map((e) => ({
-            uri: e.uri,
-            description: e.description,
-            params: e.params,
-            required: e.required,
-          })),
-        }
+        streaming: card.capabilities.streaming,
+        push_notifications: card.capabilities.pushNotifications,
+        extended_agent_card: card.capabilities.extendedAgentCard,
+        extensions: card.capabilities.extensions?.map((e) => ({
+          uri: e.uri,
+          description: e.description,
+          required: e.required,
+        })),
+      }
       : undefined,
     default_input_modes: card.defaultInputModes,
     default_output_modes: card.defaultOutputModes,
@@ -157,9 +159,11 @@ function toProtoAgentCard(card: v1.AgentCard): unknown {
       input_modes: s.inputModes,
       output_modes: s.outputModes,
     })),
-    supports_authenticated_extended_card: card.supportsAuthenticatedExtendedCard,
-    preferred_transport: card.preferredTransport,
-    protocol_version: card.protocolVersions?.[0] || '1.0',
+    supported_interfaces: card.supportedInterfaces?.map((iface) => ({
+      url: iface.url,
+      protocol_binding: iface.protocolBinding,
+    })),
+    protocol_versions: card.protocolVersions,
   };
 }
 
@@ -185,17 +189,18 @@ function fromProtoPart(proto: Record<string, unknown>): v1.Part {
   }
   if (proto.file) {
     const filePart = proto.file as Record<string, unknown>;
-    const file: v1.FileContent = filePart.file_with_uri
+    // A2A v1.0 FilePart structure
+    const file: v1.FilePart = filePart.file_with_uri
       ? {
-          uri: filePart.file_with_uri as string,
-          mimeType: filePart.mime_type as string | undefined,
-          name: filePart.name as string | undefined,
-        }
+        fileWithUri: filePart.file_with_uri as string,
+        mediaType: filePart.mime_type as string | undefined,
+        name: filePart.name as string | undefined,
+      }
       : {
-          bytes: (filePart.file_with_bytes as Buffer)?.toString('base64') || '',
-          mimeType: filePart.mime_type as string | undefined,
-          name: filePart.name as string | undefined,
-        };
+        fileWithBytes: (filePart.file_with_bytes as Buffer)?.toString('base64') || '',
+        mediaType: filePart.mime_type as string | undefined,
+        name: filePart.name as string | undefined,
+      };
     return {
       file,
       metadata: proto.metadata as Record<string, v1.JSONValue> | undefined,
@@ -204,7 +209,7 @@ function fromProtoPart(proto: Record<string, unknown>): v1.Part {
   if (proto.data) {
     const dataPart = proto.data as Record<string, unknown>;
     return {
-      data: (dataPart.data || {}) as Record<string, v1.JSONValue>,
+      data: { data: dataPart.data || {} } as v1.DataPart,
       metadata: proto.metadata as Record<string, v1.JSONValue> | undefined,
     };
   }
@@ -397,7 +402,6 @@ export class A2AGrpcServer {
       const result = await this.executor.execute(message, {
         taskId,
         contextId,
-        requestVersion: '1.0',
       });
 
       // Update task with result (result.status is v1.TaskState, task.status is v1.TaskStatus)
@@ -456,7 +460,6 @@ export class A2AGrpcServer {
         const result = await this.executor.execute(message, {
           taskId,
           contextId,
-          requestVersion: '1.0',
         });
 
         // Send artifacts

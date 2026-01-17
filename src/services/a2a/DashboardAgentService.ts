@@ -29,7 +29,7 @@ export class DashboardAgentService {
                             contextId: 'demo-session',
                             role: 'user',
                             timestamp: new Date().toISOString(),
-                            parts: [{ type: 'text', text }]
+                            parts: [{ text }]
                         }
                     }
                 })
@@ -45,8 +45,8 @@ export class DashboardAgentService {
             // The agent returns a result object with artifacts
             const result = payload.result;
             const dashboardArtifact = result.artifacts?.find((a: any) => a.name === 'dashboard');
-            const textPart = dashboardArtifact?.parts.find((p: any) => p.type === 'text');
-            const dataPart = dashboardArtifact?.parts.find((p: any) => p.type === 'data');
+            const textPart = dashboardArtifact?.parts.find((p: any) => p.text !== undefined);
+            const dataPart = dashboardArtifact?.parts.find((p: any) => p.data !== undefined);
 
             const data = dataPart ? dataPart.data : null;
 

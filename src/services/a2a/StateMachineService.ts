@@ -37,7 +37,7 @@ export class StateMachineService implements ILiquidLLMService {
                             contextId: this.contextId,
                             role: 'user',
                             timestamp: new Date().toISOString(),
-                            parts: [{ type: 'text', text: prompt }]
+                            parts: [{ text: prompt }]
                         }
                     }
                 })
@@ -59,7 +59,7 @@ export class StateMachineService implements ILiquidLLMService {
             // Extract text response
             const textPart = artifacts
                 .flatMap((a: any) => a.parts)
-                .find((p: any) => p.type === 'text');
+                .find((p: any) => p.text !== undefined);
 
             // Extract data update (side-channel for flow state updates)
             const dataPart = artifacts

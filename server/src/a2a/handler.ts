@@ -43,24 +43,27 @@ const store: TaskStore = {
 // ============================================================================
 
 /**
- * LiquidCrypto Agent Card
+ * LiquidCrypto Agent Card (A2A v1.0 compliant)
  */
 export function getAgentCard(baseUrl: string): AgentCard {
     return {
+        // Required A2A v1.0 fields
+        protocolVersions: ['1.0'],
         name: 'LiquidCrypto AI',
         description: 'AI-powered cryptocurrency trading assistant with rich UI generation',
-        url: baseUrl,
         version: '1.0.0',
-        documentationUrl: `${baseUrl}/docs`,
-        provider: {
-            organization: 'LiquidCrypto',
-            url: 'https://liquidcrypto.io',
-        },
+        supportedInterfaces: [
+            { url: `${baseUrl}/a2a`, protocolBinding: 'JSONRPC' },
+        ],
         capabilities: {
             streaming: true,
             pushNotifications: false,
             stateTransitionHistory: true,
+            extendedAgentCard: false,
+            extensions: [],
         },
+        defaultInputModes: ['text/plain'],
+        defaultOutputModes: ['text/plain', 'application/json'],
         skills: [
             {
                 id: 'portfolio',
@@ -84,8 +87,12 @@ export function getAgentCard(baseUrl: string): AgentCard {
                 examples: ['Show BTC price chart', 'Compare ETH and SOL'],
             },
         ],
-        defaultInputModes: ['text/plain'],
-        defaultOutputModes: ['text/plain', 'application/json'],
+        // Optional fields
+        documentationUrl: `${baseUrl}/docs`,
+        provider: {
+            organization: 'LiquidCrypto',
+            url: 'https://liquidcrypto.io',
+        },
         extensions: {
             a2ui: {
                 version: '0.8',
@@ -332,7 +339,7 @@ const handlers: Record<string, MethodHandler> = {
         }
 
         if (TERMINAL_STATES.includes(task.status.state)) {
-            throw { ...JSON_RPC_ERRORS.TASK_CANCELLED, data: { state: task.status.state } };
+            throw { ...JSON_RPC_ERRORS.TASK_NOT_CANCELABLE, data: { state: task.status.state } };
         }
 
         return updateTaskState(task.id, 'cancelled');

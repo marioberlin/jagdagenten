@@ -37,7 +37,7 @@ export class QAAgentService implements ILiquidLLMService {
                             contextId: this.contextId,
                             role: 'user',
                             timestamp: new Date().toISOString(),
-                            parts: [{ type: 'text', text: prompt }]
+                            parts: [{ text: prompt }]
                         }
                     }
                 })
@@ -59,12 +59,12 @@ export class QAAgentService implements ILiquidLLMService {
             // Extract text response
             const textPart = artifacts
                 .flatMap((a: any) => a.parts)
-                .find((p: any) => p.type === 'text');
+                .find((p: any) => p.text !== undefined);
 
             // Extract data update (side-channel)
             const dataPart = artifacts
                 .flatMap((a: any) => a.parts)
-                .find((p: any) => p.type === 'data');
+                .find((p: any) => p.data !== undefined);
 
             if (dataPart && this.onDataUpdate) {
                 this.onDataUpdate(dataPart.data);

@@ -53,13 +53,34 @@ export type A2ATaskState =
 export interface A2AMessage {
     role: 'user' | 'agent';
     parts: A2APart[];
+    messageId?: string;
+    contextId?: string;
+    taskId?: string;
+    metadata?: Record<string, unknown>;
 }
 
-/** Message parts */
-export type A2APart =
-    | { type: 'text'; text: string }
-    | { type: 'file'; mimeType: string; data: string; name?: string }
-    | { type: 'data'; mimeType: string; data: unknown };
+/** A2A v1.0 File Part */
+export interface A2AFilePart {
+    fileWithUri?: string;    // URI reference to file
+    fileWithBytes?: string;  // Base64-encoded file content
+    mediaType?: string;      // MIME type (e.g., "application/pdf")
+    name?: string;           // Optional filename
+}
+
+/** A2A v1.0 Data Part */
+export interface A2ADataPart {
+    data: unknown;           // Arbitrary JSON content
+}
+
+/** A2A v1.0 Part - mutually exclusive fields (spec compliant)
+ *  Only one of text, file, or data should be set.
+ */
+export interface A2APart {
+    text?: string;           // Text content
+    file?: A2AFilePart;      // File content  
+    data?: A2ADataPart;      // Structured data
+    metadata?: Record<string, unknown>;
+}
 
 /** A2A task response */
 export interface A2ATask {
@@ -201,7 +222,7 @@ export class A2ATaskBridge extends EventEmitter {
             '- If you need clarification, indicate what information is needed',
         ].join('\n');
 
-        parts.push({ type: 'text', text: prompt });
+        parts.push({ text: prompt });
 
         return {
             role: 'user',
@@ -419,7 +440,7 @@ export class A2ATaskBridge extends EventEmitter {
         let output = '';
         if (task.status.message) {
             output = task.status.message.parts
-                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                .filter((p): p is A2APart & { text: string } => typeof p.text === 'string')
                 .map(p => p.text)
                 .join('\n');
         }

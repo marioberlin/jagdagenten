@@ -7,6 +7,7 @@
 
 import { randomUUID } from 'crypto';
 import { v1 } from '@liquidcrypto/a2a-sdk';
+import type { ArtifactStore, MessageStore, SessionStore } from './postgres-store.js';
 
 // ============================================================================
 // Types
@@ -68,6 +69,7 @@ export interface AuthContext {
   userId?: string;
   token?: string;
   headers?: Record<string, string | undefined>;
+  enabledExtensions?: string[]; // Extensions enabled by client via A2A-Extensions header
 }
 
 export interface ElysiaAdapterConfig {
@@ -77,13 +79,17 @@ export interface ElysiaAdapterConfig {
   eventQueue?: EventQueue;
   pushNotificationStore?: PushNotificationStore;
   authenticatedExtendedCardProvider?: AuthenticatedExtendedCardProvider;
+  // New stores for A2A v1.0 persistence
+  messageStore?: MessageStore;
+  artifactStore?: ArtifactStore;
+  sessionStore?: SessionStore;
 }
 
 // ============================================================================
 // In-Memory Implementations (for development)
 // ============================================================================
 
-class InMemoryTaskStore implements TaskStore {
+export class InMemoryTaskStore implements TaskStore {
   private tasks = new Map<string, v1.Task>();
   private contextIndex = new Map<string, Set<string>>();
 
@@ -118,7 +124,7 @@ class InMemoryTaskStore implements TaskStore {
   }
 }
 
-class InMemoryPushNotificationStore implements PushNotificationStore {
+export class InMemoryPushNotificationStore implements PushNotificationStore {
   private configs = new Map<string, v1.PushNotificationConfig>();
 
   async get(taskId: string): Promise<v1.PushNotificationConfig | null> {
@@ -134,7 +140,7 @@ class InMemoryPushNotificationStore implements PushNotificationStore {
   }
 }
 
-class InMemoryEventQueue implements EventQueue {
+export class InMemoryEventQueue implements EventQueue {
   private subscribers = new Map<string, ((event: v1.TaskStatusUpdateEvent | v1.TaskArtifactUpdateEvent) => void)[]>();
 
   async *subscribe(taskId: string): AsyncGenerator<v1.TaskStatusUpdateEvent | v1.TaskArtifactUpdateEvent> {
@@ -181,7 +187,7 @@ class InMemoryEventQueue implements EventQueue {
 }
 
 // ============================================================================
-// JSON-RPC Error Codes
+// JSON-RPC Error Codes (A2A v1.0 spec)
 // ============================================================================
 
 const JSON_RPC_ERRORS = {
@@ -190,11 +196,19 @@ const JSON_RPC_ERRORS = {
   METHOD_NOT_FOUND: { code: -32601, message: 'Method not found' },
   INVALID_PARAMS: { code: -32602, message: 'Invalid params' },
   INTERNAL_ERROR: { code: -32603, message: 'Internal error' },
+  // A2A-specific errors (v1.0 spec codes -32001 to -32099)
   TASK_NOT_FOUND: { code: -32001, message: 'Task not found' },
   TASK_NOT_CANCELABLE: { code: -32002, message: 'Task cannot be canceled' },
   PUSH_NOTIFICATION_NOT_SUPPORTED: { code: -32003, message: 'Push notifications not supported' },
+  UNSUPPORTED_OPERATION: { code: -32004, message: 'Unsupported operation' },
+  CONTENT_TYPE_NOT_SUPPORTED: { code: -32005, message: 'Content type not supported' },
+  INVALID_AGENT_RESPONSE: { code: -32006, message: 'Invalid agent response' },
+  EXTENDED_CARD_NOT_CONFIGURED: { code: -32007, message: 'Extended agent card not configured' },
+  EXTENSION_SUPPORT_REQUIRED: { code: -32008, message: 'Extension support required' },
+  VERSION_NOT_SUPPORTED: { code: -32009, message: 'A2A version not supported' },
+  // Legacy aliases for backward compatibility
   PUSH_NOTIFICATION_NOT_CONFIGURED: { code: -32003, message: 'Push notification not configured for task' },
-  AUTHENTICATED_EXTENDED_CARD_NOT_CONFIGURED: { code: -32007, message: 'Authenticated extended card not configured' },
+  AUTHENTICATED_EXTENDED_CARD_NOT_CONFIGURED: { code: -32007, message: 'Extended agent card not configured' },
 } as const;
 
 const TERMINAL_STATES: v1.TaskState[] = [
@@ -216,6 +230,10 @@ export class ElysiaA2AAdapter {
   private executor: AgentExecutor;
   private authenticatedExtendedCardProvider?: AuthenticatedExtendedCardProvider;
   private authContext?: AuthContext;
+  // New stores for A2A v1.0 persistence
+  private messageStore?: MessageStore;
+  private artifactStore?: ArtifactStore;
+  private sessionStore?: SessionStore;
 
   constructor(config: ElysiaAdapterConfig) {
     this.agentCard = config.agentCard;
@@ -224,6 +242,59 @@ export class ElysiaA2AAdapter {
     this.eventQueue = config.eventQueue ?? new InMemoryEventQueue();
     this.pushNotificationStore = config.pushNotificationStore ?? new InMemoryPushNotificationStore();
     this.authenticatedExtendedCardProvider = config.authenticatedExtendedCardProvider;
+    // New stores for A2A v1.0 persistence
+    this.messageStore = config.messageStore;
+    this.artifactStore = config.artifactStore;
+    this.sessionStore = config.sessionStore;
+  }
+
+  /**
+   * Supported A2A protocol versions
+   */
+  private static readonly SUPPORTED_VERSIONS = ['1.0', '1'];
+
+  /**
+   * Check if a version is supported
+   */
+  private isVersionSupported(version: string | undefined): boolean {
+    if (!version) return true; // No version header = accept any
+    return ElysiaA2AAdapter.SUPPORTED_VERSIONS.includes(version);
+  }
+
+  /**
+   * Parse A2A-Extensions header and validate against required extensions
+   */
+  private parseAndValidateExtensions(
+    headers?: Record<string, string | undefined>
+  ): { enabledExtensions: string[]; error?: v1.JSONRPCError } {
+    // Parse A2A-Extensions header (comma-separated URIs)
+    const extensionsHeader = headers?.['a2a-extensions'] || headers?.['A2A-Extensions'] || '';
+    const enabledExtensions = extensionsHeader
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0);
+
+    // Check if all required extensions are enabled by the client
+    const requiredExtensions = (this.agentCard.capabilities?.extensions ?? [])
+      .filter(ext => ext.required)
+      .map(ext => ext.uri);
+
+    const missingRequired = requiredExtensions.filter(uri => !enabledExtensions.includes(uri));
+
+    if (missingRequired.length > 0) {
+      return {
+        enabledExtensions,
+        error: {
+          ...JSON_RPC_ERRORS.EXTENSION_SUPPORT_REQUIRED,
+          data: {
+            required: missingRequired,
+            provided: enabledExtensions,
+          },
+        },
+      };
+    }
+
+    return { enabledExtensions };
   }
 
   // ==========================================================================
@@ -237,10 +308,39 @@ export class ElysiaA2AAdapter {
     body: unknown,
     headers?: Record<string, string | undefined>
   ): Promise<v1.JSONRPCResponse> {
+    const request = body as v1.JSONRPCRequest;
+
+    // Check A2A-Version header
+    const requestVersion = headers?.['a2a-version'] || headers?.['A2A-Version'];
+    if (requestVersion && !this.isVersionSupported(requestVersion)) {
+      return {
+        jsonrpc: '2.0',
+        id: request.id ?? null,
+        error: {
+          ...JSON_RPC_ERRORS.VERSION_NOT_SUPPORTED,
+          data: {
+            requested: requestVersion,
+            supported: ElysiaA2AAdapter.SUPPORTED_VERSIONS
+          },
+        },
+      };
+    }
+
+    // Parse and validate extensions
+    const { enabledExtensions, error: extensionError } = this.parseAndValidateExtensions(headers);
+    if (extensionError) {
+      return {
+        jsonrpc: '2.0',
+        id: request.id ?? null,
+        error: extensionError,
+      };
+    }
+
     // Capture auth context for authenticated methods
     this.authContext = {
       headers,
       token: headers?.authorization?.replace(/^Bearer\s+/i, ''),
+      enabledExtensions, // Add enabled extensions to context
     };
 
     // Process the request directly (v1.0 only, no version detection)
@@ -252,10 +352,27 @@ export class ElysiaA2AAdapter {
    */
   async *handleStreamRequest(
     body: unknown,
-    _headers?: Record<string, string | undefined>
+    headers?: Record<string, string | undefined>
   ): AsyncGenerator<string> {
     const request = body as v1.JSONRPCRequest;
     const method = request.method;
+
+    // Check A2A-Version header
+    const requestVersion = headers?.['a2a-version'] || headers?.['A2A-Version'];
+    if (requestVersion && !this.isVersionSupported(requestVersion)) {
+      yield this.formatSSE({
+        jsonrpc: '2.0',
+        id: request.id,
+        error: {
+          ...JSON_RPC_ERRORS.VERSION_NOT_SUPPORTED,
+          data: {
+            requested: requestVersion,
+            supported: ElysiaA2AAdapter.SUPPORTED_VERSIONS
+          },
+        },
+      });
+      return;
+    }
 
     // Handle Resubscribe streaming method
     if (method === 'Resubscribe') {
@@ -279,6 +396,13 @@ export class ElysiaA2AAdapter {
     const taskId = randomUUID();
     const contextId = params?.message?.contextId ?? randomUUID();
 
+    // Get or create session if sessionStore is available
+    let sessionId: string | undefined;
+    if (this.sessionStore && contextId) {
+      const session = await this.sessionStore.getOrCreate(contextId, this.agentCard);
+      sessionId = session.id;
+    }
+
     const task: v1.Task = {
       id: taskId,
       contextId,
@@ -291,6 +415,11 @@ export class ElysiaA2AAdapter {
     };
 
     await this.taskStore.set(task);
+
+    // Persist incoming user message
+    if (this.messageStore && params?.message) {
+      await this.messageStore.create(params.message, taskId, sessionId);
+    }
 
     // Send initial status
     yield this.formatSSE({
@@ -334,11 +463,16 @@ export class ElysiaA2AAdapter {
         metadata: params?.metadata,
       });
 
-      // Stream artifacts
+      // Stream artifacts and persist
       if (result.artifacts) {
         for (const artifact of result.artifacts) {
           task.artifacts = task.artifacts ?? [];
           task.artifacts.push(artifact);
+
+          // Persist artifact to database
+          if (this.artifactStore) {
+            await this.artifactStore.create(artifact, taskId, sessionId);
+          }
 
           yield this.formatSSE({
             jsonrpc: '2.0',
@@ -350,6 +484,20 @@ export class ElysiaA2AAdapter {
             },
           });
         }
+      }
+
+      // Persist agent response message
+      if (this.messageStore && result.message) {
+        await this.messageStore.create(result.message, taskId, sessionId);
+      }
+
+      // Update session stats
+      if (this.sessionStore && sessionId) {
+        await this.sessionStore.updateStats(contextId, {
+          tasks: 1,
+          messages: result.message ? 2 : 1,
+          artifacts: result.artifacts?.length ?? 0,
+        });
       }
 
       // Complete task
@@ -453,6 +601,12 @@ export class ElysiaA2AAdapter {
       // v1.0 method names (PascalCase)
       case 'SendMessage':
         return this.handleSendMessage(params as v1.MessageSendParams);
+
+      // v1.0 streaming method (SendStreamingMessage is handled via streaming endpoint)
+      case 'SendStreamingMessage':
+      case 'StreamMessage':  // Legacy alias
+        throw { ...JSON_RPC_ERRORS.UNSUPPORTED_OPERATION, data: 'SendStreamingMessage must be called via /a2a/stream endpoint' };
+
       case 'GetTask':
         return this.handleGetTask(params as { id: string; historyLength?: number });
       case 'CancelTask':
@@ -465,19 +619,23 @@ export class ElysiaA2AAdapter {
         return this.handleSetTaskPushNotificationConfig(params as v1.TaskPushNotificationConfig);
       case 'GetTaskPushNotificationConfig':
         return this.handleGetTaskPushNotificationConfig(params as { id: string });
+      case 'ListTaskPushNotificationConfigs':  // A2A v1.0 new method
+        return this.handleListTaskPushNotificationConfigs(params as { contextId?: string });
       case 'DeleteTaskPushNotificationConfig':
         return this.handleDeleteTaskPushNotificationConfig(params as { id: string });
 
-      // Resubscribe method (v1.0 streaming)
-      case 'Resubscribe':
-        // Resubscribe is only valid for streaming - throw error for non-streaming
-        throw { ...JSON_RPC_ERRORS.INVALID_REQUEST, data: 'Resubscribe is only valid for streaming requests' };
+      // v1.0 streaming subscription method
+      case 'SubscribeToTask':  // A2A v1.0 method name
+      case 'Resubscribe':      // Legacy alias
+        // SubscribeToTask is only valid for streaming - throw error for non-streaming
+        throw { ...JSON_RPC_ERRORS.UNSUPPORTED_OPERATION, data: 'SubscribeToTask is only valid for streaming requests' };
 
-      // Authenticated extended card (v1.0)
-      case 'GetAuthenticatedExtendedCard':
-        return this.handleGetAuthenticatedExtendedCard();
+      // v1.0 extended agent card method
+      case 'GetExtendedAgentCard':           // A2A v1.0 method name
+      case 'GetAuthenticatedExtendedCard':   // Legacy alias
+        return this.handleGetExtendedAgentCard();
 
-      // v0.x method names (for compatibility - already normalized but just in case)
+      // v0.x method names (backward compatibility)
       case 'message/send':
         return this.handleSendMessage(params as v1.MessageSendParams);
       case 'tasks/get':
@@ -494,12 +652,57 @@ export class ElysiaA2AAdapter {
     }
   }
 
+  // Stub for ListTaskPushNotificationConfigs - needs implementation
+  private async handleListTaskPushNotificationConfigs(_params: { contextId?: string }): Promise<v1.TaskPushNotificationConfig[]> {
+    // TODO: Implement full listing when PushNotificationStore supports it
+    return [];
+  }
+
+  // Renamed handler to match v1.0 method name
+  private async handleGetExtendedAgentCard(): Promise<v1.AgentCard | null> {
+    if (!this.agentCard.capabilities?.extendedAgentCard) {
+      throw { ...JSON_RPC_ERRORS.EXTENDED_CARD_NOT_CONFIGURED };
+    }
+    // Return extended card with authentication-specific details
+    return this.agentCard;
+  }
+
   private async handleSendMessage(params: v1.MessageSendParams): Promise<v1.Task> {
     const { message, configuration: _configuration } = params;
 
+    // Validate message is provided
+    if (!message) {
+      throw { ...JSON_RPC_ERRORS.INVALID_PARAMS, data: 'message is required' };
+    }
+
     // Create task
     const taskId = randomUUID();
-    const contextId = message?.contextId ?? randomUUID();
+    const contextId = message.contextId ?? randomUUID();
+
+    // Validate referenceTaskIds belong to the same contextId (multi-turn validation)
+    if (message.referenceTaskIds && message.referenceTaskIds.length > 0) {
+      for (const refTaskId of message.referenceTaskIds) {
+        const refTask = await this.taskStore.get(refTaskId);
+        if (refTask && refTask.contextId !== contextId) {
+          throw {
+            ...JSON_RPC_ERRORS.INVALID_PARAMS,
+            data: {
+              message: 'Referenced task does not belong to this context',
+              taskId: refTaskId,
+              expectedContextId: contextId,
+              actualContextId: refTask.contextId,
+            },
+          };
+        }
+      }
+    }
+
+    // Get or create session if sessionStore is available
+    let sessionId: string | undefined;
+    if (this.sessionStore && contextId) {
+      const session = await this.sessionStore.getOrCreate(contextId, this.agentCard);
+      sessionId = session.id;
+    }
 
     const task: v1.Task = {
       id: taskId,
@@ -513,6 +716,11 @@ export class ElysiaA2AAdapter {
     };
 
     await this.taskStore.set(task);
+
+    // Persist incoming user message
+    if (this.messageStore && message) {
+      await this.messageStore.create(message, taskId, sessionId);
+    }
 
     // Update to working
     task.status = {
@@ -532,13 +740,34 @@ export class ElysiaA2AAdapter {
       metadata: params?.metadata,
     });
 
-    // Apply result
+    // Apply result and persist
     if (result.artifacts) {
       task.artifacts = result.artifacts;
+
+      // Persist artifacts to database
+      if (this.artifactStore) {
+        for (const artifact of result.artifacts) {
+          await this.artifactStore.create(artifact, taskId, sessionId);
+        }
+      }
     }
 
     if (result.message) {
       task.history?.push(result.message);
+
+      // Persist agent response message
+      if (this.messageStore) {
+        await this.messageStore.create(result.message, taskId, sessionId);
+      }
+    }
+
+    // Update session stats
+    if (this.sessionStore && sessionId) {
+      await this.sessionStore.updateStats(contextId, {
+        tasks: 1,
+        messages: result.message ? 2 : 1, // User message + optional agent response
+        artifacts: result.artifacts?.length ?? 0,
+      });
     }
 
     // Update status
@@ -591,15 +820,15 @@ export class ElysiaA2AAdapter {
   }
 
   private async handleListTasks(
-    params: { contextId?: string; state?: v1.TaskState[]; offset?: number; limit?: number }
-  ): Promise<v1.Task[]> {
+    params: { contextId?: string; state?: v1.TaskState[]; cursor?: string; limit?: number }
+  ): Promise<{ tasks: v1.Task[]; nextCursor?: string }> {
     let tasks: v1.Task[];
+    const limit = Math.min(params.limit ?? 20, 100); // Max 100 per request
 
     if (params.contextId) {
       tasks = await this.taskStore.listByContext(params.contextId);
     } else {
       // For now, return empty array if no contextId
-      // TODO: Implement full listing with pagination
       tasks = [];
     }
 
@@ -608,10 +837,48 @@ export class ElysiaA2AAdapter {
       tasks = tasks.filter(t => params.state!.includes(t.status.state as v1.TaskState));
     }
 
-    // Apply pagination
-    const offset = params.offset ?? 0;
-    const limit = params.limit ?? 20;
-    return tasks.slice(offset, offset + limit);
+    // Sort by creation time (newest first) for consistent cursor pagination
+    tasks = tasks.sort((a, b) => {
+      const aTime = new Date(a.status.timestamp ?? 0).getTime();
+      const bTime = new Date(b.status.timestamp ?? 0).getTime();
+      return bTime - aTime;
+    });
+
+    // Apply cursor-based pagination
+    let startIndex = 0;
+    if (params.cursor) {
+      try {
+        // Cursor format: base64(timestamp:taskId)
+        const decoded = Buffer.from(params.cursor, 'base64').toString('utf-8');
+        const [timestamp, taskId] = decoded.split(':');
+        const cursorTime = parseInt(timestamp, 10);
+
+        // Find the position after the cursor
+        startIndex = tasks.findIndex(t => {
+          const tTime = new Date(t.status.timestamp ?? 0).getTime();
+          return tTime < cursorTime || (tTime === cursorTime && t.id === taskId);
+        });
+        if (startIndex === -1) startIndex = tasks.length;
+      } catch {
+        // Invalid cursor, start from beginning
+        startIndex = 0;
+      }
+    }
+
+    // Get page of results + 1 to check if there are more
+    const pageResults = tasks.slice(startIndex, startIndex + limit + 1);
+    const hasMore = pageResults.length > limit;
+    const results = hasMore ? pageResults.slice(0, limit) : pageResults;
+
+    // Generate next cursor if there are more results
+    let nextCursor: string | undefined;
+    if (hasMore && results.length > 0) {
+      const lastTask = results[results.length - 1];
+      const timestamp = new Date(lastTask.status.timestamp ?? 0).getTime();
+      nextCursor = Buffer.from(`${timestamp}:${lastTask.id}`).toString('base64');
+    }
+
+    return { tasks: results, nextCursor };
   }
 
   // ==========================================================================
@@ -792,5 +1059,3 @@ export class ElysiaA2AAdapter {
     return `data: ${JSON.stringify(data)}\n\n`;
   }
 }
-
-export { InMemoryTaskStore, InMemoryEventQueue, InMemoryPushNotificationStore };

@@ -564,19 +564,17 @@ export class OrchestratorExecutor extends BaseA2UIExecutor {
 export function getOrchestratorAgentCard(baseUrl: string): v1.AgentCard {
   return {
     name: 'Multi-Agent Orchestrator',
-    url: baseUrl,
-    version: '1.0.0',
     protocolVersions: ['1.0'],
+    version: '1.0.0',
     description: 'Orchestrates large development tasks across specialist AI agents',
-    documentationUrl: `${baseUrl}/docs/orchestrator`,
-    provider: {
-      organization: 'LiquidCrypto',
-      url: 'https://liquidcrypto.io',
-    },
+    supportedInterfaces: [
+      { url: `${baseUrl}/a2a`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: {
       streaming: true,
       pushNotifications: true,
       stateTransitionHistory: true,
+      extendedAgentCard: false,
     },
     skills: [
       {
@@ -610,6 +608,11 @@ export function getOrchestratorAgentCard(baseUrl: string): v1.AgentCard {
     ],
     defaultInputModes: ['text/plain', 'application/json'],
     defaultOutputModes: ['text/plain', 'application/json'],
+    documentationUrl: `${baseUrl}/docs/orchestrator`,
+    provider: {
+      organization: 'LiquidCrypto',
+      url: 'https://liquidcrypto.io',
+    },
   };
 }
 

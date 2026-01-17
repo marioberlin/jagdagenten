@@ -39,6 +39,7 @@ describe('PostgresTaskStoreV1', () => {
   const config: PostgresTaskStoreConfig = {
     connectionString: 'postgresql://localhost:5432/test',
     tableName: 'test_tasks',
+    useInlineArtifacts: true, // Use inline storage for mocked tests
   };
 
   let store: PostgresTaskStoreV1;

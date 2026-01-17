@@ -464,12 +464,14 @@ export class LiquidCryptoExecutor extends BaseA2UIExecutor {
           { id: 'root', component: this.Column(['ticker-section', 'chart-section', 'portfolio-section']) },
           { id: 'ticker-section', component: TradingComponents.MarketTicker({ path: '/ticker/symbol' }, { path: '/ticker/price' }, { path: '/ticker/change24h' }) },
           { id: 'chart-section', component: TradingComponents.ChartPlaceholder(symbol, '24h') },
-          { id: 'portfolio-section', component: TradingComponents.PortfolioSummary({
-            totalValuePath: '/portfolio/totalValue',
-            changePath: '/portfolio/change24h',
-            pnlPath: '/portfolio/pnl',
-            holdingsPath: '/portfolio/holdings',
-          }) },
+          {
+            id: 'portfolio-section', component: TradingComponents.PortfolioSummary({
+              totalValuePath: '/portfolio/totalValue',
+              changePath: '/portfolio/change24h',
+              pnlPath: '/portfolio/pnl',
+              holdingsPath: '/portfolio/holdings',
+            })
+          },
         ],
       },
     ];
@@ -484,19 +486,17 @@ export class LiquidCryptoExecutor extends BaseA2UIExecutor {
 export function getLiquidCryptoAgentCard(baseUrl: string): v1.AgentCard {
   return {
     name: 'LiquidCrypto AI',
-    url: baseUrl,
-    version: '1.0.0',
     protocolVersions: ['1.0'],
+    version: '1.0.0',
     description: 'AI-powered cryptocurrency trading assistant with rich UI generation',
-    documentationUrl: `${baseUrl}/docs`,
-    provider: {
-      organization: 'LiquidCrypto',
-      url: 'https://liquidcrypto.io',
-    },
+    supportedInterfaces: [
+      { url: `${baseUrl}/a2a`, protocolBinding: 'JSONRPC' },
+    ],
     capabilities: {
       streaming: true,
       pushNotifications: false,
       stateTransitionHistory: true,
+      extendedAgentCard: false,
     },
     skills: [
       {
@@ -523,5 +523,10 @@ export function getLiquidCryptoAgentCard(baseUrl: string): v1.AgentCard {
     ],
     defaultInputModes: ['text/plain'],
     defaultOutputModes: ['text/plain', 'application/json'],
+    documentationUrl: `${baseUrl}/docs`,
+    provider: {
+      organization: 'LiquidCrypto',
+      url: 'https://liquidcrypto.io',
+    },
   };
 }

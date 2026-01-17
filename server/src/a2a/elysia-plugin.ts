@@ -2,7 +2,7 @@
  * A2A Elysia Plugin
  *
  * Integrates the A2A adapter into the Elysia server.
- * Provides /.well-known/agent.json discovery and /a2a endpoints.
+ * Provides /.well-known/agent-card.json discovery and /a2a endpoints.
  */
 
 import { Elysia } from 'elysia';
@@ -11,6 +11,9 @@ import {
   createPostgresStoresFromEnv,
   type TaskStore,
   type PushNotificationStore,
+  type ArtifactStore,
+  type MessageStore,
+  type SessionStore,
 } from './adapter/index.js';
 import { LiquidCryptoExecutor, getLiquidCryptoAgentCard } from './executors/index.js';
 import {
@@ -28,6 +31,12 @@ export interface A2APluginConfig {
   taskStore?: TaskStore;
   /** Override push notification store */
   pushNotificationStore?: PushNotificationStore;
+  /** Artifact store for session logging */
+  artifactStore?: ArtifactStore;
+  /** Message store for session logging */
+  messageStore?: MessageStore;
+  /** Session store for tracking contexts */
+  sessionStore?: SessionStore;
   /** Enable telemetry instrumentation (defaults to OTEL_ENABLED) */
   enableTelemetry?: boolean;
 }
@@ -42,6 +51,9 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
   // Determine which stores to use
   let taskStore = config.taskStore;
   let pushNotificationStore = config.pushNotificationStore;
+  let artifactStore = config.artifactStore;
+  let messageStore = config.messageStore;
+  let sessionStore = config.sessionStore;
 
   // Auto-configure PostgreSQL stores if DATABASE_URL is available
   if (!taskStore && !pushNotificationStore) {
@@ -49,7 +61,10 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
     if (pgStores) {
       taskStore = pgStores.taskStore;
       pushNotificationStore = pgStores.pushNotificationStore;
-      console.log('[A2A] Using PostgreSQL stores for task persistence');
+      artifactStore = pgStores.artifactStore;
+      messageStore = pgStores.messageStore;
+      sessionStore = pgStores.sessionStore;
+      console.log('[A2A] Using PostgreSQL stores for task/artifact/message persistence');
     } else {
       console.log('[A2A] Using in-memory stores (set DATABASE_URL for PostgreSQL)');
     }
@@ -74,13 +89,22 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
     executor,
     taskStore,
     pushNotificationStore,
+    // A2A v1.0 persistence stores
+    artifactStore,
+    messageStore,
+    sessionStore,
   });
 
   // Create telemetry middleware
   const telemetry = telemetryEnabled ? createA2ATelemetryMiddleware() : null;
 
   return new Elysia({ name: 'a2a' })
-    // Agent discovery (A2A spec /.well-known/agent.json)
+    // Canonical Agent Card discovery (A2A v1.0 spec)
+    .get('/.well-known/agent-card.json', () => {
+      return getLiquidCryptoAgentCard(baseUrl);
+    })
+
+    // Legacy Agent Card discovery (backward compatibility)
     .get('/.well-known/agent.json', () => {
       return getLiquidCryptoAgentCard(baseUrl);
     })

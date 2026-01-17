@@ -596,8 +596,8 @@ describe('A2A Type Safety', () => {
         const states: TaskState[] = [
             'submitted',
             'working',
-            'input_required',
-            'auth_required',
+            'input-required',  // A2A v1.0 kebab-case
+            'auth-required',   // A2A v1.0 kebab-case
             'completed',
             'failed',
             'cancelled',

@@ -32,8 +32,8 @@ export const A2A_HEADERS = {
 export type TaskState =
     | 'submitted'
     | 'working'
-    | 'input_required'
-    | 'auth_required'
+    | 'input-required'  // A2A v1.0 kebab-case
+    | 'auth-required'   // A2A v1.0 kebab-case
     | 'completed'
     | 'failed'
     | 'cancelled'
@@ -174,6 +174,14 @@ export interface AgentCapabilities {
     streaming?: boolean;
     pushNotifications?: boolean;
     stateTransitionHistory?: boolean;
+    /** v1.0: Whether agent supports extended card via GetExtendedAgentCard */
+    extendedAgentCard?: boolean;
+    /** v1.0: Supported A2A extensions */
+    extensions?: Array<{
+        uri: string;
+        description?: string;
+        required?: boolean;
+    }>;
 }
 
 export interface A2UIExtension {
@@ -312,17 +320,16 @@ export const JSON_RPC_ERRORS = {
     METHOD_NOT_FOUND: { code: -32601, message: 'Method not found' },
     INVALID_PARAMS: { code: -32602, message: 'Invalid params' },
     INTERNAL_ERROR: { code: -32603, message: 'Internal error' },
-    // A2A-specific errors (v0.3.0)
+    // A2A-specific errors (v1.0 spec codes -32001 to -32099)
     TASK_NOT_FOUND: { code: -32001, message: 'Task not found' },
-    TASK_CANCELLED: { code: -32002, message: 'Task cancelled' },
-    AUTH_REQUIRED: { code: -32003, message: 'Authentication required' },
-    // A2A v1.0 enhanced error codes
-    VERSION_NOT_SUPPORTED: { code: -32004, message: 'A2A version not supported' },
-    RATE_LIMIT_EXCEEDED: { code: -32005, message: 'Rate limit exceeded' },
-    TASK_TIMEOUT: { code: -32006, message: 'Task execution timeout' },
-    CONTENT_TYPE_NOT_SUPPORTED: { code: -32007, message: 'Content type not supported' },
-    UNSUPPORTED_OPERATION: { code: -32008, message: 'Operation not supported for terminal task' },
-    PUSH_NOTIFICATION_FAILED: { code: -32009, message: 'Push notification delivery failed' },
+    TASK_NOT_CANCELABLE: { code: -32002, message: 'Task cannot be canceled' },
+    PUSH_NOTIFICATION_NOT_SUPPORTED: { code: -32003, message: 'Push notifications not supported' },
+    UNSUPPORTED_OPERATION: { code: -32004, message: 'Unsupported operation' },
+    CONTENT_TYPE_NOT_SUPPORTED: { code: -32005, message: 'Content type not supported' },
+    INVALID_AGENT_RESPONSE: { code: -32006, message: 'Invalid agent response' },
+    EXTENDED_CARD_NOT_CONFIGURED: { code: -32007, message: 'Extended agent card not configured' },
+    EXTENSION_SUPPORT_REQUIRED: { code: -32008, message: 'Extension support required' },
+    VERSION_NOT_SUPPORTED: { code: -32009, message: 'A2A version not supported' },
 } as const;
 
 // ============================================================================

@@ -7,7 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes)
+### 🔌 A2A Protocol v1.0 Full Compliance
+
+Complete implementation of the [A2A Protocol v1.0 Draft Specification](https://a2a-protocol.org/latest/specification/) for agent-to-agent communication.
+
+#### Database & Persistence
+- **New SQL Migration** (`server/sql/005_a2a_system.sql`)
+  - `a2a_sessions` table for context tracking
+  - `a2a_artifacts` table for normalized artifact storage
+  - `a2a_messages` table for complete message history
+  - Helper functions for session queries
+- **New PostgreSQL Stores** (`server/src/a2a/adapter/postgres-store.ts`)
+  - `PostgresArtifactStore`, `PostgresMessageStore`, `PostgresSessionStore`
+  - Full CRUD operations with streaming support
+
+#### Protocol Compliance Fixes
+- **TaskState Enum**: Changed to kebab-case (`input-required`, `auth-required`)
+- **Part Types**: Refactored to mutually exclusive fields (removed `type` discriminator)
+- **Error Codes**: Aligned all codes with A2A v1.0 spec (-32001 to -32009)
+- **Agent Card**: Added `protocolVersions`, `supportedInterfaces`, removed deprecated `url`
+
+#### API Layer Updates
+- **Method Aliases**: `SendStreamingMessage`, `SubscribeToTask`, `GetExtendedAgentCard`
+- **Version Header**: Parses `A2A-Version` header, returns `VersionNotSupportedError`
+- **Extensions Header**: Parses `A2A-Extensions`, validates against required extensions
+- **Discovery**: Both `/.well-known/agent-card.json` and `/.well-known/agent.json`
+
+#### New Features
+- **Cursor-based Pagination** for `ListTasks` with base64 cursor format
+- **ContextId+TaskId Validation** for multi-turn conversation integrity
+- **Session Stats Tracking**: Automatic message/artifact counting
+- **Full SSE Streaming** (`/a2a/stream`): SendMessage, StreamMessage, Resubscribe support
+- **Separate Artifact Storage**: Default behavior stores artifacts in `a2a_artifacts` table
+  - Use `useInlineArtifacts: true` for legacy inline storage
+
+#### Testing
+- **27 Integration Tests** (`server/src/a2a/a2a-v1-integration.test.ts`)
+  - Method names, legacy aliases, TaskState enums, Part types
+  - Error codes, version headers, extensions, pagination
+  - ContextId validation, AgentCard structure
+
+#### Files Changed
+| File | Changes |
+|------|---------|
+| `server/src/a2a/adapter/elysia-adapter.ts` | Version/extensions validation, pagination, streaming, persistence |
+| `server/src/a2a/adapter/postgres-store.ts` | New Artifact/Message/Session stores, separate artifact storage |
+| `server/src/a2a/elysia-plugin.ts` | Store wiring, discovery endpoints |
+| `server/src/a2a/types.ts` | TaskState enums, error codes |
+| `server/src/cowork/a2a-bridge.ts` | Part type refactor |
+| `a2a-sdk/src/types/v1.ts` | Updated method constants |
+| `server/src/a2a/a2a-v1-integration.test.ts` | **NEW** - Comprehensive integration tests |
+
+#### Documentation
+- Added `docs/A2A_PROTOCOL_V1_SPEC.md` - Full A2A v1.0 specification reference
 
 ---
 
