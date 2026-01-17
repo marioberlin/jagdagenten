@@ -180,7 +180,9 @@ export class GeminiService extends LLMServiceBase {
     /**
      * Send a message to Gemini and stream the response into the Liquid Engine.
      */
-    public async sendMessage(prompt: string) {
+    public async sendMessage(prompt: string): Promise<string> {
+        let fullResponseText = '';
+
         try {
             // Build fresh model with current tools
             const model = this.genAI.getGenerativeModel({
@@ -206,19 +208,18 @@ export class GeminiService extends LLMServiceBase {
             // Iterate gracefully over the stream
             for await (const chunk of result.stream) {
                 // DEBUG: Log raw chunk
-                console.log("[GeminiService] Raw Chunk:", JSON.stringify(chunk, null, 2));
+                // console.log("[GeminiService] Raw Chunk:", JSON.stringify(chunk, null, 2));
 
                 // Transform Gemini chunk -> Liquid Events
                 const events = this.adapter.transform(chunk);
 
-                // DEBUG: Log parsed events
-                if (events.length > 0) {
-                    console.log("[GeminiService] Parsed Events:", JSON.stringify(events, null, 2));
-                }
-
-                // Ingest into Engine
+                // Ingest into Engine and capture text
                 for (const event of events) {
                     this.client.ingest(event);
+
+                    if (event.type === 'agent_message' && event.content) {
+                        fullResponseText += event.content;
+                    }
 
                     // If this is a tool completion, try to execute the registered action
                     if (event.type === 'tool_complete') {
@@ -239,6 +240,8 @@ export class GeminiService extends LLMServiceBase {
             console.error("Gemini Stream Error:", error);
             throw error; // Re-throw so the UI knows it failed
         }
+
+        return fullResponseText;
     }
 
     /**

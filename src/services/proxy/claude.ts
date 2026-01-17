@@ -59,9 +59,10 @@ export class ClaudeProxyService implements ILiquidLLMService {
     /**
      * Send message with tool calling support.
      */
-    public async sendMessage(prompt: string): Promise<void> {
+    public async sendMessage(prompt: string): Promise<string> {
         const context = this.client.buildContextPrompt();
         const tools = this.client.buildFunctionDeclarations();
+        let fullResponseText = '';
 
         try {
             const response = await fetch(`${this.baseUrl}/api/chat`, {
@@ -102,6 +103,10 @@ export class ClaudeProxyService implements ILiquidLLMService {
 
                             if (eventType === 'tool_call') {
                                 await this.handleToolEvent(data);
+                            } else if (eventType === 'chunk') {
+                                if (data.delta) {
+                                    fullResponseText += data.delta;
+                                }
                             } else if (eventType === 'error') {
                                 console.error('Claude Proxy Stream Error:', data.message);
                             }
@@ -114,6 +119,8 @@ export class ClaudeProxyService implements ILiquidLLMService {
             console.error("ClaudeProxyService Error:", error);
             throw error;
         }
+
+        return fullResponseText;
     }
 
     private async handleToolEvent(event: any) {

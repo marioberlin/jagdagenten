@@ -156,8 +156,8 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
         setMessages(prev => [...prev, { role: 'user', text }]);
 
         try {
-            await currentService.sendMessage(text);
-            setMessages(prev => [...prev, { role: 'model', text: "Done! Check the main view." }]);
+            const responseText = await currentService.sendMessage(text);
+            setMessages(prev => [...prev, { role: 'model', text: responseText || "Done! Check the main view." }]);
         } catch (e: any) {
             const errorMsg = e?.message?.includes('429') || e?.message?.includes('quota')
                 ? "API quota exceeded. Try again later or switch providers."

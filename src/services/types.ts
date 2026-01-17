@@ -42,7 +42,7 @@ export interface ILiquidLLMService {
      * Send a message and stream the response into the Liquid Engine.
      * Used for tool-calling and complex interactions.
      */
-    sendMessage(prompt: string): Promise<void>;
+    sendMessage(prompt: string): Promise<string>;
 
     /**
      * Simple chat method for plain text responses.
@@ -141,7 +141,7 @@ export abstract class LLMServiceBase implements ILiquidLLMService {
      * Send a message and stream the response.
      * Each provider implements this with their SDK.
      */
-    abstract sendMessage(prompt: string): Promise<void>;
+    abstract sendMessage(prompt: string): Promise<string>;
 
     /**
      * Simple chat for text responses.

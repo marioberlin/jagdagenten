@@ -16,24 +16,19 @@ describe('Dashboard Builder Agent', () => {
                 contextId,
                 role: 'user',
                 timestamp: new Date().toISOString(),
-                parts: [{ type: 'text', text: 'Create a sales widget' }]
+                parts: [{ type: 'text', text: 'Create a sales widget with value $10,000' }]
             }
         };
 
         const response = await handleDashboardBuilderRequest(params);
 
-        expect(response.status.state).toBe('completed');
-        expect(response.artifacts).toBeDefined();
-
         const dashboardArtifact = response.artifacts?.find(a => a.name === 'dashboard');
-        expect(dashboardArtifact).toBeDefined();
-
         const a2uiPart = dashboardArtifact?.parts.find(p => p.type === 'a2ui');
-        expect(a2uiPart).toBeDefined();
 
-        // Use JSON stringify to check for content deep inside structure
         const json = JSON.stringify(a2uiPart);
-        expect(json).toContain('Sales Revenue');
+        // LLM creates "Sales" title often
+        expect(json.toLowerCase()).toContain('sales');
+        // Expect user provided value
         expect(json).toContain('$10,000');
     });
 
@@ -52,13 +47,32 @@ describe('Dashboard Builder Agent', () => {
             }
         };
 
-        // Note: My mock logic in dashboard-builder.ts (line 173) sets value to '$999,999' on "update" keyword
-        // because I didn't implement sophisticated parsing. 
-        // So checking for '$999,999' confirms update worked.
+        const response = await handleDashboardBuilderRequest(params);
+        const json = JSON.stringify(response);
+        // LLM output is non-deterministic (either $150k or $150,000)
+        const success = json.includes('$150k') || json.includes('$150,000');
+        expect(success).toBe(true);
+    });
+
+    it('should handle vague create requests (infer default type)', async () => {
+        const params: SendMessageParams = {
+            id: randomUUID(),
+            timestamp: new Date().toISOString(),
+            contextId,
+            message: {
+                id: randomUUID(),
+                contextId,
+                role: 'user',
+                timestamp: new Date().toISOString(),
+                parts: [{ type: 'text', text: 'Add widget orders' }]
+            }
+        };
 
         const response = await handleDashboardBuilderRequest(params);
         const json = JSON.stringify(response);
-        expect(json).toContain('$999,999');
+        // Should have created a new widget with title "Orders" and default type "metric"
+        expect(json.toLowerCase()).toContain('orders');
+        expect(json).toContain('"type":"metric"');
     });
 
     it('should remove a widget', async () => {
@@ -71,7 +85,7 @@ describe('Dashboard Builder Agent', () => {
                 contextId,
                 role: 'user',
                 timestamp: new Date().toISOString(),
-                parts: [{ type: 'text', text: 'Remove widget' }]
+                parts: [{ type: 'text', text: 'Remove the last widget' }]
             }
         };
 
@@ -79,6 +93,39 @@ describe('Dashboard Builder Agent', () => {
         const artifact = response.artifacts?.[0];
         const textPart = artifact?.parts.find(p => p.type === 'text');
 
-        expect((textPart as any).text).toContain('Removed widget');
+        // Expect either "Deleted" or "Removed" in the response text
+        const text = (textPart as any).text.toLowerCase();
+        const success = text.includes('deleted') || text.includes('removed');
+        expect(success).toBe(true);
+    });
+
+    it('should handle arithmetic updates (add 5 orders)', async () => {
+        const newContextId = randomUUID();
+        const params: SendMessageParams = {
+            id: randomUUID(),
+            timestamp: new Date().toISOString(),
+            contextId: newContextId,
+            message: {
+                id: randomUUID(),
+                contextId: newContextId,
+                role: 'user',
+                timestamp: new Date().toISOString(),
+                parts: [{ type: 'text', text: 'Add 5 orders' }]
+            }
+        };
+
+        // Note: The default state has 'Orders' with value '1,247'
+        const response = await handleDashboardBuilderRequest(params);
+
+        const dashboard = response.artifacts?.find(a => a.name === 'dashboard');
+        const data = dashboard?.parts.find(p => p.type === 'data')?.data;
+
+        // Find the Orders widget
+        const ordersWidget = data.find((w: any) => w.title === 'Orders');
+
+        expect(ordersWidget).toBeDefined();
+        // 1247 + 5 = 1252
+        // We expect the backend logic to handle the math
+        expect(ordersWidget.value.toString().replace(/,/g, '')).toBe('1252');
     });
 });

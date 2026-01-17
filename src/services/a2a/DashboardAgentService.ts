@@ -9,7 +9,7 @@ export class DashboardAgentService {
         this.onDataReceived = onDataReceived;
     }
 
-    async sendMessage(text: string): Promise<{ text: string, data?: any }> {
+    async sendMessage(text: string): Promise<string> {
         try {
             const response = await fetch(`${this.baseUrl}/agents/dashboard-builder/a2a`, {
                 method: 'POST',
@@ -54,10 +54,7 @@ export class DashboardAgentService {
                 this.onDataReceived(data);
             }
 
-            return {
-                text: textPart ? textPart.text : "Received response.",
-                data
-            };
+            return textPart ? textPart.text : "Received response.";
 
         } catch (error) {
             console.error('DashboardAgentService error:', error);

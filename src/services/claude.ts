@@ -110,7 +110,9 @@ export class ClaudeService implements ILiquidLLMService {
      * Send a message to Claude and process the response.
      * Uses non-streaming for simplicity and reliability.
      */
-    public async sendMessage(prompt: string) {
+    public async sendMessage(prompt: string): Promise<string> {
+        let responseText = '';
+
         try {
             const tools = this.buildTools();
             console.log("[ClaudeService] Using model:", this.modelName);
@@ -161,6 +163,7 @@ export class ClaudeService implements ILiquidLLMService {
                     }
                 } else if (block.type === 'text') {
                     console.log("[ClaudeService] Text response:", block.text);
+                    responseText += block.text;
                 }
             }
 
@@ -170,6 +173,8 @@ export class ClaudeService implements ILiquidLLMService {
             console.error("Claude Error:", error);
             throw error;
         }
+
+        return responseText;
     }
 
     /**

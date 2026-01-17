@@ -48,13 +48,10 @@ export class GeminiProxyService implements ILiquidLLMService {
         }
     }
 
-    public async sendMessage(prompt: string): Promise<void> {
+    public async sendMessage(prompt: string): Promise<string> {
         const context = this.client.buildContextPrompt();
-
-        // Convert Liquid Actions to generic tool definitions for the backend
-        // Note: In a real implementation, we might send the full schema.
-        // For this demo, we assume the backend re-negotiates or we pass a lightweight definition.
         const tools = this.client.buildFunctionDeclarations();
+        let fullResponseText = '';
 
         try {
             const response = await fetch(`${this.baseUrl}/api/chat`, {
@@ -99,8 +96,9 @@ export class GeminiProxyService implements ILiquidLLMService {
                                 // Ingest tool event directly
                                 await this.handleToolEvent(data);
                             } else if (eventType === 'chunk') {
-                                // For now, just log or handle text delta if UI supported it
-                                // console.log('Chunk:', data.delta);
+                                if (data.delta) {
+                                    fullResponseText += data.delta;
+                                }
                             } else if (eventType === 'error') {
                                 console.error('Proxy Stream Error:', data.message);
                             }
@@ -113,6 +111,8 @@ export class GeminiProxyService implements ILiquidLLMService {
             console.error("GeminiProxyService Error:", error);
             throw error;
         }
+
+        return fullResponseText;
     }
 
     private async handleToolEvent(event: any) {

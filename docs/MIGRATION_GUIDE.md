@@ -621,4 +621,117 @@ If you encounter migration issues:
 
 ---
 
+
 *This migration guide follows the 3-Layer Architecture principle: document changes in directives so future agents understand the evolution.*
+
+---
+
+## Phase 5 Migrations: A2A Agent Conversion
+
+### 5.1 ILiquidLLMService Interface
+
+#### Breaking Changes
+
+| Change | Impact | Migration Path |
+|--------|--------|----------------|
+| `sendMessage` returns `Promise<string>` | High | Update all service implementations |
+
+#### Interface Update
+
+```typescript
+// Before
+interface ILiquidLLMService {
+    sendMessage(prompt: string): Promise<void>;
+}
+
+// After
+interface ILiquidLLMService {
+    sendMessage(prompt: string): Promise<string>;
+}
+```
+
+The UI (`AgSidebar`) expects the service to return the textual response from the LLM to display in the chat bubble. Returning `void` or an object will cause the UI to break or display empty bubbles.
+
+#### Service Implementation Pattern
+
+```typescript
+async sendMessage(prompt: string): Promise<string> {
+    // 1. Accumulate stream
+    let fullText = '';
+    
+    // ... streaming logic ...
+    
+    // 2. Return final text
+    return fullText;
+}
+```
+
+---
+
+### 5.2 AgSidebar Integration
+
+#### Side-Channel Data
+
+**Problem**: You often need to return *both* the chat text (for the bubble) AND complex data (for dashboard widgets, charts, etc.).
+
+**Anti-Pattern (Do NOT do this)**:
+```typescript
+// ERROR: Will crash generic UI
+async sendMessage(text: string) {
+    return { text: "Done", data: { ... } }; 
+}
+```
+
+**Recommended Pattern**:
+Use a callback pattern in your service to handle side-channel data updates, while returning simple text to the chat interface.
+
+```typescript
+class MyAgentService extends LLMServiceBase {
+    constructor(private onDataUpdate: (data: any) => void) { super(); }
+
+    async sendMessage(text: string): Promise<string> {
+        // 1. Process LLM response
+        const { responseText, widgetUpdates } = await this.callLLM(text);
+        
+        // 2. Send side-channel data via callback
+        if (widgetUpdates) {
+            this.onDataUpdate(widgetUpdates);
+        }
+
+        // 3. Return text for UI
+        return responseText;
+    }
+}
+```
+
+---
+
+### 5.3 Proxy Service Consistency
+
+#### Requirement
+
+Proxy services (`src/services/proxy/`) must match the behavior of direct services. If direct services accumulate and return text, proxies must do the same.
+
+**Migration Step**:
+Ensure your `ProxyService.sendMessage` implementation listens for `chunk` events, accumulates them, and resolves the promise with the full string.
+
+```typescript
+// src/services/proxy/gemini.ts
+if (event.type === 'chunk') {
+    fullResponse += event.delta;
+    // ...
+}
+return fullResponse; // At end of stream
+```
+
+---
+
+### 5.4 Prompt Engineering for Tools
+
+#### Lessons Learned
+
+1.  **Defaults**: Relax tool schema requirements. If a user says "Add order widget", they likely mean `type: "metric"`. Don't make `type` required; default it in the agent logic.
+2.  **Arithmetic**: LLMs often delete items when asked to "add 5" if not explicitly instructed.
+    *   **Bad Prompt**: "Manage widgets."
+    *   **Good Prompt**: "If user says 'add 5 orders', calculate the new value and UPDATE. Do NOT create or delete."
+3.  **Explicit Tooling**: Clearly define when to use `create` vs `update` in the system prompt.
