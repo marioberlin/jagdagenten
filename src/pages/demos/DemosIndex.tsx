@@ -179,6 +179,14 @@ const DEMOS: DemoCardProps[] = [
         tags: ['Spreadsheet', 'Google Integration'],
         status: 'stable',
     },
+    {
+        title: 'Remote Password',
+        description: 'Connects to a remote A2A agent for secure password generation',
+        href: '/os/demos/remote-password',
+        icon: Globe,
+        tags: ['Remote', 'A2A', 'Security'],
+        status: 'stable',
+    },
 ];
 
 export const DemosIndex: React.FC = () => {
