@@ -6,6 +6,7 @@
   "sideEffects": false,
   "workspaces": [
     "a2a-sdk",
+    "packages/ui",
     "server"
   ],
   "main": "./dist/liquid-glass.umd.cjs",

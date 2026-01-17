@@ -19,9 +19,10 @@ export class ClaudeService implements ILiquidLLMService {
     private _fileSearchConfig: FileSearchConfig = { enabled: false, stores: [] };
 
     constructor(_apiKey: string, liquidClient: LiquidClient) {
+        console.warn('[DEPRECATED] ClaudeService with API key exposes credentials to browser. Use ClaudeProxyService for secure AI calls.');
         this.anthropic = new Anthropic({
             apiKey: _apiKey,
-            dangerouslyAllowBrowser: true // Required for client-side usage
+            dangerouslyAllowBrowser: true // Required for client-side usage - SECURITY RISK
         });
         this.client = liquidClient;
     }

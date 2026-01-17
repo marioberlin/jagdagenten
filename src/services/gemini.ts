@@ -63,6 +63,7 @@ export class GeminiService extends LLMServiceBase {
     private adapter: LiquidGeminiAdapter;
 
     constructor(apiKey: string, liquidClient: LiquidClient) {
+        console.warn('[DEPRECATED] GeminiService with API key exposes credentials to browser. Use GeminiProxyService for secure AI calls.');
         super(liquidClient, "gemini-2.0-flash");
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.adapter = new LiquidGeminiAdapter();

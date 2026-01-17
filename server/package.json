@@ -10,9 +10,9 @@
         "build": "bun build src/index.ts --outfile dist/index.js --target node"
     },
     "dependencies": {
-        "@anthropic-ai/sdk": "^0.33.1",
+        "@anthropic-ai/sdk": "^0.71.2",
         "@elysiajs/cors": "^1.4.1",
-        "@google/generative-ai": "^0.21.0",
+        "@google/generative-ai": "^0.24.1",
         "@grpc/grpc-js": "^1.14.3",
         "@grpc/proto-loader": "^0.8.0",
         "@liquidcrypto/a2a-sdk": "workspace:*",
@@ -30,7 +30,7 @@
         "pg": "^8.17.1",
         "pino": "^10.1.1",
         "ssh2": "^1.17.0",
-        "zod": "^4.3.5"
+        "zod": "3.24.2"
     },
     "devDependencies": {
         "@types/bun": "^1.1.0",

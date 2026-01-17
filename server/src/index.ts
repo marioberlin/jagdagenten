@@ -2,11 +2,13 @@ import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
 import Redis from 'ioredis';
 import type { Redis as RedisType } from 'ioredis';
+import { callAI, callParallelAI } from './ai/index.js';
 import { cache } from './cache.js';
 import { securityHeaders, runSecurityAudit, generateCSPNonce } from './security.js';
 import { wsManager } from './websocket.js';
 import { getSentinelStatus } from './sentinel.js';
 import { ChatRequestSchema, ParallelChatRequestSchema, GraphQLRequestSchema } from './schemas/chat.js';
+import { validateQueryWithMetrics, MAX_QUERY_DEPTH, MAX_QUERY_COMPLEXITY } from './graphql/validation.js';
 import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { skillsRoutes } from './routes/skills.js';
@@ -201,121 +203,9 @@ async function checkRateLimitLegacy(ip: string, max: number, windowMs: number) {
     return { allowed: true, remaining: max - existing.count, resetTime: existing.resetTime };
 }
 
-/**
- * Hash a prompt string for cache key generation
- * Uses Bun's fast hash function
- */
-function hashPrompt(prompt: string): string {
-    // Bun.hash returns a number, convert to hex string
-    return Bun.hash(prompt).toString(16);
-}
-
-/**
- * Call Claude API directly (without caching)
- */
-async function callClaudeAPI(messages: Array<{ role: string; content: string }>): Promise<string> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-
-    const result = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + apiKey,
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4096,
-            messages
-        })
-    });
-
-    const data = await result.json() as { content?: Array<{ text: string }> };
-    return data.content?.[0]?.text || 'No response';
-}
-
-/**
- * Call Gemini API directly (without caching)
- */
-async function callGeminiAPI(messages: Array<{ role: string; content: string }>): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
-
-    const lastMessage = messages[messages.length - 1]?.content || '';
-
-    const result = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + apiKey,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: lastMessage }] }]
-            })
-        }
-    );
-
-    const data = await result.json() as {
-        candidates?: Array<{ content?: { parts?: Array<{ text: string }> } }>
-    };
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
-}
-
-/**
- * Call AI with request coalescing and stampede protection
- *
- * Uses cache.getOrSet to ensure only one request is made per unique prompt,
- * even if multiple concurrent requests come in for the same prompt.
- *
- * @see docs/IMPLEMENTATION_PLAN.md - Item 2.1 Request Coalescing
- */
-async function callAI(
-    provider: 'gemini' | 'claude',
-    messages: Array<{ role: string; content: string }>,
-    requestLogger?: ReturnType<typeof createRequestLogger>
-): Promise<string> {
-    const lastMessage = messages[messages.length - 1]?.content || '';
-    const cacheKey = `ai:${provider}:${hashPrompt(lastMessage)}`;
-    const aiLog = requestLogger || componentLoggers.ai;
-    const startTime = Date.now();
-
-    aiLog.debug({ provider, cacheKey: cacheKey.substring(0, 30) }, 'AI request initiated');
-
-    return cache.getOrSet(cacheKey, 'ai', async () => {
-        aiLog.debug({ provider }, 'Cache miss - calling API');
-
-        try {
-            const result = provider === 'claude'
-                ? await callClaudeAPI(messages)
-                : await callGeminiAPI(messages);
-
-            logAIRequest(aiLog, provider, {
-                duration: Date.now() - startTime,
-                cached: false,
-                promptLength: lastMessage.length,
-                responseLength: result.length
-            });
-
-            return result;
-        } catch (error) {
-            logAIRequest(aiLog, provider, {
-                duration: Date.now() - startTime,
-                cached: false,
-                promptLength: lastMessage.length,
-                error: error as Error
-            });
-            throw error;
-        }
-    });
-}
-
-async function callParallelAI(messages: Array<{ role: string; content: string }>) {
-    const [gemini, claude] = await Promise.allSettled([callAI('gemini', messages), callAI('claude', messages)]);
-    return {
-        gemini: gemini.status === 'fulfilled' ? gemini.value : 'Error',
-        claude: claude.status === 'fulfilled' ? claude.value : 'Error'
-    };
-}
+// AI functions are now imported from ./ai/index.js
+// - callAI: Cached AI calls with request coalescing
+// - callParallelAI: Call both providers in parallel
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -475,11 +365,33 @@ async function startServer() {
             return { responses, timestamp: new Date().toISOString() };
         })
 
-        // GraphQL Stub
+        // GraphQL Stub with Depth/Complexity Validation
         .post('/graphql', async ({ body, set }) => {
             const payload = body as { query?: string; variables?: Record<string, unknown> };
             const query = payload.query;
             const variables = payload.variables;
+
+            // Validate query depth and complexity
+            if (query) {
+                const validation = validateQueryWithMetrics(query);
+                if (!validation.valid) {
+                    set.status = 400;
+                    return {
+                        errors: [{
+                            message: validation.error,
+                            extensions: {
+                                code: 'QUERY_TOO_COMPLEX',
+                                depth: validation.depth,
+                                complexity: validation.complexity,
+                                limits: {
+                                    maxDepth: MAX_QUERY_DEPTH,
+                                    maxComplexity: MAX_QUERY_COMPLEXITY
+                                }
+                            }
+                        }]
+                    };
+                }
+            }
 
             if (query?.includes('price')) {
                 return { data: { price: { symbol: variables?.symbol || 'BTC', price: parseFloat((Math.random() * 1000 + 100).toFixed(2)), timestamp: new Date().toISOString() } } };

@@ -25,11 +25,18 @@
         "paths": {
             "@/*": [
                 "src/*"
+            ],
+            "@liquidcrypto/ui": [
+                "packages/ui/index.ts"
+            ],
+            "@liquidcrypto/ui/*": [
+                "packages/ui/*"
             ]
         }
     },
     "include": [
-        "src"
+        "src",
+        "packages/ui"
     ],
     "references": [
         {
