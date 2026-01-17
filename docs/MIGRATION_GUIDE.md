@@ -11,8 +11,11 @@
 2. [Phase 2 Migrations](#phase-2-migrations)
 3. [Phase 3 Migrations](#phase-3-migrations)
 4. [Phase 4 Migrations](#phase-4-migrations)
-5. [Deprecation Timeline](#deprecation-timeline)
-6. [Rollback Procedures](#rollback-procedures)
+5. [Phase 5 Migrations: A2A Agent Conversion](#phase-5-migrations-a2a-agent-conversion)
+6. [Phase 6 Migrations: Remote A2A Agents](#phase-6-migrations-remote-a2a-agents)
+7. [Phase 7 Migrations: Skill Migration to Antigravity](#phase-7-migrations-skill-migration-to-antigravity)
+8. [Deprecation Timeline](#deprecation-timeline)
+9. [Rollback Procedures](#rollback-procedures)
 
 ---
 
@@ -773,3 +776,103 @@ return (
 -   **Server**: Holds the `ResearchContext` (topic, blocks).
 -   **Benefit**: State persists across reloads and is directly manipulatable by the LLM without complex client-side tool mapping.
 
+---
+
+## Phase 6 Migrations: Remote A2A Agents
+
+### 6.1 Remote Agent Service
+
+#### New Capability
+
+The `RemoteAgentService` enables connecting to external A2A-compliant agents over the network.
+
+```typescript
+import { RemoteAgentService } from '@/services/a2a/RemoteAgentService';
+
+const service = new RemoteAgentService(
+    '/remote-a2a/',           // URL (use proxy for CORS)
+    'Bearer your-token-here', // Auth token
+    'session-id'              // Context ID
+);
+```
+
+#### CORS Proxy Configuration
+
+When connecting to remote A2A servers from the browser, CORS blocks direct requests. Configure a Vite proxy in `vite.config.ts`:
+
+```typescript
+proxy: {
+    '/remote-a2a': {
+        target: 'https://remote-server.example.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/remote-a2a/, '/api/v1/a2a/agent-id'),
+    },
+}
+```
+
+#### A2A Protocol Version Compatibility
+
+| Feature | **Old A2A Draft** | **A2A v1.0 (Current)** |
+|---------|-------------------|------------------------|
+| Method Names | `message/send` | `SendMessage` (PascalCase) |
+| Field Names | `snake_case` | `camelCase` |
+| Message ID | `id` | `messageId` |
+| Task States | `inputRequired` | `input-required` |
+
+> **Note**: If a remote server returns "Method not found", it likely uses the old spec. Our SDK strictly follows A2A v1.0.
+
+---
+
+## Phase 7 Migrations: Skill Migration to Antigravity
+
+### 7.1 LiquidSkills → .agent/skills
+
+#### Purpose
+
+The Antigravity agent framework expects a **flat** `.agent/skills/` directory structure, while `LiquidSkills/` uses a **nested** hierarchy. The migration script creates symlinks to bridge this.
+
+#### Running the Migration
+
+```bash
+# Preview changes
+bun scripts/migrate-skills-to-agent-folder.ts --dry-run
+
+# Apply changes
+bun scripts/migrate-skills-to-agent-folder.ts
+
+# Force overwrite existing symlinks
+bun scripts/migrate-skills-to-agent-folder.ts --force
+```
+
+#### What It Does
+
+1. Scans `LiquidSkills/` recursively for `SKILL.md` files
+2. Creates symlinks in `.agent/skills/` with slugified names
+3. Resolves naming conflicts by prefixing with category (e.g., `frontend-design` → `vendor-frontend-design`)
+4. Links `_registry.md` for skill discovery
+
+#### Directory Mapping
+
+```
+LiquidSkills/                        →  .agent/skills/
+├── liquid-design/                   →  liquid-design (symlink)
+├── community/
+│   ├── pdf/                         →  pdf (symlink)
+│   └── plugins/
+│       └── plugin-dev/
+│           └── skills/
+│               └── mcp-integration/ →  mcp-integration (symlink)
+└── vendor/
+    └── frontend-design/             →  vendor-frontend-design (symlink)
+```
+
+#### Maintenance
+
+- Run migration after adding new skills to `LiquidSkills/`
+- The `.agent/skills/` directory should be in `.gitignore`
+- Source of truth remains `LiquidSkills/`
+
+---
+
+*This migration guide follows the 3-Layer Architecture principle: document changes in directives so future agents understand the evolution.*

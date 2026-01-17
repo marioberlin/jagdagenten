@@ -155,3 +155,6 @@ TraderOld/
 bot/
 trades.json
 .tmp/
+
+# Antigravity skill symlinks (auto-generated)
+.agent/skills/

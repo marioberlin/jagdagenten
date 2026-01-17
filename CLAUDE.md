@@ -80,8 +80,11 @@ Errors are learning opportunities:
 - `.tmp/` - Intermediate files (never commit)
 - `scripts/` - Global Node.js/TypeScript scripts
 - `directives/` - Task-specific SOPs
-- `LiquidSkills/` - Domain-specific Expertise
+- `LiquidSkills/` - Domain-specific Expertise (source of truth)
+- `.agent/skills/` - Antigravity-compatible flat skill symlinks (auto-generated)
 - `.env` - Environment variables and API keys
+
+**Skill Migration**: Run `bun scripts/migrate-skills-to-agent-folder.ts` to sync `LiquidSkills/` to `.agent/skills/`.
 
 **Key principle:** Local files are only for processing. Deliverables live in build outputs or cloud services.
 

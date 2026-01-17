@@ -60,22 +60,7 @@ For features exceeding single-agent context:
 - Use the **Orchestrator** (`server/src/orchestrator/`)
 - Four specialist agents: UI, API, Security, Test
 - Follow `directives/orchestrator.md`
-- Follow `directives/orchestrator.md`
 
-### 8. Skill & Plugin Discovery
-- **Registry**: ALWAYS check `LiquidSkills/_registry.md` first.
-- **Community Skills**: You have access to a rich library in `LiquidSkills/community/` (e.g., brand-guidelines, mcp-builder).
-- **Usage**: When a user asks for a capability (e.g., "Make me a logo"), check if a skill exists (`algorithmic-art`) before implementing from scratch.
-
-### 9. Generative UI (GlassDynamicUI)
-- **Primary Interface**: When the user needs a complex interactive UI (dashboard, form, wizard), **DO NOT ask them to write code**.
-- **Action**: Generate a JSON schema for `GlassDynamicUI`.
-- **Reference**: See `src/components/agentic/GlassDynamicUI.tsx` for supported nodes (`stack`, `grid`, `input`, `video`, etc.).
-
-### 10. Agent-to-Agent (A2A) Protocol
-- **Standard**: We follow the **A2A Draft c1.0** spec.
-- **Interoperability**: Code relating to agent communication must use the `packages/a2a-sdk`.
-- **Pattern**: If a task requires capabilities outside your scope, use an A2A Client to request help from another agent.
 ---
 
 ## Self-Annealing Loop
@@ -95,8 +80,11 @@ Errors are learning opportunities:
 - `.tmp/` - Intermediate files (never commit)
 - `scripts/` - Global Node.js/TypeScript scripts
 - `directives/` - Task-specific SOPs
-- `LiquidSkills/` - Domain-specific Expertise
+- `LiquidSkills/` - Domain-specific Expertise (source of truth)
+- `.agent/skills/` - Antigravity-compatible flat skill symlinks (auto-generated)
 - `.env` - Environment variables and API keys
+
+**Skill Migration**: Run `bun scripts/migrate-skills-to-agent-folder.ts` to sync `LiquidSkills/` to `.agent/skills/`.
 
 **Key principle:** Local files are only for processing. Deliverables live in build outputs or cloud services.
 
