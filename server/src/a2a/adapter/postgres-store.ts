@@ -836,6 +836,259 @@ export class PostgresSessionStore implements SessionStore {
 }
 
 // ============================================================================
+// PostgreSQL Token Store (API Keys)
+// ============================================================================
+
+export interface ApiToken {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  createdAt: Date;
+  expiresAt: Date | null;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+}
+
+export interface TokenStore {
+  create(name: string, scopes: string[], expiresIn?: number | null): Promise<{ token: ApiToken; rawKey: string }>;
+  validate(rawKey: string): Promise<ApiToken | null>;
+  list(userId?: string): Promise<ApiToken[]>;
+  revoke(tokenId: string): Promise<void>;
+  updateLastUsed(tokenId: string): Promise<void>;
+}
+
+export class PostgresTokenStore implements TokenStore {
+  private pool: Pool;
+  private tableName = 'api_keys';
+  private initialized = false;
+  private userId: string; // Default user ID for anonymous tokens
+
+  constructor(config: PostgresTaskStoreConfig, userId?: string) {
+    this.userId = userId || '00000000-0000-0000-0000-000000000000';
+    this.pool = new Pool({
+      connectionString: config.connectionString,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      ...config.poolConfig,
+    });
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    // Ensure default user exists
+    await this.pool.query(`
+      INSERT INTO users (id, email, username, display_name)
+      VALUES ($1, 'system@liquidcrypto.local', 'system', 'System User')
+      ON CONFLICT (id) DO NOTHING
+    `, [this.userId]);
+    this.initialized = true;
+    console.log('[PostgresTokenStore] Initialized');
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) await this.initialize();
+  }
+
+  private hashKey(rawKey: string): string {
+    const crypto = require('crypto');
+    return crypto.createHash('sha256').update(rawKey).digest('hex');
+  }
+
+  async create(name: string, scopes: string[], expiresInDays?: number | null): Promise<{ token: ApiToken; rawKey: string }> {
+    await this.ensureInitialized();
+
+    const crypto = require('crypto');
+    const rawKey = `lc_${crypto.randomUUID().replace(/-/g, '')}`;
+    const keyHash = this.hashKey(rawKey);
+    const keyPrefix = rawKey.slice(0, 10);
+    const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000) : null;
+
+    const result = await this.pool.query(`
+      INSERT INTO ${this.tableName} (user_id, name, key_hash, key_prefix, scopes, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, name, key_prefix, scopes, created_at, expires_at, last_used_at, revoked_at
+    `, [this.userId, name, keyHash, keyPrefix, scopes, expiresAt]);
+
+    const row = result.rows[0];
+    return {
+      token: this.deserialize(row),
+      rawKey,
+    };
+  }
+
+  async validate(rawKey: string): Promise<ApiToken | null> {
+    await this.ensureInitialized();
+
+    const keyHash = this.hashKey(rawKey);
+    const result = await this.pool.query(`
+      SELECT * FROM ${this.tableName}
+      WHERE key_hash = $1
+        AND revoked_at IS NULL
+        AND (expires_at IS NULL OR expires_at > NOW())
+    `, [keyHash]);
+
+    if (result.rows.length === 0) return null;
+    return this.deserialize(result.rows[0]);
+  }
+
+  async list(userId?: string): Promise<ApiToken[]> {
+    await this.ensureInitialized();
+
+    const result = await this.pool.query(`
+      SELECT * FROM ${this.tableName}
+      WHERE user_id = $1 AND revoked_at IS NULL
+      ORDER BY created_at DESC
+    `, [userId || this.userId]);
+
+    return result.rows.map(row => this.deserialize(row));
+  }
+
+  async revoke(tokenId: string): Promise<void> {
+    await this.ensureInitialized();
+    await this.pool.query(`
+      UPDATE ${this.tableName} SET revoked_at = NOW() WHERE id = $1
+    `, [tokenId]);
+  }
+
+  async updateLastUsed(tokenId: string): Promise<void> {
+    await this.ensureInitialized();
+    await this.pool.query(`
+      UPDATE ${this.tableName} SET last_used_at = NOW() WHERE id = $1
+    `, [tokenId]);
+  }
+
+  private deserialize(row: Record<string, unknown>): ApiToken {
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      keyPrefix: row.key_prefix as string,
+      scopes: row.scopes as string[],
+      createdAt: new Date(row.created_at as string),
+      expiresAt: row.expires_at ? new Date(row.expires_at as string) : null,
+      lastUsedAt: row.last_used_at ? new Date(row.last_used_at as string) : null,
+      revokedAt: row.revoked_at ? new Date(row.revoked_at as string) : null,
+    };
+  }
+
+  async close(): Promise<void> {
+    await this.pool.end();
+  }
+}
+
+// ============================================================================
+// PostgreSQL Agent Key Store
+// ============================================================================
+
+export interface AgentKey {
+  id: string;
+  name: string;
+  url: string;
+  agentCard?: Record<string, unknown>;
+  status: 'up' | 'down' | 'unknown';
+  lastCheckedAt: Date | null;
+  createdAt: Date;
+}
+
+export interface AgentKeyStore {
+  create(name: string, url: string): Promise<AgentKey>;
+  get(id: string): Promise<AgentKey | null>;
+  list(): Promise<AgentKey[]>;
+  updateStatus(id: string, status: 'up' | 'down' | 'unknown', agentCard?: Record<string, unknown>): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+
+export class PostgresAgentKeyStore implements AgentKeyStore {
+  private pool: Pool;
+  private tableName = 'a2a_agent_keys';
+  private initialized = false;
+
+  constructor(config: PostgresTaskStoreConfig) {
+    this.pool = new Pool({
+      connectionString: config.connectionString,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      ...config.poolConfig,
+    });
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    // Table is created by SQL migration
+    this.initialized = true;
+    console.log('[PostgresAgentKeyStore] Initialized');
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) await this.initialize();
+  }
+
+  async create(name: string, url: string): Promise<AgentKey> {
+    await this.ensureInitialized();
+
+    const result = await this.pool.query(`
+      INSERT INTO ${this.tableName} (name, url)
+      VALUES ($1, $2)
+      RETURNING *
+    `, [name, url]);
+
+    return this.deserialize(result.rows[0]);
+  }
+
+  async get(id: string): Promise<AgentKey | null> {
+    await this.ensureInitialized();
+
+    const result = await this.pool.query(`
+      SELECT * FROM ${this.tableName} WHERE id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) return null;
+    return this.deserialize(result.rows[0]);
+  }
+
+  async list(): Promise<AgentKey[]> {
+    await this.ensureInitialized();
+
+    const result = await this.pool.query(`
+      SELECT * FROM ${this.tableName} ORDER BY created_at DESC
+    `);
+
+    return result.rows.map(row => this.deserialize(row));
+  }
+
+  async updateStatus(id: string, status: 'up' | 'down' | 'unknown', agentCard?: Record<string, unknown>): Promise<void> {
+    await this.ensureInitialized();
+
+    await this.pool.query(`
+      UPDATE ${this.tableName} 
+      SET status = $1, last_checked_at = NOW(), agent_card = COALESCE($2, agent_card)
+      WHERE id = $3
+    `, [status, agentCard ? JSON.stringify(agentCard) : null, id]);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.ensureInitialized();
+    await this.pool.query(`DELETE FROM ${this.tableName} WHERE id = $1`, [id]);
+  }
+
+  private deserialize(row: Record<string, unknown>): AgentKey {
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      url: row.url as string,
+      agentCard: row.agent_card as Record<string, unknown> | undefined,
+      status: row.status as 'up' | 'down' | 'unknown',
+      lastCheckedAt: row.last_checked_at ? new Date(row.last_checked_at as string) : null,
+      createdAt: new Date(row.created_at as string),
+    };
+  }
+
+  async close(): Promise<void> {
+    await this.pool.end();
+  }
+}
+
+// ============================================================================
 // Factory Functions
 // ============================================================================
 

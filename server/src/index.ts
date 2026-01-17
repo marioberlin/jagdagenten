@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
+import { swagger } from '@elysiajs/swagger';
 import Redis from 'ioredis';
 import type { Redis as RedisType } from 'ioredis';
 import { callAI, callParallelAI } from './ai/index.js';
@@ -16,6 +17,7 @@ import { containerRoutes } from './routes/container.js';
 import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
+import { adminRoutes } from './routes/admin.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -30,6 +32,7 @@ import { getQAAgentCard, handleQAAgentRequest } from './agents/qa-agent.js';
 import { getStateMachineAgentCard, handleStateMachineRequest } from './agents/state-machine.js';
 import { getCopilotFormAgentCard, handleCopilotFormRequest } from './agents/copilot-form.js';
 import { templateService } from './services/google/TemplateService.js';
+import { runMigrations } from './migrations.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -216,6 +219,13 @@ async function checkRateLimitLegacy(ip: string, max: number, windowMs: number) {
 const PORT = Number(process.env.PORT) || 3000;
 
 async function startServer() {
+    // Run pending database migrations before anything else
+    try {
+        await runMigrations();
+    } catch (error) {
+        console.error('[Server] Migration error (continuing anyway):', error);
+    }
+
     await initRedis();
 
     // Start WebSocket server on port 3001
@@ -225,6 +235,21 @@ async function startServer() {
 
     const app = new Elysia()
         .use(cors())
+        .use(swagger({
+            path: '/api/docs',
+            documentation: {
+                info: {
+                    title: 'LiquidCrypto API',
+                    version: '1.0.0',
+                    description: 'A2A Protocol & Admin Management API'
+                },
+                tags: [
+                    { name: 'Admin', description: 'Console management endpoints' },
+                    { name: 'A2A', description: 'Agent-to-Agent protocol endpoints' },
+                    { name: 'AI', description: 'AI chat and inference endpoints' },
+                ]
+            }
+        }))
         .use(pluginRoutes)
         .use(skillsRoutes)
         .use(authRoutes)
@@ -465,6 +490,9 @@ async function startServer() {
 
         // Container Configuration Routes
         .use(containerRoutes)
+
+        // Admin API Routes (A2A Management Console)
+        .use(adminRoutes)
 
         // Artifact Management Routes
         .use(createArtifactRoutes())

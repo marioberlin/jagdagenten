@@ -8,7 +8,7 @@ import { PortalFrame } from '@/components/layout/PortalFrame';
 import { GlassSettingsPanel } from '@/components/settings/GlassSettingsPanel';
 import { GlassShowcasePanel } from '@/components/settings/GlassShowcasePanel';
 import { GlassCoworkPanel } from '@/components/cowork/GlassCoworkPanel';
-import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase } from 'lucide-react';
+import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal } from 'lucide-react';
 
 /**
  * LiquidOSLayout
@@ -64,6 +64,12 @@ export const LiquidOSLayout: React.FC = () => {
             icon: Compass,
             label: 'Agent Hub',
             onClick: () => navigate('/os/agents')
+        },
+        {
+            id: 'a2a-console',
+            icon: Terminal,
+            label: 'A2A Console',
+            onClick: () => navigate('/os/console')
         },
         {
             id: 'cowork-mode',

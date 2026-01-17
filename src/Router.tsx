@@ -36,6 +36,7 @@ const DemosIndex = lazy(() => import('./pages/demos/DemosIndex').then(mod => ({ 
 
 // Agent Hub
 const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
+const ConsolePage = lazy(() => import('./pages/console/ConsolePage').then(mod => ({ default: mod.ConsolePage })));
 
 // Artifacts
 const ArtifactsPage = lazy(() => import('./pages/artifacts/ArtifactsPage').then(mod => ({ default: mod.ArtifactsPage })));
@@ -134,6 +135,7 @@ export const AppRouter = () => {
 
                                 <Route path="/os/agents" element={<AgentHub />} />
                                 <Route path="/os/artifacts" element={<ArtifactsPage />} />
+                                <Route path="/os/console" element={<ConsolePage />} />
                                 <Route path="/os/cowork" element={<CoworkPage />} />
 
                                 {/* Demos */}

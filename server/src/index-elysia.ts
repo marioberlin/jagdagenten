@@ -13,6 +13,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { createA2APlugin } from './a2a/index.js';
 import { coworkRoutes, sandboxRoutes, initCoworkEventForwarding } from './cowork/index.js';
 import { systemFilesRoutes } from './system/index.js';
+import consoleRoutes from './routes/console.js';
 
 // CORS plugin
 const corsPlugin = cors({
@@ -291,7 +292,8 @@ const app = new Elysia({ prefix: '' })
     .use(a2aPlugin)
     .use(coworkRoutes)
     .use(sandboxRoutes)
-    .use(systemFilesRoutes);
+    .use(systemFilesRoutes)
+    .use(consoleRoutes);
 
 // Start server
 const PORT = Number(process.env.PORT) || 3000;
