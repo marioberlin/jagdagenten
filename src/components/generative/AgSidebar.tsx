@@ -26,13 +26,15 @@ interface AgSidebarProps {
     apiKey?: string;
     apiKey?: string;
     claudeApiKey?: string;
-    customService?: any; // Allow injecting a custom service (like an A2A agent client)
+    apiKey?: string;
+    claudeApiKey?: string;
+    initialService?: any; // Allow injecting a custom service (like an A2A agent client)
 }
 
 export const AgSidebar: React.FC<AgSidebarProps> = ({
     apiKey = '',
     claudeApiKey = '',
-    customService
+    initialService
 }) => {
     const client = useLiquidClient();
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
@@ -102,8 +104,8 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
 
     // Get current service and model
-    const currentService = customService || (provider === 'gemini' ? geminiService : claudeService);
-    const currentApiKey = customService ? 'custom' : (provider === 'gemini' ? apiKey : claudeApiKey);
+    const currentService = initialService || (provider === 'gemini' ? geminiService : claudeService);
+    const currentApiKey = initialService ? 'custom' : (provider === 'gemini' ? apiKey : claudeApiKey);
 
 
     // Update service models when selection changes

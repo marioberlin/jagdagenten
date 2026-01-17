@@ -2,6 +2,31 @@ import { describe, it, expect } from 'vitest';
 import { handleDashboardBuilderRequest } from '../../../server/src/agents/dashboard-builder';
 import type { SendMessageParams } from '../../../server/src/a2a/types';
 import { randomUUID } from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+// Load .env manually if needed
+if (!process.env.GEMINI_API_KEY) {
+    try {
+        const envPath = path.resolve(process.cwd(), '.env');
+        if (fs.existsSync(envPath)) {
+            const content = fs.readFileSync(envPath, 'utf-8');
+            content.split('\n').forEach(line => {
+                const match = line.match(/^([^=]+)=(.*)$/);
+                if (match) {
+                    let key = match[1].trim();
+                    let value = match[2].trim();
+                    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.slice(1, -1);
+                    }
+                    process.env[key] = value;
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Could not load .env file', e);
+    }
+}
 
 describe('Dashboard Builder Agent', () => {
     const contextId = randomUUID();

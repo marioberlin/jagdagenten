@@ -176,7 +176,6 @@ function generateDashboardUI(widgets: DashboardWidget[]): A2UIMessage[] {
 // Agent Logic
 // ============================================================================
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const getDashboardBuilderAgentCard = (baseUrl: string): AgentCard => ({
     protocolVersions: ['1.0'],
@@ -214,6 +213,7 @@ export async function handleDashboardBuilderRequest(params: SendMessageParams): 
     const widgets = getWidgets(contextId);
 
     // 1. Setup Model with Tools
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.0-flash',
         tools: [{ functionDeclarations: tools }]

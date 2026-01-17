@@ -21,14 +21,15 @@ const GEMINI_MODELS = {
 
 type GeminiModelId = keyof typeof GEMINI_MODELS;
 
-interface AgSidebarProps {
-    apiKey?: string;
-    claudeApiKey?: string;
+apiKey ?: string;
+claudeApiKey ?: string;
+initialService ?: any;
 }
 
 export const AgSidebar: React.FC<AgSidebarProps> = ({
     apiKey = import.meta.env.VITE_GEMINI_API_KEY || '',
-    claudeApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+    claudeApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '',
+    initialService
 }) => {
     const client = useLiquidClient();
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
@@ -98,8 +99,8 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
 
     // Get current service and model
-    const currentService = provider === 'gemini' ? geminiService : claudeService;
-    const currentApiKey = provider === 'gemini' ? apiKey : claudeApiKey;
+    const currentService = initialService || (provider === 'gemini' ? geminiService : claudeService);
+    const currentApiKey = initialService ? 'custom' : (provider === 'gemini' ? apiKey : claudeApiKey);
 
 
     // Update service models when selection changes

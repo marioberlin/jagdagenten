@@ -1,15 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { GlassContainer } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 
-import { LiquidProvider, useLiquidReadable, useLiquidAction } from '../../liquid-engine/react';
+import { LiquidProvider } from '../../liquid-engine/react';
 import { GlassButton } from '../../components/primitives/GlassButton';
 import { Microscope, Search, ExternalLink, FileText, Lightbulb, Trash2, Globe, Book } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 
 import { liquidClient } from '../../services/liquid';
+import { AIResearcherService } from '@/services/a2a/AIResearcherService';
 
 // Using singleton instance for global context sharing
 
@@ -19,7 +20,7 @@ interface SearchResult {
     url: string;
     snippet: string;
     source: string;
-    timestamp: Date;
+    timestamp: string;
 }
 
 interface KeyFact {
@@ -29,97 +30,22 @@ interface KeyFact {
 }
 
 // Inner component with hooks
-function ResearcherContent() {
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [facts, setFacts] = useState<KeyFact[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
+interface ResearcherContentProps {
+    service: AIResearcherService;
+    query: string;
+    results: SearchResult[];
+    facts: KeyFact[];
+    isSearching: boolean;
+}
 
-    // Make researcher state readable to AI
-    useLiquidReadable({
-        description: "AI Researcher - Current query and search results",
-        value: {
-            currentQuery: query,
-            resultCount: results.length,
-            factCount: facts.length,
-            results: results.map(r => ({
-                title: r.title,
-                source: r.source,
-                snippet: r.snippet.substring(0, 150) + '...'
-            }))
-        }
-    });
-
-    // Web search action
-    useLiquidAction({
-        name: "search_web",
-        description: "Search the web for information on a topic and return results",
-        parameters: [
-            { name: "query", type: "string", description: "The search query", required: true },
-            { name: "results", type: "array", description: "Array of search results with title, url, snippet, source", required: true, items: { type: 'object', properties: { title: { type: 'STRING' }, url: { type: 'STRING' }, snippet: { type: 'STRING' }, source: { type: 'STRING' } } } }
-        ],
-        handler: (args: { query: string; results: Array<{ title: string; url: string; snippet: string; source: string }> }) => {
-            const newResults: SearchResult[] = args.results.map((r, i) => ({
-                id: `${Date.now()}-${i}`,
-                title: r.title,
-                url: r.url,
-                snippet: r.snippet,
-                source: r.source,
-                timestamp: new Date()
-            }));
-            setResults(prev => [...newResults, ...prev]);
-            setQuery(args.query);
-            setIsSearching(false);
-            return { success: true, resultCount: newResults.length };
-        }
-    });
-
-    // Extract facts action
-    useLiquidAction({
-        name: "extract_facts",
-        description: "Extract key facts from the search results",
-        parameters: [
-            { name: "facts", type: "array", description: "Array of extracted facts with fact text and confidence level", required: true, items: { type: 'object', properties: { fact: { type: 'STRING' }, confidence: { type: 'STRING' } } } }
-        ],
-        handler: (args: { facts: Array<{ fact: string; confidence: 'high' | 'medium' | 'low' }> }) => {
-            const newFacts: KeyFact[] = args.facts.map((f, i) => ({
-                id: `${Date.now()}-${i}`,
-                fact: f.fact,
-                confidence: f.confidence
-            }));
-            setFacts(prev => [...prev, ...newFacts]);
-            return { success: true, factCount: newFacts.length };
-        }
-    });
-
-    // Summarize action
-    useLiquidAction({
-        name: "summarize_research",
-        description: "Create a summary of all collected research",
-        parameters: [
-            { name: "summary", type: "string", description: "The research summary", required: true }
-        ],
-        handler: (args: { summary: string }) => {
-            const summaryResult: SearchResult = {
-                id: Date.now().toString(),
-                title: "📝 Research Summary",
-                url: "",
-                snippet: args.summary,
-                source: "AI Generated",
-                timestamp: new Date()
-            };
-            setResults(prev => [summaryResult, ...prev]);
-            return { success: true };
-        }
-    });
-
+function ResearcherContent({ service, query, results, facts, isSearching }: ResearcherContentProps) {
     const handleDeleteResult = useCallback((id: string) => {
-        setResults(prev => prev.filter(r => r.id !== id));
-    }, []);
+        service.sendMessage(`Delete result with ID ${id}`);
+    }, [service]);
 
     const handleDeleteFact = useCallback((id: string) => {
-        setFacts(prev => prev.filter(f => f.id !== id));
-    }, []);
+        service.sendMessage(`Delete fact with ID ${id}`);
+    }, [service]);
 
     const confidenceColors = {
         high: 'bg-green-500/10 text-green-400 border-green-500/30',
@@ -137,14 +63,14 @@ function ResearcherContent() {
                     <input
                         type="text"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Enter a research topic..."
+                        readOnly // Driven by agent now
+                        placeholder="Ask the AI agent to search..."
                         className={cn(
                             "w-full pl-11 pr-4 py-3 rounded-xl",
                             "bg-white/5 border border-white/10",
                             "text-white placeholder:text-secondary",
                             "focus:outline-none focus:border-accent-primary/50",
-                            "transition-all"
+                            "transition-all cursor-not-allowed opacity-80"
                         )}
                     />
                 </div>
@@ -207,7 +133,7 @@ function ResearcherContent() {
                             </div>
                             <h3 className="text-lg font-medium text-white mb-2">Start Researching</h3>
                             <p className="text-sm text-secondary">
-                                Enter a topic above or ask Copilot to search for information.
+                                Ask Copilot to "Search for..." or "Find information about..."
                             </p>
                         </div>
                     )}
@@ -249,7 +175,7 @@ function ResearcherContent() {
                     {facts.length === 0 && (
                         <div className="text-center py-8">
                             <p className="text-xs text-secondary">
-                                Ask Copilot to extract key facts from your research.
+                                Ask Copilot to extract facts from the results.
                             </p>
                         </div>
                     )}
@@ -261,6 +187,29 @@ function ResearcherContent() {
 
 export default function AIResearcherDemo() {
     const navigate = useNavigate();
+
+    // Lifted state
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [facts, setFacts] = useState<KeyFact[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
+    // Single service instance with callback
+    const agentService = useMemo(() => new AIResearcherService('demo-session', (data: any) => {
+        if (data.query) setQuery(data.query);
+        if (data.results) setResults(data.results);
+        if (data.facts) setFacts(data.facts);
+        if (data.isSearching !== undefined) setIsSearching(data.isSearching);
+    }), []);
+
+    // Initial Load
+    useEffect(() => {
+        // slight delay to ensure connection
+        setTimeout(() => {
+            agentService.sendMessage("Load current research state.");
+        }, 500);
+    }, [agentService]);
+
     return (
         <LiquidProvider client={liquidClient}>
             <div className="h-screen bg-glass-base flex overflow-hidden">
@@ -288,7 +237,7 @@ export default function AIResearcherDemo() {
                                     AI Researcher
                                 </h1>
                                 <p className="text-sm text-white/50">
-                                    AI-powered web research with fact extraction.
+                                    AI Agent • A2A Enabled
                                 </p>
                             </div>
                             <GlassButton
@@ -304,12 +253,18 @@ export default function AIResearcherDemo() {
 
                     {/* Researcher Area */}
                     <main className="flex-1 p-6 pt-0 overflow-hidden">
-                        <ResearcherContent />
+                        <ResearcherContent
+                            service={agentService}
+                            query={query}
+                            results={results}
+                            facts={facts}
+                            isSearching={isSearching}
+                        />
                     </main>
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar />
+                <AgSidebar initialService={agentService} />
             </div>
         </LiquidProvider>
     );

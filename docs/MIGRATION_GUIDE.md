@@ -734,4 +734,42 @@ return fullResponse; // At end of stream
 2.  **Arithmetic**: LLMs often delete items when asked to "add 5" if not explicitly instructed.
     *   **Bad Prompt**: "Manage widgets."
     *   **Good Prompt**: "If user says 'add 5 orders', calculate the new value and UPDATE. Do NOT create or delete."
-3.  **Explicit Tooling**: Clearly define when to use `create` vs `update` in the system prompt.
+
+### 5.5 Interactive Research Agents
+
+#### Proactive Content Generation
+**Problem**: Agents can be too passive, asking the user to provide content instead of generating it (e.g., "What text should I add?").
+
+**Solution**: Explicitly instruct the model in the system prompt to be a **content generator**.
+```typescript
+// System Prompt
+RULES:
+1. **BE PROACTIVE**: When the user asks to add notes, **YOU MUST GENERATE THE CONTENT YOURSELF**.
+2. Do not ask the user for the text.
+```
+
+#### Context-Aware Service Injection
+**Problem**: The global `AgSidebar` needs to connect to a specific agent session (with its own history/state) rather than a generic chat.
+
+**Solution**:
+1.  Update `AgSidebar` to accept an `initialService` prop.
+2.  Instantiate the specific agent service (e.g., `ResearchAgentService`) in the page component.
+3.  Pass it down to the sidebar.
+
+```tsx
+// Page Component
+const agentService = useMemo(() => new ResearchAgentService(sessionId), []);
+return (
+    <LiquidProvider>
+        <MainContent />
+        <AgSidebar initialService={agentService} /> {/* Injects specific context */}
+    </LiquidProvider>
+);
+```
+
+#### Server-Side State Truth
+**Pattern**: Move state from React `useState` to the Server Agent.
+-   **Client**: Becomes a specific renderer. It subscribes to data stream updates.
+-   **Server**: Holds the `ResearchContext` (topic, blocks).
+-   **Benefit**: State persists across reloads and is directly manipulatable by the LLM without complex client-side tool mapping.
+

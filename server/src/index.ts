@@ -24,6 +24,8 @@ import { getNanoBananaAgentCard, handleNanoBananaRequest } from './agents/nanoba
 import { getDocuMindAgentCard, handleDocuMindRequest } from './agents/documind.js';
 import { getTravelPlannerAgentCard, handleTravelPlannerRequest } from './agents/travel.js';
 import { getDashboardBuilderAgentCard, handleDashboardBuilderRequest } from './agents/dashboard-builder.js';
+import { getResearchCanvasAgentCard, handleResearchCanvasRequest } from './agents/research-canvas.js';
+import { getAIResearcherCard, handleAIResearcherRequest } from './agents/ai-researcher.js';
 import { templateService } from './services/google/TemplateService.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
@@ -775,6 +777,70 @@ async function startServer() {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDashboardBuilderAgentCard(baseUrl);
                 })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Research Canvas
+        .group('/agents/research-canvas', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getResearchCanvasAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleResearchCanvasRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => getResearchCanvasAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // AI Researcher
+        .group('/agents/ai-researcher', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'agent/card' || method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getAIResearcherCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage' || method === 'message/send') {
+                    const result = await handleAIResearcherRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent.json', () => getAIResearcherCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
