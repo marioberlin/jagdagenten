@@ -105,6 +105,13 @@ export default defineConfig({
                 target: 'http://localhost:3000',
                 changeOrigin: true,
             },
+            // Proxy for remote A2A Password Generator agent
+            '/remote-a2a': {
+                target: 'https://wr-demo.showheroes.com',
+                changeOrigin: true,
+                secure: true,
+                rewrite: (path) => path.replace(/^\/remote-a2a/, '/api/v1/a2a/636a315d-a83a-4308-b9c2-2d1a6ba590ee'),
+            },
         },
     },
     build: {
