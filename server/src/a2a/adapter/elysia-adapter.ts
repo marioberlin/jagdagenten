@@ -635,18 +635,6 @@ export class ElysiaA2AAdapter {
       case 'GetAuthenticatedExtendedCard':   // Legacy alias
         return this.handleGetExtendedAgentCard();
 
-      // v0.x method names (backward compatibility)
-      case 'message/send':
-        return this.handleSendMessage(params as v1.MessageSendParams);
-      case 'tasks/get':
-        return this.handleGetTask(params as { id: string; historyLength?: number });
-      case 'tasks/cancel':
-        return this.handleCancelTask(params as { id: string });
-      case 'tasks/list':
-        return this.handleListTasks(params as { contextId?: string; state?: v1.TaskState[] });
-      case 'agent/card':
-        return this.agentCard;
-
       default:
         throw { ...JSON_RPC_ERRORS.METHOD_NOT_FOUND, data: { method } };
     }

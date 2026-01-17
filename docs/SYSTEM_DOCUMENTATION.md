@@ -166,12 +166,22 @@ Component Loggers: `redis`, `cache`, `ai`, `websocket`, `security`, `http`, `gra
 ### 5.1 A2A Protocol Support
 **Directory:** `server/src/a2a/`
 
-Full A2A (Agent-to-Agent) protocol implementation.
+Full A2A (Agent-to-Agent) Protocol v1.0 implementation.
 
 **API Endpoints:**
-- `GET /.well-known/agent.json` - Agent discovery (Agent Card)
-- `POST /a2a` - JSON-RPC endpoint for A2A protocol
+- `GET /.well-known/agent-card.json` - Agent Card discovery (v1.0 canonical)
+- `POST /a2a` - JSON-RPC 2.0 endpoint for A2A protocol
 - `POST /a2a/stream` - Streaming endpoint (SSE)
+
+**v1.0 JSON-RPC Methods (PascalCase):**
+| Method | Description |
+|--------|-------------|
+| `SendMessage` | Send message and wait for completion |
+| `GetTask` | Retrieve task by ID |
+| `ListTasks` | List tasks with filtering |
+| `CancelTask` | Request task cancellation |
+
+> **Note**: As of January 2026, LiquidCrypto operates in strict v1.0 mode. Legacy v0.x method names (`message/send`, `tasks/get`) and the legacy discovery endpoint (`/.well-known/agent.json`) have been removed.
 
 ### 5.2 A2UI Rendering
 **Directory:** `src/a2a/`

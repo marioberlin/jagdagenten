@@ -288,7 +288,8 @@ export function createA2AClient(config: A2AClientConfig): A2AClient {
     },
 
     async getCard(): Promise<AgentCard> {
-      const cardUrl = baseUrl.replace(/\/$/, '') + '/.well-known/agent.json';
+      // A2A v1.0 spec path
+      const cardUrl = baseUrl.replace(/\/$/, '') + '/.well-known/agent-card.json';
       const response = await fetch(cardUrl, { headers });
 
       if (!response.ok) {

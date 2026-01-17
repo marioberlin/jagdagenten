@@ -35,7 +35,7 @@ export { useA2AClient } from '../hooks/useA2AClient';
 
 // Agent discovery utility
 export const discoverAgent = async (url: string) => {
-    const response = await fetch(`${url}/.well-known/agent.json`);
+    const response = await fetch(`${url}/.well-known/agent-card.json`);
     if (!response.ok) throw new Error(`Failed to discover agent at ${url}`);
     return response.json();
 };

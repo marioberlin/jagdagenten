@@ -739,7 +739,7 @@ export class PostgresArtifactStore implements ArtifactRegistry {
   private processTemplateParts(parts: unknown[], data: Record<string, unknown>): v1.Part[] {
     return parts.map(part => {
       const p = part as Record<string, unknown>;
-      if (p.type === 'text' && typeof p.text === 'string') {
+      if (p.text !== undefined && typeof p.text === 'string') {
         return { text: this.interpolate(p.text, data) };
       }
       if (p.type === 'data' && typeof p.data === 'object' && p.data !== null) {

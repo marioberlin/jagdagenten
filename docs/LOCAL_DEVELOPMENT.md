@@ -196,16 +196,16 @@ bun run start
 |----------|-------------|
 | `http://localhost:3000` | HTTP API |
 | `ws://localhost:3001` | WebSocket |
-| `http://localhost:3000/.well-known/agent.json` | A2A Agent Card |
-| `http://localhost:3000/a2a` | A2A JSON-RPC endpoint |
+| `http://localhost:3000/.well-known/agent-card.json` | A2A Agent Card (v1.0) |
+| `http://localhost:3000/a2a` | A2A JSON-RPC 2.0 endpoint |
 | `http://localhost:3000/a2a/stream` | A2A Streaming (SSE) |
 
 ## Testing the A2A Endpoint
 
-### Test Agent Discovery
+### Test Agent Discovery (v1.0)
 
 ```bash
-curl http://localhost:3000/.well-known/agent.json | jq
+curl http://localhost:3000/.well-known/agent-card.json | jq
 ```
 
 ### Test SendMessage (v1.0 format)
@@ -228,25 +228,9 @@ curl -X POST http://localhost:3000/a2a \
   }'
 ```
 
-### Test message/send (v0.x format)
+### Note on v0.x Methods
 
-```bash
-curl -X POST http://localhost:3000/a2a \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "test-2",
-    "method": "message/send",
-    "params": {
-      "message": {
-        "kind": "message",
-        "message_id": "msg-v0x",
-        "role": "user",
-        "parts": [{ "kind": "text", "text": "Show BTC price" }]
-      }
-    }
-  }'
-```
+> **Deprecated**: As of January 2026, LiquidCrypto operates in strict v1.0 mode. Legacy method names (`message/send`, `tasks/get`) are no longer supported. Use PascalCase methods (`SendMessage`, `GetTask`) exclusively.
 
 ### Test GetTask
 

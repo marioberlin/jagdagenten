@@ -342,7 +342,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         name: 'Password Generator',
         description: 'Secure password generation agent running on a remote A2A server. Demonstrates external agent connectivity with enterprise-grade security.\n\n**What I can do:**\n• Generate strong, random passwords\n• Customize length and complexity\n• Create memorable passphrases\n• Check password strength\n\n**Try saying:** "Generate a 16-character password" or "Create a passphrase with 4 words" or "Make a password without special characters"',
         shortDescription: 'Remote A2A password generation agent',
-        url: 'https://wr-demo.showheroes.com',
+        url: '/remote-a2a',
         version: '1.0.0',
         icon: KeyRound,
         category: 'security',
@@ -354,7 +354,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         addedAt: '2026-01-17',
         provider: { name: 'ShowHeroes', url: 'https://showheroes.com', verified: true },
         capabilities: { streaming: false, a2ui: false, pushNotifications: false, fileUpload: false },
-        authentication: 'none',
+        authentication: 'bearer',
         color: '#DC2626',
     },
 ];

@@ -329,7 +329,7 @@ export const getRizzChartsAgentCard = (baseUrl: string): AgentCard => ({
 export async function handleRizzChartsRequest(params: SendMessageParams): Promise<any> {
     const prompt = params.message.parts
         // @ts-ignore
-        .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
+        .filter((p: { text?: string }) => p.text !== undefined).map(p => p.text).join(' ').toLowerCase();
 
     // Determine what type of visualization to show based on intent
     let a2uiMessages: A2UIMessage[];

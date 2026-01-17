@@ -18,7 +18,7 @@ type ProbeState = 'idle' | 'probing' | 'success' | 'error';
  * AgentProbe
  *
  * A beautiful URL input for discovering A2A agents.
- * Probes the /.well-known/agent.json endpoint and displays results.
+ * Probes the /.well-known/agent-card.json endpoint and displays results.
  */
 export const AgentProbe: React.FC<AgentProbeProps> = ({
     onAgentDiscovered,
@@ -46,7 +46,7 @@ export const AgentProbe: React.FC<AgentProbeProps> = ({
             normalizedUrl = normalizedUrl.replace(/\/$/, '');
 
             // Probe agent card
-            const response = await fetch(`${normalizedUrl}/.well-known/agent.json`, {
+            const response = await fetch(`${normalizedUrl}/.well-known/agent-card.json`, {
                 headers: { 'Accept': 'application/json' },
             });
 

@@ -236,7 +236,7 @@ export const getResearchCanvasAgentCard = (baseUrl: string): AgentCard => ({
 
 export async function handleResearchCanvasRequest(params: SendMessageParams): Promise<any> {
     const messageText = params.message.parts
-        .filter(p => p.type === 'text')
+        .filter((p: { text?: string }) => p.text !== undefined)
         // @ts-ignore
         .map(p => p.text).join(' ');
 

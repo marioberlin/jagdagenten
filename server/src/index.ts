@@ -289,7 +289,7 @@ async function startServer() {
                 securityAudit: 'GET /api/v1/security/audit',
                 a2a: 'POST /a2a (A2A Protocol)',
                 a2aStream: 'POST /a2a/stream (A2A SSE)',
-                agentCard: 'GET /.well-known/agent.json'
+                agentCard: 'GET /.well-known/agent-card.json'
             }
         }))
 
@@ -471,7 +471,7 @@ async function startServer() {
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)
-        .get('/.well-known/agent.json', () => {
+        .get('/.well-known/agent-card.json', () => {
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
             return getAgentCard(baseUrl);
         })
@@ -488,12 +488,12 @@ async function startServer() {
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
                 // Handle agent card methods (v0.x and v1.0)
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getRestaurantAgentCard(baseUrl) };
                 }
 
                 // Handle message send methods (v1.0: SendMessage, v0.x: message/send)
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleRestaurantRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -514,7 +514,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRestaurantAgentCard(baseUrl);
                 })
@@ -533,11 +533,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getRizzChartsAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleRizzChartsRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -557,7 +557,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRizzChartsAgentCard(baseUrl);
                 })
@@ -576,11 +576,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getCryptoAdvisorAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleCryptoAdvisorRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -600,7 +600,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getCryptoAdvisorAgentCard(baseUrl);
                 })
@@ -619,11 +619,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getNanoBananaAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleNanoBananaRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -643,7 +643,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getNanoBananaAgentCard(baseUrl);
                 })
@@ -662,11 +662,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getDocuMindAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleDocuMindRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -686,7 +686,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDocuMindAgentCard(baseUrl);
                 })
@@ -705,11 +705,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getTravelPlannerAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleTravelPlannerRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -729,7 +729,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getTravelPlannerAgentCard(baseUrl);
                 })
@@ -748,11 +748,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getDashboardBuilderAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleDashboardBuilderRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -772,7 +772,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => {
+                .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDashboardBuilderAgentCard(baseUrl);
                 })
@@ -791,11 +791,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getResearchCanvasAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleResearchCanvasRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -811,7 +811,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => getResearchCanvasAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/.well-known/agent-card.json', () => getResearchCanvasAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -823,11 +823,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getAIResearcherCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleAIResearcherRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -843,7 +843,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => getAIResearcherCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/.well-known/agent-card.json', () => getAIResearcherCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -855,11 +855,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getQAAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleQAAgentRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -875,7 +875,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => getQAAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/.well-known/agent-card.json', () => getQAAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -887,11 +887,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getStateMachineAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleStateMachineRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -907,7 +907,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/.well-known/agent-card.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -919,11 +919,11 @@ async function startServer() {
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-                if (method === 'agent/card' || method === 'GetAgentCard') {
+                if (method === 'GetAgentCard') {
                     return { jsonrpc: '2.0', id: (body as any).id, result: getCopilotFormAgentCard(baseUrl) };
                 }
 
-                if (method === 'SendMessage' || method === 'message/send') {
+                if (method === 'SendMessage') {
                     const result = await handleCopilotFormRequest(params);
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
@@ -939,7 +939,7 @@ async function startServer() {
             };
 
             return app
-                .get('/.well-known/agent.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/.well-known/agent-card.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })

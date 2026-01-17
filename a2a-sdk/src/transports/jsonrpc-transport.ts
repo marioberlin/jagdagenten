@@ -55,7 +55,7 @@ export class JSONRPCTransport implements ClientTransport {
     const jsonrpcRequest: SendMessageRequest = {
       jsonrpc: '2.0',
       id: this.generateId(),
-      method: 'message/send',
+      method: 'SendMessage',
       params,
     };
 
@@ -107,7 +107,7 @@ export class JSONRPCTransport implements ClientTransport {
     const jsonrpcRequest: JSONRPCRequest = {
       jsonrpc: '2.0',
       id: this.generateId(),
-      method: 'tasks/get',
+      method: 'GetTask',
       params: request,
     };
 
@@ -128,7 +128,7 @@ export class JSONRPCTransport implements ClientTransport {
     const jsonrpcRequest: JSONRPCRequest = {
       jsonrpc: '2.0',
       id: this.generateId(),
-      method: 'tasks/cancel',
+      method: 'CancelTask',
       params: request,
     };
 

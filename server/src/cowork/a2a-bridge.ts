@@ -252,7 +252,7 @@ export class A2ATaskBridge extends EventEmitter {
             const request = {
                 jsonrpc: '2.0',
                 id: randomUUID(),
-                method: 'message/send',
+                method: 'SendMessage',
                 params: {
                     message,
                     configuration: {
@@ -264,7 +264,7 @@ export class A2ATaskBridge extends EventEmitter {
             logger.info({
                 subtaskId: subtask.id,
                 agentUrl: agentConfig.url,
-                method: 'message/send',
+                method: 'SendMessage',
             }, 'Sending A2A request to remote agent');
 
             // Make request
@@ -375,7 +375,7 @@ export class A2ATaskBridge extends EventEmitter {
                 const request = {
                     jsonrpc: '2.0',
                     id: randomUUID(),
-                    method: 'tasks/get',
+                    method: 'GetTask',
                     params: { id: taskId },
                 };
 
@@ -628,7 +628,7 @@ export class AgentDiscoveryService {
      */
     async probeAgent(baseUrl: string, timeout = 5000): Promise<RemoteAgentConfig | null> {
         try {
-            const response = await fetch(`${baseUrl}/.well-known/agent.json`, {
+            const response = await fetch(`${baseUrl}/.well-known/agent-card.json`, {
                 signal: AbortSignal.timeout(timeout),
             });
 

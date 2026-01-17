@@ -1252,7 +1252,7 @@ export async function handleRestaurantRequest(params: SendMessageParams): Promis
 
         const prompt = params.message.parts
             // @ts-ignore
-            .filter(p => p.type === 'text').map(p => p.text).join(' ').toLowerCase();
+            .filter((p: { text?: string }) => p.text !== undefined).map(p => p.text).join(' ').toLowerCase();
 
         let a2uiMessages: A2UIMessage[];
         let textResponse: string;

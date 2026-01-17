@@ -57,7 +57,7 @@ const apiInfoPlugin = new Elysia({ name: 'api-info' })
             securityAudit: 'GET /api/v1/security/audit',
             redisSentinel: 'GET /api/v1/redis/sentinel',
             // A2A Protocol (SDK-based)
-            a2aDiscovery: 'GET /.well-known/agent.json',
+            a2aDiscovery: 'GET /.well-known/agent-card.json',
             a2aRpc: 'POST /a2a',
             a2aStream: 'GET /a2a/stream',
         }

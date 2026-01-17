@@ -1138,7 +1138,7 @@ function generatePriceView(asset: CryptoAsset): A2UIMessage[] {
 export const getCryptoAdvisorAgentCard = (baseUrl: string): AgentCard => ({
     protocolVersions: ['1.0'],
     name: 'Crypto Advisor',
-    description: 'Real-time cryptocurrency market analysis, portfolio tracking, and AI-powered trading signals using Binance data and Gemini AI.',
+    description: 'Real-time cryptocurrency market analysis, portfolio tracking, and AI-powered trading signals using Binance data and Gemini AI. Supports natural conversation and specific commands: "signal/signals" for trading signals, "analyze/analysis [COIN]" for asset analysis, "price [COIN]" for prices, "top/gainer" for gainers, "loser/worst" for losers, or just chat naturally!',
     version: '1.0.0',
     supportedInterfaces: [
         { url: `${baseUrl}/agents/crypto-advisor`, protocolBinding: 'JSONRPC' },
@@ -1148,25 +1148,46 @@ export const getCryptoAdvisorAgentCard = (baseUrl: string): AgentCard => ({
     defaultOutputModes: ['text/plain', 'application/json'],
     skills: [
         {
-            id: 'market-analysis',
-            name: 'Market Analysis',
-            description: 'Analyze cryptocurrency market trends and provide insights',
-            tags: ['crypto', 'market', 'analysis', 'trading'],
-            examples: ['Analyze BTC market', 'What is the ETH trend?'],
-        },
-        {
-            id: 'portfolio-tracking',
-            name: 'Portfolio Tracking',
-            description: 'Track and manage cryptocurrency portfolios',
-            tags: ['portfolio', 'tracking', 'holdings'],
-            examples: ['Show my portfolio', 'Track my holdings'],
-        },
-        {
             id: 'trading-signals',
             name: 'Trading Signals',
-            description: 'AI-powered trading signals and recommendations',
+            description: 'AI-powered trading signals with entry, target, and stop-loss levels',
             tags: ['trading', 'signals', 'AI', 'recommendations'],
-            examples: ['Get trading signals', 'Should I buy or sell?'],
+            examples: ['show signals', 'get trading signals', 'any good trades?'],
+        },
+        {
+            id: 'asset-analysis',
+            name: 'Asset Analysis',
+            description: 'Deep analysis of specific cryptocurrencies with technical indicators',
+            tags: ['analyze', 'analysis', 'technical', 'chart'],
+            examples: ['analyze BTC', 'ETH analysis', 'what about SOL?'],
+        },
+        {
+            id: 'price-check',
+            name: 'Price Check',
+            description: 'Quick price lookup for any cryptocurrency',
+            tags: ['price', 'value', 'cost'],
+            examples: ['price of BTC', 'ETH price', 'how much is DOGE?'],
+        },
+        {
+            id: 'market-movers',
+            name: 'Market Movers',
+            description: 'Top gainers and losers in the market',
+            tags: ['gainers', 'losers', 'movers', 'top'],
+            examples: ['top gainers', 'biggest losers', 'worst performers'],
+        },
+        {
+            id: 'market-overview',
+            name: 'Market Overview',
+            description: 'Full market dashboard with AI insights',
+            tags: ['market', 'overview', 'dashboard'],
+            examples: ['show market', 'market overview', 'how is the market?'],
+        },
+        {
+            id: 'conversation',
+            name: 'Natural Conversation',
+            description: 'Chat naturally about crypto - ask questions, get explanations',
+            tags: ['chat', 'help', 'explain', 'conversation'],
+            examples: ['hello', 'what is DeFi?', 'explain staking', 'should I buy crypto?'],
         },
     ],
     provider: { organization: 'LiquidCrypto Labs' },
@@ -1182,7 +1203,7 @@ export async function handleCryptoAdvisorRequest(params: SendMessageParams): Pro
         // Extract prompt from message
         const prompt = params?.message?.parts
             // @ts-ignore
-            ?.filter(p => p.type === 'text')
+            ?.filter((p: { text?: string }) => p.text !== undefined)
             .map((p: any) => p.text)
             .join(' ')
             .toLowerCase() || '';
@@ -1246,7 +1267,83 @@ export async function handleCryptoAdvisorRequest(params: SendMessageParams): Pro
             textResponse = `Top losers: ${topLosers.map(a => `${a.symbol} ${formatChange(a.priceChangePercent)}`).join(', ')}`;
 
         } else {
-            // Default: Market overview
+            // Conversational AI fallback - use Gemini for free-form conversation
+            const apiKey = process.env.GEMINI_API_KEY;
+
+            if (apiKey && prompt.trim()) {
+                try {
+                    // Get current market context
+                    const btc = assets.find(a => a.symbol === 'BTC');
+                    const eth = assets.find(a => a.symbol === 'ETH');
+                    const topGainers = [...assets].sort((a, b) => b.priceChangePercent - a.priceChangePercent).slice(0, 3);
+                    const topLosers = [...assets].sort((a, b) => a.priceChangePercent - b.priceChangePercent).slice(0, 3);
+
+                    const marketContext = `Current Market Data (Live from Binance):
+- BTC: ${formatPrice(btc?.price || 0)} (${formatChange(btc?.priceChangePercent || 0)})
+- ETH: ${formatPrice(eth?.price || 0)} (${formatChange(eth?.priceChangePercent || 0)})
+- Top Gainers: ${topGainers.map(a => `${a.symbol} ${formatChange(a.priceChangePercent)}`).join(', ')}
+- Top Losers: ${topLosers.map(a => `${a.symbol} ${formatChange(a.priceChangePercent)}`).join(', ')}`;
+
+                    const conversationPrompt = `You are a friendly and knowledgeable crypto advisor assistant. You have access to real-time market data and can help users understand cryptocurrency markets, trading strategies, and general crypto concepts.
+
+${marketContext}
+
+User message: "${params?.message?.parts?.filter((p: any) => p.text !== undefined).map((p: any) => p.text).join(' ')}"
+
+Respond naturally and helpfully. If the user asks about prices or market data, use the live data provided above. If they're greeting you or asking general questions, be conversational and friendly. Keep responses concise (2-4 sentences) unless they ask for detailed analysis.
+
+If the user seems interested in specific features, mention that you can:
+- Show market overview ("show market")
+- Analyze specific assets ("analyze BTC")
+- Generate trading signals ("show signals")
+- Check prices ("price of ETH")`;
+
+                    const response = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: conversationPrompt }] }],
+                                generationConfig: { maxOutputTokens: 300, temperature: 0.8 }
+                            })
+                        }
+                    );
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (aiResponse) {
+                            // Return conversational response with optional market dashboard
+                            const analysis = await generateAIAnalysis(assets);
+                            a2uiMessages = generateMarketDashboard(assets, analysis);
+                            textResponse = aiResponse;
+
+                            return {
+                                id: taskId,
+                                contextId: 'crypto-advisor-context',
+                                status: { state: 'completed', timestamp: new Date().toISOString() },
+                                artifacts: [
+                                    {
+                                        name: 'response',
+                                        parts: [
+                                            { type: 'text', text: textResponse },
+                                            { type: 'a2ui' as const, a2ui: a2uiMessages }
+                                        ]
+                                    }
+                                ],
+                                history: []
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.error('[Crypto Advisor] Conversational AI error:', error);
+                    // Fall through to default dashboard
+                }
+            }
+
+            // Fallback: Market overview when no API key or conversation fails
             const analysis = await generateAIAnalysis(assets);
             a2uiMessages = generateMarketDashboard(assets, analysis);
             const btc = assets.find(a => a.symbol === 'BTC');

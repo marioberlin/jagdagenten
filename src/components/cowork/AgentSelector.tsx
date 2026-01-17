@@ -49,8 +49,8 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
         setIsDiscovering(true);
 
         const knownAgents = [
-            'http://localhost:3000/.well-known/agent.json',
-            'http://localhost:8000/.well-known/agent.json'
+            'http://localhost:3000/.well-known/agent-card.json',
+            'http://localhost:8000/.well-known/agent-card.json'
         ];
 
         const discovered: DiscoveredAgent[] = [];
@@ -61,7 +61,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                 if (response.ok) {
                     const card = await response.json() as AgentCard;
                     discovered.push({
-                        url: url.replace('/.well-known/agent.json', ''),
+                        url: url.replace('/.well-known/agent-card.json', ''),
                         card,
                         status: 'available'
                     });
@@ -97,7 +97,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                 ? customUrl.slice(0, -1)
                 : customUrl;
 
-            const response = await fetch(`${agentUrl}/.well-known/agent.json`);
+            const response = await fetch(`${agentUrl}/.well-known/agent-card.json`);
             if (response.ok) {
                 const card = await response.json() as AgentCard;
                 onSelect({

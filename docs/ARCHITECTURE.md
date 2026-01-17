@@ -488,7 +488,7 @@ LiquidCrypto implements Google's Agent-to-Agent (A2A) Protocol v1.0 for interope
 │                                         │   /a2a/stream (SSE)  │      │
 │  ┌──────────────┐    A2UI Messages      │                      │      │
 │  │  RizzCharts  │◄───────────────────►  │   /.well-known/      │      │
-│  │   Analytics  │                       │   agent.json         │      │
+│  │   Analytics  │                       │   agent-card.json    │      │
 │  └──────────────┘                       │                      │      │
 │                                         └──────────┬───────────┘      │
 │  ┌──────────────┐                                  │                  │
@@ -521,24 +521,26 @@ LiquidCrypto implements Google's Agent-to-Agent (A2A) Protocol v1.0 for interope
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/.well-known/agent.json` | GET | Agent Card discovery |
+| `/.well-known/agent-card.json` | GET | Agent Card discovery (v1.0) |
 | `/a2a` | POST | JSON-RPC 2.0 A2A requests |
 | `/a2a/stream` | POST | SSE streaming for A2UI updates |
 
-### A2A JSON-RPC Methods (v1.0)
+### A2A JSON-RPC Methods (v1.0 - Strict Mode)
 
-v1.0 uses PascalCase method names. Legacy methods are supported for backward compatibility.
+As of January 2026, LiquidCrypto operates in **strict v1.0 mode**. Only PascalCase methods are supported.
 
-| v1.0 Method | Legacy Method | Description |
-|-------------|---------------|-------------|
-| `SendMessage` | `message/send` | Send message to create task |
-| `StreamMessage` | `message/stream` | Stream message with SSE events |
-| `GetTask` | `tasks/get` | Get task by ID |
-| `CancelTask` | `tasks/cancel` | Cancel running task |
-| `SubscribeToTask` | `tasks/resubscribe` | Subscribe to task updates |
-| `SetTaskPushNotificationConfig` | `tasks/pushNotificationConfig/set` | Configure push notifications |
-| `GetTaskPushNotificationConfig` | `tasks/pushNotificationConfig/get` | Get push notification config |
-| `GetExtendedAgentCard` | `agent/authenticatedExtendedCard` | Get extended agent card |
+| Method | Description |
+|--------|-------------|
+| `SendMessage` | Send message to create task |
+| `StreamMessage` | Stream message with SSE events |
+| `GetTask` | Get task by ID |
+| `CancelTask` | Cancel running task |
+| `SubscribeToTask` | Subscribe to task updates |
+| `SetTaskPushNotificationConfig` | Configure push notifications |
+| `GetTaskPushNotificationConfig` | Get push notification config |
+| `GetExtendedAgentCard` | Get extended agent card |
+
+> **Note**: Legacy v0.x method names (`message/send`, `tasks/get`, etc.) are no longer supported.
 
 ### A2UI Component Mapping
 
@@ -810,7 +812,7 @@ The Agent Hub provides a beautiful "App Store" experience for discovering, conne
 │                                     ▼                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                 External A2A Agents                                  │   │
-│  │  /.well-known/agent.json                                             │   │
+│  │  /.well-known/agent-card.json                                        │   │
 │  │                                                                       │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐ │   │
 │  │  │Restaurant│  │  Crypto  │  │RizzCharts│  │   Custom Agents      │ │   │
@@ -881,9 +883,9 @@ const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConf
 │     └──▶ Add https:// if missing                                │
 │     └──▶ Remove trailing slashes                                │
 │                                                                  │
-│  3. Probe agent card endpoint                                    │
-│     └──▶ GET https://restaurant-agent.example.com/              │
-│          .well-known/agent.json                                 │
+│  3. Probe agent card endpoint                                            │
+│     └──▶ GET https://restaurant-agent.example.com/                      │
+│          .well-known/agent-card.json                                    │
 │                                                                  │
 │  4. Validate response                                            │
 │     └──▶ Check required fields (name, url)                      │

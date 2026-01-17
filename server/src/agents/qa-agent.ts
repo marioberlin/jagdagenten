@@ -123,7 +123,7 @@ export async function handleQAAgentRequest(params: any): Promise<any> {
     const context = getContext(contextId);
 
     // Extract user message
-    const textPart = params.message?.parts?.find((p: any) => p.type === 'text' || p.text);
+    const textPart = params.message?.parts?.find((p: { text?: string }) => p.text !== undefined);
     const userMessage = textPart?.text || textPart?.content || '';
 
     if (!userMessage) {

@@ -99,13 +99,8 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
   const telemetry = telemetryEnabled ? createA2ATelemetryMiddleware() : null;
 
   return new Elysia({ name: 'a2a' })
-    // Canonical Agent Card discovery (A2A v1.0 spec)
+    // A2A v1.0: Agent Card discovery at canonical path
     .get('/.well-known/agent-card.json', () => {
-      return getLiquidCryptoAgentCard(baseUrl);
-    })
-
-    // Legacy Agent Card discovery (backward compatibility)
-    .get('/.well-known/agent.json', () => {
       return getLiquidCryptoAgentCard(baseUrl);
     })
 

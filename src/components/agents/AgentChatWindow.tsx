@@ -140,17 +140,33 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     }, [isActive]);
 
     // Helper: Extract text and A2UI from SDK task
+    // Supports both v1.0 (status.message) and v0.x (history) response formats
     const extractTaskContent = useCallback((task: v1.Task): { content: string; a2uiMessages: LegacyA2UIMessage[] } => {
         let content = '';
         const a2uiMessages: LegacyA2UIMessage[] = [];
 
-        // Extract from status message
+        // v1.0 format: Extract from status message
         if (task.status.message) {
-            // SDK v2 change: client.extractText is removed, do manual extraction
             content = task.status.message.parts
-                ?.filter((p: any) => p.kind === 'text')
+                ?.filter((p: { text?: string }) => p.text !== undefined)
                 ?.map((p: any) => p.text)
                 ?.join('\n') ?? '';
+        }
+
+        // v0.x format: Extract from history (last agent message)
+        // Remote agents like ShowHeroes return the response in history array
+        if (!content && task.history && task.history.length > 0) {
+            // Find the last agent message in history
+            const agentMessages = task.history.filter((m: any) => m.role === 'agent');
+            const lastAgentMessage = agentMessages[agentMessages.length - 1];
+
+            if (lastAgentMessage && lastAgentMessage.parts) {
+                // Handle both v1.0 (p.text) and v0.x (p.kind === 'text') part formats
+                content = lastAgentMessage.parts
+                    .filter((p: any) => p.text !== undefined || p.kind === 'text')
+                    .map((p: any) => p.text || '')
+                    .join('\n');
+            }
         }
 
         // Extract A2UI from artifacts
@@ -198,78 +214,33 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         }]);
 
         try {
-            // Check if agent supports streaming
-            const card = await client.getCard();
-            const supportsStreaming = card.capabilities?.streaming;
-
-            if (supportsStreaming && typeof client.streamText === 'function') {
-                // Use streaming with new SDK API
-                let a2uiMessages: LegacyA2UIMessage[] = [];
-
-                for await (const event of client.streamText(userMessage.content)) {
-                    if (event.type === 'complete') {
-                        // Final task received
-                        const { content, a2uiMessages: msgs } = extractTaskContent(event.task);
-                        setMessages(prev => prev.map(msg =>
-                            msg.id === agentMessageId
-                                ? {
-                                    ...msg,
-                                    content: content || 'Task completed.',
-                                    a2ui: msgs.length > 0 ? msgs : undefined,
-                                    taskState: event.task.status.state
-                                }
-                                : msg
-                        ));
-                    } else if (event.type === 'status') {
-                        // Status update
-                        setMessages(prev => prev.map(msg =>
-                            msg.id === agentMessageId
-                                ? { ...msg, taskState: event.data.status.state }
-                                : msg
-                        ));
-                    } else if (event.type === 'artifact') {
-                        // Artifact update - extract A2UI
-                        if (a2ui.isA2UIArtifact(event.data.artifact)) {
-                            a2uiMessages = [...a2uiMessages, ...a2ui.extractA2UIMessages(event.data.artifact)];
-                            setMessages(prev => prev.map(msg =>
-                                msg.id === agentMessageId
-                                    ? { ...msg, a2ui: a2uiMessages }
-                                    : msg
-                            ));
-                        }
-                    } else if (event.type === 'error') {
-                        // Stream error
-                        setMessages(prev => prev.map(msg =>
-                            msg.id === agentMessageId
-                                ? {
-                                    ...msg,
-                                    content: '',
-                                    error: event.error.message,
-                                    taskState: v1.TaskState.FAILED
-                                }
-                                : msg
-                        ));
-                    }
-                }
-            } else {
-                // Non-streaming request
-                if (typeof client.sendText !== 'function') {
-                    throw new Error(`Client missing sendText method. Available: ${Object.keys(client || {}).join(', ')}`);
-                }
-                const task = await client.sendText(userMessage.content);
-                const { content, a2uiMessages } = extractTaskContent(task);
-
-                setMessages(prev => prev.map(msg =>
-                    msg.id === agentMessageId
-                        ? {
-                            ...msg,
-                            content: content || 'Task completed.',
-                            a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined,
-                            taskState: task.status.state
-                        }
-                        : msg
-                ));
+            // First try non-streaming for reliability with remote agents
+            // (Many agents advertise streaming:true but don't implement StreamMessage)
+            if (typeof client.sendText !== 'function') {
+                throw new Error(`Client missing sendText method. Available: ${Object.keys(client || {}).join(', ')}`);
             }
+
+            console.log('[AgentChatWindow] Sending message via sendText...');
+            const task = await client.sendText(userMessage.content);
+            console.log('[AgentChatWindow] Got task response:', {
+                id: task.id,
+                state: task.status.state,
+                hasHistory: !!(task.history?.length),
+                hasStatusMessage: !!task.status.message
+            });
+
+            const { content, a2uiMessages } = extractTaskContent(task);
+
+            setMessages(prev => prev.map(msg =>
+                msg.id === agentMessageId
+                    ? {
+                        ...msg,
+                        content: content || 'Task completed.',
+                        a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined,
+                        taskState: task.status.state
+                    }
+                    : msg
+            ));
         } catch (err) {
             console.error('[AgentChatWindow] Send error:', err);
             setMessages(prev => prev.map(msg =>

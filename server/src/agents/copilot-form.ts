@@ -111,7 +111,7 @@ export async function handleCopilotFormRequest(params: any): Promise<any> {
     const contextId = params.contextId || 'default';
 
     // Extract user message
-    const textPart = params.message?.parts?.find((p: any) => p.type === 'text' || p.text);
+    const textPart = params.message?.parts?.find((p: { text?: string }) => p.text !== undefined);
     const userMessage = textPart?.text || textPart?.content || '';
 
     if (!userMessage) {

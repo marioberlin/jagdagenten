@@ -233,11 +233,13 @@ function generateA2UI(prompt: string): A2UIMessage[] {
 type MethodHandler<P = unknown, R = unknown> = (params: P) => Promise<R>;
 
 const handlers: Record<string, MethodHandler> = {
-    'agent/card': async () => {
+    // A2A v1.0: GetAgentCard (note: clients should use /.well-known/agent-card.json instead)
+    'GetAgentCard': async () => {
         return getAgentCard(process.env.BASE_URL || 'http://localhost:3001');
     },
 
-    'message/send': async (params: SendMessageParams) => {
+    // A2A v1.0: SendMessage
+    'SendMessage': async (params: SendMessageParams) => {
         const { message, configuration } = params;
 
         // Create task
@@ -249,9 +251,9 @@ const handlers: Record<string, MethodHandler> = {
         // Update to working state
         updateTaskState(task.id, 'working');
 
-        // Extract text from message
-        const textParts = message.parts.filter((p: { type: string }) => p.type === 'text');
-        const prompt = textParts.map((p: { type: string; text?: string }) => p.text || '').join('\n');
+        // Extract text from message (A2A v1.0: parts use mutually exclusive fields, not discriminators)
+        const textParts = message.parts.filter((p: { text?: string }) => p.text !== undefined);
+        const prompt = textParts.map((p: { text?: string }) => p.text || '').join('\n');
 
         // Check if A2UI is requested
         const wantsA2UI = configuration?.acceptedOutputModes?.includes('a2ui') ||
@@ -265,15 +267,15 @@ const handlers: Record<string, MethodHandler> = {
             artifact = {
                 name: 'ui',
                 parts: [{
-                    type: 'a2ui',
-                    a2ui: a2uiMessages,
+                    // A2A v1.0: data part for structured content
+                    data: { a2ui: a2uiMessages },
                 }],
             };
         } else {
             artifact = {
                 name: 'response',
                 parts: [{
-                    type: 'text',
+                    // A2A v1.0: text field directly, no type discriminator
                     text: `Processed: ${prompt}`,
                 }],
             };
@@ -290,7 +292,8 @@ const handlers: Record<string, MethodHandler> = {
         return completedTask;
     },
 
-    'tasks/get': async (params: TaskQueryParams) => {
+    // A2A v1.0: GetTask
+    'GetTask': async (params: TaskQueryParams) => {
         const task = store.tasks.get(params.id);
         if (!task) {
             throw { ...JSON_RPC_ERRORS.TASK_NOT_FOUND, data: { taskId: params.id } };
@@ -306,7 +309,8 @@ const handlers: Record<string, MethodHandler> = {
         return task;
     },
 
-    'tasks/list': async (params: TaskListParams) => {
+    // A2A v1.0: ListTasks
+    'ListTasks': async (params: TaskListParams) => {
         let tasks = Array.from(store.tasks.values());
 
         // Filter by context
@@ -332,7 +336,8 @@ const handlers: Record<string, MethodHandler> = {
         return tasks;
     },
 
-    'tasks/cancel': async (params: TaskQueryParams) => {
+    // A2A v1.0: CancelTask
+    'CancelTask': async (params: TaskQueryParams) => {
         const task = store.tasks.get(params.id);
         if (!task) {
             throw { ...JSON_RPC_ERRORS.TASK_NOT_FOUND, data: { taskId: params.id } };

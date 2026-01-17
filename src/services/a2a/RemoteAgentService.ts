@@ -64,7 +64,7 @@ export class RemoteAgentService implements ILiquidLLMService {
                         timestamp: new Date().toISOString(),
                         contextId: this.contextId,
                         message: {
-                            id: uuidv4(),
+                            messageId: uuidv4(),
                             contextId: this.contextId,
                             role: 'user',
                             timestamp: new Date().toISOString(),
@@ -87,11 +87,21 @@ export class RemoteAgentService implements ILiquidLLMService {
 
             const result = json.result;
             const artifacts = result.artifacts || [];
+            const history = result.history || [];
 
-            // Extract text response
-            const textPart = artifacts
+            // v1.0: Extract text response from artifacts
+            let textPart = artifacts
                 .flatMap((a: any) => a.parts)
                 .find((p: any) => p.text !== undefined);
+
+            // v0.x fallback: Extract from history (last agent message)
+            if (!textPart && history.length > 0) {
+                const agentMessages = history.filter((m: any) => m.role === 'agent');
+                const lastAgentMessage = agentMessages[agentMessages.length - 1];
+                if (lastAgentMessage && lastAgentMessage.parts) {
+                    textPart = lastAgentMessage.parts.find((p: any) => p.text !== undefined || p.kind === 'text');
+                }
+            }
 
             // Extract data update (side-channel)
             const dataPart = artifacts

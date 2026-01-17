@@ -320,12 +320,14 @@ for (const refTaskId of message.referenceTaskIds) {
 
 ## Discovery
 
-Agents publish their card at these endpoints:
+Agents publish their card at the canonical v1.0 endpoint:
 
 | Path | Status |
 |------|--------|
-| `/.well-known/agent-card.json` | Canonical (v1.0) |
-| `/.well-known/agent.json` | Legacy (still supported) |
+| `/.well-known/agent-card.json` | ✅ Canonical (v1.0) |
+| `/.well-known/agent.json` | ❌ Removed (strict v1.0 mode) |
+
+> **Note**: As of January 2026, LiquidCrypto operates in strict v1.0 mode with the legacy `/.well-known/agent.json` endpoint removed.
 
 ---
 

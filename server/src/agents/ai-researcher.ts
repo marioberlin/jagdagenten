@@ -213,7 +213,7 @@ export const getAIResearcherCard = (baseUrl: string): AgentCard => ({
 
 export async function handleAIResearcherRequest(params: SendMessageParams): Promise<any> {
     const messageText = params.message.parts
-        .filter(p => p.type === 'text')
+        .filter((p: { text?: string }) => p.text !== undefined)
         // @ts-ignore
         .map(p => p.text).join(' ');
 

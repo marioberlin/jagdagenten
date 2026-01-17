@@ -835,7 +835,7 @@ export async function handleNanoBananaRequest(params: SendMessageParams): Promis
     try {
         const prompt = params?.message?.parts
             // @ts-ignore
-            ?.filter(p => p.type === 'text')
+            ?.filter((p: { text?: string }) => p.text !== undefined)
             .map((p: any) => p.text)
             .join(' ')
             .toLowerCase() || '';

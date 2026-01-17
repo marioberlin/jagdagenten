@@ -105,12 +105,19 @@ export default defineConfig({
                 target: 'http://localhost:3000',
                 changeOrigin: true,
             },
-            // Proxy for remote A2A Password Generator agent
+            // Remote A2A Password Generator agent
+            // Config source of truth: src/config/remote-agents.config.ts
+            // Token and target URL are duplicated here because vite.config runs at build time
+            // and can't easily import TypeScript modules from src/
             '/remote-a2a': {
                 target: 'https://wr-demo.showheroes.com',
                 changeOrigin: true,
                 secure: true,
-                rewrite: (path) => path.replace(/^\/remote-a2a/, '/api/v1/a2a/636a315d-a83a-4308-b9c2-2d1a6ba590ee'),
+                // Token from src/config/remote-agents.config.ts (id: 'remote-password')
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjc3ZWNlYS0wZGQ3LTRmMDUtYjAwMy0yNDcwNzVkMTdjODkiLCJhZ2VudF9pZCI6IjYzNmEzMTVkLWE4M2EtNDMwOC1iOWMyLTJkMWE2YmE1OTBlZSIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjYzMzUzNzR9.4XwjmQW6NJxLH55KgDtsBxcfDsY2WRmg_-9yNmUd1B4'
+                },
+                rewrite: (path) => path.replace(/^\/remote-a2a\/?/, '/api/v1/a2a/636a315d-a83a-4308-b9c2-2d1a6ba590ee/'),
             },
         },
     },
