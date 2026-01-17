@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { GlassContainer, GlassInput, GlassButton } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
-import { LiquidProvider, useLiquidReadable, useLiquidAction } from '../../liquid-engine/react';
+import { LiquidProvider } from '../../liquid-engine/react';
 import { GlassMap, MapMarker } from '../../components/data-display/GlassMap';
 import { Plane, MapPin, Calendar, Clock, Plus, Trash2, Sun, Cloud, CloudRain, Book } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
+import { TravelPlannerService } from '../../services/a2a/TravelPlannerService';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();
@@ -48,82 +50,27 @@ function TravelContent() {
             lng: 135.7681
         }
     ]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [sessionId] = useState(() => uuidv4());
 
-    // Make trip state readable to AI
-    useLiquidReadable({
-        description: "Travel Planner - Current trip itinerary",
-        value: {
-            tripName,
-            destinationCount: destinations.length,
-            destinations: destinations.map(d => ({
-                id: d.id,
-                name: d.name,
-                date: d.date,
-                duration: d.duration,
-                activities: d.activities
-            }))
+    // Handle data updates from A2A agent
+    const handleDataUpdate = useCallback((data: any) => {
+        if (data.tripName) {
+            setTripName(data.tripName);
         }
-    });
+        if (data.destinations) {
+            setDestinations(data.destinations);
+        }
+        if (data.newDestination) {
+            setDestinations(prev => [...prev, data.newDestination]);
+        }
+    }, []);
 
-    // Add destination action
-    useLiquidAction({
-        name: "add_destination",
-        description: "Add a new destination to the travel itinerary",
-        parameters: [
-            { name: "name", type: "string", description: "Destination city/place name", required: true },
-            { name: "date", type: "string", description: "Arrival date (e.g., Mar 20)", required: true },
-            { name: "duration", type: "string", description: "Duration of stay (e.g., 2 days)", required: true },
-            { name: "activities", type: "array", description: "List of planned activities", required: false, items: { type: 'string' } },
-            { name: "weather", type: "string", description: "Expected weather: sunny, cloudy, rainy", required: false },
-            { name: "lat", type: "number", description: "Latitude coordinate", required: false },
-            { name: "lng", type: "number", description: "Longitude coordinate", required: false }
-        ],
-        handler: (args: Partial<Destination> & { name: string; date: string; duration: string }) => {
-            const newDest: Destination = {
-                id: Date.now().toString(),
-                name: args.name,
-                date: args.date,
-                duration: args.duration,
-                activities: args.activities || [],
-                weather: args.weather as Destination['weather'],
-                lat: args.lat,
-                lng: args.lng
-            };
-            setDestinations(prev => [...prev, newDest]);
-            return { success: true, destinationId: newDest.id };
-        }
-    });
-
-    // Update trip name action
-    useLiquidAction({
-        name: "set_trip_name",
-        description: "Set or update the trip name",
-        parameters: [
-            { name: "name", type: "string", description: "The trip name", required: true }
-        ],
-        handler: (args: { name: string }) => {
-            setTripName(args.name);
-            return { success: true };
-        }
-    });
-
-    // Add activity action
-    useLiquidAction({
-        name: "add_activity",
-        description: "Add an activity to a destination",
-        parameters: [
-            { name: "destinationId", type: "string", description: "ID of the destination", required: true },
-            { name: "activity", type: "string", description: "The activity to add", required: true }
-        ],
-        handler: (args: { destinationId: string; activity: string }) => {
-            setDestinations(prev => prev.map(d =>
-                d.id === args.destinationId
-                    ? { ...d, activities: [...d.activities, args.activity] }
-                    : d
-            ));
-            return { success: true };
-        }
-    });
+    // Create A2A service
+    const agentService = useMemo(
+        () => new TravelPlannerService(sessionId, handleDataUpdate),
+        [sessionId, handleDataUpdate]
+    );
 
     const handleDeleteDestination = useCallback((id: string) => {
         setDestinations(prev => prev.filter(d => d.id !== id));
@@ -145,6 +92,15 @@ function TravelContent() {
             label: d.name,
             color: d.weather === 'sunny' ? '#f59e0b' : d.weather === 'rainy' ? '#3b82f6' : '#6b7280'
         }));
+
+    const handleAddDestinationClick = async () => {
+        setIsLoading(true);
+        try {
+            await agentService.sendMessage('Add a new interesting destination to my Japan trip with activities and coordinates');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full" style={{ minHeight: 'calc(100vh - 200px)' }}>
@@ -250,12 +206,25 @@ function TravelContent() {
 
                     {/* Add Destination Placeholder */}
                     <GlassContainer
-                        className="p-4 border-dashed flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors"
+                        className={cn(
+                            "p-4 border-dashed flex items-center justify-center cursor-pointer hover:bg-white/5 transition-colors",
+                            isLoading && "opacity-50 pointer-events-none"
+                        )}
                         border
                         material="thin"
+                        onClick={handleAddDestinationClick}
                     >
-                        <Plus size={16} className="text-secondary mr-2" />
-                        <span className="text-sm text-secondary">Ask Copilot to add a destination</span>
+                        {isLoading ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 border-2 border-accent-primary border-t-transparent rounded-full mr-2" />
+                                <span className="text-sm text-secondary">Adding destination...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={16} className="text-secondary mr-2" />
+                                <span className="text-sm text-secondary">Click to add destination or ask Copilot</span>
+                            </>
+                        )}
                     </GlassContainer>
                 </div>
             </div>
