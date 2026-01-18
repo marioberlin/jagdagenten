@@ -27,6 +27,7 @@ const StateMachineDemo = lazy(() => import('./pages/demos/StateMachineDemo').the
 const QAAgentDemo = lazy(() => import('./pages/demos/QAAgentDemo').then(mod => ({ default: mod.default })));
 const ResearchCanvasDemo = lazy(() => import('./pages/demos/ResearchCanvasDemo').then(mod => ({ default: mod.default })));
 const TravelPlannerDemo = lazy(() => import('./pages/demos/TravelPlannerDemo').then(mod => ({ default: mod.default })));
+const AuroraWeatherDemo = lazy(() => import('./pages/demos/AuroraWeatherDemo').then(mod => ({ default: mod.default })));
 const AIResearcherDemo = lazy(() => import('./pages/demos/AIResearcherDemo').then(mod => ({ default: mod.default })));
 const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mod => ({ default: mod.default })));
 const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
@@ -148,6 +149,7 @@ export const AppRouter = () => {
                                 <Route path="/os/demos/qa-agent" element={<QAAgentDemo />} />
                                 <Route path="/os/demos/research-canvas" element={<ResearchCanvasDemo />} />
                                 <Route path="/os/demos/travel-planner" element={<TravelPlannerDemo />} />
+                                <Route path="/os/demos/aurora-weather" element={<AuroraWeatherDemo />} />
                                 <Route path="/os/demos/ai-researcher" element={<AIResearcherDemo />} />
                                 <Route path="/os/demos/foundation" element={<FoundationDemo />} />
                                 <Route path="/os/demos/signature" element={<SignatureDemo />} />

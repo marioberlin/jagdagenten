@@ -14,7 +14,8 @@ import {
     Globe,
     PenSquare,
     Map,
-    Cpu
+    Cpu,
+    Cloud
 } from 'lucide-react';
 
 interface DemoCardProps {
@@ -91,6 +92,14 @@ const DemoCard: React.FC<DemoCardProps> = ({
 };
 
 const DEMOS: DemoCardProps[] = [
+    {
+        title: 'Aurora Weather',
+        description: 'Liquid Glass weather experience with material reactivity and semantic tinting',
+        href: '/os/demos/aurora-weather',
+        icon: Cloud,
+        tags: ['Weather', 'A2A', 'Material Reactivity'],
+        status: 'stable',
+    },
     {
         title: 'AI Researcher',
         description: 'Autonomous research agent with multi-step reasoning and source synthesis',
