@@ -1,0 +1,4 @@
+# Generated video backgrounds (regenerate locally)
+*.mp4
+*.webm
+!.gitkeep

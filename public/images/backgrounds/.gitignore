@@ -1,0 +1,5 @@
+# Generated media assets (regenerate locally)
+public/images/backgrounds/*.png
+public/images/backgrounds/*.jpg
+public/videos/backgrounds/*.mp4
+public/videos/backgrounds/*.webm

@@ -21,6 +21,7 @@ import { createAgentsRoutes } from './routes/agents.js';
 import { adminRoutes } from './routes/admin.js';
 import { systemFilesRoutes } from './system/index.js';
 import { sandboxRoutes } from './cowork/sandbox/routes.js';
+import { mediaRoutes } from './routes/media.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -35,6 +36,8 @@ import { getQAAgentCard, handleQAAgentRequest } from './agents/qa-agent.js';
 import { getStateMachineAgentCard, handleStateMachineRequest } from './agents/state-machine.js';
 import { getCopilotFormAgentCard, handleCopilotFormRequest } from './agents/copilot-form.js';
 import { getNeonTokyoAgentCard, handleNeonTokyoRequest } from './agents/neon-tokyo.js';
+import { getImageGenAgentCard, handleImageGenRequest } from './agents/media-imagegen.js';
+import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-videogen.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
@@ -519,6 +522,9 @@ async function startServer() {
 
         // System Files API (for GlassFilePicker)
         .use(systemFilesRoutes)
+
+        // Media Generation API (background images/videos)
+        .use(mediaRoutes)
 
         // Sandbox API (for Cowork isolated staging)
         .use(sandboxRoutes)
@@ -1029,6 +1035,70 @@ async function startServer() {
 
             return app
                 .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Media ImageGen (Background Image Generation)
+        .group('/agents/media-imagegen', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getImageGenAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleImageGenRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getImageGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Media VideoGen (Background Video Generation)
+        .group('/agents/media-videogen', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getVideoGenAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleVideoGenRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })

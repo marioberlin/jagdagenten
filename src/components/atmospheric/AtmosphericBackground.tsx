@@ -165,6 +165,7 @@ export function AtmosphericBackground({
             {enableVideo && (
                 <VideoBackground
                     condition={config.condition}
+                    destination={destination}
                     overlayOpacity={0.5}
                     className="z-0"
                 />

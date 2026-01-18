@@ -19,15 +19,16 @@ This document contains detailed system documentation extracted from AGENTS.md.
 8. [Phase 7: Container Runtime](#phase-7-container-runtime)
 9. [Phase 8: SDK Intelligence](#phase-8-sdk-intelligence-system)
 10. [Phase 9: Cowork Mode](#phase-9-cowork-mode-deep-work-system)
-11. [Architecture Summary](#architecture-summary)
-12. [Environment Variables](#environment-variables)
-13. [Test Coverage](#test-coverage)
+11. [Phase 10: Generative Media](#phase-10-generative-media-pipeline)
+12. [Architecture Summary](#architecture-summary)
+13. [Environment Variables](#environment-variables)
+14. [Test Coverage](#test-coverage)
 
 ---
 
 ## Implementation Summary
 
-**All features across 9 phases have been implemented and tested.**
+**All features across 10 phases have been implemented and tested.**
 
 | Phase | Status | Features |
 |-------|--------|----------|
@@ -40,6 +41,7 @@ This document contains detailed system documentation extracted from AGENTS.md.
 | **Phase 7** | ✅ Complete | Container Runtime, Container Settings UI, Remote Deployment, Provider Presets |
 | **Phase 8** | ✅ Complete | SDK Intelligence, Auto-Configuration, Smart Defaults, Task Analyzer |
 | **Phase 9** | ✅ Complete | Cowork Mode, Task Orchestration, Sandbox System, Agent Manager, Permissions |
+| **Phase 10** | ✅ Complete | Generative Media, Video Backgrounds, Gemini Image, Veo Video, Job Queue |
 
 ---
 
@@ -469,7 +471,179 @@ Remote agent delegation via A2A protocol.
 
 ---
 
+## Phase 10: Generative Media Pipeline
+
+### 10.1 Overview
+
+AI-powered background media generation for destination-aware atmospheric UIs using Gemini 3 Pro Image and Veo 3.1 Fast.
+
+**Features:**
+- Destination-specific cityscape images (15 cities)
+- Weather-responsive video backgrounds (6 conditions)
+- PostgreSQL artifact persistence
+- Redis caching (24-hour TTL)
+- Background job queue for async video generation
+- Graceful fallback when services unavailable
+
+### 10.2 Media Generation Agents
+**Directory:** `server/src/agents/media-common/`, `server/src/agents/`
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| **ImageGen** | Gemini 3 Pro Image | Generate iconic destination cityscape images |
+| **VideoGen** | Veo 3.1 Fast | Animate images into 8-second looping videos |
+
+**Agent Files:**
+| File | Purpose |
+|------|---------|
+| `media-common/types.ts` | Shared TypeScript interfaces |
+| `media-common/destinations.ts` | 15 destination profiles with landmarks |
+| `media-common/prompts.ts` | Prompt engineering for image/video |
+| `media-common/storage.ts` | PostgreSQL, Redis, Job Queue |
+| `media-imagegen.ts` | ImageGen A2A agent |
+| `media-videogen.ts` | VideoGen A2A agent |
+
+### 10.3 Storage Architecture
+**File:** `server/src/agents/media-common/storage.ts`
+
+Multi-layer storage with graceful degradation:
+
+```
+┌─────────────────────────────────────────┐
+│          MediaStorageManager            │
+├─────────────────────────────────────────┤
+│  L1: Redis Cache (24h TTL)              │
+│  ↓ miss                                 │
+│  L2: PostgreSQL (persistent)            │
+│  ↓ miss                                 │
+│  L3: Filesystem (public/videos/)        │
+└─────────────────────────────────────────┘
+```
+
+**PostgreSQL Table (`media_artifacts`):**
+```sql
+CREATE TABLE media_artifacts (
+    id VARCHAR(255) PRIMARY KEY,
+    cache_key VARCHAR(255) UNIQUE,
+    destination VARCHAR(100),
+    condition VARCHAR(50),
+    type VARCHAR(20),           -- 'image' | 'video'
+    status VARCHAR(50),         -- 'pending' | 'generating' | 'complete' | 'failed'
+    file_path VARCHAR(500),
+    public_url VARCHAR(500),
+    prompt TEXT,
+    model VARCHAR(100),
+    metadata JSONB,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ
+);
+```
+
+### 10.4 Background Job Queue
+**File:** `server/src/agents/media-common/storage.ts` (MediaJobQueue class)
+
+EventEmitter-based in-process job queue for async video generation.
+
+**Features:**
+- Max 2 concurrent video generations
+- Status tracking: `queued` → `processing` → `complete`/`failed`
+- Redis-backed job status (1-hour TTL)
+- Registered handlers per job type
+
+**Job Lifecycle:**
+```
+enqueue(job) → queued → processing → complete/failed
+     ↓
+  jobId returned immediately (async mode)
+```
+
+### 10.5 Media API Endpoints
+**File:** `server/src/routes/media.ts`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/media/status` | GET | Storage health (postgres, redis, queue) |
+| `/api/media/background/:dest/:cond` | GET | Get best available media URL |
+| `/api/media/image/:dest/:cond` | GET | Check image status |
+| `/api/media/video/:dest/:cond` | GET | Check video status |
+| `/api/media/job/:jobId` | GET | Check async job progress |
+| `/api/media/generate/image` | POST | Generate single image |
+| `/api/media/generate/video` | POST | Generate/queue single video |
+| `/api/media/generate/pipeline` | POST | Image + Video in one call |
+| `/api/media/list` | GET | List all generated media |
+
+### 10.6 Supported Destinations
+**File:** `server/src/agents/media-common/destinations.ts`
+
+| City | Slug | Primary Landmark |
+|------|------|------------------|
+| Tokyo | `tokyo` | Tokyo Tower |
+| Paris | `paris` | Eiffel Tower |
+| London | `london` | Big Ben |
+| New York | `new-york` | Empire State Building |
+| Berlin | `berlin` | Brandenburg Gate |
+| Toronto | `toronto` | CN Tower |
+| Milan | `milan` | Duomo di Milano |
+| Dubai | `dubai` | Burj Khalifa |
+| Sydney | `sydney` | Sydney Opera House |
+| Rome | `rome` | Colosseum |
+| Barcelona | `barcelona` | Sagrada Familia |
+| Amsterdam | `amsterdam` | Canal Houses |
+| Singapore | `singapore` | Marina Bay Sands |
+| Hong Kong | `hong-kong` | Victoria Peak |
+| Los Angeles | `los-angeles` | Hollywood Sign |
+
+### 10.7 Weather Conditions
+**File:** `server/src/agents/media-common/prompts.ts`
+
+| Condition | Visual Style | Video Motion |
+|-----------|--------------|--------------|
+| `sunny` | Golden light, blue sky | Birds, clouds, lens flare |
+| `cloudy` | Dramatic overcast | Timelapse clouds |
+| `rainy` | Wet reflections, purple-blue | Rain streaks, thunder |
+| `night` | Neon glow, city lights | Light trails, twinkling |
+| `snowy` | Winter wonderland | Snowflakes drifting |
+| `foggy` | Ethereal mist | Rolling fog |
+
+### 10.8 Frontend Integration
+**Files:** `src/components/atmospheric/VideoBackground.tsx`, `AtmosphericBackground.tsx`
+
+**VideoBackground Features:**
+- Fetches from `/api/media/background/:dest/:cond`
+- Supports video, image, or gradient fallback
+- Lazy loading with IntersectionObserver
+- Auto-generation trigger (optional)
+- Loading states and error handling
+
+### 10.9 Pre-Generation Script
+**File:** `scripts/pre-generate-backgrounds.ts`
+
+Batch generation for cache warming.
+
+```bash
+# Dry run (preview what would be generated)
+bun scripts/pre-generate-backgrounds.ts --dry-run
+
+# Generate images only
+bun scripts/pre-generate-backgrounds.ts --images-only
+
+# Generate videos only (requires images)
+bun scripts/pre-generate-backgrounds.ts --videos-only
+
+# Full generation (6 cities × 4 conditions = 24 combos)
+bun scripts/pre-generate-backgrounds.ts
+```
+
+**Default Configuration:**
+- Cities: Berlin, London, Tokyo, New York, Toronto, Milan
+- Conditions: sunny, rainy, night, snowy
+- Estimated cost: ~$3.65 for all 24 image+video pairs
+
+---
+
 ## Architecture Summary
+
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -499,7 +673,7 @@ Remote agent delegation via A2A protocol.
 
 ```bash
 # AI API Keys
-GEMINI_API_KEY=your_key
+GEMINI_API_KEY=your_key            # Required for media generation
 ANTHROPIC_API_KEY=your_key
 OPENAI_API_KEY=your_key
 
@@ -508,8 +682,12 @@ GOOGLE_CLIENT_ID=your_id
 GOOGLE_CLIENT_SECRET=your_secret
 
 # Infrastructure
-REDIS_URL=redis://localhost:6379
-DATABASE_URL=postgresql://...
+REDIS_URL=redis://localhost:6379   # Used for media cache (optional, graceful degradation)
+DATABASE_URL=postgresql://...      # Used for media artifacts (optional, graceful degradation)
+
+# Media Generation (Phase 10)
+# GEMINI_API_KEY is used for both ImageGen (Gemini 3 Pro Image) and VideoGen (Veo 3.1 Fast)
+# Storage: PostgreSQL + Redis + Filesystem cascade, works with any combination
 
 # Observability
 OTEL_ENABLED=true

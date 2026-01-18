@@ -3,31 +3,37 @@
  * 
  * Atmospheric video background with lazy loading and fallback support.
  * Features:
+ * - Fetches video/image from media API based on destination + weather
  * - Lazy loading with IntersectionObserver
- * - Graceful fallback to gradient if video fails
+ * - Graceful fallback to gradient if video fails or isn't generated yet
  * - Blur overlay for content legibility
  * - Muted autoplay with loop
  */
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { cn } from '@/utils/cn';
 import type { WeatherCondition } from '../../services/a2a/NeonTokyoService';
 
 interface VideoBackgroundProps {
+    /** Weather condition (determines visual style) */
     condition?: WeatherCondition;
+    /** Optional destination for destination-specific backgrounds */
+    destination?: string;
+    /** Direct video URL override (bypasses API) */
     videoUrl?: string;
+    /** Fallback gradient override */
     fallbackGradient?: string;
     className?: string;
     overlayOpacity?: number;
     blurAmount?: string;
+    /** If true, attempts to trigger generation when video is missing */
+    autoGenerate?: boolean;
 }
 
-// Curated free video URLs for each weather condition (Pexels/Pixabay style)
-// These are placeholder URLs - in production, use your own CDN
-const DEFAULT_VIDEOS: Partial<Record<WeatherCondition, string>> = {
-    // Using placeholder gradients as video is expensive
-    // night: 'https://cdn.example.com/neon-tokyo-night.mp4',
-    // rainy: 'https://cdn.example.com/rain-window.mp4',
-};
+interface MediaApiResponse {
+    type: 'video' | 'image' | 'none';
+    url: string | null;
+    cacheKey: string;
+}
 
 // Fallback gradients for each condition
 const FALLBACK_GRADIENTS: Record<WeatherCondition, string> = {
@@ -39,24 +45,79 @@ const FALLBACK_GRADIENTS: Record<WeatherCondition, string> = {
     foggy: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 50%, #4b5563 100%)'
 };
 
+// Slugify destination for API
+function slugify(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
 export const VideoBackground = memo(function VideoBackground({
     condition = 'night',
+    destination = 'tokyo',
     videoUrl,
     fallbackGradient,
     className,
     overlayOpacity = 0.4,
-    blurAmount = '0px'
+    blurAmount = '0px',
+    autoGenerate = false
 }: VideoBackgroundProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [mediaUrl, setMediaUrl] = useState<string | null>(videoUrl || null);
+    const [mediaType, setMediaType] = useState<'video' | 'image' | 'none'>('none');
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Determine video source
-    const src = videoUrl || DEFAULT_VIDEOS[condition];
     const gradient = fallbackGradient || FALLBACK_GRADIENTS[condition];
-    const showVideo = src && !hasError && isVisible;
+    const showMedia = mediaUrl && !hasError && isVisible && (mediaType === 'video' || mediaType === 'image');
+
+    // Fetch background from API
+    const fetchBackground = useCallback(async () => {
+        if (videoUrl) {
+            // Direct URL provided, skip API
+            setMediaUrl(videoUrl);
+            setMediaType('video');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const slug = slugify(destination);
+            const response = await fetch(`/api/media/background/${slug}/${condition}`);
+
+            if (response.ok) {
+                const data: MediaApiResponse = await response.json();
+                if (data.url) {
+                    setMediaUrl(data.url);
+                    setMediaType(data.type as 'video' | 'image');
+                } else {
+                    setMediaUrl(null);
+                    setMediaType('none');
+
+                    // Auto-trigger generation if enabled
+                    if (autoGenerate) {
+                        console.log('[VideoBackground] No media found, triggering generation...');
+                        // Fire and forget - don't wait for completion
+                        fetch('/api/media/generate/video', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ destination: slug, condition })
+                        }).catch(() => { });
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('[VideoBackground] Failed to fetch background:', error);
+            setMediaUrl(null);
+            setMediaType('none');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [destination, condition, videoUrl, autoGenerate]);
 
     // Lazy loading with IntersectionObserver
     useEffect(() => {
@@ -77,15 +138,30 @@ export const VideoBackground = memo(function VideoBackground({
         return () => observer.disconnect();
     }, []);
 
-    // Handle video load
+    // Fetch when visible and destination/condition changes
+    useEffect(() => {
+        if (isVisible) {
+            fetchBackground();
+        }
+    }, [isVisible, fetchBackground]);
+
+    // Reset state when destination/condition changes
+    useEffect(() => {
+        setIsLoaded(false);
+        setHasError(false);
+        setMediaUrl(videoUrl || null);
+        setMediaType(videoUrl ? 'video' : 'none');
+    }, [destination, condition, videoUrl]);
+
+    // Handle video/image load
     const handleLoadedData = () => {
         setIsLoaded(true);
     };
 
-    // Handle video error
+    // Handle load error
     const handleError = () => {
         setHasError(true);
-        console.warn('[VideoBackground] Video failed to load, using gradient fallback');
+        console.warn('[VideoBackground] Media failed to load, using gradient fallback');
     };
 
     return (
@@ -100,13 +176,20 @@ export const VideoBackground = memo(function VideoBackground({
             <div
                 className={cn(
                     "absolute inset-0 transition-opacity duration-1000",
-                    showVideo && isLoaded ? "opacity-0" : "opacity-100"
+                    showMedia && isLoaded ? "opacity-0" : "opacity-100"
                 )}
                 style={{ background: gradient }}
             />
 
+            {/* Loading indicator */}
+            {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
+                </div>
+            )}
+
             {/* Video layer */}
-            {showVideo && (
+            {showMedia && mediaType === 'video' && (
                 <video
                     ref={videoRef}
                     className={cn(
@@ -121,8 +204,23 @@ export const VideoBackground = memo(function VideoBackground({
                     onLoadedData={handleLoadedData}
                     onError={handleError}
                 >
-                    <source src={src} type="video/mp4" />
+                    <source src={mediaUrl!} type="video/mp4" />
                 </video>
+            )}
+
+            {/* Image layer (fallback when only image is available) */}
+            {showMedia && mediaType === 'image' && (
+                <img
+                    src={mediaUrl!}
+                    alt=""
+                    className={cn(
+                        "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000",
+                        isLoaded ? "opacity-100" : "opacity-0"
+                    )}
+                    style={{ filter: blurAmount !== '0px' ? `blur(${blurAmount})` : undefined }}
+                    onLoad={handleLoadedData}
+                    onError={handleError}
+                />
             )}
 
             {/* Dark overlay for content legibility */}
