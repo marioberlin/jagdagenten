@@ -37,8 +37,22 @@ The `docker-compose.yml` file provides the following services:
 
 | Service | Port | Description |
 |---------|------|-------------|
-| PostgreSQL | 5432 | A2A task persistence, artifacts |
+| PostgreSQL | 5432 | A2A task persistence, artifacts, sandbox sessions |
 | Redis | 6379 | Caching, WebSocket pub/sub |
+| liquid-runtime | 8081 | Container runtime for Cowork AI agent sandboxes |
+
+### Building Container Images (First Time)
+
+Before starting all services, build the container images:
+
+```bash
+# Build the liquid-container base and runtime images
+cd server/container
+./build.sh
+
+# Return to project root
+cd ../..
+```
 
 ### Starting Services
 
@@ -152,6 +166,10 @@ bun run db:migrate
 | `a2a_artifacts` | Agent-generated artifacts |
 | `a2a_artifact_versions` | Artifact version history |
 | `a2a_pinned_artifacts` | User-pinned artifacts |
+| `sandbox_sessions` | Isolated staging environments for Cowork |
+| `sandbox_files` | File tracking within sandboxes |
+| `sandbox_audit_log` | Audit trail for sandbox operations |
+| `sandbox_backups` | Backup snapshots for rollback |
 
 ### Checking Database Content
 
@@ -199,6 +217,9 @@ bun run start
 | `http://localhost:3000/.well-known/agent-card.json` | A2A Agent Card (v1.0) |
 | `http://localhost:3000/a2a` | A2A JSON-RPC 2.0 endpoint |
 | `http://localhost:3000/a2a/stream` | A2A Streaming (SSE) |
+| `http://localhost:3000/api/system/files` | File system browser API |
+| `http://localhost:3000/api/v1/sandbox` | Sandbox management API |
+| `http://localhost:8081/health` | Container runtime health check |
 
 ## Testing the A2A Endpoint
 
@@ -352,7 +373,9 @@ docker-compose down -v
 │       │                                                          │
 │       ▼                                                          │
 │  Vite Dev Server ─────────────► React Frontend                  │
-│       │                                                          │
+│       │                              │                            │
+│       │                              ├── GlassFilePicker          │
+│       │                              └── CoworkInput              │
 │       ▼                                                          │
 │  Elysia Server (localhost:3000)                                 │
 │       │                                                          │
@@ -360,6 +383,13 @@ docker-compose down -v
 │       │       │                                                  │
 │       │       ▼                                                  │
 │       │   PostgreSQL (localhost:5432)                           │
+│       │                                                          │
+│       ├── Sandbox API ─────────► SandboxManager                 │
+│       │       │                      │                           │
+│       │       │                      ▼                           │
+│       │       │              /tmp/liquid-sandboxes/              │
+│       │       │                      │                           │
+│       │       └──────────────► Container Runtime (8081)         │
 │       │                                                          │
 │       ├── WebSocket ─────────► Redis Pub/Sub                    │
 │       │                         (localhost:6379)                │
@@ -374,4 +404,7 @@ docker-compose down -v
 - [A2A SDK Integration Plan](./A2A_SDK_INTEGRATION_PLAN.md)
 - [Architecture Overview](./ARCHITECTURE.md)
 - [Container Deployment Guide](./CONTAINER_DEPLOYMENT_GUIDE.md)
+- [Cowork Isolated Staging](./COWORK_PHASE_0_ISOLATED_STAGING.md)
+- [Liquid Container Architecture](./LIQUID_CONTAINER_ARCHITECTURE.md)
 - [Testing Strategy](./TESTING_STRATEGY.md)
+

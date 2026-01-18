@@ -93,7 +93,10 @@ Errors are learning opportunities:
 ## Quick Start (Local Development)
 
 ```bash
-# Start PostgreSQL and Redis
+# Build container images (first time only)
+cd server/container && ./build.sh && cd ../..
+
+# Start PostgreSQL, Redis, and Container Runtime
 docker-compose up -d
 
 # Install dependencies
@@ -109,6 +112,15 @@ DATABASE_URL=postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcry
 REDIS_URL=redis://localhost:6379
 PORT=3000
 ```
+
+**Services running:**
+| Service | Port | Purpose |
+|---------|------|---------|
+| PostgreSQL | 5432 | Database |
+| Redis | 6379 | Cache & pub/sub |
+| liquid-runtime | 8081 | AI agent containers |
+| Backend | 3000 | Elysia API |
+| Frontend | 5173/5174 | Vite dev server |
 
 For detailed setup, see [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md).
 

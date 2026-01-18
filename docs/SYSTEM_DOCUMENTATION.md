@@ -255,8 +255,21 @@ The "App Store" for A2A agents.
 | `secrets.ts` | Multi-backend secrets (Env, Vault, AWS) |
 | `metrics.ts` | OpenTelemetry integration |
 | `executor.ts` | Orchestrator integration |
+| `lifecycle.ts` | Docker daemon detection, auto-start |
 
-### 7.2 Container Settings UI
+### 7.2 Container Lifecycle Management
+**File:** `server/src/container/lifecycle.ts`
+
+Automatic container initialization on server startup.
+
+**Features:**
+- Docker daemon detection
+- Container image verification and auto-build
+- `ensureContainersReady()` for startup hook
+- Graceful shutdown handling
+- Fallback mode when Docker unavailable
+
+### 7.3 Container Settings UI
 **Files:**
 - `src/stores/containerStore.ts` - Zustand store
 - `src/components/settings/GlassContainerSettings.tsx` - Settings panel
@@ -264,6 +277,21 @@ The "App Store" for A2A agents.
 **Features:**
 - 6 Configuration Tabs: Placement, Pool, Resources, Network, Secrets, Telemetry
 - 9 Cloud Providers: Hetzner, DigitalOcean, Fly.io, Railway, AWS, GCP, Azure, Bare Metal, Custom
+
+### 7.4 Sandbox ↔ Container Integration
+**Files:** `server/src/cowork/sandbox/SandboxManager.ts`, `server/src/cowork/sandbox/types.ts`
+
+Sandboxes can attach Docker containers for isolated AI agent execution.
+
+**Container Attachment API:**
+| Method | Purpose |
+|--------|---------|
+| `attachContainer()` | Bind container to sandbox |
+| `detachContainer()` | Release container to pool |
+| `getContainerInfo()` | Get attached container details |
+| `updateA2ATask()` | Track A2A task completion |
+| `markPendingResume()` | Mark session for later resume |
+| `resumeSession()` | Resume pending session |
 
 ---
 
@@ -323,16 +351,34 @@ Concurrent agent spawning with intelligent scheduling.
 ### 9.4 File Sandbox System
 **Directory:** `server/src/cowork/sandbox/`
 
-Isolated file staging for safe task execution.
+Isolated file staging for safe task execution with Docker container integration.
 
 **Components:**
 | File | Purpose |
 |------|---------|
-| `manager.ts` | SandboxManager - Create, commit, rollback sandboxes |
-| `backup.ts` | BackupManager - Original file preservation |
-| `conflicts.ts` | ConflictDetector - Detect file conflicts |
-| `audit.ts` | AuditLogger - Compliance trail |
+| `SandboxManager.ts` | Create, commit, rollback sandboxes, container attachment |
+| `types.ts` | Session types, container state, status enums |
+| `BackupManager.ts` | Original file preservation |
+| `ConflictDetector.ts` | Detect file conflicts |
+| `AuditLogger.ts` | Compliance trail |
+| `FileHasher.ts` | SHA-256 hash computation for change detection |
 | `routes.ts` | Elysia REST endpoints |
+
+**Sandbox REST API (`/api/v1/sandbox`):**
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/` | POST | Create sandbox |
+| `/:id` | GET | Get sandbox details |
+| `/:id/diff` | GET | Get file changes |
+| `/:id/apply` | POST | Apply changes to source |
+| `/:id/discard` | POST | Discard sandbox |
+| `/:id/rollback` | POST | Rollback to backup |
+| `/:id/attach` | POST | Attach container |
+| `/:id/detach` | POST | Detach container |
+| `/:id/container` | GET | Get container info |
+| `/:id/task` | POST | Update A2A task |
+| `/pending-resume` | GET | List pending sessions |
+| `/:id/resume` | POST | Resume pending session |
 
 ### 9.5 A2A Task Bridge
 **File:** `server/src/cowork/a2a-bridge.ts`

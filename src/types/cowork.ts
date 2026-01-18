@@ -289,6 +289,7 @@ export interface CreateSessionOptions {
 
 export interface TaskOptions {
     workspacePath?: string | null;
+    sandboxId?: string;
     agent?: SelectedAgent;
 }
 

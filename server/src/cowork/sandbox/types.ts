@@ -88,7 +88,10 @@ export type SandboxStatus =
     | 'merging'
     | 'completed'
     | 'failed'
-    | 'expired';
+    | 'expired'
+    | 'pending_resume';  // User closed browser, waiting for resume/discard decision
+
+export type ContainerState = 'pending' | 'attached' | 'detached' | 'error';
 
 export interface SandboxSession {
     id: string;
@@ -107,6 +110,17 @@ export interface SandboxSession {
     filesCopied?: number;
     totalSizeBytes?: number;
     copyDurationMs?: number;
+
+    // Container attachment
+    containerId?: string;
+    containerState?: ContainerState;
+    containerAttachedAt?: Date;
+    containerHost?: string;  // For remote container scenarios
+    containerPort?: number;
+
+    // A2A Task tracking
+    lastA2ATaskId?: string;
+    lastA2ATaskStatus?: string;
 }
 
 // ============================================================================

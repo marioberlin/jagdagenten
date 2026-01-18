@@ -20,6 +20,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - liquid-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U liquidcrypto -d liquidcrypto"]
       interval: 5s
@@ -35,14 +37,60 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - liquid-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # AI Agent Runtime Container
+  # Pre-warmed container for executing AI agents in isolated environments
+  liquid-runtime:
+    build:
+      context: ./server/container
+      dockerfile: Dockerfile
+    container_name: liquidcrypto-runtime
+    restart: unless-stopped
+    volumes:
+      # Mount sandbox directory for file operations
+      - liquid_sandboxes:/sandboxes:rw
+      # Mount /tmp for local development fallback
+      - /tmp/liquid-sandboxes:/tmp/liquid-sandboxes:rw
+    environment:
+      LIQUID_RUNTIME_MODE: pool
+      LIQUID_RUNTIME_PORT: 8080
+      LIQUID_MAX_EXECUTION_TIME: 300000
+      LIQUID_MAX_MEMORY_MB: 512
+      LIQUID_LOG_LEVEL: info
+    ports:
+      - "8081:8080"  # Expose runtime API
+    networks:
+      - liquid-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+networks:
+  liquid-network:
+    driver: bridge
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  liquid_sandboxes:
     driver: local

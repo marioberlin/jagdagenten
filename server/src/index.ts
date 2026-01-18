@@ -14,10 +14,13 @@ import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { skillsRoutes } from './routes/skills.js';
 import { containerRoutes } from './routes/container.js';
+import { ensureContainersReady, getContainerStatus, shutdownContainers } from './container/lifecycle.js';
 import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
 import { adminRoutes } from './routes/admin.js';
+import { systemFilesRoutes } from './system/index.js';
+import { sandboxRoutes } from './cowork/sandbox/routes.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -227,6 +230,25 @@ async function startServer() {
     }
 
     await initRedis();
+
+    // Initialize container runtime (required for Cowork sandboxes)
+    componentLoggers.http.info('Initializing container runtime...');
+    await ensureContainersReady();
+
+    const containerStatus = getContainerStatus();
+    if (!containerStatus.dockerAvailable) {
+        componentLoggers.http.warn(
+            { error: containerStatus.error },
+            'Docker not available - sandbox containers will not work. Build liquid-container-base image to enable.'
+        );
+        // TODO: Re-enable exit once container image is built
+        // process.exit(1);
+    } else {
+        componentLoggers.http.info(
+            { mode: containerStatus.mode, poolReady: containerStatus.poolReady },
+            'Container runtime initialized'
+        );
+    }
 
     // Start WebSocket server on port 3001
 
@@ -493,6 +515,12 @@ async function startServer() {
 
         // Admin API Routes (A2A Management Console)
         .use(adminRoutes)
+
+        // System Files API (for GlassFilePicker)
+        .use(systemFilesRoutes)
+
+        // Sandbox API (for Cowork isolated staging)
+        .use(sandboxRoutes)
 
         // Artifact Management Routes
         .use(createArtifactRoutes())

@@ -94,8 +94,8 @@ export class SandboxManager extends EventEmitter {
             throw new SandboxError(
                 'SOURCE_TOO_LARGE',
                 `Source directory is ${this.formatBytes(sourceSize)}, ` +
-                    `exceeds limit of ${this.formatBytes(config.maxSizeBytes)}. ` +
-                    `Consider selecting a subdirectory or adjusting exclude patterns.`
+                `exceeds limit of ${this.formatBytes(config.maxSizeBytes)}. ` +
+                `Consider selecting a subdirectory or adjusting exclude patterns.`
             );
         }
 
@@ -304,8 +304,8 @@ export class SandboxManager extends EventEmitter {
                 if (pattern.includes('*')) {
                     const regex = new RegExp(
                         '^' +
-                            pattern.replace(/\*/g, '.*').replace(/\?/g, '.') +
-                            '$'
+                        pattern.replace(/\*/g, '.*').replace(/\?/g, '.') +
+                        '$'
                     );
                     return regex.test(relativePath) || regex.test(path.basename(relativePath));
                 }
@@ -1174,6 +1174,212 @@ export class SandboxManager extends EventEmitter {
      */
     async discard(sandboxId: string): Promise<void> {
         await this.cleanup(sandboxId);
+    }
+
+    // ========================================================================
+    // Container Attachment
+    // ========================================================================
+
+    /**
+     * Attach a Docker container to a sandbox
+     * The container will mount the sandbox work directory at /app/workspace
+     */
+    async attachContainer(
+        sandboxId: string,
+        containerId: string,
+        options?: { host?: string; port?: number }
+    ): Promise<void> {
+        const sandbox = await this.getSandbox(sandboxId);
+
+        if (sandbox.status !== 'active') {
+            throw new SandboxError(
+                'INVALID_STATUS',
+                `Cannot attach container to sandbox in ${sandbox.status} status`
+            );
+        }
+
+        if (sandbox.containerId) {
+            throw new SandboxError(
+                'INVALID_STATUS',
+                `Sandbox already has container ${sandbox.containerId} attached`
+            );
+        }
+
+        if (this.pool) {
+            await this.pool.query(
+                `UPDATE sandbox_sessions
+                 SET container_id = $1,
+                     container_state = 'attached',
+                     container_attached_at = NOW(),
+                     container_host = $2,
+                     container_port = $3
+                 WHERE id = $4`,
+                [containerId, options?.host || null, options?.port || null, sandboxId]
+            );
+        }
+
+        await this.audit.log({
+            sandboxId,
+            eventType: 'file_modified', // Using closest existing type
+            actor: 'system',
+            details: {
+                action: 'container_attached',
+                containerId,
+                host: options?.host,
+                port: options?.port,
+            },
+        });
+
+        this.emit('containerAttached', { sandboxId, containerId });
+    }
+
+    /**
+     * Detach the container from a sandbox (release back to pool)
+     */
+    async detachContainer(sandboxId: string): Promise<string | null> {
+        const sandbox = await this.getSandbox(sandboxId);
+
+        if (!sandbox.containerId) {
+            return null;
+        }
+
+        const containerId = sandbox.containerId;
+
+        if (this.pool) {
+            await this.pool.query(
+                `UPDATE sandbox_sessions
+                 SET container_id = NULL,
+                     container_state = 'detached'
+                 WHERE id = $1`,
+                [sandboxId]
+            );
+        }
+
+        await this.audit.log({
+            sandboxId,
+            eventType: 'file_modified',
+            actor: 'system',
+            details: { action: 'container_detached', containerId },
+        });
+
+        this.emit('containerDetached', { sandboxId, containerId });
+
+        return containerId;
+    }
+
+    /**
+     * Get the container client for a sandbox (if attached)
+     */
+    async getContainerInfo(sandboxId: string): Promise<{
+        containerId: string;
+        state: string;
+        host?: string;
+        port?: number;
+    } | null> {
+        const sandbox = await this.getSandbox(sandboxId);
+
+        if (!sandbox.containerId || sandbox.containerState !== 'attached') {
+            return null;
+        }
+
+        return {
+            containerId: sandbox.containerId,
+            state: sandbox.containerState,
+            host: sandbox.containerHost,
+            port: sandbox.containerPort,
+        };
+    }
+
+    /**
+     * Update A2A task tracking for a sandbox
+     */
+    async updateA2ATask(
+        sandboxId: string,
+        taskId: string,
+        status: string
+    ): Promise<void> {
+        if (this.pool) {
+            await this.pool.query(
+                `UPDATE sandbox_sessions
+                 SET last_a2a_task_id = $1,
+                     last_a2a_task_status = $2
+                 WHERE id = $3`,
+                [taskId, status, sandboxId]
+            );
+        }
+
+        await this.audit.log({
+            sandboxId,
+            eventType: 'file_modified',
+            actor: 'agent',
+            agentTaskId: taskId,
+            details: { action: 'a2a_task_update', status },
+        });
+
+        this.emit('a2aTaskUpdate', { sandboxId, taskId, status });
+    }
+
+    /**
+     * Mark sandbox for pending resume (user closed browser)
+     */
+    async markPendingResume(sandboxId: string): Promise<void> {
+        const sandbox = await this.getSandbox(sandboxId);
+
+        if (sandbox.status === 'active') {
+            if (this.pool) {
+                await this.pool.query(
+                    `UPDATE sandbox_sessions SET status = 'pending_resume' WHERE id = $1`,
+                    [sandboxId]
+                );
+            }
+
+            // Stop source watcher to save resources
+            this.stopSourceWatcher(sandboxId);
+
+            this.emit('pendingResume', { sandboxId });
+        }
+    }
+
+    /**
+     * Resume a pending sandbox session
+     */
+    async resumeSession(sandboxId: string): Promise<SandboxSession> {
+        const sandbox = await this.getSandbox(sandboxId);
+
+        if (sandbox.status !== 'pending_resume') {
+            throw new SandboxError(
+                'INVALID_STATUS',
+                `Cannot resume sandbox in ${sandbox.status} status`
+            );
+        }
+
+        if (this.pool) {
+            await this.pool.query(
+                `UPDATE sandbox_sessions SET status = 'active' WHERE id = $1`,
+                [sandboxId]
+            );
+        }
+
+        // Restart source watcher
+        if (sandbox.config.watchSource) {
+            this.startSourceWatcher(sandboxId, sandbox.sourcePath);
+        }
+
+        await this.audit.log({
+            sandboxId,
+            eventType: 'file_modified',
+            actor: 'user',
+            details: { action: 'session_resumed' },
+        });
+
+        return this.getSandbox(sandboxId);
+    }
+
+    /**
+     * Get all pending resume sessions for a user
+     */
+    async getPendingResumeSessions(userId: string): Promise<SandboxSession[]> {
+        return this.getUserSandboxes(userId, { status: 'pending_resume' });
     }
 
     // ========================================================================

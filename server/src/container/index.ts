@@ -247,3 +247,13 @@ export {
     type SecurityIssue,
     type SecurityPreset,
 } from './security-auto.js';
+
+// Lifecycle Management
+export {
+    ensureContainersReady,
+    isDockerAvailable,
+    isContainerPoolReady,
+    getContainerStatus,
+    shutdownContainers,
+    getInitializationError,
+} from './lifecycle.js';

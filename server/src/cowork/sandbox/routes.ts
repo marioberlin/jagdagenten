@@ -297,6 +297,144 @@ export const sandboxRoutes = new Elysia({ prefix: '/api/v1/sandbox' })
         query: t.Object({
             filePath: t.String(),
         }),
+    })
+
+    // ========================================================================
+    // Container Management
+    // ========================================================================
+
+    // Attach a container to sandbox
+    .post('/:id/attach', async ({ params, body }) => {
+        try {
+            const { containerId, host, port } = body as {
+                containerId: string;
+                host?: string;
+                port?: number;
+            };
+
+            await sandboxManager.attachContainer(params.id, containerId, { host, port });
+            return { success: true };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to attach container');
+            return {
+                success: false,
+                error: error.message,
+                code: error.code || 'UNKNOWN',
+            };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+        body: t.Object({
+            containerId: t.String(),
+            host: t.Optional(t.String()),
+            port: t.Optional(t.Number()),
+        }),
+    })
+
+    // Detach container from sandbox
+    .post('/:id/detach', async ({ params }) => {
+        try {
+            const containerId = await sandboxManager.detachContainer(params.id);
+            return { success: true, containerId };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to detach container');
+            return {
+                success: false,
+                error: error.message,
+                code: error.code || 'UNKNOWN',
+            };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+    })
+
+    // Get container info for sandbox
+    .get('/:id/container', async ({ params }) => {
+        try {
+            const info = await sandboxManager.getContainerInfo(params.id);
+            return { success: true, container: info };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to get container info');
+            return { success: false, error: error.message };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+    })
+
+    // Update A2A task tracking
+    .post('/:id/task', async ({ params, body }) => {
+        try {
+            const { taskId, status } = body as { taskId: string; status: string };
+            await sandboxManager.updateA2ATask(params.id, taskId, status);
+            return { success: true };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to update A2A task');
+            return { success: false, error: error.message };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+        body: t.Object({
+            taskId: t.String(),
+            status: t.String(),
+        }),
+    })
+
+    // ========================================================================
+    // Session Resume
+    // ========================================================================
+
+    // Get pending resume sessions for current user
+    .get('/pending-resume', async () => {
+        try {
+            const userId = 'default-user'; // In production, from auth
+            const sessions = await sandboxManager.getPendingResumeSessions(userId);
+            return { success: true, sessions };
+        } catch (error: any) {
+            logger.error({ error }, 'Failed to get pending resume sessions');
+            return { success: false, error: error.message };
+        }
+    })
+
+    // Resume a pending session
+    .post('/:id/resume', async ({ params }) => {
+        try {
+            const sandbox = await sandboxManager.resumeSession(params.id);
+            return { success: true, sandbox };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to resume session');
+            return {
+                success: false,
+                error: error.message,
+                code: error.code || 'UNKNOWN',
+            };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+    })
+
+    // Mark session for pending resume (called when user disconnects)
+    .post('/:id/mark-pending', async ({ params }) => {
+        try {
+            await sandboxManager.markPendingResume(params.id);
+            return { success: true };
+        } catch (error: any) {
+            logger.error({ sandboxId: params.id, error }, 'Failed to mark pending resume');
+            return { success: false, error: error.message };
+        }
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
     });
 
 export default sandboxRoutes;
