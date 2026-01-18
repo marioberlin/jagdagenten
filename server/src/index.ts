@@ -38,6 +38,7 @@ import { getCopilotFormAgentCard, handleCopilotFormRequest } from './agents/copi
 import { getNeonTokyoAgentCard, handleNeonTokyoRequest } from './agents/neon-tokyo.js';
 import { getImageGenAgentCard, handleImageGenRequest } from './agents/media-imagegen.js';
 import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-videogen.js';
+import { getAuroraWeatherAgentCard, handleAuroraWeatherRequest } from './agents/aurora-weather.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
@@ -1007,19 +1008,33 @@ async function startServer() {
                 .post('/', handleRpc);
         })
 
+<<<<<<< HEAD
         // Neon Tokyo (Hyper-personalized Travel Concierge)
         .group('/agents/neon-tokyo', app => {
+=======
+        // Aurora Weather - Liquid Glass Weather Experience
+        .group('/agents/aurora-weather', app => {
+>>>>>>> zen-herschel
             const handleRpc = async ({ request, body, set }: any) => {
                 const method = (body as any).method;
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
                 if (method === 'GetAgentCard') {
+<<<<<<< HEAD
                     return { jsonrpc: '2.0', id: (body as any).id, result: getNeonTokyoAgentCard(baseUrl) };
                 }
 
                 if (method === 'SendMessage') {
                     const result = await handleNeonTokyoRequest(params);
+=======
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getAuroraWeatherAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const contextId = params?.contextId || params?.message?.contextId;
+                    const result = await handleAuroraWeatherRequest(params, contextId);
+>>>>>>> zen-herschel
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
                     return { jsonrpc: '2.0', id: (body as any).id, result };
@@ -1034,6 +1049,7 @@ async function startServer() {
             };
 
             return app
+<<<<<<< HEAD
                 .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1099,6 +1115,9 @@ async function startServer() {
 
             return app
                 .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+=======
+                .get('/.well-known/agent-card.json', () => getAuroraWeatherAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+>>>>>>> zen-herschel
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
