@@ -932,20 +932,352 @@ html[style*="--anim-wiggle-enabled: 0"] .anim-wiggle:hover {
    Specific timing functions for Native Mode feel
    ========================================================================== */
 :root {
-  /* Use Tailwind values where possible, but add specific spring physics */
-  
-  /* Spring Physics (Apple-style) */
-  --ease-spring-light: cubic-bezier(0.5, 1.8, 0.5, 1.0);
-  --ease-spring-medium: cubic-bezier(0.5, 1.5, 0.5, 1.0);
-  --ease-spring-heavy: cubic-bezier(0.5, 1.2, 0.5, 1.0);
-  --ease-spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1.0);
-  
-  /* Modal / Sheet / Presentation */
-  --ease-modal-present: cubic-bezier(0.32, 0.72, 0.0, 1.0);
-  --ease-modal-dismiss: cubic-bezier(0.32, 0.72, 0.0, 1.0);
-  --ease-sheet: cubic-bezier(0.2, 0.9, 0.3, 1.0);
-  
-  /* Interaction */
-  --ease-press: cubic-bezier(0.2, 0.0, 0.4, 1.0);
-  --ease-release: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+    /* Use Tailwind values where possible, but add specific spring physics */
+
+    /* Spring Physics (Apple-style) */
+    --ease-spring-light: cubic-bezier(0.5, 1.8, 0.5, 1.0);
+    --ease-spring-medium: cubic-bezier(0.5, 1.5, 0.5, 1.0);
+    --ease-spring-heavy: cubic-bezier(0.5, 1.2, 0.5, 1.0);
+    --ease-spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1.0);
+
+    /* Modal / Sheet / Presentation */
+    --ease-modal-present: cubic-bezier(0.32, 0.72, 0.0, 1.0);
+    --ease-modal-dismiss: cubic-bezier(0.32, 0.72, 0.0, 1.0);
+    --ease-sheet: cubic-bezier(0.2, 0.9, 0.3, 1.0);
+
+    /* Interaction */
+    --ease-press: cubic-bezier(0.2, 0.0, 0.4, 1.0);
+    --ease-release: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+}
+
+/* ==========================================================================
+   ATMOSPHERIC ANIMATIONS (Neon Tokyo / Weather Effects)
+   Floating orbs, rain drops, and snow particles
+   ========================================================================== */
+
+/* Floating orb animation - gentle drift motion */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    25% {
+        transform: translate(10px, -15px) scale(1.02);
+    }
+
+    50% {
+        transform: translate(-5px, -25px) scale(1);
+    }
+
+    75% {
+        transform: translate(-15px, -10px) scale(0.98);
+    }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Rain drop falling animation */
+@keyframes rain {
+    0% {
+        transform: translateY(0) scaleY(1);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.6;
+    }
+
+    90% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translateY(100vh) scaleY(1.5);
+        opacity: 0;
+    }
+}
+
+.animate-rain {
+    animation: rain 1s linear infinite;
+}
+
+/* Snow falling animation - gentle drift with rotation */
+@keyframes snow {
+    0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.8;
+    }
+
+    90% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translateY(100vh) translateX(30px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.animate-snow {
+    animation: snow 5s linear infinite;
+}
+
+/* Breathing glow animation for accent elements */
+@keyframes breathe {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        box-shadow: 0 0 20px var(--atmosphere-glow, rgba(236, 72, 153, 0.3));
+    }
+
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 40px var(--atmosphere-glow, rgba(236, 72, 153, 0.5));
+    }
+}
+
+.animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+}
+
+/* Neon pulse for night mode */
+@keyframes neon-pulse {
+
+    0%,
+    100% {
+        filter: brightness(1) drop-shadow(0 0 2px var(--atmosphere-accent, #ec4899));
+    }
+
+    50% {
+        filter: brightness(1.2) drop-shadow(0 0 8px var(--atmosphere-accent, #ec4899));
+    }
+}
+
+.animate-neon-pulse {
+    animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* Holographic shimmer animation for tickets */
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+/* 3D transform utilities for card flip */
+.perspective-1000 {
+    perspective: 1000px;
+}
+
+.transform-style-3d {
+    transform-style: preserve-3d;
+}
+
+.backface-hidden {
+    backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+
+/* Confetti burst animation */
+@keyframes confetti {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(calc(-50% + cos(var(--confetti-angle, 0deg)) * 20px),
+                calc(-50% + sin(var(--confetti-angle, 0deg)) * 20px)) scale(0);
+        opacity: 0;
+    }
+}
+
+.animate-confetti {
+    animation: confetti 0.6s ease-out forwards;
+}
+
+/* Scale in animation for checkmarks */
+@keyframes scale-in {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
+}
+
+/* ==========================================================================
+   BREATHING BORDER ANIMATION
+   Subtle glow pulse for atmospheric glass panels
+   ========================================================================== */
+
+@keyframes breathing-border {
+
+    0%,
+    100% {
+        border-color: var(--breathing-border-color, rgba(255, 255, 255, 0.1));
+        box-shadow: 0 0 0 0 var(--breathing-glow-color, rgba(236, 72, 153, 0));
+    }
+
+    50% {
+        border-color: var(--breathing-border-color-active, rgba(255, 255, 255, 0.25));
+        box-shadow: 0 0 20px 2px var(--breathing-glow-color, rgba(236, 72, 153, 0.2));
+    }
+}
+
+.animate-breathing-border {
+    animation: breathing-border 4s ease-in-out infinite;
+}
+
+/* Faster variant for active/focused elements */
+.animate-breathing-border-fast {
+    animation: breathing-border 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   GLASS REFRACTION EFFECT
+   Creates depth illusion with offset background blur
+   ========================================================================== */
+
+.glass-refraction {
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-refraction::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background: inherit;
+    filter: blur(20px) saturate(1.5);
+    transform: scale(1.1);
+    opacity: 0.3;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Chromatic aberration effect for premium glass feel */
+.glass-chromatic {
+    position: relative;
+}
+
+.glass-chromatic::before,
+.glass-chromatic::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.glass-chromatic:hover::before {
+    background: linear-gradient(135deg, rgba(255, 0, 100, 0.05) 0%, transparent 50%);
+    opacity: 1;
+}
+
+.glass-chromatic:hover::after {
+    background: linear-gradient(315deg, rgba(0, 200, 255, 0.05) 0%, transparent 50%);
+    opacity: 1;
+}
+
+/* ==========================================================================
+   RAIN DROPS ON GLASS EFFECT
+   CSS-only water droplets for rainy atmosphere
+   ========================================================================== */
+
+.glass-rain-drops {
+    position: relative;
+}
+
+.glass-rain-drops::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 2%),
+        radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.12) 0%, transparent 1.5%),
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.1) 0%, transparent 2.5%),
+        radial-gradient(circle at 70% 15%, rgba(255, 255, 255, 0.13) 0%, transparent 1.8%),
+        radial-gradient(circle at 85% 55%, rgba(255, 255, 255, 0.11) 0%, transparent 2.2%),
+        radial-gradient(circle at 15% 80%, rgba(255, 255, 255, 0.14) 0%, transparent 1.3%),
+        radial-gradient(circle at 60% 85%, rgba(255, 255, 255, 0.09) 0%, transparent 2%),
+        radial-gradient(circle at 90% 30%, rgba(255, 255, 255, 0.12) 0%, transparent 1.5%);
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   FOCUS GLOW RING
+   Accessible focus indicator with atmospheric styling
+   ========================================================================== */
+
+.focus-glow:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 2px var(--glass-bg-regular),
+        0 0 0 4px var(--atmosphere-accent, #ec4899),
+        0 0 20px var(--atmosphere-glow, rgba(236, 72, 153, 0.4));
+}
+
+/* ==========================================================================
+   FADE IN ANIMATION
+   Smooth transition for view mode changes
+   ========================================================================== */
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Line clamp utility for card descriptions */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

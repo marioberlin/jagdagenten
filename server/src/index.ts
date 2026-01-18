@@ -34,6 +34,7 @@ import { getAIResearcherCard, handleAIResearcherRequest } from './agents/ai-rese
 import { getQAAgentCard, handleQAAgentRequest } from './agents/qa-agent.js';
 import { getStateMachineAgentCard, handleStateMachineRequest } from './agents/state-machine.js';
 import { getCopilotFormAgentCard, handleCopilotFormRequest } from './agents/copilot-form.js';
+import { getNeonTokyoAgentCard, handleNeonTokyoRequest } from './agents/neon-tokyo.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
@@ -996,6 +997,38 @@ async function startServer() {
 
             return app
                 .get('/.well-known/agent-card.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Neon Tokyo (Hyper-personalized Travel Concierge)
+        .group('/agents/neon-tokyo', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getNeonTokyoAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleNeonTokyoRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })

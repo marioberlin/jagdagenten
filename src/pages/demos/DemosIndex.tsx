@@ -187,6 +187,14 @@ const DEMOS: DemoCardProps[] = [
         tags: ['Remote', 'A2A', 'Security'],
         status: 'stable',
     },
+    {
+        title: 'Neon Tokyo',
+        description: 'Hyper-personalized travel concierge with atmosphere-reactive UI',
+        href: '/os/demos/neon-tokyo',
+        icon: Sparkles,
+        tags: ['Travel', 'Atmosphere', 'A2A'],
+        status: 'experimental',
+    },
 ];
 
 export const DemosIndex: React.FC = () => {

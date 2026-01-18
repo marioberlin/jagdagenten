@@ -32,6 +32,7 @@ const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mo
 const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
 const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
 const RemotePasswordDemo = lazy(() => import('./pages/demos/RemotePasswordDemo').then(mod => ({ default: mod.default })));
+const NeonTokyoDemo = lazy(() => import('./pages/demos/NeonTokyoDemo').then(mod => ({ default: mod.default })));
 const DemosIndex = lazy(() => import('./pages/demos/DemosIndex').then(mod => ({ default: mod.DemosIndex })));
 
 // Agent Hub
@@ -153,6 +154,7 @@ export const AppRouter = () => {
                                 <Route path="/os/demos/signature" element={<SignatureDemo />} />
                                 <Route path="/os/demos/extension" element={<ExtensionDemo />} />
                                 <Route path="/os/demos/remote-password" element={<RemotePasswordDemo />} />
+                                <Route path="/os/demos/neon-tokyo" element={<NeonTokyoDemo />} />
                                 <Route path="/os/sheets" element={<SheetsDemo />} />
 
                                 {/* Documentation */}
