@@ -4,6 +4,7 @@ import { swagger } from '@elysiajs/swagger';
 import Redis from 'ioredis';
 import type { Redis as RedisType } from 'ioredis';
 import { callAI, callParallelAI } from './ai/index.js';
+import { randomUUID } from 'crypto';
 import { cache } from './cache.js';
 import { securityHeaders, runSecurityAudit, generateCSPNonce } from './security.js';
 import { wsManager } from './websocket.js';
@@ -41,6 +42,7 @@ import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-vide
 import { getAuroraWeatherAgentCard, handleAuroraWeatherRequest } from './agents/aurora-weather.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
+import { createPostgresStoresFromEnv, type PostgresTaskStore } from './a2a/index.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -62,6 +64,7 @@ type RateLimitStore = {
 let redis: RedisType | null = null;
 let useRedis = false;
 let rateLimitStore: RateLimitStore;
+let taskStore: PostgresTaskStore | undefined;
 
 async function initRedis() {
     try {
@@ -235,6 +238,18 @@ async function startServer() {
     }
 
     await initRedis();
+
+    // Initialize A2A Stores if DB is available
+    if (process.env.DATABASE_URL) {
+        try {
+            const stores = createPostgresStoresFromEnv();
+            await stores.taskStore.initialize();
+            taskStore = stores.taskStore;
+            componentLoggers.http.info('Initialized A2A Task Store for tracking');
+        } catch (error) {
+            componentLoggers.http.error({ error: (error as Error).message }, 'Failed to initialize A2A Task Store');
+        }
+    }
 
     // Initialize container runtime (required for Cowork sandboxes)
     componentLoggers.http.info('Initializing container runtime...');
@@ -1008,33 +1023,19 @@ async function startServer() {
                 .post('/', handleRpc);
         })
 
-<<<<<<< HEAD
         // Neon Tokyo (Hyper-personalized Travel Concierge)
         .group('/agents/neon-tokyo', app => {
-=======
-        // Aurora Weather - Liquid Glass Weather Experience
-        .group('/agents/aurora-weather', app => {
->>>>>>> zen-herschel
             const handleRpc = async ({ request, body, set }: any) => {
                 const method = (body as any).method;
                 const params = (body as any).params;
                 const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
                 if (method === 'GetAgentCard') {
-<<<<<<< HEAD
                     return { jsonrpc: '2.0', id: (body as any).id, result: getNeonTokyoAgentCard(baseUrl) };
                 }
 
                 if (method === 'SendMessage') {
                     const result = await handleNeonTokyoRequest(params);
-=======
-                    return { jsonrpc: '2.0', id: (body as any).id, result: getAuroraWeatherAgentCard(baseUrl) };
-                }
-
-                if (method === 'SendMessage') {
-                    const contextId = params?.contextId || params?.message?.contextId;
-                    const result = await handleAuroraWeatherRequest(params, contextId);
->>>>>>> zen-herschel
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
                     return { jsonrpc: '2.0', id: (body as any).id, result };
@@ -1049,8 +1050,40 @@ async function startServer() {
             };
 
             return app
-<<<<<<< HEAD
                 .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Aurora Weather - Liquid Glass Weather Experience
+        .group('/agents/aurora-weather', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getAuroraWeatherAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const contextId = params?.contextId || params?.message?.contextId;
+                    const result = await handleAuroraWeatherRequest(params, contextId);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found' }
+                };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getAuroraWeatherAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -1067,7 +1100,57 @@ async function startServer() {
                 }
 
                 if (method === 'SendMessage') {
-                    const result = await handleImageGenRequest(params);
+                    console.log('[MediaImageGen] Received Request:', params);
+                    const taskId = randomUUID();
+                    let contextId = params?.contextId || params?.message?.contextId || randomUUID();
+                    console.log('[MediaImageGen] Creating Task:', taskId, contextId);
+
+                    // 1. Create Task (Submitted) - enables visibility in Console
+                    if (taskStore) {
+                        try {
+                            console.log('[MediaImageGen] Saving Task to Store...');
+                            await taskStore.set({
+                                id: taskId,
+                                agentId: 'media-imagegen',
+                                contextId,
+                                status: { state: 'submitted', timestamp: new Date().toISOString() },
+                                history: params.message ? [params.message] : [],
+                                artifacts: []
+                            });
+                            console.log('[MediaImageGen] Task Saved.');
+                        } catch (e) {
+                            console.error('[MediaImageGen] TaskStore Error:', e);
+                        }
+                    }
+
+                    // 2. Update to Working
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = { state: 'working', timestamp: new Date().toISOString() };
+                            await taskStore.set(task);
+                        }
+                    }
+
+                    // 3. Execute Agent
+                    const result = await handleImageGenRequest({ ...params, contextId }); // Pass contextId down
+
+                    // 4. Update Task with Result
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = {
+                                state: result.status || 'completed',
+                                message: result.message,
+                                timestamp: new Date().toISOString()
+                            };
+                            if (result.artifacts) {
+                                task.artifacts = result.artifacts;
+                            }
+                            await taskStore.set(task);
+                        }
+                    }
+
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
                     return { jsonrpc: '2.0', id: (body as any).id, result };
@@ -1099,7 +1182,55 @@ async function startServer() {
                 }
 
                 if (method === 'SendMessage') {
-                    const result = await handleVideoGenRequest(params);
+                    console.log('[MediaVideoGen] Received Request:', params);
+                    const taskId = randomUUID();
+                    let contextId = params?.contextId || params?.message?.contextId || randomUUID();
+                    console.log('[MediaVideoGen] Creating Task:', taskId, contextId);
+
+                    // 1. Create Task (Submitted)
+                    if (taskStore) {
+                        try {
+                            await taskStore.set({
+                                id: taskId,
+                                agentId: 'media-videogen',
+                                contextId,
+                                status: { state: 'submitted', timestamp: new Date().toISOString() },
+                                history: params.message ? [params.message] : [],
+                                artifacts: []
+                            });
+                        } catch (e) {
+                            console.error('[MediaVideoGen] TaskStore Error:', e);
+                        }
+                    }
+
+                    // 2. Update to Working
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = { state: 'working', timestamp: new Date().toISOString() };
+                            await taskStore.set(task);
+                        }
+                    }
+
+                    // 3. Execute Agent
+                    const result = await handleVideoGenRequest({ ...params, contextId });
+
+                    // 4. Update Task with Result
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = {
+                                state: result.status || 'completed',
+                                message: result.message,
+                                timestamp: new Date().toISOString()
+                            };
+                            if (result.artifacts) {
+                                task.artifacts = result.artifacts;
+                            }
+                            await taskStore.set(task);
+                        }
+                    }
+
                     set.headers['Content-Type'] = 'application/json';
                     set.headers['A2A-Protocol-Version'] = '1.0';
                     return { jsonrpc: '2.0', id: (body as any).id, result };
@@ -1115,9 +1246,6 @@ async function startServer() {
 
             return app
                 .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
-=======
-                .get('/.well-known/agent-card.json', () => getAuroraWeatherAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
->>>>>>> zen-herschel
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })

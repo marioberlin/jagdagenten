@@ -10,6 +10,8 @@ import { GlassShowcasePanel } from '@/components/settings/GlassShowcasePanel';
 import { GlassCoworkPanel } from '@/components/cowork/GlassCoworkPanel';
 import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal } from 'lucide-react';
 
+import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
+
 /**
  * LiquidOSLayout
  * 
@@ -111,56 +113,73 @@ export const LiquidOSLayout: React.FC = () => {
     ];
 
     return (
-        <PortalFrame activeMode="os">
-            <SpatialCanvas scale={hasOverlay ? 0.95 : 1} blur={hasOverlay ? 10 : 0}>
-                {/* Main OS Content - Scrollable Area */}
-                <div className="w-full h-full overflow-y-auto custom-scrollbar pb-32">
-                    <Outlet />
-                </div>
+        <div className="relative w-full h-full text-foreground">
+            {/* 1. Menu Bar - Top Layer, Persistent */}
+            <LiquidMenuBar />
+
+            {/* 2. Content Area - Handles Dimensional Jump */}
+            <PortalFrame activeMode="os" className="pt-[30px]">
+                {/* 3. Spatial Environment - The "Desktop" */}
+                {/* When an overlay is open, this recedes (scales down + blurs) */}
+                <SpatialCanvas scale={hasOverlay ? 0.95 : 1} blur={hasOverlay ? 10 : 0}>
+                    {/* Main OS Content - Scrollable Area */}
+                    <div className="w-full h-full overflow-y-auto custom-scrollbar pt-4 pb-32">
+                        <Outlet />
+                    </div>
+                </SpatialCanvas>
+
+                {/* 4. Windows Layer - Floats ABOVE the Spatial Environment */}
+                {/* These specific windows are "OS Level" overlays, so they are not scaled by SpatialCanvas */}
 
                 {/* System Settings Overlay Window */}
-                {settingsOpen && (
-                    <GlassWindow
-                        id="settings-window"
-                        title="System Preferences"
-                        initialPosition={{ x: window.innerWidth * 0.05, y: 60 }}
-                        initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                        isActive={true}
-                        onClose={() => setSettingsOpen(false)}
-                    >
-                        <GlassSettingsPanel onClose={() => setSettingsOpen(false)} />
-                    </GlassWindow>
-                )}
+                <AnimatePresence>
+                    {settingsOpen && (
+                        <GlassWindow
+                            id="settings-window"
+                            title="System Preferences"
+                            initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                            initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                            isActive={true}
+                            onClose={() => setSettingsOpen(false)}
+                        >
+                            <GlassSettingsPanel onClose={() => setSettingsOpen(false)} />
+                        </GlassWindow>
+                    )}
+                </AnimatePresence>
 
                 {/* Component Showcase Overlay Window */}
-                {showcaseOpen && (
-                    <GlassWindow
-                        id="showcase-window"
-                        title="Component Library"
-                        initialPosition={{ x: window.innerWidth * 0.05, y: 60 }}
-                        initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                        isActive={true}
-                        onClose={() => setShowcaseOpen(false)}
-                    >
-                        <GlassShowcasePanel onClose={() => setShowcaseOpen(false)} />
-                    </GlassWindow>
-                )}
+                <AnimatePresence>
+                    {showcaseOpen && (
+                        <GlassWindow
+                            id="showcase-window"
+                            title="Component Library"
+                            initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                            initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                            isActive={true}
+                            onClose={() => setShowcaseOpen(false)}
+                        >
+                            <GlassShowcasePanel onClose={() => setShowcaseOpen(false)} />
+                        </GlassWindow>
+                    )}
+                </AnimatePresence>
 
                 {/* Cowork Mode Overlay Window */}
-                {coworkOpen && (
-                    <GlassWindow
-                        id="cowork-window"
-                        title="Cowork Mode"
-                        initialPosition={{ x: window.innerWidth * 0.05, y: 60 }}
-                        initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                        isActive={true}
-                        onClose={() => setCoworkOpen(false)}
-                    >
-                        <GlassCoworkPanel onClose={() => setCoworkOpen(false)} />
-                    </GlassWindow>
-                )}
+                <AnimatePresence>
+                    {coworkOpen && (
+                        <GlassWindow
+                            id="cowork-window"
+                            title="Cowork Mode"
+                            initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                            initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                            isActive={true}
+                            onClose={() => setCoworkOpen(false)}
+                        >
+                            <GlassCoworkPanel onClose={() => setCoworkOpen(false)} />
+                        </GlassWindow>
+                    )}
+                </AnimatePresence>
 
-                {/* System Dock - Toggleable, auto-hide when overlay open */}
+                {/* 5. System Dock - Fixed Bottom */}
                 {dockVisible && (
                     <div
                         className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
@@ -188,7 +207,7 @@ export const LiquidOSLayout: React.FC = () => {
                         </AnimatePresence>
                     </div>
                 )}
-            </SpatialCanvas>
-        </PortalFrame>
+            </PortalFrame>
+        </div>
     );
 };

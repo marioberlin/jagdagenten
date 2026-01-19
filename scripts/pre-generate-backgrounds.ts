@@ -9,16 +9,19 @@
  *   bun scripts/pre-generate-backgrounds.ts [--images-only] [--videos-only] [--dry-run]
  */
 
-import { handleImageGenRequest } from '../server/src/agents/media-imagegen';
-import { handleVideoGenRequest } from '../server/src/agents/media-videogen';
+// Don't import handlers directly to ensure A2A task tracking via server
+// import { handleImageGenRequest } from '../server/src/agents/media-imagegen';
+// import { handleVideoGenRequest } from '../server/src/agents/media-videogen';
 import type { WeatherCondition } from '../server/src/agents/media-common/types';
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-// Cities to pre-generate (6 cities × 4 conditions = 24 combinations)
-const CITIES = ['berlin', 'london', 'tokyo', 'new-york', 'toronto', 'milan'];
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+// Cities to pre-generate
+const CITIES = ['berlin', 'london', 'tokyo', 'new-york', 'toronto', 'milan', 'paris', 'sydney', 'dubai', 'singapore'];
 
 // Weather conditions to generate (4 distinct conditions)
 const CONDITIONS: WeatherCondition[] = ['sunny', 'rainy', 'night', 'snowy'];
@@ -50,11 +53,48 @@ interface GenerationResult {
     cached: boolean;
     error?: string;
     duration?: number;
+    taskId?: string;
 }
 
 // ============================================================================
 // Generation Functions
 // ============================================================================
+
+async function callAgent(endpoint: string, city: string, condition: string): Promise<any> {
+    const destination = city;
+    // Context ID helps group these tasks in the Console
+    const contextId = `pre-gen-${destination}-${condition}-${Date.now()}`;
+
+    const body = {
+        jsonrpc: '2.0',
+        method: 'SendMessage',
+        params: {
+            message: {
+                parts: [{ text: JSON.stringify({ destination, condition }) }],
+                contextId
+            },
+            contextId
+        },
+        id: Date.now()
+    };
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+    }
+
+    const json = await response.json() as any;
+    if (json.error) {
+        throw new Error(json.error.message || JSON.stringify(json.error));
+    }
+
+    return json.result;
+}
 
 async function generateImage(city: string, condition: WeatherCondition, dryRun: boolean): Promise<GenerationResult> {
     const startTime = Date.now();
@@ -65,11 +105,7 @@ async function generateImage(city: string, condition: WeatherCondition, dryRun: 
     }
 
     try {
-        const result = await handleImageGenRequest({
-            message: {
-                parts: [{ text: JSON.stringify({ destination: city, condition }) }]
-            }
-        });
+        const result = await callAgent('/agents/media-imagegen', city, condition);
 
         const duration = Date.now() - startTime;
         const artifact = result.artifacts?.[0];
@@ -96,11 +132,7 @@ async function generateVideo(city: string, condition: WeatherCondition, dryRun: 
     }
 
     try {
-        const result = await handleVideoGenRequest({
-            message: {
-                parts: [{ text: JSON.stringify({ destination: city, condition }) }]
-            }
-        });
+        const result = await callAgent('/agents/media-videogen', city, condition);
 
         const duration = Date.now() - startTime;
         const artifact = result.artifacts?.[0];
@@ -119,127 +151,128 @@ async function generateVideo(city: string, condition: WeatherCondition, dryRun: 
 }
 
 // ============================================================================
-// Main
+// Main Execution
 // ============================================================================
 
 async function main() {
     const args = process.argv.slice(2);
+    const dryRun = args.includes('--dry-run');
     const imagesOnly = args.includes('--images-only');
     const videosOnly = args.includes('--videos-only');
-    const dryRun = args.includes('--dry-run');
 
-    const generateImages = !videosOnly;
-    const generateVideos = !imagesOnly;
-
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║           Pre-Generate Background Media                       ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝');
-    console.log();
-    console.log(`Cities: ${CITIES.join(', ')}`);
-    console.log(`Conditions: ${CONDITIONS.join(', ')}`);
-    console.log(`Total combinations: ${CITIES.length * CONDITIONS.length}`);
-    console.log(`Generate images: ${generateImages ? '✓' : '✗'}`);
-    console.log(`Generate videos: ${generateVideos ? '✓' : '✗'}`);
-    console.log(`Dry run: ${dryRun ? 'YES' : 'NO'}`);
-    console.log();
-
-    if (!process.env.GEMINI_API_KEY) {
-        console.error('❌ GEMINI_API_KEY environment variable not set!');
-        console.log('   Set it in your .env file or export it:');
-        console.log('   export GEMINI_API_KEY=your_key_here');
-        process.exit(1);
+    // Skip the first argument as it's the script path
+    if (args.includes('--help')) {
+        console.log('Usage: bun scripts/pre-generate-backgrounds.ts [options]');
+        console.log('Options:');
+        console.log('  --dry-run      Simulate generation without calling APIs');
+        console.log('  --images-only  Generate only background images');
+        console.log('  --videos-only  Generate only background videos');
+        return;
     }
+
+    console.log('🌍 LiquidCrypto Media Pre-generation');
+    console.log('====================================');
+    console.log(`Target: ${BASE_URL}`);
+    console.log(`Concurrency: 4 tasks`);
+    if (dryRun) console.log('MODE: DRY RUN (No generation)');
+    console.log('');
+
+    // Build task queue
+    type Task = () => Promise<GenerationResult>;
+    const taskQueue: { name: string; fn: Task }[] = [];
+
+    // 1. Queue Images
+    if (!videosOnly) {
+        console.log(`Planning ${CITIES.length * CONDITIONS.length} images...`);
+        for (const city of CITIES) {
+            for (const condition of CONDITIONS) {
+                taskQueue.push({
+                    name: `Image: ${city} (${condition})`,
+                    fn: () => generateImage(city, condition, dryRun)
+                });
+            }
+        }
+    }
+
+    // 2. Queue Videos
+    if (!imagesOnly) {
+        console.log(`Planning ${CITIES.length * CONDITIONS.length} videos...`);
+        for (const city of CITIES) {
+            for (const condition of CONDITIONS) {
+                taskQueue.push({
+                    name: `Video: ${city} (${condition})`,
+                    fn: () => generateVideo(city, condition, dryRun)
+                });
+            }
+        }
+    }
+
+    console.log(`\nStarting execution of ${taskQueue.length} tasks...`);
+    console.log('----------------------------------------');
 
     const results: GenerationResult[] = [];
-    const totalStart = Date.now();
+    const CONCURRENCY_LIMIT = 4;
+    const activePromises: Promise<void>[] = [];
 
-    // Generate images first
-    if (generateImages) {
-        console.log('═══════════════════════════════════════════════════════════════');
-        console.log(' Phase 1: Generating Images');
-        console.log('═══════════════════════════════════════════════════════════════');
+    // Process queue with concurrency limit
+    while (taskQueue.length > 0 || activePromises.length > 0) {
+        // Fill active slots
+        while (taskQueue.length > 0 && activePromises.length < CONCURRENCY_LIMIT) {
+            const task = taskQueue.shift()!;
+            const taskPromise = (async () => {
+                console.log(`[Start] ${task.name}`);
+                try {
+                    const result = await task.fn();
+                    results.push(result);
 
-        for (const city of CITIES) {
-            for (const condition of CONDITIONS) {
-                console.log(`\n🖼️  ${city} + ${condition}...`);
-                const result = await generateImage(city, condition, dryRun);
-                results.push(result);
+                    // Log result immediately
+                    const status = result.cached ? 'CACHED' : (result.success ? 'DONE' : 'FAIL');
+                    const icon = result.success ? '✅' : '❌';
+                    const dur = result.duration ? formatDuration(result.duration) : '';
+                    console.log(`${icon} [${status}] ${result.city} ${result.condition} (${result.type}) ${dur}`);
 
-                if (result.cached) {
-                    console.log(`   ✓ Cached (${formatDuration(result.duration || 0)})`);
-                } else if (result.success) {
-                    console.log(`   ✓ Generated (${formatDuration(result.duration || 0)})`);
-                } else {
-                    console.log(`   ✗ Failed: ${result.error}`);
+                    if (result.error) {
+                        console.error(`  Error: ${result.error}`);
+                    }
+                } catch (e) {
+                    console.error(`❌ [CRASH] ${task.name}`, e);
                 }
+            })();
 
-                if (!dryRun && !result.cached) {
-                    await sleep(DELAY_BETWEEN_IMAGES_MS);
-                }
-            }
+            // Add to active set and remove when done
+            const p = taskPromise.then(() => {
+                const idx = activePromises.indexOf(p);
+                if (idx > -1) activePromises.splice(idx, 1);
+            });
+            activePromises.push(p);
+
+            // Small stagger to avoid hammering connection at exact same ms
+            await sleep(200);
+        }
+
+        // Wait for at least one to finish if queue is blocked or empty
+        if (activePromises.length > 0) {
+            await Promise.race(activePromises);
+        } else if (taskQueue.length === 0) {
+            break;
         }
     }
 
-    // Generate videos (requires images to exist)
-    if (generateVideos) {
-        console.log('\n═══════════════════════════════════════════════════════════════');
-        console.log(' Phase 2: Generating Videos');
-        console.log('═══════════════════════════════════════════════════════════════');
+    // Report
+    console.log('\n====================================');
+    console.log('Execution Complete');
+    console.log('====================================');
 
-        for (const city of CITIES) {
-            for (const condition of CONDITIONS) {
-                console.log(`\n🎬 ${city} + ${condition}...`);
-                const result = await generateVideo(city, condition, dryRun);
-                results.push(result);
+    const success = results.filter(r => r.success).length;
+    const cached = results.filter(r => r.cached).length;
+    const failed = results.filter(r => !r.success).length;
 
-                if (result.cached) {
-                    console.log(`   ✓ Cached`);
-                } else if (result.success) {
-                    console.log(`   ✓ Generated (${formatDuration(result.duration || 0)})`);
-                } else {
-                    console.log(`   ✗ Failed: ${result.error}`);
-                }
+    console.log(`Total:   ${results.length}`);
+    console.log(`Success: ${success}`);
+    console.log(`Cached:  ${cached}`);
+    console.log(`Failed:  ${failed}`);
 
-                if (!dryRun && !result.cached) {
-                    await sleep(DELAY_BETWEEN_VIDEOS_MS);
-                }
-            }
-        }
-    }
-
-    // Summary
-    const totalDuration = Date.now() - totalStart;
-    const imageResults = results.filter(r => r.type === 'image');
-    const videoResults = results.filter(r => r.type === 'video');
-
-    console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log(' Summary');
-    console.log('═══════════════════════════════════════════════════════════════');
-
-    if (imageResults.length > 0) {
-        const imageSuccess = imageResults.filter(r => r.success).length;
-        const imageCached = imageResults.filter(r => r.cached).length;
-        console.log(`\n🖼️  Images: ${imageSuccess}/${imageResults.length} successful (${imageCached} cached)`);
-    }
-
-    if (videoResults.length > 0) {
-        const videoSuccess = videoResults.filter(r => r.success).length;
-        const videoCached = videoResults.filter(r => r.cached).length;
-        console.log(`🎬 Videos: ${videoSuccess}/${videoResults.length} successful (${videoCached} cached)`);
-    }
-
-    console.log(`\n⏱️  Total time: ${formatDuration(totalDuration)}`);
-
-    // List failures
-    const failures = results.filter(r => !r.success);
-    if (failures.length > 0) {
-        console.log('\n❌ Failures:');
-        for (const f of failures) {
-            console.log(`   - ${f.city}-${f.condition} (${f.type}): ${f.error}`);
-        }
-    }
-
-    console.log('\n✅ Done!');
+    if (failed > 0) process.exit(1);
 }
 
 main().catch(console.error);
