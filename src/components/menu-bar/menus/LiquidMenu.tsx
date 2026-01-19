@@ -16,9 +16,11 @@ import {
     Power
 } from 'lucide-react';
 import type { MenuItemDef } from '@/context/MenuBarContext';
+import { useDialogs } from '@/context/DialogContext';
 
 export function useLiquidMenuItems(): MenuItemDef[] {
     const navigate = useNavigate();
+    const { openDialog } = useDialogs();
 
     return useMemo<MenuItemDef[]>(() => [
         {
@@ -26,8 +28,7 @@ export function useLiquidMenuItems(): MenuItemDef[] {
             label: 'About LiquidOS',
             icon: Info,
             action: () => {
-                // TODO: Open About dialog
-                console.log('About LiquidOS');
+                openDialog('aboutLiquidOS');
             },
         },
         { id: 'sep-1', label: '', dividerAfter: true },
@@ -95,5 +96,5 @@ export function useLiquidMenuItems(): MenuItemDef[] {
                 console.log('Quit');
             },
         },
-    ], [navigate]);
+    ], [navigate, openDialog]);
 }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { GlassSheet } from '@/components/overlays/GlassSheet';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
-import { FileSpreadsheet, Clock, HardDrive, Loader2, Sparkles, LogIn, LogOut } from 'lucide-react';
+import { FileSpreadsheet, Clock, HardDrive, Loader2, Sparkles, LogIn, LogOut, Grid, List as ListIcon } from 'lucide-react';
 
 interface ParsedFile {
     id: string;
@@ -11,14 +10,12 @@ interface ParsedFile {
     lastOpened?: number;
 }
 
-interface GlassFilesPanelProps {
-    open: boolean;
-    onClose: () => void;
-    onFileOpen: (file: ParsedFile) => void;
+interface GlassFinderAppProps {
+    onClose?: () => void;
+    onFileOpen?: (file: ParsedFile) => void;
 }
 
-export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
-    open,
+export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
     onClose,
     onFileOpen,
 }) => {
@@ -29,11 +26,13 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
         isAuthenticated,
         signIn,
         signOut,
-        isAuthLoading
+        isAuthLoading,
+        accessToken
     } = useGoogleDrive();
     const [recentFiles, setRecentFiles] = useState<ParsedFile[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     useEffect(() => {
         const stored = localStorage.getItem('liquid_recent_sheets');
@@ -54,8 +53,14 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
         setRecentFiles(updated);
         localStorage.setItem('liquid_recent_sheets', JSON.stringify(updated));
 
-        onFileOpen(newFile);
-        onClose();
+        if (onFileOpen) {
+            onFileOpen(newFile);
+        } else {
+            // Default behavior if no handler: open in new tab or handle internally
+            window.open(newFile.url, '_blank');
+        }
+
+        if (onClose) onClose();
     };
 
     const handleOpenPicker = () => {
@@ -133,17 +138,40 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
     };
 
     return (
-        <GlassSheet
-            open={open}
-            onOpenChange={onClose}
-            title="Smart Sheets"
-            description="Open Google Sheets with AI superpowers"
-            side="right"
-            className="w-[400px] sm:w-[540px]"
-        >
-            <div className="flex flex-col h-full gap-6">
+        <div className="flex flex-col h-full bg-black/40 text-white p-6">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                    <GlassButton
+                        variant="secondary"
+                        size="sm"
+                        className={viewMode === 'grid' ? 'bg-white/20' : ''}
+                        onClick={() => setViewMode('grid')}
+                    >
+                        <Grid size={16} />
+                    </GlassButton>
+                    <GlassButton
+                        variant="secondary"
+                        size="sm"
+                        className={viewMode === 'list' ? 'bg-white/20' : ''}
+                        onClick={() => setViewMode('list')}
+                    >
+                        <ListIcon size={16} />
+                    </GlassButton>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                        <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-400' : 'bg-orange-400'}`} />
+                        <span className="text-xs text-white/70">
+                            {isAuthenticated ? 'Drive Connected' : 'Guest'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex flex-col h-full gap-6 overflow-hidden">
                 {/* Actions */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 flex-shrink-0">
                     <GlassButton
                         variant="primary"
                         className="h-24 flex flex-col gap-2 items-center justify-center border-dashed border-2 border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10"
@@ -181,81 +209,81 @@ export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
                 </div>
 
                 {createError && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex-shrink-0">
                         Creation Error: {createError}. Check backend logs.
                     </div>
                 )}
 
                 {driveError && (
-                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs">
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs flex-shrink-0">
                         {driveError}
                     </div>
                 )}
 
-                {/* Google Account Status */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-400' : 'bg-orange-400'}`} />
-                        <span className="text-sm text-white/70">
-                            {isAuthenticated ? 'Connected to Google Drive' : 'Sign in to browse your Drive'}
-                        </span>
-                    </div>
-                    {isAuthenticated ? (
-                        <GlassButton
-                            variant="secondary"
-                            size="sm"
-                            onClick={signOut}
-                            className="text-xs gap-1"
-                        >
-                            <LogOut size={14} />
-                            Sign Out
-                        </GlassButton>
-                    ) : (
+                {/* Auth Action if needed */}
+                {!isAuthenticated && (
+                    <div className="flex justify-center flex-shrink-0">
                         <GlassButton
                             variant="primary"
                             size="sm"
                             onClick={signIn}
                             disabled={isAuthLoading}
-                            className="text-xs gap-1"
+                            className="gap-2"
                         >
                             {isAuthLoading ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
-                            Sign In
+                            Sign In to Access Drive
                         </GlassButton>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {isAuthenticated && (
+                    <div className="flex justify-center flex-shrink-0">
+                        <GlassButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={signOut}
+                            className="text-xs gap-1 text-white/40 hover:text-white"
+                        >
+                            <LogOut size={12} />
+                            Sign Out
+                        </GlassButton>
+                    </div>
+                )}
 
                 {/* Recent Files */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="flex items-center gap-2 mb-4 text-xs font-medium text-white/40 uppercase tracking-wider">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                    <div className="flex items-center gap-2 mb-4 text-xs font-medium text-white/40 uppercase tracking-wider flex-shrink-0">
                         <Clock size={12} />
                         Recent Files
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="overflow-y-auto custom-scrollbar pr-2 flex-1">
                         {recentFiles.length === 0 ? (
                             <div className="text-center py-10 text-white/20 text-sm">
                                 No recent sheets found
                             </div>
                         ) : (
-                            recentFiles.map((file) => (
-                                <button
-                                    key={file.id}
-                                    onClick={() => handleFileSelect(file)}
-                                    className="w-full flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all group text-left"
-                                >
-                                    <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors">
-                                        <FileSpreadsheet size={20} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium text-white truncate">{file.name}</div>
-                                        <div className="text-xs text-white/40 truncate">Google Sheet • {new Date(file.lastOpened || 0).toLocaleDateString()}</div>
-                                    </div>
-                                </button>
-                            ))
+                            <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-3" : "space-y-2"}>
+                                {recentFiles.map((file) => (
+                                    <button
+                                        key={file.id}
+                                        onClick={() => handleFileSelect(file)}
+                                        className={`w-full flex ${viewMode === 'grid' ? 'flex-col items-center text-center p-4' : 'items-center text-left p-3 gap-4'} rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all group`}
+                                    >
+                                        <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors mb-2">
+                                            <FileSpreadsheet size={24} />
+                                        </div>
+                                        <div className="min-w-0 w-full">
+                                            <div className="text-sm font-medium text-white truncate">{file.name}</div>
+                                            <div className="text-xs text-white/40 truncate">Google Sheet • {new Date(file.lastOpened || 0).toLocaleDateString()}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
-        </GlassSheet>
+        </div>
     );
 };

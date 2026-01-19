@@ -15,7 +15,7 @@ import { smartRoutes } from './routes/smart.js';
 import { pluginRoutes } from './routes/plugins.js';
 import { skillsRoutes } from './routes/skills.js';
 import { containerRoutes } from './routes/container.js';
-import { ensureContainersReady, getContainerStatus, shutdownContainers } from './container/lifecycle.js';
+import { ensureContainersReady, getContainerStatus, shutdownContainers, startHealthMonitor, stopHealthMonitor } from './container/lifecycle.js';
 import { authRoutes } from './routes/auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
@@ -269,6 +269,23 @@ async function startServer() {
             'Container runtime initialized'
         );
     }
+
+    // Start health monitor for auto-recovery of services
+    startHealthMonitor({
+        interval: 30000, // Check every 30 seconds
+        autoRecover: true,
+        onRecoveryStart: (serviceId) => {
+            componentLoggers.http.info({ serviceId }, 'Starting service recovery');
+        },
+        onRecoveryComplete: (serviceId, success) => {
+            if (success) {
+                componentLoggers.http.info({ serviceId }, 'Service recovery succeeded');
+            } else {
+                componentLoggers.http.warn({ serviceId }, 'Service recovery failed');
+            }
+        },
+    });
+    componentLoggers.http.info('Health monitor started with auto-recovery enabled');
 
     // Start WebSocket server on port 3001
 

@@ -28,7 +28,7 @@ import { GeminiService } from '@/services/gemini';
 import { useOptionalLiquidClient } from '@/liquid-engine/react';
 import { cn } from '@/utils/cn';
 
-interface GlassSettingsPanelProps {
+interface GlassSettingsAppProps {
     onClose?: () => void;
 }
 
@@ -55,7 +55,7 @@ const tabs = [
 // Main Component
 // ============================================
 
-export const GlassSettingsPanel: React.FC<GlassSettingsPanelProps> = () => {
+export const GlassSettingsApp: React.FC<GlassSettingsAppProps> = () => {
     const navigate = useNavigate();
     const location = useLocation();
 

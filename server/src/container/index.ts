@@ -256,4 +256,11 @@ export {
     getContainerStatus,
     shutdownContainers,
     getInitializationError,
+    // Auto-Recovery & Health Monitoring
+    startHealthMonitor,
+    stopHealthMonitor,
+    recoverService,
+    getServicesHealth,
+    type ServiceHealthStatus,
+    type HealthMonitorConfig,
 } from './lifecycle.js';

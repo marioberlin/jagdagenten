@@ -4204,11 +4204,11 @@ const DetailPanel: React.FC<{ example: ComponentExample | null; onClose: () => v
 // Main Component
 // ============================================
 
-interface GlassShowcasePanelProps {
+interface GlassShowcaseAppProps {
     onClose?: () => void;
 }
 
-export const GlassShowcasePanel: React.FC<GlassShowcasePanelProps> = () => {
+export const GlassShowcaseApp: React.FC<GlassShowcaseAppProps> = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [selectedExample, setSelectedExample] = useState<ComponentExample | null>(null);
@@ -4424,4 +4424,4 @@ export const GlassShowcasePanel: React.FC<GlassShowcasePanelProps> = () => {
     );
 };
 
-export default GlassShowcasePanel;
+export default GlassShowcaseApp;

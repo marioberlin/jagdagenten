@@ -14,7 +14,7 @@ import { RushHourLayout } from './layouts/RushHourLayout';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
-const GlassSettingsPanel = lazy(() => import('./components/settings/GlassSettingsPanel').then(mod => ({ default: mod.GlassSettingsPanel })));
+const GlassSettingsApp = lazy(() => import('./components/settings/GlassSettingsApp').then(mod => ({ default: mod.GlassSettingsApp })));
 const Showcase = lazy(() => import('./pages/Showcase').then(mod => ({ default: mod.Showcase })));
 
 const DesignGuide = lazy(() => import('./pages/DesignGuide').then(mod => ({ default: mod.default })));
@@ -137,7 +137,7 @@ export const AppRouter = () => {
                                     <Route path="/os" element={<Home />} />
 
                                     {/* System Apps */}
-                                    <Route path="/os/settings/*" element={<GlassSettingsPanel />} />
+                                    <Route path="/os/settings/*" element={<GlassSettingsApp />} />
                                     <Route path="/os/design" element={<DesignGuide />} />
                                     <Route path="/os/showcase" element={<Showcase />} />
 

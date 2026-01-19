@@ -1,8 +1,8 @@
 /**
- * GlassCoworkPanel
+ * GlassCoworkApp
  *
  * A deep work panel for complex, multi-step tasks.
- * Opens as an overlay window like GlassSettingsPanel.
+ * Opens as an overlay window like GlassSettingsApp.
  * Layout: Left (History) | Main (Input/Progress) | Right (Progress/Artifacts/Context)
  */
 
@@ -40,7 +40,7 @@ import { TaskQueuePanel } from '@/components/cowork/TaskQueuePanel';
 import { cn } from '@/utils/cn';
 import type { TaskOptions, SelectedAgent, CoworkSessionSummary } from '@/types/cowork';
 
-interface GlassCoworkPanelProps {
+interface GlassCoworkAppProps {
     onClose?: () => void;
 }
 
@@ -51,7 +51,7 @@ const SUGGESTED_CONNECTORS = [
     { id: 'linear', name: 'Linear', icon: ExternalLink },
 ];
 
-export const GlassCoworkPanel: React.FC<GlassCoworkPanelProps> = ({ onClose: _onClose }) => {
+export const GlassCoworkApp: React.FC<GlassCoworkAppProps> = ({ onClose: _onClose }) => {
     const {
         activeSession,
         recentSessions,
@@ -491,4 +491,4 @@ export const GlassCoworkPanel: React.FC<GlassCoworkPanelProps> = ({ onClose: _on
     );
 };
 
-export default GlassCoworkPanel;
+export default GlassCoworkApp;

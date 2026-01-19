@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { GlassSmartSheet } from '@/components/features/GlassSmartSheet';
-import { GlassFilesPanel } from '@/components/features/GlassFilesPanel';
+import { GlassFilesApp } from '@/components/features/GlassFilesApp';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { GlassContainer } from '@/components/primitives/GlassContainer';
 import { FileSpreadsheet, FolderOpen } from 'lucide-react';
@@ -73,7 +73,7 @@ export const SheetsDemo = () => {
                 onClose={() => setSheetOpen(false)}
             />
 
-            <GlassFilesPanel
+            <GlassFilesApp
                 open={filesOpen}
                 onClose={() => setFilesOpen(false)}
                 onFileOpen={handleFileSelect}

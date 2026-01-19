@@ -6,6 +6,12 @@
 
 import { z } from 'zod';
 import { router, publicProcedure } from '../index.js';
+import {
+    getContainerStatus,
+    isDockerAvailable,
+    getServicesHealth,
+    recoverService,
+} from '../../container/lifecycle.js';
 
 export const healthRouter = router({
     /**
@@ -50,24 +56,61 @@ export const healthRouter = router({
         }),
 
     /**
-     * Readiness probe for k8s
+     * Readiness probe for k8s with auto-recovery support
      * 
      * @example
      * const ready = await trpc.health.ready.query();
      */
     ready: publicProcedure
-        .query(async () => {
-            // Add checks for dependencies here (DB, Redis, etc.)
+        .input(z.object({
+            autoRecover: z.boolean().optional().default(true),
+        }).optional())
+        .query(async ({ input }) => {
+            const autoRecover = input?.autoRecover ?? true;
+
+            // Get actual container/service health
+            const containerStatus = getContainerStatus();
+            const servicesHealth = await getServicesHealth();
+
+            // Check database (placeholder for now)
+            const databaseHealthy = true; // TODO: actual DB check
+
+            // Determine service status
+            const runtimeHealthy = servicesHealth['liquid-runtime']?.healthy ?? false;
+            const dockerHealthy = isDockerAvailable();
+
+            // Build checks map
             const checks = {
-                database: true, // TODO: actual DB check
-                cache: true,    // TODO: actual cache check
+                database: databaseHealthy,
+                cache: true, // TODO: actual cache check
+                docker: dockerHealthy,
+                containerRuntime: runtimeHealthy,
             };
 
             const allHealthy = Object.values(checks).every(v => v);
+            let autoRecoveryTriggered = false;
+
+            // Auto-recover if enabled and services are down
+            if (autoRecover && !allHealthy) {
+                if (!runtimeHealthy) {
+                    await recoverService('liquid-runtime');
+                    autoRecoveryTriggered = true;
+                }
+                if (!dockerHealthy) {
+                    await recoverService('docker');
+                    autoRecoveryTriggered = true;
+                }
+            }
 
             return {
                 ready: allHealthy,
                 checks,
+                container: {
+                    mode: containerStatus.mode,
+                    dockerAvailable: containerStatus.dockerAvailable,
+                    poolReady: containerStatus.poolReady,
+                },
+                autoRecoveryTriggered,
                 timestamp: new Date().toISOString(),
             };
         }),
@@ -82,6 +125,40 @@ export const healthRouter = router({
         .query(async () => {
             return {
                 alive: true,
+                timestamp: new Date().toISOString(),
+            };
+        }),
+
+    /**
+     * Trigger service recovery
+     * 
+     * @example
+     * const result = await trpc.health.recover.mutate({ serviceId: 'liquid-runtime' });
+     */
+    recover: publicProcedure
+        .input(z.object({
+            serviceId: z.enum(['liquid-runtime', 'docker']),
+        }))
+        .mutation(async ({ input }) => {
+            const success = await recoverService(input.serviceId);
+            return {
+                serviceId: input.serviceId,
+                success,
+                timestamp: new Date().toISOString(),
+            };
+        }),
+
+    /**
+     * Get detailed services health
+     * 
+     * @example
+     * const services = await trpc.health.services.query();
+     */
+    services: publicProcedure
+        .query(async () => {
+            const services = await getServicesHealth();
+            return {
+                services,
                 timestamp: new Date().toISOString(),
             };
         }),

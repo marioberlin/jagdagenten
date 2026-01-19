@@ -2,7 +2,7 @@
  * GlassContainerSettings
  *
  * Beautiful settings panel for configuring LiquidContainer deployment.
- * Follows the design patterns from GlassSettingsPanel.
+ * Follows the design patterns from GlassSettingsApp.
  */
 
 import React, { useState, useMemo } from 'react';

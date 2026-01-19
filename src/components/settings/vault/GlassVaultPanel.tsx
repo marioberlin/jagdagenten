@@ -2,7 +2,7 @@
  * Glass Vault Panel
  * 
  * Main vault settings panel with sub-tabs for Entities, Personal, Roles, Autofill, Security, Audit.
- * Integrates into GlassSettingsPanel as the "Vault" tab.
+ * Integrates into GlassSettingsApp as the "Vault" tab.
  */
 
 import React, { useState, useMemo, useEffect } from 'react';

@@ -18,5 +18,5 @@ export { TaskTicket } from './TaskTicket';
 export type { QueuedTask } from './TaskTicket';
 export { TaskPrioritySelector, PriorityBadge, QuickPriorityButtons, priorityToNumber, numberToPriority } from './TaskPrioritySelector';
 export type { PriorityLevel } from './TaskPrioritySelector';
-export { GlassCoworkPanel } from './GlassCoworkPanel';
+export { GlassCoworkApp } from './GlassCoworkApp';
 export { GlassFilePicker } from './GlassFilePicker';

@@ -11,13 +11,13 @@ interface ParsedFile {
     lastOpened?: number;
 }
 
-interface GlassFilesPanelProps {
+interface GlassFilesAppProps {
     open: boolean;
     onClose: () => void;
     onFileOpen: (file: ParsedFile) => void;
 }
 
-export const GlassFilesPanel: React.FC<GlassFilesPanelProps> = ({
+export const GlassFilesApp: React.FC<GlassFilesAppProps> = ({
     open,
     onClose,
     onFileOpen,
