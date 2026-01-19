@@ -38,8 +38,25 @@ export const LiquidOSLayout: React.FC = () => {
             }
         };
 
+        // Listen for Cowork Toggle from Menu Bar
+        const handleCoworkToggle = () => {
+            setCoworkOpen(prev => {
+                const newState = !prev;
+                if (newState) {
+                    setSettingsOpen(false);
+                    setShowcaseOpen(false);
+                }
+                return newState;
+            });
+        };
+
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('liquid:toggle-cowork', handleCoworkToggle);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('liquid:toggle-cowork', handleCoworkToggle);
+        };
     }, []);
 
     // Determine if dock should be shown

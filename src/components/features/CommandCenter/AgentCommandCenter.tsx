@@ -23,11 +23,11 @@ export const AgentCommandCenter: React.FC = () => {
             >
                 {/* Header */}
                 <div className="text-center mb-12">
-                    <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 tracking-tight mb-4">
+                    <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 tracking-tight mb-4 translate-x-3">
                         Liquid OS <span className="text-xl align-top opacity-50 font-mono">v2.0</span>
                     </h1>
-                    <p className="text-xl text-white/60 font-light">
-                        Spatial Operating System initialized.
+                    <p className="text-xl text-white/60 font-light translate-y-[-10px]">
+                        Agentic Enterprise Operating System initialized
                     </p>
                 </div>
 

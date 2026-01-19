@@ -19,6 +19,7 @@ import { useFileMenuItems } from '../menus/FileMenu';
 import { useEditMenuItems } from '../menus/EditMenu';
 import { useAgentMenuItems } from '../menus/AgentMenu';
 import { useViewMenuItems } from '../menus/ViewMenu';
+import { useGoMenuItems } from '../menus/GoMenu';
 import { useMemoryMenuItems } from '../menus/MemoryMenu';
 import { useContextMenuItems } from '../menus/ContextMenu';
 import { useHelpMenuItems } from '../menus/HelpMenu';
@@ -32,6 +33,7 @@ export const LeftZone: React.FC = () => {
     const editMenuItems = useEditMenuItems();
     const agentMenuItems = useAgentMenuItems();
     const viewMenuItems = useViewMenuItems();
+    const goMenuItems = useGoMenuItems();
     const memoryMenuItems = useMemoryMenuItems();
     const contextMenuItems = useContextMenuItems();
     const helpMenuItems = useHelpMenuItems();
@@ -40,8 +42,9 @@ export const LeftZone: React.FC = () => {
     const standardMenus = [
         { id: 'file', label: 'File', items: fileMenuItems },
         { id: 'edit', label: 'Edit', items: editMenuItems },
-        { id: 'agent', label: 'Agent', items: agentMenuItems },
         { id: 'view', label: 'View', items: viewMenuItems },
+        { id: 'go', label: 'Go', items: goMenuItems },
+        { id: 'agent', label: 'Agent', items: agentMenuItems },
         { id: 'memory', label: 'Memory', items: memoryMenuItems },
     ];
 

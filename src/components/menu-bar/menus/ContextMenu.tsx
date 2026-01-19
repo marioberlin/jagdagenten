@@ -7,15 +7,14 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Minimize2,
-    Maximize2,
-    Command,
-    Zap,
-    Compass,
+    Lock,
     Briefcase,
-    Layout,
-    Sparkles,
-    Layers
+    MessageSquare,
+    Search,
+    BookOpen,
+    PenTool,
+    FileText,
+    Brain,
 } from 'lucide-react';
 import type { MenuItemDef } from '@/context/MenuBarContext';
 
@@ -23,79 +22,65 @@ export function useContextMenuItems(): MenuItemDef[] {
     const navigate = useNavigate();
 
     return useMemo<MenuItemDef[]>(() => [
+        // Section 1: Modes (Private / Business)
         {
-            id: 'minimize',
-            label: 'Minimize',
-            icon: Minimize2,
-            shortcut: '⌘M',
+            id: 'mode-private',
+            label: 'Private',
+            icon: Lock,
             action: () => {
-                console.log('Minimize');
+                console.log('Switch to Private Mode');
             },
         },
         {
-            id: 'zoom',
-            label: 'Zoom',
-            icon: Maximize2,
+            id: 'mode-business',
+            label: 'Business',
+            icon: Briefcase,
             action: () => {
-                console.log('Zoom window');
+                console.log('Switch to Business Mode');
             },
         },
         { id: 'sep-1', label: '', dividerAfter: true },
-        // Quick navigation to main areas
+
+        // Section 2: Prompting Tools
         {
-            id: 'command-center',
-            label: 'Command Center',
-            icon: Command,
-            shortcut: '⌘1',
-            action: () => navigate('/os'),
+            id: 'prompt',
+            label: 'Prompt',
+            icon: MessageSquare,
+            action: () => navigate('/os/prompt'), // Placeholder route
         },
         {
-            id: 'rush-hour',
-            label: 'RushHour Terminal',
-            icon: Zap,
-            shortcut: '⌘2',
-            action: () => navigate('/terminal'),
-        },
-        {
-            id: 'agent-hub',
-            label: 'Agent Hub',
-            icon: Compass,
-            shortcut: '⌘3',
-            action: () => navigate('/os/agents'),
-        },
-        {
-            id: 'cowork-mode',
-            label: 'Cowork Mode',
-            icon: Briefcase,
-            shortcut: '⌘4',
-            action: () => navigate('/os/cowork'),
+            id: 'prompt-finder',
+            label: 'Prompt Finder',
+            icon: Search,
+            action: () => navigate('/os/prompt-finder'), // Placeholder route
         },
         { id: 'sep-2', label: '', dividerAfter: true },
+
+        // Section 3: Knowledge Management
         {
-            id: 'design-explorer',
-            label: 'Design Explorer',
-            icon: Layout,
-            action: () => navigate('/os/design'),
-        },
-        {
-            id: 'component-library',
-            label: 'Component Library',
-            icon: Sparkles,
-            action: () => navigate('/os/showcase'),
-        },
-        {
-            id: 'demos',
-            label: 'Demos',
-            icon: Layers,
-            action: () => navigate('/os/demos'),
-        },
-        { id: 'sep-3', label: '', dividerAfter: true },
-        {
-            id: 'bring-to-front',
-            label: 'Bring All to Front',
-            action: () => {
-                console.log('Bring all to front');
-            },
+            id: 'knowledge',
+            label: 'Knowledge',
+            icon: BookOpen,
+            submenu: [
+                {
+                    id: 'know-input',
+                    label: 'Input',
+                    icon: PenTool,
+                    action: () => navigate('/os/knowledge/input'), // Placeholder route
+                },
+                {
+                    id: 'know-finder',
+                    label: 'File Finder',
+                    icon: FileText,
+                    action: () => navigate('/os/knowledge/files'), // Placeholder route
+                },
+                {
+                    id: 'know-rag',
+                    label: 'RAG',
+                    icon: Brain,
+                    action: () => navigate('/os/knowledge/rag'), // Placeholder route
+                },
+            ]
         },
     ], [navigate]);
 }

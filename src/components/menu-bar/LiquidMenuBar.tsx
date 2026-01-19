@@ -63,7 +63,7 @@ export const LiquidMenuBar: React.FC<LiquidMenuBarProps> = ({ className }) => {
                 "flex items-center justify-between",
                 // Glass material
                 "bg-[var(--glass-bg-regular)] backdrop-blur-xl",
-                "border-b border-[var(--glass-border)]",
+
                 // Typography
                 "text-[13px] font-normal text-[var(--glass-text-primary)]",
                 // Padding
