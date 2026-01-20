@@ -198,7 +198,9 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
             }}
             onPointerDown={onFocus}
             style={{
-                position: 'absolute', // Absolute positioning controlled by motion
+                position: 'fixed', // Fixed positioning to overlay the entire viewport
+                top: 0,
+                left: 0,
                 zIndex: isActive ? 50 : 10,
             }}
             transition={{
