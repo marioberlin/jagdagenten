@@ -1,4 +1,3 @@
-import { ILiquidLLMService } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper to get base URL
@@ -7,7 +6,11 @@ const getBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL || '';
 };
 
-export class AIResearcherService implements ILiquidLLMService {
+/**
+ * AIResearcherService - A2A Agent Client
+ * Communicates with the AI Researcher agent via A2A protocol
+ */
+export class AIResearcherService {
     private baseUrl: string;
     private contextId: string;
     private onDataUpdate?: (data: any) => void;

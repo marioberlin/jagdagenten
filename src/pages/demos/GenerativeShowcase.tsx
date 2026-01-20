@@ -6,15 +6,15 @@ import { GlassSmartWeather } from '../../components/generative/GlassSmartWeather
 import { GlassSmartList } from '../../components/generative/GlassSmartList';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidProvider } from '../../liquid-engine/react';
+import { LiquidClient } from '../../liquid-engine/client';
 
-import { liquidClient } from '../../services/liquid';
-
-// Using singleton instance for global context sharing
+// Create a shared client for this showcase
+const showcaseClient = new LiquidClient();
 
 export default function GenerativeShowcase() {
     const navigate = useNavigate();
     return (
-        <LiquidProvider client={liquidClient}>
+        <LiquidProvider client={showcaseClient}>
             <div className="h-screen bg-glass-base flex overflow-hidden">
                 {/* Main Content Area */}
                 <div className="flex-1 p-10 overflow-auto relative">

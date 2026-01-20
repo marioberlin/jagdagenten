@@ -224,48 +224,24 @@ const MaterialThicknessDemo = () => {
     );
 };
 
-// SF Symbols Demo
-const SFSymbolsDemo = () => {
+// Lucide Icons Demo (replaced SF Symbols)
+const LucideIconsDemo = () => {
     const [renderMode, setRenderMode] = useState('monochrome');
 
-    // Detect dark mode
-    const [isDarkMode, setIsDarkMode] = useState(() =>
-        typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-    );
-
-    React.useEffect(() => {
-        const observer = new MutationObserver(() => {
-            setIsDarkMode(document.documentElement.classList.contains('dark'));
-        });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => observer.disconnect();
-    }, []);
-
-    const symbols = [
-        { name: 'cloud.sun.rain.fill' },
-        { name: 'bell.fill' },
-        { name: 'phone.fill' },
-        { name: 'music.note.list' },
+    const icons = [
+        { name: 'CloudSun', Icon: (props: any) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 2v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="M20 12h2" /><path d="m19.07 4.93-1.41 1.41" /><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128" /><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" /></svg> },
+        { name: 'Bell', Icon: (props: any) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg> },
+        { name: 'Phone', Icon: (props: any) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg> },
+        { name: 'Music', Icon: (props: any) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> },
     ];
 
-    // Get filter based on render mode and theme
-    const getIconFilter = (mode: string) => {
-        const baseInvert = isDarkMode ? 'invert(1)' : 'invert(0)';
+    const getIconColor = (mode: string) => {
         switch (mode) {
-            case 'monochrome':
-                // Blue tint: apply sepia then hue-rotate to blue
-                return `${baseInvert} sepia(1) saturate(5) hue-rotate(200deg)`;
-            case 'hierarchical':
-                // Blue with some transparency effect via brightness
-                return `${baseInvert} sepia(1) saturate(3) hue-rotate(200deg) drop-shadow(0 0 4px rgba(59,130,246,0.5))`;
-            case 'palette':
-                // Purple/pink gradient effect
-                return `${baseInvert} sepia(1) saturate(3) hue-rotate(260deg)`;
-            case 'multicolor':
-                // No color change - just invert for dark mode
-                return baseInvert;
-            default:
-                return baseInvert;
+            case 'monochrome': return 'text-blue-500';
+            case 'hierarchical': return 'text-blue-500/80';
+            case 'palette': return 'text-purple-500';
+            case 'multicolor': return 'text-primary';
+            default: return 'text-primary';
         }
     };
 
@@ -287,24 +263,14 @@ const SFSymbolsDemo = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {symbols.map((sym) => (
-                    <div key={sym.name} className="bg-glass-surface rounded-2xl p-6 flex flex-col items-center gap-3">
-                        <img
-                            src={`/symbols/${sym.name}/regular.svg`}
-                            alt=""
-                            aria-hidden="true"
-                            width={48}
-                            height={48}
-                            className="object-contain"
-                            style={{
-                                filter: getIconFilter(renderMode),
-                                width: 48,
-                                height: 48,
-                                opacity: renderMode === 'hierarchical' ? 0.9 : 1
-                            }}
+                {icons.map((icon) => (
+                    <div key={icon.name} className="bg-glass-surface rounded-2xl p-6 flex flex-col items-center gap-3">
+                        <icon.Icon
+                            className={`w-12 h-12 ${getIconColor(renderMode)}`}
+                            style={{ opacity: renderMode === 'hierarchical' ? 0.9 : 1 }}
                         />
-                        <code className="text-xs font-mono text-tertiary text-center break-all">
-                            {sym.name}
+                        <code className="text-xs font-mono text-tertiary text-center">
+                            {icon.name}
                         </code>
                     </div>
                 ))}
@@ -313,10 +279,13 @@ const SFSymbolsDemo = () => {
             <div className="bg-glass-surface rounded-2xl p-4">
                 <h4 className="font-semibold mb-2 text-primary">Rendering Mode: {renderMode}</h4>
                 <p className="text-sm text-secondary">
-                    {renderMode === 'monochrome' && 'Single color applied to all symbol paths. Best for simple, consistent iconography.'}
-                    {renderMode === 'hierarchical' && 'Different opacities of one color create visual depth and hierarchy between layers.'}
-                    {renderMode === 'palette' && 'Multiple custom colors applied to different layers. Full control over appearance.'}
-                    {renderMode === 'multicolor' && 'Symbols render with their inherent colors. Best for symbols representing real-world objects.'}
+                    {renderMode === 'monochrome' && 'Single color applied to all icon paths. Best for simple, consistent iconography.'}
+                    {renderMode === 'hierarchical' && 'Different opacities of one color create visual depth and hierarchy.'}
+                    {renderMode === 'palette' && 'Custom colors applied with full control over appearance.'}
+                    {renderMode === 'multicolor' && 'Icons render with theme-aware colors. Adapts to light/dark mode.'}
+                </p>
+                <p className="text-xs text-tertiary mt-2">
+                    Using lucide-react icons (260+ icons available)
                 </p>
             </div>
         </div>
@@ -938,13 +907,13 @@ export default function DesignGuide() {
                 {activeTab === 'icons' && (
                     <div className="space-y-8">
                         <div>
-                            <h2 className="text-2xl font-bold mb-2">SF Symbols</h2>
+                            <h2 className="text-2xl font-bold mb-2">Lucide Icons</h2>
                             <p className="text-secondary mb-6">
-                                Thousands of consistent, highly configurable symbols that integrate seamlessly
-                                with San Francisco system font in all weights and sizes.
+                                260+ consistent, highly configurable SVG icons that integrate seamlessly
+                                with any font in all weights and sizes.
                             </p>
                         </div>
-                        <SFSymbolsDemo />
+                        <LucideIconsDemo />
                     </div>
                 )}
 

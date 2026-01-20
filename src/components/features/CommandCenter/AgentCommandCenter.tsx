@@ -4,7 +4,7 @@ import { useAgentConfig } from '@/context/AgentConfigContext';
 import { Activity, Cpu, Shield, Zap, Search, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ServiceInfoTooltip } from './ServiceInfoTooltip';
-import { useServiceHealth } from '@/hooks/useServiceHealth';
+import { useServiceHealth, type ServiceHealthStatus } from '@/hooks/useServiceHealth';
 import { SERVICE_DESCRIPTIONS } from '@/data/serviceDescriptions';
 
 /**
@@ -135,9 +135,9 @@ interface StatusCardProps {
     serviceId?: string;
     isHovered?: boolean;
     onHover?: (label: string | null) => void;
-    healthStatus?: 'healthy' | 'unhealthy' | 'unknown' | 'checking';
+    healthStatus?: ServiceHealthStatus['status'];
     showWarning?: boolean;
-    allServices?: Record<string, { status: 'healthy' | 'unhealthy' | 'unknown' | 'checking' }>;
+    allServices?: Record<string, ServiceHealthStatus>;
 }
 
 const StatusCard: React.FC<StatusCardProps> = ({

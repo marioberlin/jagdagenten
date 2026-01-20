@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
-
-
-
+// Types are provided by src/types/google.d.ts
 
 interface UseGoogleAuthResult {
     accessToken: string | null;
@@ -29,7 +27,7 @@ export const useGoogleAuth = (
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isGisLoaded, setIsGisLoaded] = useState(false);
-    const tokenClientRef = useRef<TokenClient | null>(null);
+    const tokenClientRef = useRef<ReturnType<typeof window.google.accounts.oauth2.initTokenClient> | null>(null);
     const tokenExpiryRef = useRef<number | null>(null);
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -71,7 +69,7 @@ export const useGoogleAuth = (
             tokenClientRef.current = window.google!.accounts.oauth2.initTokenClient({
                 client_id: clientId,
                 scope: scopes.join(' '),
-                callback: (response: TokenResponse) => {
+                callback: (response) => {
                     setIsLoading(false);
                     if (response.error) {
                         setError(response.error_description || response.error);
@@ -91,8 +89,9 @@ export const useGoogleAuth = (
                     setError(err.message || 'Authentication failed');
                 },
             });
-        } catch (e: any) {
-            setError(`Failed to initialize OAuth client: ${e.message}`);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            setError(`Failed to initialize OAuth client: ${message}`);
         }
     }, [isGisLoaded, clientId, scopes.join(' ')]);
 

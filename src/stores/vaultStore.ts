@@ -15,6 +15,7 @@ import {
     VaultAddress,
     VaultRole,
     VaultIdentifier,
+    VaultBankAccount,
     AuditEntry,
     DomainDefault,
     AddressPurpose,

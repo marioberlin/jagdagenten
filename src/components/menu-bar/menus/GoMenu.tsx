@@ -5,7 +5,6 @@ import { REMOTE_AGENTS } from '@/config/remote-agents.config';
 import {
     Layout,
     Zap,
-    Terminaal, // Typo intentional to check if lucide has it, realized it's Terminal
     Terminal,
     Briefcase,
     Compass,
@@ -19,7 +18,7 @@ import {
 
 export const useGoMenuItems = (): MenuItemDef[] => {
     const navigate = useNavigate();
-    const { setOpenMenuId, setCoworkOpen } = useMenuBar(); // Assuming setCoworkOpen is available in context? 
+    const { setOpenMenuId: _setOpenMenuId } = useMenuBar();
     // LeftZone uses setOpenMenuId. 
     // Wait, setCoworkOpen is typically in LiquidOSLayout state, likely passed down or in a persistent store. 
     // If not in MenuBarContext, we might need to rely on 'Cowork Mode' being an App that routes or finding a way to toggle.

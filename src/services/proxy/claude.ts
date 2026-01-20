@@ -1,6 +1,15 @@
 import { LiquidClient } from "../../liquid-engine/client";
 import { ILiquidLLMService, FileSearchConfig, ChatOptions } from "../types";
 
+// Claude models - exported for UI
+export const CLAUDE_MODELS = {
+    'claude-sonnet-4-5-20241022': 'Claude Sonnet 4.5',
+    'claude-opus-4-5-20251101': 'Claude Opus 4.5',
+    'claude-haiku-3-5-20241022': 'Claude Haiku 3.5',
+} as const;
+
+export type ClaudeModelId = keyof typeof CLAUDE_MODELS;
+
 /**
  * ClaudeProxyService - Secure Claude integration via backend proxy.
  * 

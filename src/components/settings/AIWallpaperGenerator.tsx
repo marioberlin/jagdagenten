@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GlassPageHeader } from '../../components/layout/GlassPageHeader';
 import { Sparkles, Upload, RefreshCw, Image as ImageIcon, Loader2, Trash2, Pencil } from 'lucide-react';
 import { useOptionalLiquidClient } from '../../liquid-engine/react';
-import { GeminiService } from '../../services/gemini';
+import { GeminiProxyService } from '../../services/proxy/gemini';
 import { addDynamicBackground } from '../../components/Backgrounds/BackgroundRegistry';
 
 interface AIWallpaperGeneratorProps {
@@ -24,7 +24,7 @@ export const AIWallpaperGenerator: React.FC<AIWallpaperGeneratorProps> = ({ onSe
     const [imageSize, setImageSize] = useState('1K');
     const [referenceImage, setReferenceImage] = useState<string | null>(null);
     const [generatedHistory, setGeneratedHistory] = useState<GeneratedImage[]>([]);
-    const [geminiService, setGeminiService] = useState<GeminiService | null>(null);
+    const [geminiService, setGeminiService] = useState<GeminiProxyService | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,25 +37,21 @@ export const AIWallpaperGenerator: React.FC<AIWallpaperGeneratorProps> = ({ onSe
         "Minimalist geometric shapes, soft pastel colors, bauhaus style"
     ];
 
-    // Initialize Service
+    // Initialize Service - use proxy service to avoid exposing API keys
     useEffect(() => {
         console.log("AIWallpaperGenerator Mounted");
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-        if (apiKey) {
-            // If no Liquid Context is available (e.g. widely used in Settings), we use a mock client
-            const targetClient = client || ({
-                getActions: () => [],
-                buildContextPrompt: () => "",
-                ingest: () => { },
-                executeAction: async () => ({})
-            } as any);
+        // If no Liquid Context is available, we use a mock client
+        const targetClient = client || ({
+            getActions: () => [],
+            buildContextPrompt: () => "",
+            ingest: () => { },
+            executeAction: async () => ({})
+        } as any);
 
-            console.log("Initializing Gemini Service", { hasKey: true, usingMockClient: !client });
-            setGeminiService(new GeminiService(apiKey, targetClient));
-        } else {
-            console.log("No API Key found");
-        }
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        console.log("Initializing Gemini Proxy Service", { baseUrl, usingMockClient: !client });
+        setGeminiService(new GeminiProxyService(targetClient, baseUrl));
 
         // Load history
         const savedHistory = localStorage.getItem('ai_wallpaper_history');

@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { router, publicProcedure, ChatInputSchema } from './index.js';
+import { router, publicProcedure, ChatInputSchema } from '../index.js';
 import { callAI, callParallelAI } from '../ai/index.js';
 
 export const aiRouter = router({
@@ -21,7 +21,7 @@ export const aiRouter = router({
     chat: publicProcedure
         .input(ChatInputSchema)
         .mutation(async ({ input, ctx }) => {
-            const { provider, messages, stream } = input;
+            const { provider, messages, stream: _stream } = input;
 
             // Convert to format expected by callAI
             const formattedMessages = messages.map(m => ({

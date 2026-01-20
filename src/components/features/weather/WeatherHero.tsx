@@ -1,4 +1,4 @@
-import React from 'react';
+// React is auto-imported in JSX runtime;
 import { MapPin } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassContainer } from '@/components';

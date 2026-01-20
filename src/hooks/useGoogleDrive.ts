@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useGoogleAuth } from "./useGoogleAuth";
 
-
+// Types are provided by src/types/google.d.ts
 
 interface PickerOptions {
     onSelect: (file: { id: string, name: string, url: string }) => void;

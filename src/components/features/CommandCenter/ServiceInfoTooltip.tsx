@@ -19,7 +19,7 @@ interface ServiceInfoTooltipProps {
     service: ServiceDescription;
     isVisible: boolean;
     position?: 'top' | 'bottom';
-    healthStatus?: 'healthy' | 'unhealthy' | 'unknown' | 'checking';
+    healthStatus?: ServiceHealthStatus['status'];
     className?: string;
     /** All services health status for System Status tooltip */
     allServices?: Record<string, ServiceHealthStatus>;
@@ -39,18 +39,20 @@ export const ServiceInfoTooltip: React.FC<ServiceInfoTooltipProps> = ({
     className,
     allServices,
 }) => {
-    const statusColors = {
+    const statusColors: Record<ServiceHealthStatus['status'], string> = {
         healthy: 'text-emerald-400 bg-emerald-500/20',
         unhealthy: 'text-red-400 bg-red-500/20',
         unknown: 'text-gray-400 bg-gray-500/20',
         checking: 'text-blue-400 bg-blue-500/20',
+        recovering: 'text-yellow-400 bg-yellow-500/20',
     };
 
-    const statusLabels = {
+    const statusLabels: Record<ServiceHealthStatus['status'], string> = {
         healthy: 'Online',
         unhealthy: 'Offline',
         unknown: 'Unknown',
         checking: 'Checking...',
+        recovering: 'Recovering...',
     };
 
     // Determine which services to show based on service type

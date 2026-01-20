@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Bell, AlertTriangle, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassContainer } from '@/components';

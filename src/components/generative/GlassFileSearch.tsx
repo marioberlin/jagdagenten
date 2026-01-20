@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Upload, Loader2, Database } from 'lucide-react';
-import { GeminiService } from '../../services/gemini';
+import { GeminiProxyService } from '../../services/proxy/gemini';
 
 interface GlassFileSearchProps {
-    geminiService: GeminiService | null;
+    geminiService: GeminiProxyService | null;
     onConfigChange: (config: { enabled: boolean; stores: string[] }) => void;
 }
 

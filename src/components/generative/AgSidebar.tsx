@@ -1,10 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { Send, Bot } from 'lucide-react';
-import { GeminiService } from '../../services/gemini';
 import { GeminiProxyService } from '../../services/proxy/gemini';
-import { ClaudeService, CLAUDE_MODELS, ClaudeModelId } from '../../services/claude';
-import { ClaudeProxyService } from '../../services/proxy/claude';
+import { ClaudeProxyService, CLAUDE_MODELS, ClaudeModelId } from '../../services/proxy/claude';
 import { useLiquidClient } from '../../liquid-engine/react';
 import { useLocation } from 'react-router-dom';
 import { useAgentConfig } from '../../context/AgentConfigContext';
@@ -23,9 +21,6 @@ const GEMINI_MODELS = {
 type GeminiModelId = keyof typeof GEMINI_MODELS;
 
 interface AgSidebarProps {
-    apiKey?: string;
-    apiKey?: string;
-    claudeApiKey?: string;
     apiKey?: string;
     claudeApiKey?: string;
     initialService?: any; // Allow injecting a custom service (like an A2A agent client)
@@ -79,38 +74,26 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
     const claudeService = useMemo(() => {
         try {
-            // Default to Proxy if no key provided, or if in production
-            if (!claudeApiKey || runtimeMode === 'production') {
-                const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-                return new ClaudeProxyService(client, baseUrl);
-            }
-            // If key is explicitly provided, use client-side service (legacy/fallback)
-            return new ClaudeService(claudeApiKey, client);
+            // Always use proxy service to avoid exposing API keys
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+            return new ClaudeProxyService(client, baseUrl);
         } catch (e) {
-            console.error("Failed to init ClaudeService:", e);
+            console.error("Failed to init ClaudeProxyService:", e);
             return null;
         }
-    }, [claudeApiKey, client, runtimeMode]);
+    }, [client]);
 
 
     // Get current service and model
     const currentService = initialService || (provider === 'gemini' ? geminiService : claudeService);
-    const currentApiKey = initialService ? 'custom' : (provider === 'gemini' ? apiKey : claudeApiKey);
 
 
     // Update service models when selection changes
     React.useEffect(() => {
         if (geminiService) {
             geminiService.setModel(geminiModel);
-
-            // Auto-apply File Search config from context for the current route
-            const config = getConfigForRoute(location.pathname);
-            if (config.fileSearch) {
-                (geminiService as GeminiService).setFileSearchConfig(config.fileSearch);
-                console.log(`[AgSidebar] Applied FileSearch config for ${location.pathname}`, config.fileSearch);
-            }
         }
-    }, [geminiModel, geminiService, location.pathname, getConfigForRoute]);
+    }, [geminiModel, geminiService]);
 
     React.useEffect(() => {
         if (claudeService) {

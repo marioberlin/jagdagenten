@@ -1,4 +1,4 @@
-import React from 'react';
+// React is auto-imported in JSX runtime;
 import { Droplets, Wind, Gauge, Eye, Thermometer, UmbrellaOff } from 'lucide-react';
 import { GlassContainer } from '@/components';
 import { CurrentWeather } from '@/services/a2a/AuroraWeatherService';

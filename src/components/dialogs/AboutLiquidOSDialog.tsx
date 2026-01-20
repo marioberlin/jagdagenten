@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { X, ChevronDown, ChevronRight, Activity, AlertCircle, ExternalLink } from 'lucide-react';
 import { SERVICE_DESCRIPTIONS, type ServiceDescription } from '@/data/serviceDescriptions';
-import { useServiceHealth } from '@/hooks/useServiceHealth';
+import { useServiceHealth, type ServiceHealthStatus } from '@/hooks/useServiceHealth';
 
 interface AboutLiquidOSDialogProps {
     isOpen: boolean;
@@ -25,15 +25,16 @@ export const AboutLiquidOSDialog: React.FC<AboutLiquidOSDialogProps> = ({ isOpen
         .map(id => SERVICE_DESCRIPTIONS[id])
         .filter(Boolean);
 
-    const getHealthStatus = (serviceId: string): 'healthy' | 'unhealthy' | 'unknown' | 'checking' => {
+    const getHealthStatus = (serviceId: string): ServiceHealthStatus['status'] => {
         return healthStatus[serviceId]?.status || 'unknown';
     };
 
-    const statusColors = {
+    const statusColors: Record<ServiceHealthStatus['status'], string> = {
         healthy: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
         unhealthy: 'text-red-400 bg-red-500/20 border-red-500/30',
         unknown: 'text-gray-400 bg-gray-500/20 border-gray-500/30',
         checking: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+        recovering: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
     };
 
     return (
@@ -131,8 +132,8 @@ interface ServiceRowProps {
     service: ServiceDescription;
     isExpanded: boolean;
     onToggle: () => void;
-    healthStatus: 'healthy' | 'unhealthy' | 'unknown' | 'checking';
-    statusColors: Record<string, string>;
+    healthStatus: ServiceHealthStatus['status'];
+    statusColors: Record<ServiceHealthStatus['status'], string>;
 }
 
 const ServiceRow: React.FC<ServiceRowProps> = ({
@@ -180,7 +181,8 @@ const ServiceRow: React.FC<ServiceRowProps> = ({
                         )}
                         {healthStatus === 'healthy' ? 'Online' :
                             healthStatus === 'unhealthy' ? 'Offline' :
-                                healthStatus === 'checking' ? 'Checking...' : 'Unknown'}
+                                healthStatus === 'checking' ? 'Checking...' :
+                                    healthStatus === 'recovering' ? 'Recovering...' : 'Unknown'}
                     </div>
                 </div>
             </button>

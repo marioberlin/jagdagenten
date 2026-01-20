@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { GeminiService } from '../../services/gemini';
+import { GeminiProxyService } from '../../services/proxy/gemini';
 import { NLWebOrchestrator, type PipelineStage, type SecureSession } from './NLWebOrchestrator';
 import type { ConversationTurn } from './Decontextualizer';
 
@@ -15,8 +15,8 @@ import type { ConversationTurn } from './Decontextualizer';
 // ============================================================================
 
 export interface UseSecureNLWebOptions {
-    /** Gemini API key (required) */
-    apiKey: string;
+    /** Base URL for the API proxy (defaults to localhost:3000) */
+    baseUrl?: string;
     /** Knowledge base items from Settings (Schema.org JSON-LD or plain text) */
     knowledgeBase?: string[];
     /** Initial session state (for restoring from storage) */
@@ -75,7 +75,7 @@ function createDefaultSession(): SecureSession {
 // ============================================================================
 
 export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebReturn {
-    const { apiKey, knowledgeBase = [], initialSession, onSynthesize } = options;
+    const { baseUrl = 'http://localhost:3000', knowledgeBase = [], initialSession, onSynthesize } = options;
 
     // State
     const [stage, setStage] = useState<PipelineStage>('idle');
@@ -91,23 +91,24 @@ export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebRe
     // Refs for mutable state
     const conversationHistory = useRef<ConversationTurn[]>([]);
 
-    // Memoized Gemini service
+    // Memoized Gemini proxy service
     const geminiService = useMemo(() => {
-        if (!apiKey) return null;
         try {
-            // Create a minimal mock client for the service
+            // Create a minimal mock client for the proxy service
             const mockClient = {
                 getActions: () => [],
                 buildContextPrompt: () => '',
+                buildFunctionDeclarations: () => [],
                 ingest: () => { },
+                getToolState: () => null,
                 executeAction: async () => ({}),
             } as any;
-            return new GeminiService(apiKey, mockClient);
+            return new GeminiProxyService(mockClient, baseUrl);
         } catch (e) {
-            console.error('[useSecureNLWeb] Failed to create GeminiService:', e);
+            console.error('[useSecureNLWeb] Failed to create GeminiProxyService:', e);
             return null;
         }
-    }, [apiKey]);
+    }, [baseUrl]);
 
     // Stage change handler
     const handleStageChange = useCallback((newStage: PipelineStage, message: string) => {

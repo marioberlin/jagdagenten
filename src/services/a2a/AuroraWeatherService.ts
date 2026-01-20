@@ -128,7 +128,7 @@ const getBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL || '';
 };
 
-export class AuroraWeatherService implements ILiquidLLMService {
+export class AuroraWeatherService  {
     private baseUrl: string;
     private contextId: string;
     private onDataUpdate?: (data: WeatherUpdate) => void;

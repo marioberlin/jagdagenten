@@ -136,5 +136,63 @@ export class GeminiProxyService implements ILiquidLLMService {
             }
         }
     }
+
+    // =========================================================================
+    // File Search Stubs - To be implemented with backend endpoints
+    // =========================================================================
+
+    /**
+     * List file search stores (stub - not yet implemented on backend)
+     */
+    async listFileSearchStores(): Promise<{ fileSearchStores: { name: string; displayName: string }[] }> {
+        console.warn('[GeminiProxyService] listFileSearchStores not yet implemented via proxy');
+        return { fileSearchStores: [] };
+    }
+
+    /**
+     * Create file search store (stub - not yet implemented on backend)
+     */
+    async createFileSearchStore(name: string): Promise<{ name: string }> {
+        console.warn('[GeminiProxyService] createFileSearchStore not yet implemented via proxy', name);
+        throw new Error('File search store creation not yet available via proxy');
+    }
+
+    /**
+     * Upload to file search store (stub - not yet implemented on backend)
+     */
+    async uploadToFileSearchStore(_storeName: string, _file: File): Promise<void> {
+        console.warn('[GeminiProxyService] uploadToFileSearchStore not yet implemented via proxy');
+        throw new Error('File upload not yet available via proxy');
+    }
+
+    /**
+     * Generate image (stub - not yet implemented on backend)
+     */
+    async generateImage(_prompt: string, _options?: { aspectRatio?: string; imageSize?: string; referenceImages?: string[] }): Promise<string[]> {
+        console.warn('[GeminiProxyService] generateImage not yet implemented via proxy');
+        throw new Error('Image generation not yet available via proxy');
+    }
+
+    /**
+     * Update Schema.org JSON-LD (stub - not yet implemented on backend)
+     */
+    async updateSchema(currentJson: string, refinement: string, _schemaReference?: string): Promise<string> {
+        console.warn('[GeminiProxyService] updateSchema not yet implemented via proxy');
+        // Return original JSON with a note for now
+        return currentJson + `\n// TODO: Apply refinement: ${refinement}`;
+    }
+
+    /**
+     * Convert text to Schema.org JSON-LD (stub - not yet implemented on backend)
+     */
+    async convertTextToSchema(text: string, _schemaReference?: string): Promise<string> {
+        console.warn('[GeminiProxyService] convertTextToSchema not yet implemented via proxy');
+        // Return basic JSON-LD structure
+        return JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Thing",
+            "description": text
+        }, null, 2);
+    }
 }
 

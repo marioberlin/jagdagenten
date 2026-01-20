@@ -4,7 +4,7 @@
  * Convenience hook for apps to register their menus and status icons.
  * Handles cleanup on unmount automatically.
  */
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useMenuBar as useMenuBarContext, type MenuDef, type StatusIconDef, type PrivacyIndicators } from '@/context/MenuBarContext';
 import type { LucideIcon } from 'lucide-react';
 

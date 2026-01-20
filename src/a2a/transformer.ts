@@ -722,32 +722,19 @@ export function processA2UIMessage(
     message: A2UIMessage,
     state: TransformerState
 ): void {
-    switch (message.type) {
-        case 'beginRendering':
-            processBeginRendering(message as BeginRenderingMessage, state);
-            break;
+    const messageType = message.type as string;
 
-        case 'surfaceUpdate':
-            processSurfaceUpdate(message as SurfaceUpdateMessage, state);
-            break;
-
-        // SDK usa 'setModel', handle it here
-        case 'setModel':
-        // Legacy/LiquidCrypto agents use 'dataModelUpdate'
-        case 'dataModelUpdate':
-            processSetModel(message as DataModelUpdateMessage, state);
-            break;
-
-        case 'deleteSurface':
-            processDeleteSurface(message as any, state);
-            break;
-
-        // SDK's actionResponse and endRendering - acknowledge but no-op for now
-        case 'actionResponse':
-        case 'endRendering':
-            // These are informational, no state update needed
-            break;
+    if (messageType === 'beginRendering') {
+        processBeginRendering(message as BeginRenderingMessage, state);
+    } else if (messageType === 'surfaceUpdate') {
+        processSurfaceUpdate(message as SurfaceUpdateMessage, state);
+    } else if (messageType === 'setModel' || messageType === 'dataModelUpdate') {
+        // SDK uses 'setModel', legacy agents use 'dataModelUpdate'
+        processSetModel(message as DataModelUpdateMessage, state);
+    } else if (messageType === 'deleteSurface') {
+        processDeleteSurface(message as any, state);
     }
+    // SDK's actionResponse and endRendering - acknowledge but no-op for now
 }
 
 function processDeleteSurface(message: { surfaceId: string }, state: TransformerState): void {

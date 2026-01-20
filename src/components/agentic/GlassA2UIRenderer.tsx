@@ -293,7 +293,7 @@ export const ConnectedA2UIRenderer: React.FC<ConnectedA2UIRendererProps> = ({
                 });
 
                 // Get capabilities to verify usage
-                await client.getCard();
+                await client.getAgentCard();
 
                 const task = await client.sendText(text);
 

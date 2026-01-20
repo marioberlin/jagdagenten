@@ -10,7 +10,7 @@
 
 // Re-export SDK namespaces for convenience
 export { v1, a2ui } from '@liquidcrypto/a2a-sdk';
-import { a2ui as a2uiModule, v1 as v1Module } from '@liquidcrypto/a2a-sdk';
+import { v1 as v1Module } from '@liquidcrypto/a2a-sdk';
 import type { a2ui as a2uiTypes, v1 as v1Types } from '@liquidcrypto/a2a-sdk';
 
 // ============================================================================
@@ -67,7 +67,7 @@ export type MessageRole = 'user' | 'agent';
 export const TERMINAL_STATES: v1Types.TaskState[] = [
     v1Module.TaskState.COMPLETED,
     v1Module.TaskState.FAILED,
-    v1Module.TaskState.CANCELLED,
+    v1Module.TaskState.CANCELED,
     v1Module.TaskState.REJECTED,
 ];
 
@@ -138,19 +138,35 @@ export type A2UIMessage = a2uiTypes.A2UIMessage;
 
 /**
  * Begin rendering message - initializes a new UI surface
+ * Defined locally since SDK uses different export pattern
  */
-export type BeginRenderingMessage = a2uiTypes.BeginRenderingMessage;
+export interface BeginRenderingMessage {
+    type: 'beginRendering';
+    surfaceId: string;
+    rootComponentId: string;
+    kind?: string;
+    styling?: Record<string, unknown>;
+}
 
 /**
  * Surface update message - updates component tree
  */
-export type SurfaceUpdateMessage = a2uiTypes.SurfaceUpdateMessage;
+export interface SurfaceUpdateMessage {
+    type: 'surfaceUpdate';
+    surfaceId: string;
+    rootComponent?: A2UIComponent;
+    components: A2UIComponent[];
+}
 
 /**
  * Set model message - updates data bindings
- * (Note: SDK uses 'setModel', legacy used 'dataModelUpdate')
  */
-export type DataModelUpdateMessage = a2uiTypes.SetModelMessage;
+export interface DataModelUpdateMessage {
+    type: 'setModel' | 'dataModelUpdate';
+    surfaceId: string;
+    model?: Record<string, unknown>;
+    data?: Record<string, unknown>;
+}
 
 /**
  * A2UI Component - re-exported from SDK

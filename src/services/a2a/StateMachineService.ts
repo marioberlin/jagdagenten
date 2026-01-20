@@ -1,4 +1,4 @@
-import { ILiquidLLMService } from '../types';
+
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper to get base URL
@@ -6,7 +6,7 @@ const getBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL || '';
 };
 
-export class StateMachineService implements ILiquidLLMService {
+export class StateMachineService  {
     private baseUrl: string;
     private contextId: string;
     private onDataUpdate?: (data: any) => void;

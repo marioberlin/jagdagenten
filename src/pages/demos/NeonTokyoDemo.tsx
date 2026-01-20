@@ -116,7 +116,7 @@ function PackingList({ items, onToggle }: { items: PackingItem[]; onToggle: (id:
                         ) : (
                             <Circle size={16} className="text-white/30 shrink-0" />
                         )}
-                        <span className="mr-1">{item.emoji}</span>
+                        {item.icon && <PackingIcon iconKey={item.icon} size={14} />}
                         <span className={cn(
                             "flex-1 text-sm",
                             item.checked ? "line-through text-white/50" : "text-white/80"
@@ -328,7 +328,7 @@ function NeonTokyoContent({ atmosphere, destination }: { atmosphere?: NeonTokyoD
         ticket: {
             type: 'flight',
             carrier: 'Japan Airlines',
-            flightNumber: 'JL407',
+            // Flight number is encoded in the carrier field
             departure: { location: 'SFO', time: '11:30', terminal: '1' },
             arrival: { location: 'NRT', time: '15:30+1' },
             passenger: 'Alex Traveler',

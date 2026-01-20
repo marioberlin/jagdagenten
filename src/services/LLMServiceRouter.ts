@@ -2,56 +2,45 @@
  * LLMServiceRouter.ts
  * 
  * Capability-based routing for LLM services.
- * Routes requests to appropriate providers based on capability:
- * - Text/Chat → Primary provider (user's selection)
- * - Image generation → Always Gemini
- * - File Search → Always Gemini
+ * Routes requests to appropriate providers based on capability.
+ * 
+ * NOTE: Direct API key services have been removed for security.
+ * All LLM interactions now go through proxy services.
  */
 
 import { LiquidClient } from '../liquid-engine/client';
-import { GeminiService } from './gemini';
-import { ClaudeService } from './claude';
 import { GeminiProxyService } from './proxy/gemini';
+import { ClaudeProxyService } from './proxy/claude';
 import { ILiquidLLMService, FileSearchConfig, ChatOptions } from './types';
 import type { LLMProvider } from '../context/AgentConfigContext';
 
 export interface RouterConfig {
     provider: LLMProvider;
-    geminiApiKey: string;
-    claudeApiKey?: string;
     client: LiquidClient;
     proxyUrl?: string;
 }
 
 export class LLMServiceRouter implements ILiquidLLMService {
     private primaryService: ILiquidLLMService;
-    private imageService: GeminiService;
+    private geminiService: GeminiProxyService;
     private currentProvider: LLMProvider;
 
     constructor(config: RouterConfig) {
-        // Always create Gemini for image generation and file search
-        this.imageService = new GeminiService(config.geminiApiKey, config.client);
+        // Always create Gemini proxy for image generation and file search
+        this.geminiService = new GeminiProxyService(config.client, config.proxyUrl);
         this.currentProvider = config.provider;
 
         // Create primary service based on user selection
         switch (config.provider) {
             case 'claude':
-                if (!config.claudeApiKey) {
-                    console.warn('[LLMServiceRouter] Claude selected but no API key provided, falling back to Gemini');
-                    this.primaryService = this.imageService;
-                } else {
-                    this.primaryService = new ClaudeService(config.claudeApiKey, config.client);
-                }
+                this.primaryService = new ClaudeProxyService(config.client, config.proxyUrl);
                 break;
 
             case 'proxy':
-                this.primaryService = new GeminiProxyService(config.client, config.proxyUrl);
-                break;
-
             case 'gemini':
             default:
-                // Same instance as imageService
-                this.primaryService = this.imageService;
+                // Use Gemini proxy as primary
+                this.primaryService = this.geminiService;
                 break;
         }
     }
@@ -64,7 +53,7 @@ export class LLMServiceRouter implements ILiquidLLMService {
         this.primaryService.setModel(modelName);
     }
 
-    sendMessage(prompt: string): Promise<void> {
+    sendMessage(prompt: string): Promise<string> {
         return this.primaryService.sendMessage(prompt);
     }
 
@@ -78,7 +67,7 @@ export class LLMServiceRouter implements ILiquidLLMService {
 
     setFileSearchConfig(config: FileSearchConfig): void {
         // File search is Gemini-specific, always route there
-        this.imageService.setFileSearchConfig(config);
+        this.geminiService.setFileSearchConfig(config);
     }
 
     generateImage(
@@ -91,7 +80,7 @@ export class LLMServiceRouter implements ILiquidLLMService {
     ): Promise<string[]> {
         // Image generation is Gemini-specific, always route there
         console.log(`[LLMServiceRouter] Routing image generation to Gemini (primary: ${this.currentProvider})`);
-        return this.imageService.generateImage(prompt, options);
+        return this.geminiService.generateImage(prompt, options);
     }
 
     // =========================================================================
@@ -113,10 +102,10 @@ export class LLMServiceRouter implements ILiquidLLMService {
     }
 
     /**
-     * Get the underlying Gemini service for advanced operations
+     * Get the underlying Gemini proxy service for advanced operations
      * (file search store management, schema conversion, etc.)
      */
-    getGeminiService(): GeminiService {
-        return this.imageService;
+    getGeminiService(): GeminiProxyService {
+        return this.geminiService;
     }
 }

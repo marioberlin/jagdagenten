@@ -13,7 +13,7 @@ async function testConnection() {
         });
 
         console.log('Fetching Agent Card...');
-        const card = await client.getCard();
+        const card = await client.getAgentCard();
         console.log('Success! Agent Card:', card);
 
         console.log('\nSending Hello message...');

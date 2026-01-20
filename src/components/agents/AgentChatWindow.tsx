@@ -104,7 +104,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 });
 
                 // Try to get agent card to verify connection
-                await newClient.getCard();
+                await newClient.getAgentCard();
                 setClient(newClient);
                 setIsConnected(true);
                 setError(null);
@@ -148,8 +148,8 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         // v1.0 format: Extract from status message
         if (task.status.message) {
             content = task.status.message.parts
-                ?.filter((p: { text?: string }) => p.text !== undefined)
-                ?.map((p: any) => p.text)
+                ?.filter((p): p is v1.TextPart => 'text' in p && typeof (p as any).text === 'string')
+                ?.map((p) => p.text)
                 ?.join('\n') ?? '';
         }
 

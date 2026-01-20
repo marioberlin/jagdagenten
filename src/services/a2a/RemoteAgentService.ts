@@ -1,7 +1,7 @@
 import { ILiquidLLMService, ChatOptions, ToolSchema } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-export class RemoteAgentService implements ILiquidLLMService {
+export class RemoteAgentService  {
     private url: string;
     private authToken: string;
     private contextId: string;

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { liquidClient } from '../services/liquid';
+import { liquidClientFactory, generateSessionId } from '../liquid-engine/clientFactory';
 import { vaultService, VaultFillPack, FormField, FormSuggestion } from '../services/vaultService';
 import { SensitivityTier } from '../types/vaultTypes';
 
@@ -69,6 +69,10 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [securityBlacklist, setSecurityBlacklistState] = useState<string[]>([]);
     const location = useLocation();
 
+    // Session-scoped LiquidClient access (replaces deprecated singleton)
+    const sessionIdRef = useRef<string>(generateSessionId());
+    const getLiquidClient = useCallback(() => liquidClientFactory.getClient(sessionIdRef.current), []);
+
     // Load generic config from localStorage
     useEffect(() => {
         try {
@@ -80,7 +84,7 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
             const storedStrategy = localStorage.getItem(STRATEGY_KEY) as ContextStrategyType;
             if (storedStrategy) {
                 setStrategyState(storedStrategy);
-                liquidClient.setContextStrategy(storedStrategy);
+                getLiquidClient().setContextStrategy(storedStrategy);
             }
 
             const storedRuntime = localStorage.getItem(RUNTIME_KEY) as RuntimeMode;
@@ -121,8 +125,8 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const setContextStrategy = React.useCallback((strategy: ContextStrategyType) => {
         setStrategyState(strategy);
         localStorage.setItem(STRATEGY_KEY, strategy);
-        liquidClient.setContextStrategy(strategy);
-    }, []);
+        getLiquidClient().setContextStrategy(strategy);
+    }, [getLiquidClient]);
 
     // Handle Runtime Mode Changes
     const setRuntimeMode = React.useCallback((mode: RuntimeMode) => {
@@ -158,9 +162,9 @@ export const AgentConfigProvider: React.FC<{ children: React.ReactNode }> = ({ c
     useEffect(() => {
         // Inform the liquid client of the current focus (route)
         // This enables the "Tree" strategy to prune irrelevant contexts
-        liquidClient.setFocus(location.pathname);
+        getLiquidClient().setFocus(location.pathname);
         console.log(`[AgentConfig] Focus set to: ${location.pathname}`);
-    }, [location.pathname]);
+    }, [location.pathname, getLiquidClient]);
 
     const updatePageConfig = React.useCallback((route: string, updates: Partial<PageConfig>) => {
         setConfig(prev => {

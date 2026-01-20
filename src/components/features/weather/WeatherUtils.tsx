@@ -1,4 +1,4 @@
-import React from 'react';
+// React is auto-imported in JSX runtime;
 import {
     Sun, Cloud, CloudRain, CloudSnow, Wind, Database, Clock
 } from 'lucide-react';

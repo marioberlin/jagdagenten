@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Clock, ChevronLeft, ChevronRight, Droplets, Sunrise, Sunset } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassContainer } from '@/components';

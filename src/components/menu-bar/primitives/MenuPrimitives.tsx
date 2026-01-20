@@ -3,7 +3,7 @@
  * 
  * Core building blocks for the menu bar system.
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -69,7 +69,7 @@ interface MenuDropdownProps {
 export const MenuDropdown: React.FC<MenuDropdownProps> = ({
     isOpen,
     items,
-    onClose,
+    onClose: _onClose,
     onItemClick,
     align = 'left',
     className,
@@ -95,7 +95,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
                         material="thick"
                         className="min-w-[200px] max-w-[320px] py-1 shadow-lg rounded-lg overflow-visible"
                     >
-                        {items.map((item, index) => (
+                        {items.map((item) => (
                             <React.Fragment key={item.id}>
                                 <MenuItem
                                     item={item}
@@ -132,7 +132,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
 }) => {
     const hasSubmenu = item.submenu && item.submenu.length > 0;
     const Icon = item.icon;
-    const timeoutRef = useRef<NodeJS.Timeout>();
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const handleMouseEnter = () => {
         if (hasSubmenu && onSubmenuHover) {

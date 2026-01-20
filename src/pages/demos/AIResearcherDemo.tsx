@@ -9,10 +9,11 @@ import { Microscope, Search, ExternalLink, FileText, Lightbulb, Trash2, Globe, B
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 
-import { liquidClient } from '../../services/liquid';
+import { LiquidClient } from '../../liquid-engine/client';
 import { AIResearcherService } from '@/services/a2a/AIResearcherService';
 
-// Using singleton instance for global context sharing
+// Create a shared client for this demo
+const researcherClient = new LiquidClient();
 
 interface SearchResult {
     id: string;
@@ -211,7 +212,7 @@ export default function AIResearcherDemo() {
     }, [agentService]);
 
     return (
-        <LiquidProvider client={liquidClient}>
+        <LiquidProvider client={researcherClient}>
             <div className="h-screen bg-glass-base flex overflow-hidden">
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col overflow-hidden relative">

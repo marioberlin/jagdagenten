@@ -5,7 +5,7 @@
  * Manages parallel pre-processing and decision gating.
  */
 
-import { GeminiService } from '../../services/gemini';
+import { GeminiProxyService } from '../../services/proxy/gemini';
 import {
     runDeterministicFilters,
     createCustomFilter,
@@ -52,7 +52,7 @@ export interface PreProcessingResult {
 }
 
 export interface OrchestratorConfig {
-    geminiService: GeminiService;
+    geminiService: GeminiProxyService;
     session: SecureSession;
     conversationHistory: ConversationTurn[];
     knowledgeBase?: string[];       // Schema.org JSON-LD or plain text from Settings
@@ -89,7 +89,7 @@ const STAGE_MESSAGES: Record<PipelineStage, string> = {
 // ============================================================================
 
 export class NLWebOrchestrator {
-    private geminiService: GeminiService;
+    private geminiService: GeminiProxyService;
     private session: SecureSession;
     private conversationHistory: ConversationTurn[];
     private knowledgeBase: string[];

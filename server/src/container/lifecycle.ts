@@ -314,7 +314,7 @@ async function buildContainerImage(): Promise<boolean> {
     try {
         log.info('Building container image...');
 
-        const { stdout } = await execAsync(
+        const { stdout: _stdout } = await execAsync(
             'docker build -t liquid-container:latest ./server/container',
             {
                 timeout: 300000, // 5 minute timeout for build

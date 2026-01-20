@@ -4,7 +4,7 @@
  * A2A client for the Neon Tokyo hyper-personalized travel concierge.
  * Handles atmosphere-driven travel planning with weather-reactive UI.
  */
-import { ILiquidLLMService } from '../types';
+
 import { v4 as uuidv4 } from 'uuid';
 
 // Weather conditions that drive atmosphere
@@ -74,7 +74,7 @@ const getBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL || '';
 };
 
-export class NeonTokyoService implements ILiquidLLMService {
+export class NeonTokyoService  {
     private baseUrl: string;
     private contextId: string;
     private onDataUpdate?: (data: NeonTokyoData) => void;

@@ -24,7 +24,7 @@ import { GlassAgentSettings } from './GlassAgentSettings';
 import { GlassCapabilitiesPanel } from './capabilities';
 import { GlassVaultPanel } from './vault';
 import { GlassFileSearch } from '@/components/generative/GlassFileSearch';
-import { GeminiService } from '@/services/gemini';
+import { GeminiProxyService } from '@/services/proxy/gemini';
 import { useOptionalLiquidClient } from '@/liquid-engine/react';
 import { cn } from '@/utils/cn';
 
@@ -1289,12 +1289,10 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
     const [fileSearchConfig, setFileSearchConfig] = useState<FileSearchConfig | undefined>(undefined);
     const [hasChanges, setHasChanges] = useState(false);
 
-    // GeminiService for RAG and Schema operations
+    // GeminiProxyService for RAG and Schema operations (secure backend proxy)
     const client = useOptionalLiquidClient();
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
     const geminiService = useMemo(() => {
-        if (!apiKey) return null;
         const targetClient = client || ({
             getActions: () => [],
             buildContextPrompt: () => "",
@@ -1302,12 +1300,13 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
             executeAction: async () => ({})
         } as any);
         try {
-            return new GeminiService(apiKey, targetClient);
+            // Use proxy service - no API key exposed to browser
+            return new GeminiProxyService(targetClient, import.meta.env.VITE_API_URL || 'http://localhost:3000');
         } catch (e) {
-            console.error("Failed to init GeminiService:", e);
+            console.error("Failed to init GeminiProxyService:", e);
             return null;
         }
-    }, [apiKey, client]);
+    }, [client]);
 
     // Load config when route changes
     useEffect(() => {
