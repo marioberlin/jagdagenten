@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Search, X, MapPin, Navigation } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { GlassContainer } from '@/components';
 
 // Location Search Component
 export function LocationSearch({
@@ -40,7 +39,7 @@ export function LocationSearch({
                 </button>
             ) : (
                 <div className="absolute right-0 top-0 z-20">
-                    <GlassContainer className="p-3 rounded-xl min-w-[280px]" border>
+                    <div className="p-3 rounded-xl min-w-[280px] bg-[#0d1117]/98 backdrop-blur-2xl border border-white/20 shadow-2xl">
                         <form onSubmit={handleSubmit}>
                             <div className="flex items-center gap-2 mb-3">
                                 <Search size={16} className="text-secondary" />
@@ -79,7 +78,7 @@ export function LocationSearch({
                                 ))}
                             </div>
                         </div>
-                    </GlassContainer>
+                    </div>
                 </div>
             )}
         </div>
