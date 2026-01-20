@@ -88,8 +88,8 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            "@liquidcrypto/a2a-sdk": path.resolve(__dirname, "./a2a-sdk/src/index.ts"),
-            "a2a-sdk": path.resolve(__dirname, "./a2a-sdk/src/index.ts"),
+            "@liquidcrypto/a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
+            "a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
         },
     },
     server: {

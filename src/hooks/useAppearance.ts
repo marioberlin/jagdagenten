@@ -1,6 +1,8 @@
 import { useTheme } from './useTheme';
 
 /**
+ * @deprecated Use `useTheme()` directly instead. This hook will be removed in v2.0.
+ * 
  * Hook to access appearance settings (density, radius, shadow, material, outline)
  * Legacy wrapper around useTheme for backward compatibility.
  */

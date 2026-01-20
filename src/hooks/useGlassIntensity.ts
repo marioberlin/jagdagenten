@@ -1,6 +1,8 @@
 import { useTheme } from './useTheme';
 
 /**
+ * @deprecated Use `useTheme()` or `useGlass()` directly instead. This hook will be removed in v2.0.
+ * 
  * Hook to access glass intensity settings (intensity, overlay, tint, vibrancy)
  * Legacy wrapper around useTheme for backward compatibility.
  */

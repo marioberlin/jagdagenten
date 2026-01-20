@@ -1,9 +1,0 @@
-## Codebase Patterns
-- (Carried over from feature/self-healing:)
-
----
-
-# Ralph Progress Log
-Restarted for: feature/multi-agent
----
-
