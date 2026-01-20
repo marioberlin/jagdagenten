@@ -27,6 +27,8 @@ export type PanelId =
     | 'artifacts'
     | 'showcase'
     | 'finder'
+    | 'neonTokyo'
+    | 'auroraWeather'
     | null;
 
 interface DesktopState {
@@ -67,7 +69,7 @@ export const useDesktopStore = create<DesktopStore>()(
     devtools(
         (set, get) => ({
             // Initial state
-            activePanel: null,
+            activePanel: 'auroraWeather',
             snapshot: null,
             isTransitioning: false,
 

@@ -18,6 +18,8 @@ interface HolographicTicketProps {
     accentColor?: string;
     className?: string;
     onFlip?: () => void;
+    /** If true, removes max-width constraint for flexible layouts */
+    fullWidth?: boolean;
 }
 
 // Type icons
@@ -129,7 +131,8 @@ export function HolographicTicket({
     ticket,
     accentColor = '#ec4899',
     className,
-    onFlip
+    onFlip,
+    fullWidth = false
 }: HolographicTicketProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [isFlipped, setIsFlipped] = useState(false);
@@ -146,7 +149,8 @@ export function HolographicTicket({
         <div
             ref={containerRef}
             className={cn(
-                "relative w-full max-w-md perspective-1000",
+                "relative w-full perspective-1000",
+                !fullWidth && "max-w-md",
                 className
             )}
             onMouseEnter={() => setIsHovered(true)}

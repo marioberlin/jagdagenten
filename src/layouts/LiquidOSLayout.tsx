@@ -9,7 +9,9 @@ import { GlassSettingsApp } from '@/components/settings/GlassSettingsApp';
 import { GlassShowcaseApp } from '@/components/settings/GlassShowcaseApp';
 import { GlassCoworkApp } from '@/components/cowork/GlassCoworkApp';
 import { GlassFinderApp } from '@/components/features/GlassFinderApp';
-import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal, HardDrive } from 'lucide-react';
+import { NeonTokyoApp } from '@/components/features/NeonTokyoApp';
+import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
+import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -30,7 +32,8 @@ export const LiquidOSLayout: React.FC = () => {
     const { activePanel, openPanel, closePanel } = useDesktopStore();
 
     // Track if any overlay is open
-    const hasOverlay = activePanel !== null;
+    // Exclude Aurora Weather to allow "Windowed Mode" (see-through to desktop)
+    const hasOverlay = activePanel !== null && activePanel !== 'auroraWeather';
 
     // Panel toggle helper
     const togglePanel = useCallback((panelId: Exclude<PanelId, null>) => {
@@ -105,6 +108,20 @@ export const LiquidOSLayout: React.FC = () => {
             label: 'Finder',
             isActive: activePanel === 'finder',
             onClick: () => togglePanel('finder')
+        },
+        {
+            id: 'neon-tokyo',
+            icon: Plane,
+            label: 'Neon Tokyo',
+            isActive: activePanel === 'neonTokyo',
+            onClick: () => togglePanel('neonTokyo')
+        },
+        {
+            id: 'aurora-weather',
+            icon: Cloud,
+            label: 'Aurora Weather',
+            isActive: activePanel === 'auroraWeather',
+            onClick: () => togglePanel('auroraWeather')
         },
         {
             id: 'a2a-console',
@@ -272,6 +289,56 @@ export const LiquidOSLayout: React.FC = () => {
                                 onClose={closePanel}
                             >
                                 <GlassFinderApp onClose={closePanel} />
+                            </GlassWindow>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Neon Tokyo App Window */}
+                <AnimatePresence>
+                    {activePanel === 'neonTokyo' && (
+                        <motion.div
+                            key="neon-tokyo-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="neon-tokyo-window"
+                                title="Neon Tokyo"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <NeonTokyoApp onClose={closePanel} />
+                            </GlassWindow>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Aurora Weather App Window */}
+                <AnimatePresence>
+                    {activePanel === 'auroraWeather' && (
+                        <motion.div
+                            key="aurora-weather-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="aurora-weather-window"
+                                title="Aurora Weather"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <AuroraWeatherApp />
                             </GlassWindow>
                         </motion.div>
                     )}
