@@ -113,7 +113,7 @@ export function GlassMap({
     return (
         <div
             ref={containerRef}
-            className={cn("glass-panel overflow-hidden rounded-xl relative w-full h-full", className)}
+            className={cn("glass-panel overflow-hidden rounded-xl relative w-full h-full [&_.pigeon-attribution]:hidden [&_button[style*='position: absolute']]:hidden", className)}
             style={{ minHeight: '300px' }}
         >
             <Map
@@ -155,19 +155,24 @@ export function GlassMap({
                 )}
             </Map>
 
-            {/* Map Controls Overlay */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            {/* Map Controls Overlay - Glass styled zoom controls */}
+            <div className="absolute top-4 right-4 flex flex-col z-20">
                 <button
                     onClick={() => setZoom(z => Math.min(z + 1, 18))}
-                    className="glass-button w-8 h-8 flex items-center justify-center rounded-lg bg-black/50 hover:bg-white/10 text-white border border-white/10"
+                    className="w-9 h-9 flex items-center justify-center bg-[#0d1117]/90 backdrop-blur-xl hover:bg-[#1a1a2e] text-white/80 hover:text-white border border-white/10 rounded-t-lg transition-all"
                 >
-                    +
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                 </button>
                 <button
                     onClick={() => setZoom(z => Math.max(z - 1, 1))}
-                    className="glass-button w-8 h-8 flex items-center justify-center rounded-lg bg-black/50 hover:bg-white/10 text-white border border-white/10"
+                    className="w-9 h-9 flex items-center justify-center bg-[#0d1117]/90 backdrop-blur-xl hover:bg-[#1a1a2e] text-white/80 hover:text-white border border-white/10 border-t-0 rounded-b-lg transition-all"
                 >
-                    −
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                 </button>
             </div>
 
