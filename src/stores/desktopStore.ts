@@ -69,7 +69,7 @@ export const useDesktopStore = create<DesktopStore>()(
     devtools(
         (set, get) => ({
             // Initial state
-            activePanel: 'auroraWeather',
+            activePanel: null,
             snapshot: null,
             isTransitioning: false,
 
