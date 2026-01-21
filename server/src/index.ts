@@ -40,6 +40,7 @@ import { getNeonTokyoAgentCard, handleNeonTokyoRequest } from './agents/neon-tok
 import { getImageGenAgentCard, handleImageGenRequest } from './agents/media-imagegen.js';
 import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-videogen.js';
 import { getAuroraWeatherAgentCard, handleAuroraWeatherRequest } from './agents/aurora-weather.js';
+import { getMarketDataAgentCard, handleMarketDataRequest, getTradeExecutorAgentCard, handleTradeExecutorRequest, getStrategyAgentCard, handleStrategyRequest, getRiskAgentCard, handleRiskRequest, getOrchestratorAgentCard, handleOrchestratorRequest, getNotificationAgentCard, handleNotificationRequest, getSymbolManagerAgentCard, handleSymbolManagerRequest, getWebhookGatewayAgentCard, handleWebhookGatewayRequest, getMaintenanceAgentCard, handleMaintenanceRequest, createTradingRestApi } from './agents/trading/index.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import { createPostgresStoresFromEnv, type PostgresTaskStore } from './a2a/index.js';
@@ -565,10 +566,13 @@ async function startServer() {
         // Artifact Management Routes
         .use(createArtifactRoutes())
 
+        // Trading REST API (Phase 5)
+        .use(createTradingRestApi())
+
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)
-        
-                .get('/.well-known/agent-card.json', () => {
+
+        .get('/.well-known/agent-card.json', () => {
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
             return getAgentCard(baseUrl);
         })
@@ -611,7 +615,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRestaurantAgentCard(baseUrl);
@@ -655,7 +659,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRizzChartsAgentCard(baseUrl);
@@ -699,7 +703,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getCryptoAdvisorAgentCard(baseUrl);
@@ -708,6 +712,282 @@ async function startServer() {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getCryptoAdvisorAgentCard(baseUrl);
                 })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Market Data Agent (Trading Fleet)
+        .group('/agents/market-data', app => {
+            const handleRpc = async ({ request, body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getMarketDataAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleMarketDataRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return {
+                        jsonrpc: '2.0',
+                        id: (body as any).id,
+                        result
+                    };
+                }
+
+                set.status = 400;
+                return {
+                    jsonrpc: '2.0',
+                    id: (body as any).id,
+                    error: { code: -32601, message: 'Method not found', data: { method } }
+                };
+            };
+
+            return app
+
+                .get('/.well-known/agent-card.json', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getMarketDataAgentCard(baseUrl);
+                })
+                .get('/', () => {
+                    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+                    return getMarketDataAgentCard(baseUrl);
+                })
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Trade Executor Agent (Trading Fleet)
+        .group('/agents/trade-executor', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getTradeExecutorAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleTradeExecutorRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getTradeExecutorAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getTradeExecutorAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Strategy Agent (Trading Fleet)
+        .group('/agents/strategy', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getStrategyAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleStrategyRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getStrategyAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getStrategyAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Risk Agent (Trading Fleet)
+        .group('/agents/risk', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getRiskAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleRiskRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getRiskAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getRiskAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Orchestrator Agent (Trading Fleet)
+        .group('/agents/orchestrator', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getOrchestratorAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleOrchestratorRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getOrchestratorAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getOrchestratorAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Notification Agent (Trading Fleet)
+        .group('/agents/notification', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getNotificationAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleNotificationRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getNotificationAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getNotificationAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Symbol Manager Agent (Trading Fleet)
+        .group('/agents/symbol-manager', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getSymbolManagerAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleSymbolManagerRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getSymbolManagerAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getSymbolManagerAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Webhook Gateway Agent (Trading Fleet)
+        .group('/agents/webhook-gateway', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getWebhookGatewayAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleWebhookGatewayRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getWebhookGatewayAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getWebhookGatewayAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
+        })
+
+        // Maintenance Agent (Trading Fleet)
+        .group('/agents/maintenance', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getMaintenanceAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleMaintenanceRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getMaintenanceAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getMaintenanceAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
         })
@@ -743,7 +1023,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getNanoBananaAgentCard(baseUrl);
@@ -787,7 +1067,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDocuMindAgentCard(baseUrl);
@@ -831,7 +1111,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getTravelPlannerAgentCard(baseUrl);
@@ -875,7 +1155,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDashboardBuilderAgentCard(baseUrl);
@@ -915,7 +1195,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getResearchCanvasAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -948,7 +1228,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getAIResearcherCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -981,7 +1261,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getQAAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1014,7 +1294,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1047,7 +1327,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1080,7 +1360,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1114,7 +1394,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getAuroraWeatherAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1197,7 +1477,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getImageGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1278,7 +1558,7 @@ async function startServer() {
             };
 
             return app
-                
+
                 .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
