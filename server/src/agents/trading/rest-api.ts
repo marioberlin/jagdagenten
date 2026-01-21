@@ -9,13 +9,25 @@
  * - GET  /api/trading/price/:symbol
  * - GET  /api/trading/klines/:symbol
  * - POST /api/trading/analyze/:symbol
+ * - GET  /api/trading/orders/:symbol - Order history
+ * - GET  /api/trading/trades/:symbol - Trade history
+ * - GET  /api/trading/account - Account info
  * - GET  /api/trading/watchlist
- * - POST /api/trading/watchlist
  * - GET  /api/trading/health
  */
 
 import { Elysia, t } from 'elysia';
-import { fetchTickers, fetchPrice, fetchKlines, fetchOrderBook } from './shared/binance-client.js';
+import {
+    fetchTickers,
+    fetchPrice,
+    fetchKlines,
+    fetchOrderBook,
+    getOrderHistory,
+    getTradeHistory,
+    getAccountInfo,
+    getBalances,
+    hasApiCredentials,
+} from './shared/binance-client.js';
 import { resilientCall } from './shared/resilience.js';
 import {
     rsiSignal,
@@ -31,6 +43,7 @@ import {
     hmaSignal,
     fibonacciSignal,
     fearGreedSignal,
+    btcCorrelationSignal,
     aggregateSignals,
 } from './strategy/tools/indicators.js';
 
@@ -297,6 +310,128 @@ export function createTradingRestApi() {
         })
 
         // ====================================================================
+        // Account & History Endpoints (Authenticated)
+        // ====================================================================
+
+        .get('/account', async ({ set }) => {
+            if (!hasApiCredentials()) {
+                set.status = 401;
+                return { success: false, error: 'API credentials not configured' };
+            }
+
+            try {
+                const balances = await getBalances();
+
+                return {
+                    success: true,
+                    data: {
+                        balances: balances.slice(0, 20), // Top 20 non-zero
+                        totalAssets: balances.length,
+                    },
+                    timestamp: new Date().toISOString(),
+                };
+            } catch (error) {
+                set.status = 500;
+                return { success: false, error: (error as Error).message };
+            }
+        })
+
+        .get('/orders/:symbol', async ({ params: { symbol }, query, set }) => {
+            if (!hasApiCredentials()) {
+                set.status = 401;
+                return { success: false, error: 'API credentials not configured' };
+            }
+
+            try {
+                const limit = parseInt(query?.limit as string) || 50;
+                const orders = await getOrderHistory(symbol.toUpperCase(), limit);
+
+                // Filter by time range if specified
+                const range = query?.range as string || '24h';
+                const now = Date.now();
+                const cutoff = range === '7d' ? now - 7 * 24 * 60 * 60 * 1000 : now - 24 * 60 * 60 * 1000;
+
+                const filtered = orders.filter(o => o.transactTime >= cutoff);
+
+                return {
+                    success: true,
+                    data: filtered.map(o => ({
+                        orderId: o.orderId,
+                        symbol: o.symbol,
+                        side: o.side,
+                        type: o.type,
+                        status: o.status,
+                        price: parseFloat(o.price),
+                        quantity: parseFloat(o.origQty),
+                        filled: parseFloat(o.executedQty),
+                        time: new Date(o.transactTime).toISOString(),
+                    })),
+                    count: filtered.length,
+                    range,
+                    timestamp: new Date().toISOString(),
+                };
+            } catch (error) {
+                set.status = 500;
+                return { success: false, error: (error as Error).message };
+            }
+        })
+
+        .get('/trades/:symbol', async ({ params: { symbol }, query, set }) => {
+            if (!hasApiCredentials()) {
+                set.status = 401;
+                return { success: false, error: 'API credentials not configured' };
+            }
+
+            try {
+                const limit = parseInt(query?.limit as string) || 50;
+                const trades = await getTradeHistory(symbol.toUpperCase(), limit);
+
+                // Filter by time range
+                const range = query?.range as string || '24h';
+                const now = Date.now();
+                const cutoff = range === '7d' ? now - 7 * 24 * 60 * 60 * 1000 : now - 24 * 60 * 60 * 1000;
+
+                const filtered = trades.filter(t => t.time >= cutoff);
+
+                // Calculate P&L
+                let totalProfit = 0;
+                for (const trade of filtered) {
+                    if (trade.isBuyer) {
+                        totalProfit -= trade.quoteQty + trade.commission;
+                    } else {
+                        totalProfit += trade.quoteQty - trade.commission;
+                    }
+                }
+
+                return {
+                    success: true,
+                    data: {
+                        trades: filtered.map(t => ({
+                            id: t.id,
+                            orderId: t.orderId,
+                            side: t.isBuyer ? 'BUY' : 'SELL',
+                            price: t.price,
+                            quantity: t.qty,
+                            value: t.quoteQty,
+                            commission: t.commission,
+                            commissionAsset: t.commissionAsset,
+                            time: new Date(t.time).toISOString(),
+                        })),
+                        summary: {
+                            totalTrades: filtered.length,
+                            estimatedPnL: totalProfit,
+                            range,
+                        },
+                    },
+                    timestamp: new Date().toISOString(),
+                };
+            } catch (error) {
+                set.status = 500;
+                return { success: false, error: (error as Error).message };
+            }
+        })
+
+        // ====================================================================
         // Health Endpoint
         // ====================================================================
 
@@ -321,7 +456,7 @@ export function createTradingRestApi() {
                         },
                         indicators: {
                             status: 'loaded',
-                            count: 13,
+                            count: 14,
                         },
                     },
                     timestamp: new Date().toISOString(),

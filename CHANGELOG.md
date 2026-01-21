@@ -63,6 +63,47 @@ Complete implementation of the [A2A Protocol v1.0 Draft Specification](https://a
 
 ---
 
+### 🔗 Phase 6: Binance Testnet Deep Integration
+
+Complete Binance Testnet integration with WebSocket streams, live UI components, and trade history.
+
+#### Backend (Server)
+- **`binance-websocket.ts`** - Real-time ticker, kline, depth streams with auto-reconnection
+- **`binance-client.ts`** - Added `getOrderHistory()`, `getTradeHistory()` with 24h/7d filtering
+- **`rest-api.ts`** - 3 new endpoints:
+  - `GET /api/trading/account` - Account balances
+  - `GET /api/trading/orders/:symbol?range=24h|7d` - Order history
+  - `GET /api/trading/trades/:symbol?range=24h|7d` - Trade history with P&L
+- **`indicators.ts`** - Added `btcCorrelationSignal()` (14 total indicators)
+
+#### Frontend (UI)
+- **`MarketsView.tsx`** - Live price grid with:
+  - Real-time prices from REST API (30s auto-refresh)
+  - Search and filtering
+  - Sorting by symbol, price, 24h change, volume
+  - Green/red trend indicators
+- **`RiskSettingsView.tsx`** - Risk configuration panel with:
+  - Max position size (1-50%)
+  - Default stop-loss (1-25%)
+  - Default take-profit (5-100%)
+  - Daily loss limit (1-25%)
+  - Max open positions (1-20)
+  - Trailing stop-loss toggle
+  - Settings persisted to localStorage
+- **`RushHourTradingApp.tsx`** - Integrated new components, replaced placeholder tabs
+
+#### Files Changed
+| File | Changes |
+|------|---------|
+| `server/src/agents/trading/shared/binance-websocket.ts` | NEW - WebSocket stream service |
+| `server/src/agents/trading/shared/binance-client.ts` | Added order/trade history |
+| `server/src/agents/trading/rest-api.ts` | 3 new endpoints, 14 indicators |
+| `src/components/trading/MarketsView.tsx` | NEW - Live markets grid |
+| `src/components/trading/RiskSettingsView.tsx` | NEW - Risk config panel |
+| `src/components/features/RushHourTradingApp.tsx` | Integrated new components |
+
+---
+
 ## [0.2.0] - 2026-01-11
 
 ### 🚀 Implementation Plan Complete - All 15 Features

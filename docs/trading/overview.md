@@ -46,6 +46,81 @@ The core trading engine is written in Python and consists of four main modules:
 
 ---
 
+## A2A Trading Agents (TypeScript)
+
+In addition to the Python bot, the project includes a **9-agent A2A trading system** built in TypeScript that integrates with the LiquidOS agent framework.
+
+### Architecture
+
+```
+server/src/agents/trading/
+├── index.ts               # Agent fleet registration
+├── rest-api.ts            # REST API (11 endpoints)
+├── shared/
+│   ├── binance-client.ts  # Binance API client
+│   ├── binance-websocket.ts # Real-time streams
+│   ├── types.ts           # Shared types
+│   └── resilience.ts      # Retry patterns
+├── market-data/           # Live price feeds
+├── trade-executor/        # Order execution
+├── strategy/              # 14 technical indicators
+├── risk/                  # Position limits
+├── orchestrator/          # Workflow coordination
+├── notification/          # Alerts
+├── symbol-manager/        # Watchlists
+├── webhook-gateway/       # TradingView webhooks
+└── maintenance/           # Health monitoring
+```
+
+### Trading Agents
+
+| Agent | Purpose |
+|-------|---------|
+| **MarketDataAgent** | Live Binance prices, klines, order book |
+| **TradeExecutorAgent** | Execute orders on Binance Testnet |
+| **StrategyAgent** | 14 technical indicators, signal aggregation |
+| **RiskAgent** | Position limits, stop-loss, take-profit |
+| **OrchestratorAgent** | Multi-step trading workflows |
+| **NotificationAgent** | Price alerts, order notifications |
+| **SymbolManagerAgent** | User watchlists |
+| **WebhookGatewayAgent** | TradingView alerts |
+| **MaintenanceAgent** | System health monitoring |
+
+### REST API Endpoints
+
+```
+GET  /api/trading/prices         → All tickers
+GET  /api/trading/price/:symbol  → Single price
+GET  /api/trading/klines/:symbol → OHLCV data
+GET  /api/trading/orderbook/:sym → Order book
+GET  /api/trading/analyze/:sym   → 14-indicator analysis
+GET  /api/trading/scan           → Market scanner
+GET  /api/trading/watchlist      → User watchlist
+GET  /api/trading/account        → Account balances
+GET  /api/trading/orders/:symbol → Order history (24h/7d)
+GET  /api/trading/trades/:symbol → Trade history (24h/7d)
+GET  /api/trading/health         → System health
+```
+
+### Technical Indicators (14)
+
+| Category | Indicators |
+|----------|------------|
+| Momentum | RSI, MACD, Stochastic |
+| Trend | MA Crossover, ADX, Ichimoku, HMA |
+| Volatility | Bollinger Bands, ATR |
+| Volume | Volume Spike, OBV |
+| Other | Fibonacci, Fear & Greed, BTC Correlation |
+
+### RushHour Trading App
+
+The A2A agents power the **RushHour Trading App** in LiquidOS:
+
+- **Dashboard Tab**: Portfolio metrics, positions, recent activity
+- **Markets Tab**: Live price grid with search/sorting
+- **Bots Tab**: Automated trading bot management
+- **Risk Tab**: Risk parameter configuration
+
 ## Strategy Overview
 
 ### Buy the Dip (Dollar Cost Averaging)
