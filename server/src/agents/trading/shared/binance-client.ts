@@ -542,6 +542,106 @@ export async function getOpenOrders(symbol?: string): Promise<any[]> {
 }
 
 /**
+ * Get order history for a symbol
+ */
+export async function getOrderHistory(
+    symbol: string,
+    limit: number = 50
+): Promise<BinanceOrderResponse[]> {
+    if (!API_KEY || !SECRET_KEY) {
+        throw new Error('Binance API credentials not configured');
+    }
+
+    const fullSymbol = symbol.endsWith('USDT') ? symbol : `${symbol}USDT`;
+
+    const queryString = buildSignedQuery({
+        symbol: fullSymbol,
+        limit: limit.toString(),
+    });
+
+    const response = await fetch(`${BINANCE_BASE_URL}/allOrders?${queryString}`, {
+        method: 'GET',
+        headers: getSignedHeaders(),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Binance AllOrders API error: ${response.status} - ${error}`);
+    }
+
+    return response.json() as Promise<BinanceOrderResponse[]>;
+}
+
+/**
+ * Get trade history for a symbol
+ */
+export async function getTradeHistory(
+    symbol: string,
+    limit: number = 50
+): Promise<Array<{
+    symbol: string;
+    id: number;
+    orderId: number;
+    price: number;
+    qty: number;
+    quoteQty: number;
+    commission: number;
+    commissionAsset: string;
+    time: number;
+    isBuyer: boolean;
+    isMaker: boolean;
+}>> {
+    if (!API_KEY || !SECRET_KEY) {
+        throw new Error('Binance API credentials not configured');
+    }
+
+    const fullSymbol = symbol.endsWith('USDT') ? symbol : `${symbol}USDT`;
+
+    const queryString = buildSignedQuery({
+        symbol: fullSymbol,
+        limit: limit.toString(),
+    });
+
+    const response = await fetch(`${BINANCE_BASE_URL}/myTrades?${queryString}`, {
+        method: 'GET',
+        headers: getSignedHeaders(),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Binance MyTrades API error: ${response.status} - ${error}`);
+    }
+
+    const trades = await response.json() as Array<{
+        symbol: string;
+        id: number;
+        orderId: number;
+        price: string;
+        qty: string;
+        quoteQty: string;
+        commission: string;
+        commissionAsset: string;
+        time: number;
+        isBuyer: boolean;
+        isMaker: boolean;
+    }>;
+
+    return trades.map(t => ({
+        symbol: t.symbol,
+        id: t.id,
+        orderId: t.orderId,
+        price: parseFloat(t.price),
+        qty: parseFloat(t.qty),
+        quoteQty: parseFloat(t.quoteQty),
+        commission: parseFloat(t.commission),
+        commissionAsset: t.commissionAsset,
+        time: t.time,
+        isBuyer: t.isBuyer,
+        isMaker: t.isMaker,
+    }));
+}
+
+/**
  * Test connectivity to Binance API
  */
 export async function testConnectivity(): Promise<{ success: boolean; serverTime?: number; error?: string }> {

@@ -30,6 +30,8 @@ import { AssetAllocation } from '@/components/trading/AssetAllocation';
 import { BotOverview } from '@/components/trading/BotOverview';
 import { PositionsTable } from '@/components/trading/PositionsTable';
 import { RecentActivity } from '@/components/trading/RecentActivity';
+import { MarketsView } from '@/components/trading/MarketsView';
+import { RiskSettingsView } from '@/components/trading/RiskSettingsView';
 
 // Hooks
 import { useDashboardData } from '@/hooks/trading/useDashboardData';
@@ -227,15 +229,12 @@ export const RushHourTradingApp: React.FC<RushHourTradingAppProps> = ({ onClose 
                     </div>
                 );
 
+
             case 'markets':
                 return (
-                    <div className="flex items-center justify-center h-64 text-secondary">
-                        <div className="text-center">
-                            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                            <p>Markets view coming soon</p>
-                            <p className="text-xs text-tertiary mt-2">Real-time market data and charts</p>
-                        </div>
-                    </div>
+                    <MarketsView
+                        onSelectSymbol={(symbol) => console.log('Selected:', symbol)}
+                    />
                 );
 
             case 'bots':
@@ -251,15 +250,7 @@ export const RushHourTradingApp: React.FC<RushHourTradingAppProps> = ({ onClose 
                 );
 
             case 'risk':
-                return (
-                    <div className="flex items-center justify-center h-64 text-secondary">
-                        <div className="text-center">
-                            <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                            <p>Risk Settings</p>
-                            <p className="text-xs text-tertiary mt-2">Configure your risk management parameters</p>
-                        </div>
-                    </div>
-                );
+                return <RiskSettingsView />;
 
             default:
                 return null;
