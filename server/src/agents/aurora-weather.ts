@@ -754,8 +754,8 @@ function generateDetailedActivityRecommendations(
         .filter(h => {
             const t = h.temperature;
             return t > 15 && t < 28 &&
-                   h.precipitationProbability < 30 &&
-                   !['rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(h.condition);
+                h.precipitationProbability < 30 &&
+                !['rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(h.condition);
         })
         .map(h => new Date(h.time).getHours());
 
@@ -998,11 +998,13 @@ async function fetchFullWeatherData(location: WeatherLocation): Promise<WeatherD
 // ============================================================================
 
 interface Intent {
-    type: 'get_weather' | 'add_location' | 'remove_location' | 'get_forecast' | 'get_alerts' | 'suggest_activities' | 'help' | 'will_it_rain' | 'air_quality' | 'clothing';
+    type: 'get_weather' | 'add_location' | 'remove_location' | 'get_forecast' | 'get_alerts' | 'suggest_activities' | 'help' | 'will_it_rain' | 'air_quality' | 'clothing' | 'trip_weather' | 'route_watch' | 'packing_list';
     location?: string;
     locationId?: string;
     targetTime?: string; // For time-specific queries like "will it rain at 5pm?"
     targetHour?: number; // Parsed hour (0-23)
+    destinations?: string[]; // For trip weather queries
+    dateRange?: { start: string; end: string }; // For route-to-watch queries
 }
 
 // Parse time from natural language (e.g., "5pm", "17:00", "5:30")
@@ -1041,6 +1043,34 @@ function parseIntent(message: string): Intent {
     if (/add|track|save|follow/.test(msg) && /location|city|place/.test(msg)) {
         const match = msg.match(/(?:add|track|save|follow)\s+(?:the\s+)?(?:location|city|place)?\s*(.+?)(?:\s+to|\s*$)/i);
         return { type: 'add_location', location: match?.[1]?.trim() };
+    }
+
+    // Trip weather patterns: "weather for my trip to Berlin and Munich"
+    if (/trip|itinerary|road\s*trip|journey/.test(msg) && /weather|forecast/.test(msg)) {
+        // Extract destinations from message
+        const destMatch = msg.match(/(?:to|through|via|visiting)\s+(.+?)(?:\s+on|\s+next|\?|$)/i);
+        const destinations = destMatch?.[1]?.split(/\s*(?:,|and|then|to)\s*/).filter(Boolean) || [];
+        return { type: 'trip_weather', destinations };
+    }
+
+    // Packing list patterns: "packing list for trip to Berlin" or "what should I pack"
+    if (/(?:packing|pack)(?:ing)?\s*(?:list|suggestions?)?|what\s+(?:should|to)\s+(?:i\s+)?pack/.test(msg)) {
+        const destMatch = msg.match(/(?:to|for)\s+(.+?)(?:\s+on|\s+next|\?|$)/i);
+        const destinations = destMatch?.[1]?.split(/\s*(?:,|and|then|to)\s*/).filter(Boolean) || [];
+        return { type: 'packing_list', destinations };
+    }
+
+    // Route watch patterns: "when is good weather between Berlin and Munich"
+    if (/(?:when|best\s+time|optimal|good\s+(?:weather|day)).+(?:between|from).+to/.test(msg) || /watch\s+(?:this\s+)?route|monitor\s+weather/.test(msg)) {
+        // Try to extract origin and destination
+        const routeMatch = msg.match(/(?:between|from)\s+([a-zA-Z\s]+?)\s+(?:and|to)\s+([a-zA-Z\s]+?)(?:\s+(?:on|until|for)|\?|$)/i);
+        if (routeMatch) {
+            return {
+                type: 'route_watch',
+                destinations: [routeMatch[1].trim(), routeMatch[2].trim()]
+            };
+        }
+        return { type: 'route_watch' };
     }
 
     // Direct "add X" pattern
@@ -1156,7 +1186,7 @@ function generateRainAtTimeResponse(hourly: HourlyForecast[], targetHour: number
     const hourData = hourly.find(h => {
         const hDate = new Date(h.time);
         return hDate.getHours() === targetHour &&
-               hDate.getDate() === targetDate.getDate();
+            hDate.getDate() === targetDate.getDate();
     });
 
     if (!hourData) {
@@ -1827,8 +1857,226 @@ I can help you with:
 • **Air quality**: "What's the air quality?" or "Is it safe for my kid to play outside?"
 • **What to wear**: "What should I wear today?"
 • **Activity suggestions**: "What activities are good for today?"
+• **Trip weather**: "Weather for my trip to Berlin, Leipzig, and Dresden"
+• **Route timing**: "When is good weather between Berlin and Usedom?"
 
 Try asking me about the weather!`;
+                break;
+            }
+
+            case 'trip_weather': {
+                // Handle weather for multiple destinations along a route
+                if (!intent.destinations || intent.destinations.length === 0) {
+                    textResponse = "Tell me about your trip! For example: \"Weather for my trip to Berlin, Leipzig, and Dresden\"";
+                    break;
+                }
+
+                const tripWeatherResults: Array<{ location: WeatherLocation; data: WeatherData }> = [];
+
+                for (const dest of intent.destinations.slice(0, 5)) { // Limit to 5 destinations
+                    try {
+                        const location = await geocodeLocation(dest);
+                        if (location) {
+                            const data = await fetchFullWeatherData(location);
+                            tripWeatherResults.push({ location, data });
+                            session.weatherData[location.id] = data;
+                            if (!session.locations.find(l => l.id === location.id)) {
+                                session.locations.push(location);
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`[AURORA] Failed to get weather for ${dest}:`, e);
+                    }
+                }
+
+                if (tripWeatherResults.length === 0) {
+                    textResponse = "I couldn't find weather for those destinations. Try different city names.";
+                    break;
+                }
+
+                // Generate trip weather summary
+                const tripSummary = tripWeatherResults.map((r, i) => {
+                    const { location, data } = r;
+                    const emoji = data.current.condition === 'clear' ? '☀️' :
+                        data.current.condition === 'partly_cloudy' ? '⛅' :
+                            data.current.condition === 'rain' || data.current.condition === 'heavy_rain' ? '🌧️' :
+                                data.current.condition === 'snow' || data.current.condition === 'heavy_snow' ? '❄️' : '☁️';
+                    return `${i + 1}. **${location.name}**: ${emoji} ${data.current.temperature}°C, ${data.current.conditionText}`;
+                }).join('\n');
+
+                // Find best overall day for the trip
+                const allDailyForecasts = tripWeatherResults.map(r => r.data.daily).flat();
+                const dayScores = new Map<string, { precip: number; count: number }>();
+                allDailyForecasts.forEach(d => {
+                    const entry = dayScores.get(d.date) || { precip: 0, count: 0 };
+                    entry.precip += d.precipitationProbability;
+                    entry.count += 1;
+                    dayScores.set(d.date, entry);
+                });
+
+                const bestDay = Array.from(dayScores.entries())
+                    .map(([date, { precip, count }]) => ({ date, avgPrecip: precip / count }))
+                    .sort((a, b) => a.avgPrecip - b.avgPrecip)[0];
+
+                const bestDayStr = bestDay ? `\n\n🗓️ **Best day for your trip**: ${new Date(bestDay.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} (${Math.round(bestDay.avgPrecip)}% avg rain chance)` : '';
+
+                textResponse = `**Trip Weather Overview** 🚗\n\n${tripSummary}${bestDayStr}`;
+
+                weatherUpdate = {
+                    type: 'weather_update',
+                    locations: session.locations,
+                    weatherData: session.weatherData,
+                    selectedLocationId: tripWeatherResults[0]?.location.id || session.selectedLocationId,
+                    lastUpdated: new Date().toISOString()
+                };
+                break;
+            }
+
+            case 'route_watch': {
+                // Handle finding optimal weather windows for a route
+                if (!intent.destinations || intent.destinations.length < 2) {
+                    textResponse = "Tell me your route! For example: \"When is good weather between Berlin and Usedom?\"";
+                    break;
+                }
+
+                const [originName, destName] = intent.destinations;
+                const origin = await geocodeLocation(originName);
+                const destination = await geocodeLocation(destName);
+
+                if (!origin || !destination) {
+                    textResponse = `I couldn't find one of the locations. "${originName}" or "${destName}" might need a more specific name.`;
+                    break;
+                }
+
+                // Fetch weather for both endpoints
+                const originData = await fetchFullWeatherData(origin);
+                const destData = await fetchFullWeatherData(destination);
+
+                session.weatherData[origin.id] = originData;
+                session.weatherData[destination.id] = destData;
+                if (!session.locations.find(l => l.id === origin.id)) session.locations.push(origin);
+                if (!session.locations.find(l => l.id === destination.id)) session.locations.push(destination);
+
+                // Find best days based on combined forecasts (low precip, reasonable temps)
+                const recommendations: Array<{ date: string; score: number; summary: string }> = [];
+
+                for (let i = 0; i < Math.min(originData.daily.length, destData.daily.length); i++) {
+                    const originDay = originData.daily[i];
+                    const destDay = destData.daily[i];
+
+                    // Calculate weather score (0-100, higher is better)
+                    const avgPrecip = (originDay.precipitationProbability + destDay.precipitationProbability) / 2;
+                    const avgTemp = (originDay.tempHigh + destDay.tempHigh) / 2;
+                    const avgWind = (originDay.windSpeedMax + destDay.windSpeedMax) / 2;
+
+                    // Score: lower precip and wind is better, temp between 15-25 is ideal
+                    let score = 100 - avgPrecip; // 0-100
+                    score -= Math.abs(avgTemp - 20) * 2; // Penalty for being far from 20°C
+                    score -= avgWind > 30 ? 20 : avgWind > 20 ? 10 : 0; // Wind penalty
+                    score = Math.max(0, Math.min(100, score));
+
+                    const dayName = new Date(originDay.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+                    let emoji = '☀️';
+                    if (avgPrecip > 50) emoji = '🌧️';
+                    else if (avgPrecip > 30) emoji = '🌦️';
+                    else if (avgTemp < 10) emoji = '🥶';
+                    else if (avgTemp > 30) emoji = '🥵';
+
+                    recommendations.push({
+                        date: originDay.date,
+                        score,
+                        summary: `${emoji} **${dayName}**: ${Math.round(avgTemp)}°C avg, ${Math.round(avgPrecip)}% rain chance`
+                    });
+                }
+
+                // Sort by score
+                recommendations.sort((a, b) => b.score - a.score);
+
+                const bestDays = recommendations.slice(0, 3);
+                const worstDays = recommendations.slice(-2).reverse();
+
+                textResponse = `**Route Weather: ${origin.name} → ${destination.name}** 🛣️\n\n` +
+                    `✅ **Best times to go:**\n${bestDays.map(d => d.summary).join('\n')}\n\n` +
+                    `⚠️ **Avoid if possible:**\n${worstDays.map(d => d.summary).join('\n')}\n\n` +
+                    `_Based on weather at both ${origin.name} and ${destination.name}_`;
+
+                weatherUpdate = {
+                    type: 'weather_update',
+                    locations: session.locations,
+                    weatherData: session.weatherData,
+                    selectedLocationId: origin.id,
+                    lastUpdated: new Date().toISOString()
+                };
+                break;
+            }
+
+            case 'packing_list': {
+                // Generate packing list based on weather
+                let targetLocation: WeatherLocation | null = null;
+                const destinations = intent.destinations || [];
+
+                if (destinations.length > 0) {
+                    // Use first destination for weather reference
+                    targetLocation = await geocodeLocation(destinations[0]);
+                    if (targetLocation) {
+                        session.locations.push(targetLocation);
+                    }
+                } else {
+                    // Use current/selected location
+                    targetLocation = session.locations.find(l => l.id === session.selectedLocationId) || session.locations[0];
+                }
+
+                if (!targetLocation) {
+                    textResponse = 'Please specify a destination for your packing list, e.g., "packing list for Berlin"';
+                    break;
+                }
+
+                const data = await fetchFullWeatherData(targetLocation);
+                session.weatherData[targetLocation.id] = data;
+
+                // Analyze weather to determine packing needs
+                const avgTemp = data.daily.slice(0, 5).reduce((sum, d) => sum + (d.tempHigh + d.tempLow) / 2, 0) / 5;
+                const maxPrecip = Math.max(...data.daily.slice(0, 5).map(d => d.precipitationProbability));
+                const hasRain = maxPrecip > 40;
+                const isCold = avgTemp < 12;
+                const isHot = avgTemp > 28;
+                const hasHighUV = data.daily.some(d => (d as any).uvIndex > 6);
+
+                // Build packing categories
+                const essentials = ['📋 ID / Passport', '💳 Credit/Debit cards', '📱 Phone + charger', '🔋 Power bank', '🎧 Headphones'];
+                const clothing: string[] = ['👕 T-shirts', '👖 Pants/Shorts', '🧦 Socks', '👟 Comfortable shoes'];
+                const weatherGear: string[] = [];
+
+                if (isCold) {
+                    clothing.push('🧥 Warm jacket', '🧣 Sweater/Hoodie', '🧤 Gloves');
+                }
+                if (isHot) {
+                    clothing.push('👒 Light breathable clothes', '🩴 Sandals', '🩳 Shorts');
+                }
+                if (hasRain) {
+                    weatherGear.push('☂️ Umbrella', '🧥 Rain jacket');
+                }
+                if (hasHighUV || isHot) {
+                    weatherGear.push('🧴 Sunscreen SPF 50+', '🕶️ Sunglasses', '🧢 Hat/Cap');
+                }
+
+                const weatherSummary = `${Math.round(avgTemp)}°C avg, ${hasRain ? 'rain expected' : 'dry conditions'}`;
+
+                textResponse = `**Packing List for ${targetLocation.name}** 🎒\n\n` +
+                    `_Weather: ${weatherSummary}_\n\n` +
+                    `**Essentials:**\n${essentials.join('\n')}\n\n` +
+                    `**Clothing:**\n${clothing.join('\n')}\n\n` +
+                    (weatherGear.length > 0 ? `**Weather Gear:**\n${weatherGear.join('\n')}\n\n` : '') +
+                    `_Tip: Check weather closer to your trip for updates!_`;
+
+                weatherUpdate = {
+                    type: 'weather_update',
+                    locations: session.locations,
+                    weatherData: session.weatherData,
+                    selectedLocationId: targetLocation.id,
+                    lastUpdated: new Date().toISOString()
+                };
                 break;
             }
         }

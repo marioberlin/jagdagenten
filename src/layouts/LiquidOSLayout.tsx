@@ -12,8 +12,10 @@ import { GlassCoworkApp } from '@/components/cowork/GlassCoworkApp';
 import { GlassFinderApp } from '@/components/features/GlassFinderApp';
 import { NeonTokyoApp } from '@/components/features/NeonTokyoApp';
 import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
+import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
 import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp } from 'lucide-react';
+import ConsolePage from '@/pages/console/ConsolePage';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -121,6 +123,13 @@ export const LiquidOSLayout: React.FC = () => {
             label: 'Aurora Weather',
             isActive: activePanel === 'auroraWeather',
             onClick: () => togglePanel('auroraWeather')
+        },
+        {
+            id: 'aurora-travel',
+            icon: Map,
+            label: 'Aurora Travel',
+            isActive: activePanel === 'auroraTravel',
+            onClick: () => togglePanel('auroraTravel')
         },
         {
             id: 'a2a-console',
@@ -361,6 +370,31 @@ export const LiquidOSLayout: React.FC = () => {
                     )}
                 </AnimatePresence>
 
+                {/* Aurora Travel App Window */}
+                <AnimatePresence>
+                    {activePanel === 'auroraTravel' && (
+                        <motion.div
+                            key="aurora-travel-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="aurora-travel-window"
+                                title="Aurora Travel Weather"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <AuroraTravelApp onClose={closePanel} />
+                            </GlassWindow>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* RushHour Trading App Window */}
                 <AnimatePresence>
                     {activePanel === 'rushHourTrading' && (
@@ -381,6 +415,31 @@ export const LiquidOSLayout: React.FC = () => {
                                 onClose={closePanel}
                             >
                                 <RushHourTradingApp onClose={closePanel} />
+                            </GlassWindow>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* A2A Console Window */}
+                <AnimatePresence>
+                    {activePanel === 'console' && (
+                        <motion.div
+                            key="console-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="console-window"
+                                title="A2A Console"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <ConsolePage />
                             </GlassWindow>
                         </motion.div>
                     )}
