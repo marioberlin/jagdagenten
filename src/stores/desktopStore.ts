@@ -30,6 +30,7 @@ export type PanelId =
     | 'neonTokyo'
     | 'auroraWeather'
     | 'rushHourTrading'
+    | 'sparkles'
     | null;
 
 interface DesktopState {
