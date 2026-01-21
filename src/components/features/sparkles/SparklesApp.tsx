@@ -5,18 +5,21 @@
  * Built with Liquid Glass design system.
  */
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X } from 'lucide-react';
-import { useSparklesStore, useFilteredThreads, useSyncStatus } from '@/stores/sparklesStore';
+import { X } from 'lucide-react';
+import { useSparklesStore, useFilteredThreads } from '@/stores/sparklesStore';
 import { useDesktopStore } from '@/stores/desktopStore';
 import { SparklesSidebar } from './SparklesSidebar';
 import { SparklesMailList } from './SparklesMailList';
 import { SparklesMailView } from './SparklesMailView';
 import { SparklesComposeModal } from './SparklesComposeModal';
 import { SparklesEmptyState } from './SparklesEmptyState';
+import { SparklesModalRenderer } from './modals';
 import { useSparklesMenuBar } from './hooks/useSparklesMenuBar';
 import { useSparklesShortcuts } from './hooks/useSparklesShortcuts';
+import { useSnoozeWatcher } from './hooks/useSnoozeWatcher';
+import { useScheduledSendQueue } from './hooks/useScheduledSendQueue';
 import { cn } from '@/lib/utils';
 
 // =============================================================================
@@ -30,18 +33,22 @@ export function SparklesApp() {
     ui,
     selectedThread,
     settings,
-    toggleSidebar,
     selectThread,
   } = useSparklesStore();
 
   const filteredThreads = useFilteredThreads();
-  const syncStatus = useSyncStatus();
 
   // Register menu bar items
   useSparklesMenuBar();
 
   // Register keyboard shortcuts
   useSparklesShortcuts();
+
+  // Monitor snoozed threads and show notifications when they wake
+  useSnoozeWatcher();
+
+  // Monitor scheduled emails and send them when due
+  useScheduledSendQueue();
 
   // Handle escape key to close panel
   useEffect(() => {
@@ -134,6 +141,9 @@ export function SparklesApp() {
           <SparklesComposeModal key={compose.id} compose={compose} />
         ))}
       </AnimatePresence>
+
+      {/* Modal System */}
+      <SparklesModalRenderer />
 
       {/* Close Button (top-right) */}
       <button

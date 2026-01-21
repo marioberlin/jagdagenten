@@ -527,7 +527,7 @@ export type SparklesModal =
   | { type: 'create-event'; date?: string }
   | { type: 'event-details'; eventId: string }
   | { type: 'gatekeeper' }
-  | { type: 'labels' }
+  | { type: 'labels'; threadId?: string }
   | { type: 'create-label' }
   | { type: 'keyboard-shortcuts' }
   | { type: 'about' };

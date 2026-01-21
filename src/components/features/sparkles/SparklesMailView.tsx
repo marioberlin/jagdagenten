@@ -2,7 +2,7 @@
  * SparklesMailView - Email thread detail view
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -27,6 +27,13 @@ import { useSparklesStore } from '@/stores/sparklesStore';
 import { cn } from '@/lib/utils';
 import type { EmailThread, EmailMessage, Attachment } from '@/types/sparkles';
 import DOMPurify from 'dompurify';
+import {
+  archiveThread,
+  trashThread,
+  toggleStar,
+  markAsRead,
+  downloadAttachment,
+} from '@/services/sparklesApiActions';
 
 // =============================================================================
 // Props
@@ -116,25 +123,69 @@ export function SparklesMailView({ thread, onClose }: SparklesMailViewProps) {
     });
   }, [thread, openCompose]);
 
-  const handleArchive = useCallback(() => {
-    updateThread(thread.id, { labelIds: thread.labelIds.filter((l) => l !== 'INBOX') });
-    onClose();
-  }, [thread, updateThread, onClose]);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isStarring, setIsStarring] = useState(false);
 
-  const handleDelete = useCallback(() => {
-    updateThread(thread.id, { labelIds: [...thread.labelIds, 'TRASH'] });
-    onClose();
-  }, [thread, updateThread, onClose]);
+  const handleArchive = useCallback(async () => {
+    if (isArchiving) return;
+    setIsArchiving(true);
+    try {
+      await archiveThread(thread.id);
+      onClose();
+    } catch (error) {
+      console.error('Failed to archive:', error);
+    } finally {
+      setIsArchiving(false);
+    }
+  }, [thread.id, onClose, isArchiving]);
 
-  const handleStar = useCallback(() => {
-    updateThread(thread.id, { isStarred: !thread.isStarred });
-  }, [thread, updateThread]);
+  const handleDelete = useCallback(async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await trashThread(thread.id);
+      onClose();
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [thread.id, onClose, isDeleting]);
+
+  const handleStar = useCallback(async () => {
+    if (isStarring) return;
+    setIsStarring(true);
+    try {
+      await toggleStar(thread.id);
+    } catch (error) {
+      console.error('Failed to toggle star:', error);
+    } finally {
+      setIsStarring(false);
+    }
+  }, [thread.id, isStarring]);
 
   const handleSnooze = useCallback(() => {
     openModal({ type: 'snooze', threadId: thread.id });
   }, [thread.id, openModal]);
 
-  const sender = thread.participants[0];
+  const handleDownloadAttachment = useCallback(
+    async (messageId: string, attachment: Attachment) => {
+      try {
+        await downloadAttachment(messageId, attachment.id, attachment.filename);
+      } catch (error) {
+        console.error('Failed to download attachment:', error);
+      }
+    },
+    []
+  );
+
+  // Mark as read when viewing
+  useEffect(() => {
+    if (thread.isUnread) {
+      markAsRead(thread.id).catch(console.error);
+    }
+  }, [thread.id, thread.isUnread]);
 
   return (
     <div className="h-full flex flex-col bg-[var(--glass-bg-thin)]">

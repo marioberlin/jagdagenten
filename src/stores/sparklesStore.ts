@@ -145,6 +145,7 @@ interface SparklesActions {
 
   // Label Actions
   setLabels: (accountId: string, labels: Label[]) => void;
+  addLabel: (accountId: string, label: Label) => void;
 
   // Gatekeeper Actions
   setPendingSenders: (senders: PendingSender[]) => void;
@@ -159,6 +160,12 @@ interface SparklesActions {
   addSnoozedThread: (snooze: SnoozedThread) => void;
   removeSnoozedThread: (threadId: string) => void;
 
+  // Scheduled Email Actions
+  addScheduledEmail: (email: ScheduledEmail) => void;
+  updateScheduledEmail: (id: string, updates: Partial<ScheduledEmail>) => void;
+  removeScheduledEmail: (id: string) => void;
+  cancelScheduledEmail: (id: string) => void;
+
   // Compose Actions
   openCompose: (mode: ComposeState['mode'], options?: Partial<ComposeState>) => string;
   updateCompose: (composeId: string, updates: Partial<ComposeState>) => void;
@@ -167,6 +174,8 @@ interface SparklesActions {
   // Calendar Actions
   setCalendars: (calendars: GoogleCalendar[]) => void;
   setEvents: (events: CalendarEvent[]) => void;
+  addEvent: (event: CalendarEvent) => void;
+  removeEvent: (eventId: string) => void;
   setSelectedDate: (date: string | null) => void;
 
   // Settings Actions
@@ -284,9 +293,9 @@ export const useSparklesStore = create<SparklesStore>()(
             ),
             threadCache: state.threadCache[threadId]
               ? {
-                  ...state.threadCache,
-                  [threadId]: { ...state.threadCache[threadId], ...updates },
-                }
+                ...state.threadCache,
+                [threadId]: { ...state.threadCache[threadId], ...updates },
+              }
               : state.threadCache,
             selectedThread:
               state.selectedThread?.id === threadId
@@ -312,8 +321,8 @@ export const useSparklesStore = create<SparklesStore>()(
           set((state) => {
             const thread = threadId
               ? state.threadCache[threadId] ??
-                state.threads.find((t) => t.id === threadId) ??
-                null
+              state.threads.find((t) => t.id === threadId) ??
+              null
               : null;
             return {
               selectedThread: thread,
@@ -339,6 +348,14 @@ export const useSparklesStore = create<SparklesStore>()(
         setLabels: (accountId, labels) =>
           set((state) => ({
             labels: { ...state.labels, [accountId]: labels },
+          })),
+
+        addLabel: (accountId, label) =>
+          set((state) => ({
+            labels: {
+              ...state.labels,
+              [accountId]: [...(state.labels[accountId] || []), label],
+            },
           })),
 
         // =====================================================================
@@ -414,6 +431,34 @@ export const useSparklesStore = create<SparklesStore>()(
           })),
 
         // =====================================================================
+        // Scheduled Email Actions
+        // =====================================================================
+
+        addScheduledEmail: (email) =>
+          set((state) => ({
+            scheduledEmails: [...state.scheduledEmails, email],
+          })),
+
+        updateScheduledEmail: (id, updates) =>
+          set((state) => ({
+            scheduledEmails: state.scheduledEmails.map((e) =>
+              e.id === id ? { ...e, ...updates } : e
+            ),
+          })),
+
+        removeScheduledEmail: (id) =>
+          set((state) => ({
+            scheduledEmails: state.scheduledEmails.filter((e) => e.id !== id),
+          })),
+
+        cancelScheduledEmail: (id) =>
+          set((state) => ({
+            scheduledEmails: state.scheduledEmails.map((e) =>
+              e.id === id ? { ...e, status: 'failed' as const, errorMessage: 'Cancelled by user' } : e
+            ),
+          })),
+
+        // =====================================================================
         // Compose Actions
         // =====================================================================
 
@@ -483,6 +528,14 @@ export const useSparklesStore = create<SparklesStore>()(
 
         setCalendars: (calendars) => set({ calendars }),
         setEvents: (events) => set({ events }),
+        addEvent: (event) =>
+          set((state) => ({
+            events: [...state.events, event],
+          })),
+        removeEvent: (eventId) =>
+          set((state) => ({
+            events: state.events.filter((e) => e.id !== eventId),
+          })),
         setSelectedDate: (date) => set({ selectedDate: date }),
 
         // =====================================================================
@@ -669,7 +722,10 @@ export const useFilteredThreads = () =>
   useSparklesStore((state) => {
     const { ui, threads, prioritySenders, blockedSenders, pendingSenders } = state;
 
-    let filtered = [...threads];
+    // If no threads, return stable empty array (this avoids re-renders on empty state)
+    if (threads.length === 0) return threads;
+
+    let filtered = threads;
 
     // Filter by account
     if (ui.activeFolderAccountId !== 'all') {
@@ -680,13 +736,13 @@ export const useFilteredThreads = () =>
     switch (ui.activeFolder) {
       case 'SMART_INBOX':
         filtered = filtered.filter(
-          (t) => !blockedSenders.includes(t.participants[0]?.email?.toLowerCase())
+          (t) => !blockedSenders.includes(t.participants[0]?.email?.toLowerCase() ?? '')
         );
         break;
       case 'GATEKEEPER':
-        const pendingEmails = pendingSenders.map((s) => s.email.toLowerCase());
+        const pendingEmails = new Set(pendingSenders.map((s) => s.email.toLowerCase()));
         filtered = filtered.filter((t) =>
-          pendingEmails.includes(t.participants[0]?.email?.toLowerCase())
+          pendingEmails.has(t.participants[0]?.email?.toLowerCase() ?? '')
         );
         break;
       case 'STARRED':
@@ -707,26 +763,27 @@ export const useFilteredThreads = () =>
       case 'IMPORTANT':
         filtered = filtered.filter((t) => t.isImportant);
         break;
+      case 'INBOX':
+        filtered = filtered.filter((t) => t.labelIds.includes('INBOX'));
+        break;
       default:
         if (!ui.activeFolder.startsWith('SMART_') && !ui.activeFolder.startsWith('CATEGORY_')) {
           filtered = filtered.filter((t) => t.labelIds.includes(ui.activeFolder));
         }
     }
 
-    // Mark priority
-    filtered = filtered.map((t) => ({
-      ...t,
-      isPriority: prioritySenders.includes(t.participants[0]?.email?.toLowerCase()),
-    }));
+    // Check if any threads have priority (without mutating objects)
+    const prioritySet = new Set(prioritySenders);
 
-    // Sort: Priority first, then by date
-    filtered.sort((a, b) => {
-      if (a.isPriority && !b.isPriority) return -1;
-      if (!a.isPriority && b.isPriority) return 1;
+    // Sort by priority first, then by date
+    // NOTE: We use slice() to avoid mutating the original filtered array
+    return [...filtered].sort((a, b) => {
+      const aPriority = prioritySet.has(a.participants[0]?.email?.toLowerCase() ?? '');
+      const bPriority = prioritySet.has(b.participants[0]?.email?.toLowerCase() ?? '');
+      if (aPriority && !bPriority) return -1;
+      if (!aPriority && bPriority) return 1;
       return b.lastMessageAt - a.lastMessageAt;
     });
-
-    return filtered;
   });
 
 export const useTodayEvents = () =>

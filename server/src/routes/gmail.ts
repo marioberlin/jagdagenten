@@ -7,27 +7,131 @@
  * - Message operations (send, draft, modify)
  * - Label management
  * - Sync operations
+ *
+ * Token Storage:
+ * - Uses Redis-backed encrypted token storage
+ * - Falls back to memory when Redis is unavailable
  */
 
 import { Elysia, t } from 'elysia';
 import { createGmailService, GmailCredentials } from '../services/google/GmailService.js';
+import { tokenStorage, StoredCredentials } from '../services/tokenStorage.js';
 import { componentLoggers } from '../logger.js';
 
 const logger = componentLoggers.http;
 
-// In-memory session store (in production, use Redis or database)
-const sessions = new Map<string, { service: ReturnType<typeof createGmailService>; credentials: GmailCredentials }>();
+// In-memory service cache (services are lightweight, tokens are stored securely)
+const serviceCache = new Map<string, ReturnType<typeof createGmailService>>();
 
 // Helper to get or create Gmail service from session
-const getServiceFromSession = (sessionId: string) => {
-  const session = sessions.get(sessionId);
-  if (!session) {
+const getServiceFromSession = async (sessionId: string) => {
+  // Check cache first
+  const cachedService = serviceCache.get(sessionId);
+  if (cachedService) {
+    return cachedService;
+  }
+
+  // Retrieve credentials from secure storage
+  const credentials = await tokenStorage.retrieve(sessionId);
+  if (!credentials) {
     throw new Error('Session not found. Please authenticate first.');
   }
-  return session.service;
+
+  // Create and cache service
+  const service = createGmailService();
+  await service.setCredentials({
+    accessToken: credentials.accessToken,
+    refreshToken: credentials.refreshToken,
+    expiresAt: credentials.expiresAt,
+  });
+
+  serviceCache.set(sessionId, service);
+  return service;
+};
+
+// Clear service from cache
+const clearServiceCache = (sessionId: string) => {
+  serviceCache.delete(sessionId);
 };
 
 export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
+  // ==========================================================================
+  // Token Management Endpoints (New)
+  // ==========================================================================
+
+  /**
+   * Store tokens (for client-side persistence)
+   * POST /api/v1/sparkles/tokens/store
+   */
+  .post(
+    '/tokens/store',
+    async ({ body }) => {
+      const sessionId = crypto.randomUUID();
+
+      await tokenStorage.store(sessionId, {
+        accessToken: body.accessToken,
+        refreshToken: body.refreshToken,
+        expiresAt: body.expiresAt,
+        email: body.email,
+        name: body.name,
+        avatar: body.avatar,
+      });
+
+      logger.info({ sessionId, email: body.email }, 'Tokens stored via API');
+
+      return { sessionId };
+    },
+    {
+      body: t.Object({
+        accessToken: t.String(),
+        refreshToken: t.String(),
+        expiresAt: t.Number(),
+        email: t.String(),
+        name: t.Optional(t.String()),
+        avatar: t.Optional(t.String()),
+      }),
+    }
+  )
+
+  /**
+   * Retrieve stored credentials
+   * GET /api/v1/sparkles/tokens/retrieve
+   */
+  .get('/tokens/retrieve', async ({ headers }) => {
+    const sessionId = headers['x-session-id'];
+    if (!sessionId) throw new Error('Session ID required');
+
+    const credentials = await tokenStorage.retrieve(sessionId);
+    if (!credentials) {
+      throw new Error('Session not found');
+    }
+
+    // Don't return the full tokens, just metadata and expiry
+    return {
+      email: credentials.email,
+      name: credentials.name,
+      avatar: credentials.avatar,
+      expiresAt: credentials.expiresAt,
+      isValid: credentials.expiresAt > Date.now(),
+    };
+  })
+
+  /**
+   * Revoke tokens and end session
+   * DELETE /api/v1/sparkles/tokens/revoke
+   */
+  .delete('/tokens/revoke', async ({ headers }) => {
+    const sessionId = headers['x-session-id'];
+    if (!sessionId) throw new Error('Session ID required');
+
+    await tokenStorage.revoke(sessionId);
+    clearServiceCache(sessionId);
+
+    logger.info({ sessionId }, 'Tokens revoked via API');
+
+    return { success: true };
+  })
+
   // ==========================================================================
   // Authentication
   // ==========================================================================
@@ -56,11 +160,21 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
         const credentials = await service.exchangeCodeForTokens(body.code);
         const profile = await service.getProfile();
 
-        // Create session
+        // Create session and store tokens securely
         const sessionId = crypto.randomUUID();
-        sessions.set(sessionId, { service, credentials });
+        await tokenStorage.store(sessionId, {
+          accessToken: credentials.accessToken,
+          refreshToken: credentials.refreshToken,
+          expiresAt: credentials.expiresAt,
+          email: profile.email,
+          name: profile.name,
+          avatar: profile.avatar,
+        });
 
-        logger.info({ email: profile.email }, 'Gmail session created');
+        // Cache the service
+        serviceCache.set(sessionId, service);
+
+        logger.info({ email: profile.email, sessionId }, 'Gmail session created');
 
         return {
           sessionId,
@@ -95,11 +209,21 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
         await service.setCredentials(body.credentials);
         const profile = await service.getProfile();
 
-        // Create session
+        // Create session and store tokens securely
         const sessionId = crypto.randomUUID();
-        sessions.set(sessionId, { service, credentials: body.credentials });
+        await tokenStorage.store(sessionId, {
+          accessToken: body.credentials.accessToken,
+          refreshToken: body.credentials.refreshToken,
+          expiresAt: body.credentials.expiresAt,
+          email: profile.email,
+          name: profile.name,
+          avatar: profile.avatar,
+        });
 
-        logger.info({ email: profile.email }, 'Gmail session restored');
+        // Cache the service
+        serviceCache.set(sessionId, service);
+
+        logger.info({ email: profile.email, sessionId }, 'Gmail session restored');
 
         return {
           sessionId,
@@ -131,11 +255,14 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const session = sessions.get(sessionId);
-      if (!session) throw new Error('Session not found');
+      const service = await getServiceFromSession(sessionId);
+      const credentials = await service.refreshAccessToken();
 
-      const credentials = await session.service.refreshAccessToken();
-      session.credentials = credentials;
+      // Update stored tokens
+      await tokenStorage.update(sessionId, {
+        accessToken: credentials.accessToken,
+        expiresAt: credentials.expiresAt,
+      });
 
       return {
         credentials: {
@@ -150,10 +277,11 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
    * End session
    * POST /api/v1/sparkles/auth/logout
    */
-  .post('/auth/logout', ({ headers }) => {
+  .post('/auth/logout', async ({ headers }) => {
     const sessionId = headers['x-session-id'];
     if (sessionId) {
-      sessions.delete(sessionId);
+      await tokenStorage.revoke(sessionId);
+      clearServiceCache(sessionId);
       logger.info({ sessionId }, 'Gmail session ended');
     }
     return { success: true };
@@ -171,7 +299,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     return await service.getProfile();
   })
 
@@ -183,7 +311,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     return await service.listLabels();
   })
 
@@ -197,7 +325,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       return await service.createLabel(body.name, body.color);
     },
     {
@@ -221,7 +349,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     await service.deleteLabel(params.id);
     return { success: true };
   })
@@ -238,7 +366,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     return await service.listThreads({
       labelIds: query.labelIds?.split(','),
       query: query.q,
@@ -255,7 +383,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     const thread = await service.getThread(params.id);
     if (!thread) throw new Error('Thread not found');
     return thread;
@@ -271,7 +399,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       await service.modifyThread(params.id, {
         addLabelIds: body.addLabelIds,
         removeLabelIds: body.removeLabelIds,
@@ -294,7 +422,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     await service.trashThread(params.id);
     return { success: true };
   })
@@ -307,7 +435,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     await service.untrashThread(params.id);
     return { success: true };
   })
@@ -320,7 +448,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     await service.deleteThread(params.id);
     return { success: true };
   })
@@ -337,7 +465,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     const message = await service.getMessage(params.id);
     if (!message) throw new Error('Message not found');
     return message;
@@ -353,7 +481,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       const messageId = await service.sendMessage({
         to: body.to,
         cc: body.cc,
@@ -421,7 +549,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       const draftId = await service.createDraft({
         to: body.to,
         cc: body.cc,
@@ -473,7 +601,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     const data = await service.getAttachment(params.messageId, params.attachmentId);
     return { data };
   })
@@ -492,7 +620,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       await service.batchModifyMessages(body.messageIds, {
         addLabelIds: body.addLabelIds,
         removeLabelIds: body.removeLabelIds,
@@ -524,7 +652,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       throw new Error('startHistoryId is required');
     }
 
-    const service = getServiceFromSession(sessionId);
+    const service = await getServiceFromSession(sessionId);
     return await service.getHistory(query.startHistoryId);
   })
 
@@ -538,7 +666,7 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
       const sessionId = headers['x-session-id'];
       if (!sessionId) throw new Error('Session ID required');
 
-      const service = getServiceFromSession(sessionId);
+      const service = await getServiceFromSession(sessionId);
       return await service.watchMailbox(body.topicName);
     },
     {

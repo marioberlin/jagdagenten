@@ -25,6 +25,7 @@ import {
 import { useSparklesStore } from '@/stores/sparklesStore';
 import { cn } from '@/lib/utils';
 import type { ComposeState } from '@/types/sparkles';
+import { sendEmail, saveDraft } from '@/services/sparklesApiActions';
 
 // =============================================================================
 // Props
@@ -77,12 +78,36 @@ export function SparklesComposeModal({ compose }: SparklesComposeModalProps) {
     updateCompose(compose.id, { isMaximized: !compose.isMaximized, isMinimized: false });
   }, [compose.id, compose.isMaximized, updateCompose]);
 
+  const [isSending, setIsSending] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
   // Handle send
   const handleSend = useCallback(async () => {
-    // TODO: Implement send via API
-    console.log('Sending email:', compose);
-    closeCompose(compose.id);
-  }, [compose, closeCompose]);
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      await sendEmail(compose);
+      // closeCompose is called inside sendEmail on success
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      // TODO: Show error toast
+      setIsSending(false);
+    }
+  }, [compose, isSending]);
+
+  // Handle save draft
+  const handleSaveDraft = useCallback(async () => {
+    if (isSavingDraft) return;
+    setIsSavingDraft(true);
+    try {
+      const draftId = await saveDraft(compose);
+      updateCompose(compose.id, { draftId, isDirty: false, lastSavedAt: Date.now() });
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }, [compose, isSavingDraft, updateCompose]);
 
   // Handle schedule
   const handleSchedule = useCallback(() => {
@@ -103,8 +128,8 @@ export function SparklesComposeModal({ compose }: SparklesComposeModalProps) {
   const position = compose.isMinimized
     ? 'bottom-4 right-4 w-72'
     : compose.isMaximized
-    ? 'inset-4'
-    : 'bottom-4 right-4 w-[600px] h-[500px]';
+      ? 'inset-4'
+      : 'bottom-4 right-4 w-[600px] h-[500px]';
 
   if (compose.isMinimized) {
     return (
@@ -168,12 +193,12 @@ export function SparklesComposeModal({ compose }: SparklesComposeModalProps) {
           {compose.mode === 'new'
             ? 'New Message'
             : compose.mode === 'reply'
-            ? 'Reply'
-            : compose.mode === 'replyAll'
-            ? 'Reply All'
-            : compose.mode === 'forward'
-            ? 'Forward'
-            : 'Draft'}
+              ? 'Reply'
+              : compose.mode === 'replyAll'
+                ? 'Reply All'
+                : compose.mode === 'forward'
+                  ? 'Forward'
+                  : 'Draft'}
         </span>
         <button
           onClick={handleMinimize}

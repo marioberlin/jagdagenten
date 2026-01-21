@@ -16,7 +16,8 @@ import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
 import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
 import ConsolePage from '@/pages/console/ConsolePage';
 import { SparklesApp } from '@/components/features/sparkles';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail } from 'lucide-react';
+import { ICloudApp } from '@/components/features/icloud';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail, CloudCog } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -138,6 +139,13 @@ export const LiquidOSLayout: React.FC = () => {
             label: 'Aurora Travel',
             isActive: activePanel === 'auroraTravel',
             onClick: () => togglePanel('auroraTravel')
+        },
+        {
+            id: 'icloud-app',
+            icon: CloudCog,
+            label: 'iCloud',
+            isActive: activePanel === 'icloud',
+            onClick: () => togglePanel('icloud')
         },
         {
             id: 'a2a-console',
@@ -457,6 +465,31 @@ export const LiquidOSLayout: React.FC = () => {
                 <AnimatePresence>
                     {activePanel === 'sparkles' && (
                         <SparklesApp />
+                    )}
+                </AnimatePresence>
+
+                {/* iCloud App Window */}
+                <AnimatePresence>
+                    {activePanel === 'icloud' && (
+                        <motion.div
+                            key="icloud-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="icloud-window"
+                                title="iCloud"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <ICloudApp />
+                            </GlassWindow>
+                        </motion.div>
                     )}
                 </AnimatePresence>
 

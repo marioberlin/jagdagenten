@@ -2,7 +2,7 @@
  * SparklesMailList - Email thread list with search and filters
  */
 
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -21,6 +21,12 @@ import {
 import { useSparklesStore, useSyncStatus } from '@/stores/sparklesStore';
 import { cn } from '@/lib/utils';
 import type { EmailThread, EmailCategory } from '@/types/sparkles';
+import {
+  fetchThreads,
+  batchArchive,
+  batchDelete,
+  toggleStar,
+} from '@/services/sparklesApiActions';
 
 // =============================================================================
 // Props
@@ -49,6 +55,8 @@ export function SparklesMailList({ threads }: SparklesMailListProps) {
 
   const syncStatus = useSyncStatus();
   const listRef = useRef<HTMLDivElement>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   // Group threads by category if in smart view
   const groupedThreads = useMemo(() => {
@@ -81,6 +89,42 @@ export function SparklesMailList({ threads }: SparklesMailListProps) {
     return groups;
   }, [threads, ui.viewMode, ui.activeFolder]);
 
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fetchThreads({ labelIds: ['INBOX'], maxResults: 50 });
+    } catch (error) {
+      console.error('Failed to refresh:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing]);
+
+  const handleBulkArchive = useCallback(async () => {
+    if (isBulkProcessing || ui.multiSelectThreadIds.length === 0) return;
+    setIsBulkProcessing(true);
+    try {
+      await batchArchive(ui.multiSelectThreadIds);
+    } catch (error) {
+      console.error('Failed to archive:', error);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  }, [isBulkProcessing, ui.multiSelectThreadIds]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (isBulkProcessing || ui.multiSelectThreadIds.length === 0) return;
+    setIsBulkProcessing(true);
+    try {
+      await batchDelete(ui.multiSelectThreadIds);
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  }, [isBulkProcessing, ui.multiSelectThreadIds]);
+
   const handleThreadClick = useCallback(
     (threadId: string) => {
       selectThread(threadId);
@@ -89,11 +133,16 @@ export function SparklesMailList({ threads }: SparklesMailListProps) {
   );
 
   const handleStarClick = useCallback(
-    (e: React.MouseEvent, threadId: string, isStarred: boolean) => {
+    async (e: React.MouseEvent, threadId: string, isStarred: boolean) => {
       e.stopPropagation();
-      updateThread(threadId, { isStarred: !isStarred });
+      // Optimistic update happens inside toggleStar
+      try {
+        await toggleStar(threadId);
+      } catch (error) {
+        console.error('Failed to toggle star:', error);
+      }
     },
-    [updateThread]
+    []
   );
 
   const handleSelectClick = useCallback(
@@ -156,12 +205,15 @@ export function SparklesMailList({ threads }: SparklesMailListProps) {
 
             {/* Refresh */}
             <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               className={cn(
                 'p-1.5 rounded-md',
                 'text-[var(--glass-text-secondary)] hover:text-[var(--glass-text-primary)]',
                 'hover:bg-[var(--glass-surface-hover)]',
                 'transition-colors duration-150',
-                syncStatus === 'syncing' && 'animate-spin'
+                'disabled:opacity-50',
+                isRefreshing && 'animate-spin'
               )}
               title="Refresh"
             >
@@ -173,22 +225,28 @@ export function SparklesMailList({ threads }: SparklesMailListProps) {
               <>
                 <div className="w-px h-4 bg-[var(--glass-border)] mx-1" />
                 <button
+                  onClick={handleBulkArchive}
+                  disabled={isBulkProcessing}
                   className={cn(
                     'p-1.5 rounded-md',
                     'text-[var(--glass-text-secondary)] hover:text-[var(--glass-text-primary)]',
                     'hover:bg-[var(--glass-surface-hover)]',
-                    'transition-colors duration-150'
+                    'transition-colors duration-150',
+                    'disabled:opacity-50'
                   )}
                   title="Archive"
                 >
                   <Archive className="w-4 h-4" />
                 </button>
                 <button
+                  onClick={handleBulkDelete}
+                  disabled={isBulkProcessing}
                   className={cn(
                     'p-1.5 rounded-md',
                     'text-[var(--glass-text-secondary)] hover:text-[var(--system-red)]',
                     'hover:bg-[var(--glass-surface-hover)]',
-                    'transition-colors duration-150'
+                    'transition-colors duration-150',
+                    'disabled:opacity-50'
                   )}
                   title="Delete"
                 >
@@ -388,8 +446,8 @@ function ThreadRow({
         isSelected
           ? 'bg-[var(--glass-surface-active)]'
           : isMultiSelected
-          ? 'bg-[var(--glass-surface)]'
-          : 'hover:bg-[var(--glass-surface-hover)]',
+            ? 'bg-[var(--glass-surface)]'
+            : 'hover:bg-[var(--glass-surface-hover)]',
         thread.isUnread && 'border-l-2 border-l-[var(--color-accent)]'
       )}
       whileHover={{ scale: 1.005 }}

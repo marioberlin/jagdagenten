@@ -347,14 +347,14 @@ export function useSparklesMenuBar() {
           syncStatus === 'syncing'
             ? 'var(--system-blue)'
             : syncStatus === 'error'
-            ? 'var(--system-red)'
-            : 'var(--glass-text-tertiary)',
+              ? 'var(--system-red)'
+              : 'var(--glass-text-tertiary)',
         tooltip:
           syncStatus === 'syncing'
             ? 'Syncing mail...'
             : syncStatus === 'error'
-            ? 'Sync failed - click to retry'
-            : 'All mail synced',
+              ? 'Sync failed - click to retry'
+              : 'All mail synced',
         onClick: syncAllMail,
         priority: 10,
       },
@@ -381,36 +381,52 @@ export function useSparklesMenuBar() {
     [syncStatus, pendingSenderCount, unreadCount, syncAllMail, openGatekeeper, goToInbox]
   );
 
-  // Register app identity
+  // Register app identity on mount only
   useEffect(() => {
     setAppIdentity('Sparkles', Mail);
 
     return () => {
-      setAppIdentity(null, undefined);
+      setAppIdentity('LiquidOS', undefined);
     };
-  }, [setAppIdentity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount/unmount
 
-  // Register menus
+  // Register menus on mount, update on changes
   useEffect(() => {
     registerMenu(sparklesAppMenu);
-    registerMenu(mailboxMenu);
-    registerMenu(messageMenu);
+    // No cleanup needed - just update in place
+  }, [sparklesAppMenu, registerMenu]);
 
+  useEffect(() => {
+    registerMenu(mailboxMenu);
+  }, [mailboxMenu, registerMenu]);
+
+  useEffect(() => {
+    registerMenu(messageMenu);
+  }, [messageMenu, registerMenu]);
+
+  // Cleanup menus on unmount only
+  useEffect(() => {
     return () => {
       unregisterMenu('sparkles-app');
       unregisterMenu('sparkles-mailbox');
       unregisterMenu('sparkles-message');
     };
-  }, [sparklesAppMenu, mailboxMenu, messageMenu, registerMenu, unregisterMenu]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run cleanup on unmount
 
-  // Register status icons
+  // Register status icons on mount, update on changes
   useEffect(() => {
     statusIcons.forEach((icon) => registerStatusIcon(icon));
+  }, [statusIcons, registerStatusIcon]);
 
+  // Cleanup status icons on unmount only
+  useEffect(() => {
     return () => {
-      statusIcons.forEach((icon) => unregisterStatusIcon(icon.id));
+      ['sparkles-sync', 'sparkles-gatekeeper', 'sparkles-unread'].forEach(unregisterStatusIcon);
     };
-  }, [statusIcons, registerStatusIcon, unregisterStatusIcon]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run cleanup on unmount
 }
 
 export default useSparklesMenuBar;
