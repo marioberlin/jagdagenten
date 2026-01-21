@@ -97,10 +97,13 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         const initClient = async () => {
             try {
                 // Create SDK client with v1.0 compliant config
+                // Remote agents (e.g., /remote-a2a) accept RPC at base URL, not /a2a suffix
+                const isRemoteAgent = agent.url.startsWith('/remote-');
                 const newClient = createA2AClient({
                     baseUrl: agent.url,
                     authToken,
                     enableA2UI: true,
+                    rpcPath: isRemoteAgent ? '' : '/a2a',
                 });
 
                 // Try to get agent card to verify connection
@@ -169,9 +172,22 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             }
         }
 
-        // Extract A2UI from artifacts
+        // Extract text and A2UI from artifacts
+        // Local agents (e.g., Restaurant Finder) return responses in artifacts array
         if (task.artifacts) {
             for (const artifact of task.artifacts) {
+                // Extract text from artifact parts (local agent format: parts[].text)
+                if (!content && artifact.parts) {
+                    for (const part of artifact.parts) {
+                        // Handle both {text: string} and {type: 'text', text: string} formats
+                        if ('text' in part && typeof (part as any).text === 'string') {
+                            content = (part as any).text;
+                            break;
+                        }
+                    }
+                }
+
+                // Extract A2UI messages
                 if (a2ui.isA2UIArtifact(artifact)) {
                     a2uiMessages.push(...a2ui.extractA2UIMessages(artifact));
                 }
@@ -220,6 +236,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                 throw new Error(`Client missing sendText method. Available: ${Object.keys(client || {}).join(', ')}`);
             }
 
+
             console.log('[AgentChatWindow] Sending message via sendText...');
             const task = await client.sendText(userMessage.content);
             console.log('[AgentChatWindow] Got task response:', {
@@ -243,12 +260,49 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             ));
         } catch (err) {
             console.error('[AgentChatWindow] Send error:', err);
+
+            // Format user-friendly error message
+            const formatErrorMessage = (error: unknown): string => {
+                const rawMessage = error instanceof Error ? error.message : String(error);
+
+                // Remote server environment errors
+                if (rawMessage.includes('Environment is not ready') || rawMessage.includes('Environment error')) {
+                    return '🔧 Remote service temporarily unavailable. The external agent is experiencing issues. Please try again later.';
+                }
+
+                // Network/connection errors
+                if (rawMessage.includes('Failed to fetch') || rawMessage.includes('NetworkError')) {
+                    return '🌐 Network error. Please check your connection and try again.';
+                }
+
+                // Timeout errors
+                if (rawMessage.includes('timeout') || rawMessage.includes('Timeout')) {
+                    return '⏱️ Request timed out. The agent took too long to respond.';
+                }
+
+                // HTTP errors
+                if (rawMessage.includes('HTTP 5')) {
+                    return '🔧 Server error. The agent service is experiencing issues.';
+                }
+                if (rawMessage.includes('HTTP 4')) {
+                    return '⚠️ Request error. Please try a different message.';
+                }
+
+                // Internal errors from remote servers
+                if (rawMessage.includes('Internal error')) {
+                    return `⚠️ ${rawMessage.replace('Internal error:', 'Service error:').trim()}`;
+                }
+
+                // Default: show the raw message
+                return rawMessage;
+            };
+
             setMessages(prev => prev.map(msg =>
                 msg.id === agentMessageId
                     ? {
                         ...msg,
                         content: '',
-                        error: err instanceof Error ? err.message : 'Failed to get response',
+                        error: formatErrorMessage(err),
                         taskState: v1.TaskState.FAILED
                     }
                     : msg

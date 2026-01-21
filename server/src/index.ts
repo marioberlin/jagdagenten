@@ -567,7 +567,8 @@ async function startServer() {
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)
-        .get('/.well-known/agent-card.json', () => {
+        
+                .get('/.well-known/agent-card.json', () => {
             const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
             return getAgentCard(baseUrl);
         })
@@ -610,6 +611,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRestaurantAgentCard(baseUrl);
@@ -653,6 +655,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getRizzChartsAgentCard(baseUrl);
@@ -696,6 +699,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getCryptoAdvisorAgentCard(baseUrl);
@@ -739,6 +743,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getNanoBananaAgentCard(baseUrl);
@@ -782,6 +787,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDocuMindAgentCard(baseUrl);
@@ -825,6 +831,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getTravelPlannerAgentCard(baseUrl);
@@ -868,6 +875,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => {
                     const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
                     return getDashboardBuilderAgentCard(baseUrl);
@@ -907,6 +915,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getResearchCanvasAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -939,6 +948,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getAIResearcherCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -971,6 +981,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getQAAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1003,6 +1014,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getStateMachineAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1035,6 +1047,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getCopilotFormAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1067,6 +1080,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getNeonTokyoAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1100,6 +1114,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getAuroraWeatherAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1182,6 +1197,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getImageGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
@@ -1262,6 +1278,7 @@ async function startServer() {
             };
 
             return app
+                
                 .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
