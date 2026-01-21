@@ -31,6 +31,7 @@ export type PanelId =
     | 'auroraWeather'
     | 'auroraTravel'
     | 'rushHourTrading'
+    | 'sparkles'
     | null;
 
 interface DesktopState {

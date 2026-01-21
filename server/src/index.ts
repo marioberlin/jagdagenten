@@ -23,6 +23,7 @@ import { adminRoutes } from './routes/admin.js';
 import { systemFilesRoutes } from './system/index.js';
 import { sandboxRoutes } from './cowork/sandbox/routes.js';
 import { mediaRoutes } from './routes/media.js';
+import { gmailRoutes } from './routes/gmail.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -559,6 +560,9 @@ async function startServer() {
 
         // Media Generation API (background images/videos)
         .use(mediaRoutes)
+
+        // Gmail API for Sparkles Email Client
+        .use(gmailRoutes)
 
         // Sandbox API (for Cowork isolated staging)
         .use(sandboxRoutes)

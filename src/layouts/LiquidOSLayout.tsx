@@ -15,7 +15,8 @@ import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
 import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
 import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
 import ConsolePage from '@/pages/console/ConsolePage';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map } from 'lucide-react';
+import { SparklesApp } from '@/components/features/sparkles';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -96,6 +97,13 @@ export const LiquidOSLayout: React.FC = () => {
             label: 'RushHour Trading',
             isActive: activePanel === 'rushHourTrading',
             onClick: () => togglePanel('rushHourTrading')
+        },
+        {
+            id: 'sparkles-mail',
+            icon: Mail,
+            label: 'Sparkles Mail',
+            isActive: activePanel === 'sparkles',
+            onClick: () => togglePanel('sparkles')
         },
         {
             id: 'agent-hub',
@@ -442,6 +450,13 @@ export const LiquidOSLayout: React.FC = () => {
                                 <ConsolePage />
                             </GlassWindow>
                         </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Sparkles Mail App - Full Screen Overlay */}
+                <AnimatePresence>
+                    {activePanel === 'sparkles' && (
+                        <SparklesApp />
                     )}
                 </AnimatePresence>
 
