@@ -57,13 +57,25 @@ function createMockAccount(overrides: Partial<GmailAccount> = {}): GmailAccount 
 
 describe('sparklesStore', () => {
     beforeEach(() => {
-        // Clear store state before each test by setting empty arrays
+        // Fully reset store state before each test
         act(() => {
             const store = useSparklesStore.getState();
+
+            // Reset all arrays and state
             store.setThreads([]);
-            // Clear accounts by removing each one
-            store.accounts.forEach(acc => store.removeAccount(acc.id));
             store.setPendingSenders([]);
+
+            // Clear accounts
+            store.accounts.forEach(acc => store.removeAccount(acc.id));
+
+            // Clear snoozed threads
+            store.snoozedThreads.forEach(s => store.removeSnoozedThread(s.threadId));
+
+            // Clear scheduled emails
+            store.scheduledEmails.forEach(e => store.removeScheduledEmail(e.id));
+
+            // Reset priority senders
+            store.prioritySenders.forEach(e => store.removePrioritySender(e));
         });
     });
 

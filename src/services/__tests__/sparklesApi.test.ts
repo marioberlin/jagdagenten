@@ -49,6 +49,8 @@ describe('sparklesApi', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         localStorageMock.clear();
+        // Clear the module-level session cache
+        clearSession();
     });
 
     afterEach(() => {
@@ -73,9 +75,7 @@ describe('sparklesApi', () => {
         });
 
         it('should retrieve session ID from localStorage', () => {
-            localStorageMock.getItem.mockReturnValueOnce('cached-session');
-            // Clear internal cache first
-            clearSession();
+            // Session is already cleared by beforeEach, so localStorage will be checked
             localStorageMock.getItem.mockReturnValueOnce('stored-session');
             expect(getSessionId()).toBe('stored-session');
         });
@@ -84,6 +84,8 @@ describe('sparklesApi', () => {
             setSessionId('to-be-cleared');
             clearSession();
             expect(localStorageMock.removeItem).toHaveBeenCalledWith('sparkles_session_id');
+            // hasSession checks getSessionId which checks localStorage (now empty)
+            localStorageMock.getItem.mockReturnValueOnce(null);
             expect(hasSession()).toBe(false);
         });
 
