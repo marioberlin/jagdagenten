@@ -4,7 +4,7 @@
  * Centralized source of truth for design constants to prevent hardcoding.
  * Based on Apple Human Interface Guidelines and Liquid Glass Design System.
  *
- * @see LiquidSkills/liquid-design/SKILL.md
+ * @see skills/liquid-design/SKILL.md
  */
 
 /**

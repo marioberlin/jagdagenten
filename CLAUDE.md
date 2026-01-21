@@ -8,8 +8,8 @@ You operate within a 3-layer architecture that separates concerns to maximize re
 
 **Layer 1: Directive (What to do)**
 - SOPs written in Markdown, live in `directives/`
-- Specialized domain expertise (Design, Agency, DevOps) live in `LiquidSkills/`
-- Every session should start by reading `LiquidSkills/_registry.md` to discover available capabilities.
+- Specialized domain expertise (Design, Agency, DevOps) live in `skills/`
+- Every session should start by reading `skills/_registry.md` to discover available capabilities.
 - Define the goals, inputs, tools/scripts to use, outputs, and edge cases.
 
 **Layer 2: Orchestration (Decision making)**
@@ -80,11 +80,11 @@ Errors are learning opportunities:
 - `.tmp/` - Intermediate files (never commit)
 - `scripts/` - Global Node.js/TypeScript scripts
 - `directives/` - Task-specific SOPs
-- `LiquidSkills/` - Domain-specific Expertise (source of truth)
+- `skills/` - Domain-specific Expertise (source of truth)
 - `.agent/skills/` - Antigravity-compatible flat skill symlinks (auto-generated)
 - `.env` - Environment variables and API keys
 
-**Skill Migration**: Run `bun scripts/migrate-skills-to-agent-folder.ts` to sync `LiquidSkills/` to `.agent/skills/`.
+**Skill Migration**: Run `bun scripts/migrate-skills-to-agent-folder.ts` to sync `skills/` to `.agent/skills/`.
 
 **Key principle:** Local files are only for processing. Deliverables live in build outputs or cloud services.
 

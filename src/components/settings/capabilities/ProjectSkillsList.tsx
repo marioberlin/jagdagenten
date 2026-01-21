@@ -1,7 +1,7 @@
 /**
  * ProjectSkillsList
  * 
- * Displays LiquidSkills from the project root - domain expertise that the agent "knows".
+ * Displays skills from the project root - domain expertise that the agent "knows".
  * Uses Book icon motif with blue color theme.
  */
 
@@ -43,7 +43,7 @@ export const ProjectSkillsList: React.FC<ProjectSkillsListProps> = ({ searchQuer
                 <Book size={32} className="mx-auto text-white/20 mb-3" />
                 <p className="text-white/40 text-sm">No project skills found</p>
                 <p className="text-white/30 text-xs mt-1">
-                    Add skills to your <code className="bg-black/30 px-1 rounded">LiquidSkills/</code> directory
+                    Add skills to your <code className="bg-black/30 px-1 rounded">skills/</code> directory
                 </p>
             </div>
         );

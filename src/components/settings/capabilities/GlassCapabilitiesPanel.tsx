@@ -3,7 +3,7 @@
  * 
  * Main orchestrator for the Capabilities settings section.
  * Provides sub-tab navigation between:
- * - Project Skills (LiquidSkills - what the agent knows)
+ * - Project Skills (skills - what the agent knows)
  * - Integrations (MCP/Plugins - tools the agent uses)
  * - Marketplace (Discovery & installation)
  */

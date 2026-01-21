@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Migration Script: LiquidSkills → .agent/skills
+ * Migration Script: skills → .agent/skills
  *
- * Flattens the nested LiquidSkills structure into an Antigravity-compatible
+ * Flattens the nested skills structure into an Antigravity-compatible
  * flat .agent/skills/ directory using symlinks.
  *
  * Usage:
@@ -18,7 +18,7 @@ import { join, relative, dirname } from 'path';
 import { parseArgs } from 'util';
 
 const ROOT = dirname(dirname(import.meta.path));
-const LIQUID_SKILLS_DIR = join(ROOT, 'LiquidSkills');
+const SKILLS_DIR = join(ROOT, 'skills');
 const AGENT_SKILLS_DIR = join(ROOT, '.agent', 'skills');
 
 interface SkillInfo {
@@ -147,9 +147,9 @@ function main() {
 
   if (values.help) {
     console.log(`
-Migration Script: LiquidSkills → .agent/skills
+Migration Script: skills → .agent/skills
 
-Flattens the nested LiquidSkills structure into an Antigravity-compatible
+Flattens the nested skills structure into an Antigravity-compatible
 flat .agent/skills/ directory using symlinks.
 
 Usage:
@@ -166,9 +166,9 @@ Options:
   const dryRun = values['dry-run'];
   const force = values['force'];
 
-  console.log('🔍 Scanning LiquidSkills for SKILL.md files...\n');
+  console.log('🔍 Scanning skills for SKILL.md files...\n');
 
-  const skills = findSkillFolders(LIQUID_SKILLS_DIR);
+  const skills = findSkillFolders(SKILLS_DIR);
   console.log(`Found ${skills.length} skills:\n`);
 
   for (const skill of skills) {
@@ -221,7 +221,7 @@ Options:
   }
 
   // Copy _registry.md if it exists
-  const registrySource = join(LIQUID_SKILLS_DIR, '_registry.md');
+  const registrySource = join(SKILLS_DIR, '_registry.md');
   const registryDest = join(AGENT_SKILLS_DIR, '_registry.md');
 
   if (existsSync(registrySource)) {

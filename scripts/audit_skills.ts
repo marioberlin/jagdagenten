@@ -43,7 +43,7 @@ const SKILLS_DIRS = [
     { path: 'ClaudeSkills/skills', type: 'skill' as const, source: 'ClaudeSkills' },
     { path: 'ClaudePlugins/external', type: 'plugin' as const, source: 'ClaudePlugins' },
     { path: 'ClaudePlugins/internal', type: 'plugin' as const, source: 'ClaudePlugins-Internal' },
-    { path: 'LiquidSkills', type: 'skill' as const, source: 'LiquidSkills' },
+    { path: 'skills', type: 'skill' as const, source: 'skills' },
 ];
 
 const PROJECT_ROOT = join(import.meta.dir, '..');
@@ -124,7 +124,7 @@ async function auditSkill(skillPath: string, type: 'skill' | 'plugin', source: s
     if (!hasManifest) {
         missingFiles.push('plugin.json or SKILL.md');
     }
-    if (source !== 'LiquidSkills' && !(await fileExists(join(skillPath, 'README.md')))) {
+    if (source !== 'skills' && !(await fileExists(join(skillPath, 'README.md')))) {
         missingFiles.push('README.md');
     }
 
@@ -176,7 +176,7 @@ async function generateRecommendations(skills: SkillInfo[]): Promise<string[]> {
     const claudeSkills = skills.filter(s => s.source === 'ClaudeSkills' && s.hasManifest);
     if (claudeSkills.length > 0) {
         recommendations.push(
-            `Integrate ${claudeSkills.length} ClaudeSkills into LiquidSkills registry`
+            `Integrate ${claudeSkills.length} ClaudeSkills into skills registry`
         );
     }
 

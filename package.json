@@ -57,7 +57,8 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "heal:watch": "bun scripts/healer-watch.ts"
   },
   "peerDependencies": {
     "framer-motion": "11.15.0",

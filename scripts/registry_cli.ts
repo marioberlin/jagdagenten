@@ -290,7 +290,7 @@ async function cmdInstall(pluginName: string, version?: string): Promise<void> {
         }
 
         // Create installation directory
-        const installDir = join(process.cwd(), 'LiquidSkills', pluginName);
+        const installDir = join(process.cwd(), 'skills', pluginName);
 
         console.log(`\nInstalling to: ${installDir}`);
 
@@ -330,7 +330,7 @@ async function cmdInstall(pluginName: string, version?: string): Promise<void> {
  * Uninstall plugin
  */
 async function cmdUninstall(pluginName: string): Promise<void> {
-    const installDir = join(process.cwd(), 'LiquidSkills', pluginName);
+    const installDir = join(process.cwd(), 'skills', pluginName);
 
     if (!existsSync(installDir)) {
         console.error(`Plugin ${pluginName} is not installed.`);

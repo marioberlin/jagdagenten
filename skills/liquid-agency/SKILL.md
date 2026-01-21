@@ -20,7 +20,7 @@ When adding or importing a Python-based skill (e.g. from ClaudeSkills):
 3.  **Rewrite**: If approved, port the logic to Bun/TS using the `tools/bun` target.
 
 ### Skill Discovery
-Always check `LiquidSkills/_registry.md` at the start of a session to see available capabilities.
+Always check `skills/_registry.md` at the start of a session to see available capabilities.
 
 ## 3. Ralph Autonomous Loop
 For complex features:
