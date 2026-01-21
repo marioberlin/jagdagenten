@@ -8,6 +8,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { Plus, Minus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface MapMarker {
@@ -186,10 +187,7 @@ export function GlassGoogleMap({
                 options={{
                     styles: NIGHT_MODE_STYLES,
                     disableDefaultUI: true,
-                    zoomControl: true,
-                    zoomControlOptions: {
-                        position: google.maps.ControlPosition.RIGHT_CENTER
-                    },
+                    zoomControl: false,
                     mapTypeControl: false,
                     streetViewControl: false,
                     fullscreenControl: false,
@@ -225,6 +223,38 @@ export function GlassGoogleMap({
                     </InfoWindow>
                 )}
             </GoogleMap>
+
+            {/* Liquid Glass Zoom Controls */}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-10">
+                <button
+                    onClick={() => map?.setZoom((map.getZoom() ?? defaultZoom) + 1)}
+                    className="group w-9 h-9 flex items-center justify-center
+                        bg-black/40 backdrop-blur-xl
+                        border border-white/20
+                        rounded-lg
+                        transition-all duration-200 ease-out
+                        hover:bg-white/10 hover:border-white/30
+                        hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]
+                        active:scale-95"
+                    aria-label="Zoom in"
+                >
+                    <Plus className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                </button>
+                <button
+                    onClick={() => map?.setZoom((map.getZoom() ?? defaultZoom) - 1)}
+                    className="group w-9 h-9 flex items-center justify-center
+                        bg-black/40 backdrop-blur-xl
+                        border border-white/20
+                        rounded-lg
+                        transition-all duration-200 ease-out
+                        hover:bg-white/10 hover:border-white/30
+                        hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]
+                        active:scale-95"
+                    aria-label="Zoom out"
+                >
+                    <Minus className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                </button>
+            </div>
 
             {/* Marker count overlay */}
             <div className="absolute bottom-4 left-4 glass-card px-3 py-1.5 text-xs text-white/70 bg-black/50 rounded-lg border border-white/10 z-10">
