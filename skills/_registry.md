@@ -3,14 +3,14 @@ name: liquid-skills-registry
 description: Central index for all available agent skills in the LiquidCrypto project.
 ---
 
-# LiquidSkills Registry
+# Skills Registry
 
 Welcome, Agent. This is the central repository of specialized capabilities for the LiquidCrypto project. Use these skills to maintain high design quality, follow architectural patterns, and automate workflows.
 
 ---
 
 ## 🤝 Parallel Harmony: Skills & Plugins
-LiquidSkills supports both **Claude Skills** (instructions) and **Claude Plugins** (manifests/hooks) in parallel.
+Skills supports both **Claude Skills** (instructions) and **Claude Plugins** (manifests/hooks) in parallel.
 - **Skills (Knowledge)**: Pure markdown instructions in `SKILL.md`.
 - **Plugins (Automation)**: Manifest-driven modules with `plugin.json` for automated **Hooks**.
 - **Hybrid Execution**: Agents use Skills for reasoning while Plugins enforce standards automatically via `PostToolUse` triggers.
@@ -22,7 +22,7 @@ LiquidSkills supports both **Claude Skills** (instructions) and **Claude Plugins
 | Skill | Description | Language | Path |
 | :--- | :--- | :--- | :--- |
 | **liquid-design** | [Plugin] Unified Source of Truth (Constants, Materials, Patterns) | Bun/TS | `liquid-design/` |
-| **liquid-agency** | [Plugin] Agent Orchestration & Protocol | Bun/TS | `liquid-agency/` |
+| **agent-orchestration** | [Plugin] Agent Orchestration & Protocol | Bun/TS | `agent-orchestration/` |
 
 ## Vendor & Imported Skills
 

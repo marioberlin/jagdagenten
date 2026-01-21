@@ -1,9 +1,9 @@
 ---
-name: liquid-agency
+name: agent-orchestration
 description: Master instructions for agent orchestration, the 3-layer architecture, and skill management. Use this to maintain project integrity and agent reliability.
 ---
 
-# Liquid Agency Skill
+# Agent Orchestration Skill
 
 This skill defines how agents operate within the LiquidCrypto ecosystem to ensure deterministic execution and high reliability.
 
