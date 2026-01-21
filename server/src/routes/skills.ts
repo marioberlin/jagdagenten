@@ -21,14 +21,14 @@ export const skillsRoutes = new Elysia({ prefix: '/api/v1' })
     .get('/skills', async () => {
         try {
             const skills: Skill[] = [];
-            let skillsRoot = join(process.cwd(), 'LiquidSkills');
+            let skillsRoot = join(process.cwd(), 'skills');
 
             // Fix path resolution if running from server directory
             const serverDirCheck = Bun.file(join(process.cwd(), 'package.json'));
             if (await serverDirCheck.exists()) {
                 const pkg = await serverDirCheck.json();
                 if (pkg.name === 'liquid-glass-server') {
-                    skillsRoot = join(process.cwd(), '..', 'LiquidSkills');
+                    skillsRoot = join(process.cwd(), '..', 'skills');
                 }
             }
 
