@@ -27,6 +27,8 @@ graph TB
             Console["ConsolePage"]
             Artifacts["ArtifactsPage"]
             Cowork["CoworkPage"]
+            Sparkles["SparklesApp (Gmail)"]
+            ICloud["ICloudApp"]
         end
     end
     
@@ -60,7 +62,7 @@ graph TB
 │                                                        │
 ├────────────────────────────────────────────────────────┤
 │  GlassDock (bottom floating)                           │
-│  [🏠] [⚙️] [👥] [📦] [💻] [🎨] [📁] [📈] [☁️]         │
+│  [🏠] [⚙️] [👥] [📦] [💻] [🎨] [📁] [📈] [✉️] [☁️]   │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -111,6 +113,7 @@ All routes are under the `/os/*` prefix within the unified LiquidOS layout.
 - Opens Glass Apps as windowed panels:
   - `settings`, `cowork`, `agents`, `console`, `artifacts`
   - `showcase`, `finder`, `neonTokyo`, `auroraWeather`, `trading`
+  - `sparkles` (Gmail client), `icloud` (Apple services)
 
 ### LiquidMenuBar (Top Navigation)
 
@@ -141,6 +144,8 @@ All major features are implemented as **Glass Apps** that open as windowed panel
 | **Console** | `ConsolePage` | Terminal/console |
 | **Artifacts** | `ArtifactsPage` | Artifact browser |
 | **Cowork** | `CoworkPage` | Collaboration mode |
+| **Sparkles** | `SparklesApp` | Gmail client with AI features |
+| **iCloud** | `ICloudApp` | Apple iCloud services (Contacts, Calendar, Mail, Drive, Notes, Reminders, Photos, Find My) |
 
 ---
 
@@ -157,6 +162,8 @@ All major features are implemented as **Glass Apps** that open as windowed panel
 | `coworkStore` | Collaboration state |
 | `sandboxStore` | Sandbox environment |
 | `skillStore` | Skills management |
+| `sparklesStore` | Gmail client state |
+| `icloudStore` | iCloud services state |
 
 ---
 

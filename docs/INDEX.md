@@ -84,6 +84,19 @@ Backend systems and autonomous development.
 
 ---
 
+## Sparkles Mail
+
+Email client integrated into LiquidOS with Gmail and Calendar support.
+
+| Document | Description |
+|----------|-------------|
+| [Implementation Status](sparkles-implementation-status.md) | ✅ All P0-P3 Complete |
+| [Implementation Plan](sparkles-implementation-plan.md) | Comprehensive dev guide |
+| [UX Concept](plans/sparkles-ux-concept.md) | Design philosophy |
+| [Email Client Plan](plans/sparkles-email-client.md) | Original feature spec |
+
+---
+
 ## Trading
 
 Crypto trading bot and dashboard.
@@ -102,6 +115,7 @@ Deep technical specifications.
 |----------|-------------|
 | [A2A Protocol](reference/api/a2a-spec.md) | Agent-to-Agent protocol spec |
 | [Liquid Glass API](reference/api/liquid-glass-api.md) | Component API reference |
+| [iCloud Integration](reference/icloud-integration.md) | iCloud GlassApp documentation |
 | [ADRs](reference/adr/) | Architecture Decision Records |
 | [PRDs](reference/prd/) | Product Requirements Documents |
 
@@ -128,3 +142,4 @@ Historical documents preserved for reference.
 | Archive | Contents |
 |---------|----------|
 | [2025 Archive](archive/2025/) | Superseded implementation plans |
+| [iCloud Standalone](archived/icloud-standalone/) | Original iCloud AI Agent docs (migrated to LiquidOS GlassApp) |
