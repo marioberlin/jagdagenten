@@ -71,7 +71,7 @@ export function createTradingRestApi() {
                         name: t.name,
                         price: t.price,
                         change24h: t.priceChangePercent,
-                        volume: t.volume,
+                        volume: t.volume24h,
                     })),
                     timestamp: new Date().toISOString(),
                 };
