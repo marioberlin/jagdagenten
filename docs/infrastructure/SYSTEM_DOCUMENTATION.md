@@ -655,7 +655,7 @@ bun scripts/pre-generate-backgrounds.ts
 │  ├── src/components/wrapped/   # ErrorBoundary wrappers             │
 │  ├── src/a2a/                  # A2A client & transformer           │
 │  ├── src/components/agents/    # Agent Hub components               │
-│  └── src/layouts/              # Two Worlds layouts                 │
+│  └── src/layouts/              # LiquidOS unified spatial layout        │
 │                                                                      │
 │  Backend (Bun + Elysia)                                             │
 │  ├── server/src/a2a/           # A2A protocol handler               │

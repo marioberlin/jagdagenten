@@ -913,12 +913,14 @@ The AgentChatWindow provides:
 - **Error Handling**: Retry mechanism with error display
 - **Focus Management**: Multiple concurrent chat windows
 
-### Two Worlds Integration
+### LiquidOS Integration
 
-| World | Route | Experience |
-|-------|-------|------------|
-| **Liquid OS** | `/os/agents` | Full spatial exploration, floating windows |
-| **Rush Hour** | (Future) | Sidebar panel, compact agent list |
+The Agent Hub is fully integrated into the LiquidOS spatial desktop:
+
+| Component | Route | Description |
+|-----------|-------|-------------|
+| **Agent Hub** | `/os/agents` | Full spatial exploration, floating chat windows |
+| **GlassDock** | Bottom dock | Quick access to Agent Hub |
 
 **GlassDock Integration:**
 ```typescript

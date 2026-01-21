@@ -12,7 +12,8 @@ import { GlassCoworkApp } from '@/components/cowork/GlassCoworkApp';
 import { GlassFinderApp } from '@/components/features/GlassFinderApp';
 import { NeonTokyoApp } from '@/components/features/NeonTokyoApp';
 import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
-import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud } from 'lucide-react';
+import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -89,9 +90,10 @@ export const LiquidOSLayout: React.FC = () => {
         },
         {
             id: 'rush-hour',
-            icon: Zap,
-            label: 'RushHour Terminal',
-            onClick: () => navigate('/terminal')
+            icon: TrendingUp,
+            label: 'RushHour Trading',
+            isActive: activePanel === 'rushHourTrading',
+            onClick: () => togglePanel('rushHourTrading')
         },
         {
             id: 'agent-hub',
@@ -354,6 +356,31 @@ export const LiquidOSLayout: React.FC = () => {
                                 onClose={closePanel}
                             >
                                 <AuroraWeatherApp />
+                            </GlassWindow>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* RushHour Trading App Window */}
+                <AnimatePresence>
+                    {activePanel === 'rushHourTrading' && (
+                        <motion.div
+                            key="rushhour-trading-panel"
+                            variants={panelVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={panelTransition}
+                        >
+                            <GlassWindow
+                                id="rushhour-trading-window"
+                                title="RushHour Trading"
+                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
+                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
+                                isActive={true}
+                                onClose={closePanel}
+                            >
+                                <RushHourTradingApp onClose={closePanel} />
                             </GlassWindow>
                         </motion.div>
                     )}

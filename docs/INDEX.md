@@ -14,6 +14,7 @@ updated: 2026-01-20
 |-------|-------------|
 | [Getting Started](guides/getting-started.md) | Local development setup |
 | [Architecture](overview/architecture.md) | System design principles |
+| [Unified Architecture](UNIFIED_ARCHITECTURE.md) | LiquidOS spatial desktop paradigm |
 | [Design Tokens](design/tokens.md) | CSS variables reference |
 
 ---

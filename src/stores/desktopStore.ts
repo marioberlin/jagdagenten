@@ -29,6 +29,7 @@ export type PanelId =
     | 'finder'
     | 'neonTokyo'
     | 'auroraWeather'
+    | 'rushHourTrading'
     | null;
 
 interface DesktopState {

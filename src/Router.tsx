@@ -10,7 +10,7 @@ import { ErrorBoundary } from '@/components';
 
 // Layouts
 import { LiquidOSLayout } from './layouts/LiquidOSLayout';
-import { RushHourLayout } from './layouts/RushHourLayout';
+// RushHourLayout removed - now integrated as Glass App
 
 // Lazy-loaded pages
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
@@ -60,14 +60,8 @@ const GenerativeShowcaseDocs = lazy(() => import('./pages/showcase/GenerativeSho
 const GenerativeExtensionsDocs = lazy(() => import('./pages/showcase/GenerativeExtensionsDocs').then(mod => ({ default: mod.default })));
 const AuditDocs = lazy(() => import('./pages/showcase/AuditDocs').then(mod => ({ default: mod.default })));
 
-// Trading (RushHour)
-const MarketOverview = lazy(() => import('./pages/MarketOverview').then(mod => ({ default: mod.MarketOverview })));
-const TradingDashboard = lazy(() => import('./pages/trading/Dashboard').then(mod => ({ default: mod.Dashboard })));
-const TradingRiskSettings = lazy(() => import('./pages/trading/RiskSettings').then(mod => ({ default: mod.RiskSettings })));
-const TradingBotConfig = lazy(() => import('./pages/trading/BotConfig').then(mod => ({ default: mod.BotConfig })));
-const SmartAnalytics = lazy(() => import('./pages/analytics/SmartAnalytics').then(mod => ({ default: mod.SmartAnalytics })));
-const ShowcaseCompound = lazy(() => import('./pages/showcase/ShowcaseCompound').then(mod => ({ default: mod.ShowcaseCompound })));
-const PerformanceComparison = lazy(() => import('./pages/PerformanceComparison').then(mod => ({ default: mod.default })));
+// Trading components - now embedded in RushHourTradingApp Glass App
+// Legacy pages removed: TradingDashboard, TradingRiskSettings, TradingBotConfig, SmartAnalytics, MarketOverview
 
 // Loading fallback component
 function PageLoader() {
@@ -178,21 +172,9 @@ export const AppRouter = () => {
                                     <Route path="/os/docs/audit" element={<AuditDocs />} />
                                 </Route>
 
-                                {/* --- WORLD 2: RUSH HOUR (Dense Terminal) --- */}
-                                <Route path="/terminal" element={<RushHourLayout />}>
-                                    <Route index element={<Navigate to="/terminal/dashboard" replace />} />
-                                    <Route path="dashboard" element={<TradingDashboard />} />
-                                    <Route path="market" element={<MarketOverview />} />
-                                    <Route path="risk" element={<TradingRiskSettings />} />
-                                    <Route path="bots" element={<TradingBotConfig />} />
-                                    <Route path="bots/:id" element={<TradingBotConfig />} />
-                                    <Route path="analytics" element={<SmartAnalytics />} />
-                                    <Route path="performance" element={<PerformanceComparison />} />
-                                    <Route path="compound" element={<ShowcaseCompound />} />
-                                </Route>
-
-                                {/* Legacy Redirects (for safety) */}
-                                <Route path="/trading" element={<Navigate to="/terminal/dashboard" replace />} />
+                                {/* Legacy Redirects - World 2 routes now redirect to LiquidOS */}
+                                <Route path="/terminal/*" element={<Navigate to="/os" replace />} />
+                                <Route path="/trading" element={<Navigate to="/os" replace />} />
                                 <Route path="/settings" element={<Navigate to="/os/settings" replace />} />
                                 <Route path="/design-guide" element={<Navigate to="/os/design" replace />} />
 

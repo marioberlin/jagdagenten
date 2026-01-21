@@ -28,7 +28,7 @@ export const GlassDock: React.FC<GlassDockProps> = ({ items, className }) => {
         <div
             className={cn(
                 "fixed bottom-8 left-1/2 -translate-x-1/2 z-50",
-                "flex items-end h-20 gap-4 px-4 pb-3 rounded-2xl",
+                "flex items-center h-16 gap-3 px-4 rounded-2xl",
                 "bg-[var(--glass-bg)]/80 backdrop-blur-2xl border border-white/10 shadow-2xl",
                 className
             )}
@@ -61,7 +61,7 @@ const DockIcon = ({ mouseX, item }: { mouseX: MotionValue; item: DockItem }) => 
             style={{ width, height: width }}
             onClick={item.onClick}
             className={cn(
-                "relative flex items-center justify-center rounded-xl cursor-pointer transition-colors group mb-2 text-white/50 hover:text-white",
+                "relative flex items-center justify-center rounded-xl cursor-pointer transition-colors group text-white/50 hover:text-white",
                 item.isActive ? "bg-[var(--glass-accent)]/20 text-[var(--glass-accent)]" : "bg-white/5 hover:bg-white/10",
                 "aspect-square"
             )}
