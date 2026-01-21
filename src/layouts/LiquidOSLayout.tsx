@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
+import { EmptyDesktop } from '@/components/layout/EmptyDesktop';
 import { GlassDock } from '@/components/navigation/GlassDock';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
@@ -15,7 +16,6 @@ import { Settings, Layout, Command, Zap, Compass, Sparkles, Briefcase, Terminal,
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
-import { cn } from '@/utils/cn';
 
 /**
  * LiquidOSLayout
@@ -26,14 +26,12 @@ import { cn } from '@/utils/cn';
 export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
     const [dockVisible, setDockVisible] = useState(true);
-    const [dockHovered, setDockHovered] = useState(false);
 
     // Centralized panel state from desktopStore
     const { activePanel, openPanel, closePanel } = useDesktopStore();
 
-    // Track if any overlay is open
-    // Exclude Aurora Weather to allow "Windowed Mode" (see-through to desktop)
-    const hasOverlay = activePanel !== null && activePanel !== 'auroraWeather';
+    // Track if any panel is open
+    const hasPanelOpen = activePanel !== null;
 
     // Panel toggle helper
     const togglePanel = useCallback((panelId: Exclude<PanelId, null>) => {
@@ -74,9 +72,8 @@ export const LiquidOSLayout: React.FC = () => {
         };
     }, [activePanel, closePanel, togglePanel]);
 
-    // Determine if dock should be shown
-    // When any overlay is open, only show on hover
-    const showDock = dockVisible && (!hasOverlay || dockHovered);
+    // Dock is always visible when dockVisible is true (user can toggle with Shift+Space)
+    const showDock = dockVisible;
 
     // Dock Items Configuration
     const dockItems = [
@@ -84,9 +81,9 @@ export const LiquidOSLayout: React.FC = () => {
             id: 'os-home',
             icon: Command,
             label: 'Command Center',
-            isActive: !hasOverlay,
+            isActive: !hasPanelOpen,
             onClick: () => {
-                if (hasOverlay) closePanel();
+                if (hasPanelOpen) closePanel();
                 navigate('/os');
             }
         },
@@ -180,15 +177,33 @@ export const LiquidOSLayout: React.FC = () => {
             {/* 2. Content Area - Handles Dimensional Jump */}
             <PortalFrame activeMode="os" className="pt-[30px]">
                 {/* 3. Spatial Environment - The "Desktop" */}
-                {/* When an overlay is open, this recedes (scales down + blurs) */}
-                <SpatialCanvas scale={hasOverlay ? 0.95 : 1} blur={hasOverlay ? 10 : 0}>
-                    {/* Main OS Content - Scrollable Area */}
-                    <div className={cn(
-                        "w-full h-full overflow-y-auto custom-scrollbar pt-4 pb-32 transition-opacity duration-300",
-                        hasOverlay ? "opacity-0 pointer-events-none" : "opacity-100"
-                    )}>
-                        <Outlet />
-                    </div>
+                {/* When a panel is open, show EmptyDesktop; otherwise show page content */}
+                <SpatialCanvas>
+                    <AnimatePresence mode="wait">
+                        {hasPanelOpen ? (
+                            <motion.div
+                                key="empty-desktop"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="w-full h-full"
+                            >
+                                <EmptyDesktop />
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="home-content"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="w-full h-full overflow-y-auto custom-scrollbar pt-4 pb-32"
+                            >
+                                <Outlet />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </SpatialCanvas>
 
                 {/* 4. Windows Layer - Floats ABOVE the Spatial Environment */}
@@ -344,34 +359,24 @@ export const LiquidOSLayout: React.FC = () => {
                     )}
                 </AnimatePresence>
 
-                {/* 5. System Dock - Fixed Bottom */}
-                {dockVisible && (
-                    <div
-                        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
-                        onMouseEnter={() => setDockHovered(true)}
-                        onMouseLeave={() => setDockHovered(false)}
-                    >
-                        {/* Invisible hover trigger area when dock is hidden */}
-                        {hasOverlay && !dockHovered && (
-                            <div className="absolute bottom-0 left-0 right-0 h-16" />
-                        )}
-                        <AnimatePresence>
-                            {showDock && (
-                                <motion.div
-                                    initial={{ y: 100, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: 100, opacity: 0 }}
-                                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                                    className="pointer-events-none"
-                                >
-                                    <div className="pointer-events-auto">
-                                        <GlassDock items={dockItems} />
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                )}
+                {/* 5. System Dock - Fixed Bottom, Always Visible */}
+                <AnimatePresence>
+                    {showDock && (
+                        <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
+                            <motion.div
+                                initial={{ y: 100, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: 100, opacity: 0 }}
+                                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                                className="pointer-events-none"
+                            >
+                                <div className="pointer-events-auto">
+                                    <GlassDock items={dockItems} />
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </PortalFrame>
         </div>
     );
