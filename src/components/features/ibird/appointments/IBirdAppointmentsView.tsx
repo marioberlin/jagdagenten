@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Clock,
   MapPin,
@@ -17,10 +17,8 @@ import {
   Check,
   X,
   Calendar,
-  User,
-  MoreHorizontal,
 } from 'lucide-react';
-import { useIBirdStore, useUpcomingBookings, useActiveAppointmentTypes } from '@/stores/ibirdStore';
+import { useIBirdStore } from '@/stores/ibirdStore';
 import type { Booking, AppointmentType } from '@/stores/ibirdStore';
 import { useAppointmentsApi } from '../hooks/useIBirdApi';
 import { cn } from '@/lib/utils';
@@ -267,10 +265,28 @@ import { useState } from 'react';
 // =============================================================================
 
 export function IBirdAppointmentsView() {
-  const { settings, ui, selectAppointmentType, openAppointmentTypeEditor } = useIBirdStore();
-  const upcomingBookings = useUpcomingBookings();
-  const appointmentTypes = useActiveAppointmentTypes();
+  const { settings, selectAppointmentType, openAppointmentTypeEditor, bookings: allBookings, appointmentTypes: allAppointmentTypes } = useIBirdStore();
   const { fetchBookings, confirmBooking, cancelBooking } = useAppointmentsApi();
+
+  // Compute upcoming bookings locally to avoid selector instability with new Date()
+  const upcomingBookings = useMemo(() => {
+    const now = new Date();
+    return allBookings
+      .filter((b) => {
+        const bookingDate = new Date(`${b.scheduledDate}T${b.startTime}`);
+        return bookingDate >= now && b.status !== 'cancelled';
+      })
+      .sort((a, b) => {
+        const dateA = new Date(`${a.scheduledDate}T${a.startTime}`);
+        const dateB = new Date(`${b.scheduledDate}T${b.startTime}`);
+        return dateA.getTime() - dateB.getTime();
+      });
+  }, [allBookings]);
+
+  // Compute active appointment types locally
+  const appointmentTypes = useMemo(() => {
+    return allAppointmentTypes.filter((t) => t.isActive);
+  }, [allAppointmentTypes]);
 
   // Load bookings on mount
   useEffect(() => {

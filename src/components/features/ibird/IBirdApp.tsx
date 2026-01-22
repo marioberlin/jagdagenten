@@ -109,14 +109,14 @@ export function IBirdApp() {
   // Handle escape key to close panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !ui.activeModal && !ui.composeWindows.length) {
+      if (e.key === 'Escape' && !ui.activeModal && !ui.composeWindows?.length) {
         closePanel();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [closePanel, ui.activeModal, ui.composeWindows.length]);
+  }, [closePanel, ui.activeModal, ui.composeWindows?.length]);
 
   // Module switcher
   const handleModuleSwitch = useCallback((module: IBirdModule) => {
@@ -269,7 +269,7 @@ export function IBirdApp() {
 
       {/* Compose Windows (Mail) */}
       <AnimatePresence>
-        {ui.composeWindows.map((compose) => (
+        {(ui.composeWindows ?? []).map((compose) => (
           <IBirdComposeModal key={compose.id} compose={compose} />
         ))}
       </AnimatePresence>

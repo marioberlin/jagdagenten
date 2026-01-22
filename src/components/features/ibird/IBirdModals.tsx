@@ -12,16 +12,9 @@ import {
   Mail,
   Calendar,
   Clock,
-  Plus,
-  Eye,
-  EyeOff,
-  Check,
   AlertCircle,
   Loader2,
-  Globe,
   Bell,
-  Palette,
-  User,
 } from 'lucide-react';
 import { useIBirdStore } from '@/stores/ibirdStore';
 import { useSettingsApi, useMailApi } from './hooks/useIBirdApi';
@@ -31,67 +24,61 @@ import { cn } from '@/lib/utils';
 // Add Account Modal
 // =============================================================================
 
-interface AddAccountFormData {
-  email: string;
-  password: string;
-  displayName: string;
-  provider: 'gmail' | 'outlook' | 'icloud' | 'other';
-  imapHost?: string;
-  imapPort?: number;
-  smtpHost?: string;
-  smtpPort?: number;
-}
-
 function AddAccountModal({ onClose }: { onClose: () => void }) {
   const { createAccount } = useMailApi();
-  const [step, setStep] = useState<'provider' | 'credentials' | 'testing'>('provider');
-  const [formData, setFormData] = useState<AddAccountFormData>({
-    email: '',
-    password: '',
-    displayName: '',
-    provider: 'gmail',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const providers = [
-    { id: 'gmail', name: 'Gmail', icon: '📧', color: 'from-red-500 to-yellow-500' },
-    { id: 'outlook', name: 'Outlook', icon: '📬', color: 'from-blue-500 to-cyan-500' },
-    { id: 'icloud', name: 'iCloud', icon: '☁️', color: 'from-blue-400 to-gray-400' },
-    { id: 'other', name: 'Other (IMAP)', icon: '📮', color: 'from-gray-500 to-gray-600' },
-  ];
-
-  const handleProviderSelect = (provider: AddAccountFormData['provider']) => {
-    setFormData({ ...formData, provider });
-    setStep('credentials');
-  };
-
-  const handleSubmit = async () => {
+  const handleGmailOAuth = async () => {
     setIsLoading(true);
     setError(null);
-    setStep('testing');
 
     try {
-      // In a real app, this would validate credentials with the mail server
-      await createAccount({
-        email: formData.email,
-        displayName: formData.displayName || formData.email.split('@')[0],
-        provider: formData.provider,
-        imapHost: formData.imapHost || getDefaultImapHost(formData.provider),
-        imapPort: formData.imapPort || 993,
-        smtpHost: formData.smtpHost || getDefaultSmtpHost(formData.provider),
-        smtpPort: formData.smtpPort || 587,
-        authType: 'password' as const,
-        password: formData.password,
-      });
+      // Initiate Gmail OAuth flow
+      // In a real implementation, this would:
+      // 1. Open a popup or redirect to Google's OAuth consent screen
+      // 2. User grants permission
+      // 3. Receive auth code and exchange for tokens
+      // 4. Create account with OAuth tokens
 
-      // Success - close modal
-      onClose();
+      // For now, simulate the OAuth flow
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+      if (!clientId) {
+        // Demo mode - show what would happen
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Create a mock account for demo purposes
+        await createAccount({
+          email: 'demo@gmail.com',
+          displayName: 'Demo User',
+          provider: 'gmail',
+          imapHost: 'imap.gmail.com',
+          imapPort: 993,
+          smtpHost: 'smtp.gmail.com',
+          smtpPort: 587,
+          authType: 'oauth2' as const,
+        });
+
+        onClose();
+        return;
+      }
+
+      // Real OAuth flow
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      const scope = encodeURIComponent('https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile');
+      const state = crypto.randomUUID();
+
+      // Store state for verification
+      sessionStorage.setItem('oauth_state', state);
+      sessionStorage.setItem('oauth_callback', 'ibird_add_account');
+
+      // Redirect to Google OAuth
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}&access_type=offline&prompt=consent`;
+
+      window.location.href = authUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add account');
-      setStep('credentials');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to connect to Gmail');
       setIsLoading(false);
     }
   };
@@ -111,236 +98,64 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* Step: Provider Selection */}
-      {step === 'provider' && (
-        <div className="space-y-4">
-          <p className="text-sm text-[var(--glass-text-secondary)]">
-            Choose your email provider to get started.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {providers.map((provider) => (
-              <button
-                key={provider.id}
-                onClick={() => handleProviderSelect(provider.id as AddAccountFormData['provider'])}
-                className={cn(
-                  'p-4 rounded-xl border border-[var(--glass-border)]',
-                  'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)]',
-                  'transition-all duration-150 text-left'
-                )}
-              >
-                <div className={cn(
-                  'w-10 h-10 rounded-lg flex items-center justify-center mb-2',
-                  'bg-gradient-to-br', provider.color
-                )}>
-                  <span className="text-xl">{provider.icon}</span>
-                </div>
-                <span className="font-medium text-[var(--glass-text-primary)]">
-                  {provider.name}
-                </span>
-              </button>
-            ))}
+      {/* Content */}
+      <div className="space-y-4">
+        <p className="text-sm text-[var(--glass-text-secondary)]">
+          Connect your Gmail account to get started with your inbox, calendar, and appointments.
+        </p>
+
+        {error && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+            <AlertCircle className="w-4 h-4 text-red-500" />
+            <span className="text-sm text-red-500">{error}</span>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Step: Credentials */}
-      {step === 'credentials' && (
-        <div className="space-y-4">
-          <button
-            onClick={() => setStep('provider')}
-            className="text-sm text-[var(--glass-accent)] hover:underline"
-          >
-            ← Back to providers
-          </button>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-4 h-4 text-red-500" />
-              <span className="text-sm text-red-500">{error}</span>
+        {/* Gmail OAuth Button */}
+        <button
+          onClick={handleGmailOAuth}
+          disabled={isLoading}
+          className={cn(
+            'w-full p-4 rounded-xl border border-[var(--glass-border)]',
+            'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)]',
+            'transition-all duration-150',
+            'flex items-center gap-4',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+        >
+          {isLoading ? (
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-yellow-500 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-white animate-spin" />
+            </div>
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-yellow-500 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
             </div>
           )}
-
-          <div className="space-y-4">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="you@example.com"
-                className={cn(
-                  'w-full px-3 py-2 rounded-lg',
-                  'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                  'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
-                  'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                )}
-              />
-            </div>
-
-            {/* Display Name */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                Display Name (optional)
-              </label>
-              <input
-                type="text"
-                value={formData.displayName}
-                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                placeholder="Your Name"
-                className={cn(
-                  'w-full px-3 py-2 rounded-lg',
-                  'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                  'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
-                  'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                )}
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                Password / App Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••••••"
-                  className={cn(
-                    'w-full px-3 py-2 pr-10 rounded-lg',
-                    'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                    'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
-                    'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-[var(--glass-surface-hover)] rounded"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-[var(--glass-text-tertiary)]" />
-                  ) : (
-                    <Eye className="w-4 h-4 text-[var(--glass-text-tertiary)]" />
-                  )}
-                </button>
-              </div>
-              {formData.provider === 'gmail' && (
-                <p className="mt-1 text-xs text-[var(--glass-text-tertiary)]">
-                  For Gmail, use an App Password. Enable 2FA and create one at{' '}
-                  <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-[var(--glass-accent)] hover:underline">
-                    Google Account
-                  </a>
-                </p>
-              )}
-            </div>
-
-            {/* Custom IMAP/SMTP for 'other' provider */}
-            {formData.provider === 'other' && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                      IMAP Host
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.imapHost || ''}
-                      onChange={(e) => setFormData({ ...formData, imapHost: e.target.value })}
-                      placeholder="imap.example.com"
-                      className={cn(
-                        'w-full px-3 py-2 rounded-lg',
-                        'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                        'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                      IMAP Port
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.imapPort || 993}
-                      onChange={(e) => setFormData({ ...formData, imapPort: parseInt(e.target.value) })}
-                      className={cn(
-                        'w-full px-3 py-2 rounded-lg',
-                        'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                        'text-[var(--glass-text-primary)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                      )}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                      SMTP Host
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.smtpHost || ''}
-                      onChange={(e) => setFormData({ ...formData, smtpHost: e.target.value })}
-                      placeholder="smtp.example.com"
-                      className={cn(
-                        'w-full px-3 py-2 rounded-lg',
-                        'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                        'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--glass-text-secondary)] mb-1">
-                      SMTP Port
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.smtpPort || 587}
-                      onChange={(e) => setFormData({ ...formData, smtpPort: parseInt(e.target.value) })}
-                      className={cn(
-                        'w-full px-3 py-2 rounded-lg',
-                        'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-                        'text-[var(--glass-text-primary)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--glass-accent)]/50'
-                      )}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
+          <div className="flex-1 text-left">
+            <span className="block font-semibold text-[var(--glass-text-primary)]">
+              {isLoading ? 'Connecting...' : 'Sign in with Google'}
+            </span>
+            <span className="block text-sm text-[var(--glass-text-secondary)]">
+              Connect your Gmail account securely with OAuth
+            </span>
           </div>
+        </button>
 
-          {/* Submit */}
-          <button
-            onClick={handleSubmit}
-            disabled={!formData.email || !formData.password}
-            className={cn(
-              'w-full py-2.5 rounded-lg font-medium transition-all duration-150',
-              'bg-[var(--glass-accent)] text-white',
-              'hover:bg-[var(--glass-accent-hover)]',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-          >
-            Add Account
-          </button>
-        </div>
-      )}
-
-      {/* Step: Testing */}
-      {step === 'testing' && (
-        <div className="flex flex-col items-center justify-center py-8 space-y-4">
-          <Loader2 className="w-8 h-8 text-[var(--glass-accent)] animate-spin" />
-          <p className="text-[var(--glass-text-secondary)]">
-            Connecting to mail server...
+        {/* Info */}
+        <div className="pt-4 border-t border-[var(--glass-border)]">
+          <p className="text-xs text-[var(--glass-text-tertiary)] text-center">
+            We'll only request access to read and send emails on your behalf.
+            <br />
+            You can revoke access at any time from your Google Account settings.
           </p>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -756,28 +571,6 @@ function SettingsToggle({ label, description, checked, onChange }: {
       </button>
     </div>
   );
-}
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-function getDefaultImapHost(provider: string): string {
-  switch (provider) {
-    case 'gmail': return 'imap.gmail.com';
-    case 'outlook': return 'outlook.office365.com';
-    case 'icloud': return 'imap.mail.me.com';
-    default: return '';
-  }
-}
-
-function getDefaultSmtpHost(provider: string): string {
-  switch (provider) {
-    case 'gmail': return 'smtp.gmail.com';
-    case 'outlook': return 'smtp.office365.com';
-    case 'icloud': return 'smtp.mail.me.com';
-    default: return '';
-  }
 }
 
 // =============================================================================

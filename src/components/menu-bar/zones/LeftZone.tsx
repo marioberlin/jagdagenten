@@ -38,7 +38,7 @@ export const LeftZone: React.FC = () => {
     const contextMenuItems = useContextMenuItems();
     const helpMenuItems = useHelpMenuItems();
 
-    // Standard menu definitions
+    // Standard menu definitions (only shown when no app is active)
     const standardMenus = [
         { id: 'file', label: 'File', items: fileMenuItems },
         { id: 'edit', label: 'Edit', items: editMenuItems },
@@ -46,15 +46,16 @@ export const LeftZone: React.FC = () => {
         { id: 'go', label: 'Go', items: goMenuItems },
         { id: 'agent', label: 'Agent', items: agentMenuItems },
         { id: 'memory', label: 'Memory', items: memoryMenuItems },
-    ];
-
-    // All menus in order (standard + custom + context + help)
-    const allMenus = [
-        ...standardMenus,
-        ...state.customMenus,
         { id: 'context', label: 'Context', items: contextMenuItems },
         { id: 'help', label: 'Help', items: helpMenuItems },
     ];
+
+    // Determine if an app is active (has registered custom menus)
+    const isAppActive = state.appName !== 'LiquidOS' && state.customMenus.length > 0;
+
+    // When an app is active, show only its custom menus
+    // When no app is active, show the standard system menus
+    const allMenus = isAppActive ? state.customMenus : standardMenus;
 
     const handleMenuClick = (menuId: string) => {
         setOpenMenuId(openMenuId === menuId ? null : menuId);

@@ -14,7 +14,7 @@ import {
   MoreHorizontal,
   GripVertical,
 } from 'lucide-react';
-import { useIBirdStore, useVisibleEvents, useEventsInRange } from '@/stores/ibirdStore';
+import { useIBirdStore, useVisibleEvents } from '@/stores/ibirdStore';
 import type { CalendarEvent, CalendarViewMode } from '@/stores/ibirdStore';
 import { useCalendarApi } from '../hooks/useIBirdApi';
 import { cn } from '@/lib/utils';
@@ -168,17 +168,18 @@ function CalendarHeader() {
 // =============================================================================
 
 function WeekView() {
-  const { ui, selectEvent, openEventEditor, updateEvent } = useIBirdStore();
+  const { ui, selectEvent, openEventEditor, updateEvent, calendars, events: allStoreEvents } = useIBirdStore();
   const { editEvent } = useCalendarApi();
-  const viewDate = new Date(ui.calendarViewDate);
+  const calendarViewDate = ui.calendarViewDate;
 
   // Drag state
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Generate week days
+  // Generate week days - memoized on calendarViewDate string
   const weekDays = useMemo(() => {
+    const viewDate = new Date(calendarViewDate);
     const days: Date[] = [];
     const start = new Date(viewDate);
     start.setDate(viewDate.getDate() - viewDate.getDay());
@@ -189,12 +190,26 @@ function WeekView() {
       days.push(d);
     }
     return days;
-  }, [viewDate]);
+  }, [calendarViewDate]);
 
-  // Get events for the week
-  const startDate = weekDays[0].toISOString().split('T')[0];
-  const endDate = weekDays[6].toISOString().split('T')[0];
-  const events = useEventsInRange(startDate, endDate);
+  // Filter events for the week - computed in component to avoid selector instability
+  const events = useMemo(() => {
+    const startDate = weekDays[0].toISOString().split('T')[0];
+    const endDate = weekDays[6].toISOString().split('T')[0];
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+
+    const visibleCalendarIds = calendars
+      .filter((c) => c.isVisible)
+      .map((c) => c.id);
+
+    return allStoreEvents.filter((e) => {
+      if (!visibleCalendarIds.includes(e.calendarId)) return false;
+      const eventStart = new Date(e.startTime).getTime();
+      const eventEnd = new Date(e.endTime).getTime();
+      return eventStart <= end && eventEnd >= start;
+    });
+  }, [weekDays, calendars, allStoreEvents]);
 
   // Generate hour slots
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -499,9 +514,10 @@ function WeekView() {
 // =============================================================================
 
 function MonthView() {
-  const { ui, selectEvent, openEventEditor, updateEvent } = useIBirdStore();
+  const { ui, selectEvent, openEventEditor, updateEvent, calendars, events: storeEvents } = useIBirdStore();
   const { editEvent } = useCalendarApi();
-  const viewDate = new Date(ui.calendarViewDate);
+  const calendarViewDate = ui.calendarViewDate;
+  const viewDate = new Date(calendarViewDate);
 
   // Drag state for month view
   const [draggingEvent, setDraggingEvent] = useState<CalendarEvent | null>(null);
@@ -550,12 +566,26 @@ function MonthView() {
     }
 
     return weeks;
-  }, [viewDate]);
+  }, [calendarViewDate]);
 
-  // Get all events for the visible range
-  const startDate = monthGrid[0][0].toISOString().split('T')[0];
-  const endDate = monthGrid[monthGrid.length - 1][6].toISOString().split('T')[0];
-  const allEvents = useEventsInRange(startDate, endDate);
+  // Get all events for the visible range - computed in component to avoid selector instability
+  const allEvents = useMemo(() => {
+    const startDate = monthGrid[0][0].toISOString().split('T')[0];
+    const endDate = monthGrid[monthGrid.length - 1][6].toISOString().split('T')[0];
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+
+    const visibleCalendarIds = calendars
+      .filter((c) => c.isVisible)
+      .map((c) => c.id);
+
+    return storeEvents.filter((e) => {
+      if (!visibleCalendarIds.includes(e.calendarId)) return false;
+      const eventStart = new Date(e.startTime).getTime();
+      const eventEnd = new Date(e.endTime).getTime();
+      return eventStart <= end && eventEnd >= start;
+    });
+  }, [monthGrid, calendars, storeEvents]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

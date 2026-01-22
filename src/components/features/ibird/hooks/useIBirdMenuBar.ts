@@ -5,112 +5,108 @@
  */
 
 import { useEffect } from 'react';
-import { useDesktopStore } from '@/stores/desktopStore';
+import { useMenuBar, type MenuDef } from '@/context/MenuBarContext';
 import { useIBirdStore } from '@/stores/ibirdStore';
 
 export function useIBirdMenuBar() {
-  const { setMenuBar, clearMenuBar } = useDesktopStore();
+  const { registerMenu, unregisterMenu, setAppIdentity } = useMenuBar();
   const { ui, openCompose, openEventEditor, openAppointmentTypeEditor } = useIBirdStore();
 
   useEffect(() => {
-    const menuItems = [
+    const menuItems: MenuDef[] = [
       {
-        id: 'ibird',
+        id: 'ibird-app',
         label: 'iBird',
         items: [
-          { id: 'about', label: 'About iBird', shortcut: '' },
-          { id: 'separator-1', type: 'separator' as const },
-          { id: 'preferences', label: 'Preferences...', shortcut: '⌘,' },
-          { id: 'separator-2', type: 'separator' as const },
-          { id: 'quit', label: 'Quit iBird', shortcut: '⌘Q' },
+          { id: 'ibird-about', label: 'About iBird', dividerAfter: true },
+          { id: 'ibird-preferences', label: 'Preferences...', shortcut: '⌘,', dividerAfter: true },
+          { id: 'ibird-quit', label: 'Quit iBird', shortcut: '⌘Q' },
         ],
       },
       {
-        id: 'file',
+        id: 'ibird-file',
         label: 'File',
         items: ui.activeModule === 'mail'
           ? [
-              { id: 'new-message', label: 'New Message', shortcut: '⌘N', action: () => openCompose('new') },
-              { id: 'separator-1', type: 'separator' as const },
-              { id: 'close', label: 'Close', shortcut: '⌘W' },
+              { id: 'ibird-new-message', label: 'New Message', shortcut: '⌘N', action: () => openCompose('new'), dividerAfter: true },
+              { id: 'ibird-close', label: 'Close', shortcut: '⌘W' },
             ]
           : ui.activeModule === 'calendar'
           ? [
-              { id: 'new-event', label: 'New Event', shortcut: '⌘N', action: () => openEventEditor() },
-              { id: 'separator-1', type: 'separator' as const },
-              { id: 'close', label: 'Close', shortcut: '⌘W' },
+              { id: 'ibird-new-event', label: 'New Event', shortcut: '⌘N', action: () => openEventEditor(), dividerAfter: true },
+              { id: 'ibird-close', label: 'Close', shortcut: '⌘W' },
             ]
           : [
-              { id: 'new-type', label: 'New Event Type', shortcut: '⌘N', action: () => openAppointmentTypeEditor() },
-              { id: 'separator-1', type: 'separator' as const },
-              { id: 'close', label: 'Close', shortcut: '⌘W' },
+              { id: 'ibird-new-type', label: 'New Event Type', shortcut: '⌘N', action: () => openAppointmentTypeEditor(), dividerAfter: true },
+              { id: 'ibird-close', label: 'Close', shortcut: '⌘W' },
             ],
       },
       {
-        id: 'edit',
+        id: 'ibird-edit',
         label: 'Edit',
         items: [
-          { id: 'undo', label: 'Undo', shortcut: '⌘Z' },
-          { id: 'redo', label: 'Redo', shortcut: '⇧⌘Z' },
-          { id: 'separator-1', type: 'separator' as const },
-          { id: 'cut', label: 'Cut', shortcut: '⌘X' },
-          { id: 'copy', label: 'Copy', shortcut: '⌘C' },
-          { id: 'paste', label: 'Paste', shortcut: '⌘V' },
-          { id: 'separator-2', type: 'separator' as const },
-          { id: 'select-all', label: 'Select All', shortcut: '⌘A' },
-          { id: 'find', label: 'Find...', shortcut: '⌘F' },
+          { id: 'ibird-undo', label: 'Undo', shortcut: '⌘Z' },
+          { id: 'ibird-redo', label: 'Redo', shortcut: '⇧⌘Z', dividerAfter: true },
+          { id: 'ibird-cut', label: 'Cut', shortcut: '⌘X' },
+          { id: 'ibird-copy', label: 'Copy', shortcut: '⌘C' },
+          { id: 'ibird-paste', label: 'Paste', shortcut: '⌘V', dividerAfter: true },
+          { id: 'ibird-select-all', label: 'Select All', shortcut: '⌘A' },
+          { id: 'ibird-find', label: 'Find...', shortcut: '⌘F' },
         ],
       },
       {
-        id: 'view',
+        id: 'ibird-view',
         label: 'View',
         items: ui.activeModule === 'mail'
           ? [
-              { id: 'toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\' },
-              { id: 'separator-1', type: 'separator' as const },
-              { id: 'list-view', label: 'List View' },
-              { id: 'conversation-view', label: 'Conversation View' },
+              { id: 'ibird-toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\', dividerAfter: true },
+              { id: 'ibird-list-view', label: 'List View' },
+              { id: 'ibird-conversation-view', label: 'Conversation View' },
             ]
           : ui.activeModule === 'calendar'
           ? [
-              { id: 'toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\' },
-              { id: 'separator-1', type: 'separator' as const },
-              { id: 'day-view', label: 'Day' },
-              { id: 'week-view', label: 'Week' },
-              { id: 'month-view', label: 'Month' },
-              { id: 'year-view', label: 'Year' },
-              { id: 'agenda-view', label: 'Agenda' },
+              { id: 'ibird-toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\', dividerAfter: true },
+              { id: 'ibird-day-view', label: 'Day' },
+              { id: 'ibird-week-view', label: 'Week' },
+              { id: 'ibird-month-view', label: 'Month' },
+              { id: 'ibird-year-view', label: 'Year' },
+              { id: 'ibird-agenda-view', label: 'Agenda' },
             ]
           : [
-              { id: 'toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\' },
+              { id: 'ibird-toggle-sidebar', label: 'Toggle Sidebar', shortcut: '⌘\\' },
             ],
       },
       {
-        id: 'window',
+        id: 'ibird-window',
         label: 'Window',
         items: [
-          { id: 'minimize', label: 'Minimize', shortcut: '⌘M' },
-          { id: 'zoom', label: 'Zoom' },
-          { id: 'separator-1', type: 'separator' as const },
-          { id: 'mail', label: 'Mail', shortcut: '⌘1' },
-          { id: 'calendar', label: 'Calendar', shortcut: '⌘2' },
-          { id: 'appointments', label: 'Appointments', shortcut: '⌘3' },
+          { id: 'ibird-minimize', label: 'Minimize', shortcut: '⌘M' },
+          { id: 'ibird-zoom', label: 'Zoom', dividerAfter: true },
+          { id: 'ibird-mail', label: 'Mail', shortcut: '⌘1' },
+          { id: 'ibird-calendar', label: 'Calendar', shortcut: '⌘2' },
+          { id: 'ibird-appointments', label: 'Appointments', shortcut: '⌘3' },
         ],
       },
       {
-        id: 'help',
+        id: 'ibird-help',
         label: 'Help',
         items: [
-          { id: 'ibird-help', label: 'iBird Help' },
-          { id: 'keyboard-shortcuts', label: 'Keyboard Shortcuts', shortcut: '⌘/' },
+          { id: 'ibird-help-docs', label: 'iBird Help' },
+          { id: 'ibird-keyboard-shortcuts', label: 'Keyboard Shortcuts', shortcut: '⌘/' },
         ],
       },
     ];
 
-    setMenuBar(menuItems);
+    // Set app identity
+    setAppIdentity('iBird');
+
+    // Register each menu
+    menuItems.forEach(menu => registerMenu(menu));
 
     return () => {
-      clearMenuBar();
+      // Unregister menus on cleanup
+      menuItems.forEach(menu => unregisterMenu(menu.id));
+      setAppIdentity('LiquidOS');
     };
-  }, [ui.activeModule, setMenuBar, clearMenuBar, openCompose, openEventEditor, openAppointmentTypeEditor]);
+  }, [ui.activeModule, registerMenu, unregisterMenu, setAppIdentity, openCompose, openEventEditor, openAppointmentTypeEditor]);
 }

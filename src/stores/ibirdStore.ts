@@ -1197,6 +1197,14 @@ export const useIBirdStore = create<IBirdStore>()(
             recentSearches: state.ui.recentSearches,
           },
         }),
+        merge: (persistedState, currentState) => {
+          const persisted = persistedState as Partial<IBirdState>;
+          return {
+            ...currentState,
+            settings: { ...currentState.settings, ...persisted.settings },
+            ui: { ...currentState.ui, ...persisted.ui },
+          };
+        },
       }
     ),
     { name: 'IBirdStore' }
@@ -1207,16 +1215,20 @@ export const useIBirdStore = create<IBirdStore>()(
 // Selectors
 // =============================================================================
 
+// Stable empty arrays to prevent infinite re-renders
+const EMPTY_FOLDERS: MailFolder[] = [];
+const EMPTY_LABELS: MailLabel[] = [];
+
 export const useActiveAccount = () =>
   useIBirdStore((state) =>
     state.accounts.find((a) => a.id === state.ui.activeAccountId)
   );
 
 export const useAccountFolders = (accountId: string) =>
-  useIBirdStore((state) => state.folders[accountId] ?? []);
+  useIBirdStore((state) => state.folders[accountId] || EMPTY_FOLDERS);
 
 export const useAccountLabels = (accountId: string) =>
-  useIBirdStore((state) => state.labels[accountId] ?? []);
+  useIBirdStore((state) => state.labels[accountId] || EMPTY_LABELS);
 
 export const useUnreadCount = () =>
   useIBirdStore((state) => state.messages.filter((m) => !m.isRead).length);
