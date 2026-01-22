@@ -33,6 +33,7 @@ export type PanelId =
     | 'rushHourTrading'
     | 'sparkles'
     | 'icloud'
+    | 'ibird'
     | null;
 
 interface DesktopState {

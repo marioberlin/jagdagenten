@@ -25,6 +25,7 @@ import { sandboxRoutes } from './cowork/sandbox/routes.js';
 import { mediaRoutes } from './routes/media.js';
 import { gmailRoutes } from './routes/gmail.js';
 import { icloudRoutes } from './routes/icloud.js';
+import { ibirdRoutes } from './routes/ibird/index.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -567,6 +568,9 @@ async function startServer() {
 
         // iCloud API for iCloud GlassApp
         .use(icloudRoutes)
+
+        // iBird - Email, Calendar & Appointments System
+        .use(ibirdRoutes)
 
         // Sandbox API (for Cowork isolated staging)
         .use(sandboxRoutes)
