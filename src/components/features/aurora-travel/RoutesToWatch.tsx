@@ -5,7 +5,8 @@
  * Users define origin/destination with flexible dates, and the app
  * recommends when weather is best for the journey.
  */
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import {
     Route,
     Eye,
@@ -28,8 +29,6 @@ import { cn } from '@/utils/cn';
 import { GlassContainer, GlassButton } from '@/components';
 import {
     useAuroraTravelStore,
-    selectRecommendedRoutes,
-    selectWatchingRoutes,
     type RouteToWatch,
     type WeatherWindow,
 } from '@/stores/auroraTravelStore';
@@ -233,9 +232,26 @@ export const RoutesToWatch: React.FC<RoutesToWatchProps> = ({
     onViewRoute,
     onBookWindow,
 }) => {
-    const recommendedRoutes = useAuroraTravelStore(selectRecommendedRoutes);
-    const watchingRoutes = useAuroraTravelStore(selectWatchingRoutes);
-    const allRoutes = [...recommendedRoutes, ...watchingRoutes];
+    // Select raw data with useShallow for stable reference
+    const routesToWatch = useAuroraTravelStore(
+        useShallow((state) => state.routesToWatch)
+    );
+
+    // Compute derived values with useMemo for stable references
+    const recommendedRoutes = useMemo(
+        () => routesToWatch.filter(r => r.status === 'recommended'),
+        [routesToWatch]
+    );
+
+    const watchingRoutes = useMemo(
+        () => routesToWatch.filter(r => r.status === 'watching'),
+        [routesToWatch]
+    );
+
+    const allRoutes = useMemo(
+        () => [...recommendedRoutes, ...watchingRoutes],
+        [recommendedRoutes, watchingRoutes]
+    );
 
     return (
         <div className="space-y-4">

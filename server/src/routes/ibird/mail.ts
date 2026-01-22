@@ -128,15 +128,15 @@ export const mailRoutes = new Elysia({ prefix: '/mail' })
 
   /**
    * List folders for an account
-   * GET /api/v1/ibird/mail/accounts/:accountId/folders
+   * GET /api/v1/ibird/mail/accounts/:id/folders
    */
-  .get('/accounts/:accountId/folders', async ({ headers, params }) => {
+  .get('/accounts/:id/folders', async ({ headers, params }) => {
     const userId = getUserId(headers);
     // Verify account belongs to user
-    const account = await mailAccountService.getAccount(params.accountId, userId);
+    const account = await mailAccountService.getAccount(params.id, userId);
     if (!account) throw new Error('Account not found');
 
-    return await mailAccountService.listFolders(params.accountId);
+    return await mailAccountService.listFolders(params.id);
   })
 
   /**
@@ -155,13 +155,13 @@ export const mailRoutes = new Elysia({ prefix: '/mail' })
 
   /**
    * List messages in a folder
-   * GET /api/v1/ibird/mail/folders/:folderId/messages
+   * GET /api/v1/ibird/mail/folders/:id/messages
    */
-  .get('/folders/:folderId/messages', async ({ params, query }) => {
+  .get('/folders/:id/messages', async ({ params, query }) => {
     const page = query.page ? parseInt(query.page) : 1;
     const limit = query.limit ? parseInt(query.limit) : 50;
 
-    return await mailMessageService.listMessages(params.folderId, { page, limit });
+    return await mailMessageService.listMessages(params.id, { page, limit });
   })
 
   /**
@@ -364,8 +364,8 @@ export const mailRoutes = new Elysia({ prefix: '/mail' })
 
   /**
    * List attachments for a message
-   * GET /api/v1/ibird/mail/messages/:messageId/attachments
+   * GET /api/v1/ibird/mail/messages/:id/attachments
    */
-  .get('/messages/:messageId/attachments', async ({ params }) => {
-    return await mailMessageService.listAttachments(params.messageId);
+  .get('/messages/:id/attachments', async ({ params }) => {
+    return await mailMessageService.listAttachments(params.id);
   });

@@ -3,7 +3,8 @@
  * 
  * Trip listing and Routes-to-Watch management interface.
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Map,
@@ -16,8 +17,6 @@ import { cn } from '@/utils/cn';
 import { GlassContainer, GlassButton } from '@/components';
 import {
     useAuroraTravelStore,
-    selectUpcomingTrips,
-    selectActiveTrip,
     type Trip,
 } from '@/stores/auroraTravelStore';
 
@@ -153,12 +152,32 @@ export const AuroraTripsTab: React.FC = () => {
     const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
     const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
-    // Store data
-    const trips = useAuroraTravelStore(state => state.trips);
-    const upcomingTrips = useAuroraTravelStore(selectUpcomingTrips);
-    const activeTrip = useAuroraTravelStore(selectActiveTrip);
-    const routesToWatch = useAuroraTravelStore(state => state.routesToWatch);
-    const recommendedRoutes = routesToWatch.filter(r => r.status === 'recommended');
+    // Store data - select raw arrays and compute derived data with useMemo
+    const { trips, activeTripId, routesToWatch } = useAuroraTravelStore(
+        useShallow((state) => ({
+            trips: state.trips,
+            activeTripId: state.activeTripId,
+            routesToWatch: state.routesToWatch,
+        }))
+    );
+
+    // Compute derived values with useMemo for stable references
+    const activeTrip = useMemo(
+        () => trips.find(t => t.id === activeTripId),
+        [trips, activeTripId]
+    );
+
+    const upcomingTrips = useMemo(() => {
+        const now = Date.now();
+        return trips
+            .filter(t => t.status === 'planned' && t.departureDate && new Date(t.departureDate).getTime() > now)
+            .sort((a, b) => new Date(a.departureDate!).getTime() - new Date(b.departureDate!).getTime());
+    }, [trips]);
+
+    const recommendedRoutes = useMemo(
+        () => routesToWatch.filter(r => r.status === 'recommended'),
+        [routesToWatch]
+    );
 
     // Handlers
     const handleCreateTrip = () => {

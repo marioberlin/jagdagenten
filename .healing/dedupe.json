@@ -22,5 +22,13 @@
     "lastSeen": "2026-01-21T22:58:09.069Z",
     "healingInProgress": true,
     "lastHealingAttempt": "2026-01-21T22:58:09.069Z"
+  },
+  {
+    "hash": "4b606b3696fbd28b",
+    "count": 1,
+    "firstSeen": "2026-01-22T21:36:25.593Z",
+    "lastSeen": "2026-01-22T21:36:25.593Z",
+    "healingInProgress": true,
+    "lastHealingAttempt": "2026-01-22T21:36:25.593Z"
   }
 ]

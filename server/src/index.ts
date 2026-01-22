@@ -26,6 +26,7 @@ import { mediaRoutes } from './routes/media.js';
 import { gmailRoutes } from './routes/gmail.js';
 import { icloudRoutes } from './routes/icloud.js';
 import { ibirdRoutes } from './routes/ibird/index.js';
+import { fileSearchRoutes } from './routes/fileSearch.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -43,6 +44,7 @@ import { getNeonTokyoAgentCard, handleNeonTokyoRequest } from './agents/neon-tok
 import { getImageGenAgentCard, handleImageGenRequest } from './agents/media-imagegen.js';
 import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-videogen.js';
 import { getAuroraWeatherAgentCard, handleAuroraWeatherRequest } from './agents/aurora-weather.js';
+import { getProjectAssistantCard, handleProjectAssistantRequest, handleProjectAssistantChat } from './agents/project-assistant.js';
 import { getMarketDataAgentCard, handleMarketDataRequest, getTradeExecutorAgentCard, handleTradeExecutorRequest, getStrategyAgentCard, handleStrategyRequest, getRiskAgentCard, handleRiskRequest, getOrchestratorAgentCard, handleOrchestratorRequest, getNotificationAgentCard, handleNotificationRequest, getSymbolManagerAgentCard, handleSymbolManagerRequest, getWebhookGatewayAgentCard, handleWebhookGatewayRequest, getMaintenanceAgentCard, handleMaintenanceRequest, createTradingRestApi } from './agents/trading/index.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
@@ -342,6 +344,51 @@ async function startServer() {
             };
         })
 
+        // Redis Health Check
+        .get('/health/redis', async ({ set }) => {
+            if (!redis) {
+                set.status = 503;
+                return { status: 'unavailable', message: 'Redis not connected' };
+            }
+            try {
+                await redis.ping();
+                return { status: 'healthy', timestamp: new Date().toISOString() };
+            } catch (error) {
+                set.status = 503;
+                return { status: 'unhealthy', error: (error as Error).message };
+            }
+        })
+
+        // PostgreSQL Health Check
+        .get('/health/postgres', async ({ set }) => {
+            try {
+                const { pool } = await import('./db.js');
+                const result = await pool.query('SELECT 1');
+                return { status: 'healthy', timestamp: new Date().toISOString() };
+            } catch (error) {
+                set.status = 503;
+                return { status: 'unhealthy', error: (error as Error).message };
+            }
+        })
+
+        // Runtime Health Proxy (to avoid CORS issues with direct container access)
+        .get('/health/runtime', async ({ set }) => {
+            try {
+                const response = await fetch('http://localhost:8081/health', {
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    return { ...data, status: 'healthy', timestamp: new Date().toISOString() };
+                }
+                set.status = 503;
+                return { status: 'unhealthy', error: `HTTP ${response.status}` };
+            } catch (error) {
+                set.status = 503;
+                return { status: 'unhealthy', error: (error as Error).message };
+            }
+        })
+
         // SSE Stream
         .get('/stream', ({ set }) => {
             set.headers['Content-Type'] = 'text/event-stream';
@@ -574,6 +621,9 @@ async function startServer() {
 
         // Sandbox API (for Cowork isolated staging)
         .use(sandboxRoutes)
+
+        // FileSearch RAG API (Gemini File Search Tool)
+        .use(fileSearchRoutes)
 
         // Artifact Management Routes
         .use(createArtifactRoutes())
@@ -1574,6 +1624,50 @@ async function startServer() {
                 .get('/.well-known/agent-card.json', () => getVideoGenAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
                 .post('/a2a', handleRpc)
                 .post('/', handleRpc);
+        })
+
+        // Project Assistant (Gemini-powered project knowledge)
+        .group('/agents/project-assistant', app => {
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getProjectAssistantCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const result = await handleProjectAssistantRequest(params);
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getProjectAssistantCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getProjectAssistantCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc)
+                // Simple chat endpoint for frontend
+                .post('/chat', async ({ body, set }) => {
+                    const { prompt, useRAG } = body as { prompt: string; useRAG?: boolean };
+                    if (!prompt) {
+                        set.status = 400;
+                        return { error: 'prompt is required' };
+                    }
+                    try {
+                        const response = await handleProjectAssistantChat(prompt, { useRAG });
+                        return { text: response.text, citations: response.citations };
+                    } catch (error) {
+                        set.status = 500;
+                        return { error: 'Failed to process request' };
+                    }
+                });
         })
 
         // A2A Protocol Plugin (with PostgreSQL persistence if DATABASE_URL is set)

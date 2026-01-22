@@ -515,6 +515,8 @@ interface IBirdActions {
   // UI Actions
   // =========================================================================
   toggleSidebar: () => void;
+  setSidebarWidth: (width: number) => void;
+  setMailListWidth: (width: number) => void;
   setMailViewMode: (mode: MailViewMode) => void;
   setSearchQuery: (query: string) => void;
   setSearchFocused: (focused: boolean) => void;
@@ -668,9 +670,9 @@ export const useIBirdStore = create<IBirdStore>()(
             ),
             messageCache: state.messageCache[messageId]
               ? {
-                  ...state.messageCache,
-                  [messageId]: { ...state.messageCache[messageId], ...updates },
-                }
+                ...state.messageCache,
+                [messageId]: { ...state.messageCache[messageId], ...updates },
+              }
               : state.messageCache,
           })),
 
@@ -1068,6 +1070,16 @@ export const useIBirdStore = create<IBirdStore>()(
             ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed },
           })),
 
+        setSidebarWidth: (width) =>
+          set((state) => ({
+            ui: { ...state.ui, sidebarWidth: Math.max(180, Math.min(300, width)) },
+          })),
+
+        setMailListWidth: (width) =>
+          set((state) => ({
+            ui: { ...state.ui, mailListWidth: Math.max(250, Math.min(500, width)) },
+          })),
+
         setMailViewMode: (mode) =>
           set((state) => ({
             ui: { ...state.ui, mailViewMode: mode },
@@ -1197,12 +1209,19 @@ export const useIBirdStore = create<IBirdStore>()(
             recentSearches: state.ui.recentSearches,
           },
         }),
+        // Merge persisted state with defaults to handle schema migrations
         merge: (persistedState, currentState) => {
-          const persisted = persistedState as Partial<IBirdState>;
+          const persisted = persistedState as Partial<IBirdState> | undefined;
           return {
             ...currentState,
-            settings: { ...currentState.settings, ...persisted.settings },
-            ui: { ...currentState.ui, ...persisted.ui },
+            settings: {
+              ...currentState.settings,
+              ...persisted?.settings,
+            },
+            ui: {
+              ...currentState.ui,
+              ...persisted?.ui,
+            },
           };
         },
       }

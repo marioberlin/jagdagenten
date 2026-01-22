@@ -25,7 +25,7 @@ export interface UseServiceHealthOptions {
 }
 
 const HEALTH_ENDPOINTS: Record<string, string> = {
-    'liquid-runtime': 'http://localhost:8081/health',
+    'liquid-runtime': 'http://localhost:3000/health/runtime',
     'backend': 'http://localhost:3000/health',
     'postgres': 'http://localhost:3000/health/postgres',
     'redis': 'http://localhost:3000/health/redis',

@@ -17,10 +17,32 @@ export const settingsRoutes = new Elysia({ prefix: '/settings' })
   /**
    * Get user settings
    * GET /api/v1/ibird/settings
+   * Falls back to default settings if user doesn't exist (for demo purposes)
    */
   .get('/', async ({ headers }) => {
-    const userId = getUserId(headers);
-    return await settingsService.getSettings(userId);
+    try {
+      const userId = getUserId(headers);
+      return await settingsService.getSettings(userId);
+    } catch (error) {
+      // Return default settings for demo/development when user doesn't exist
+      console.warn('[iBird Settings] Error fetching settings, returning defaults:', error);
+      return {
+        defaultModule: 'mail',
+        timezone: 'America/Los_Angeles',
+        dateFormat: 'MM/DD/YYYY',
+        timeFormat: '12h',
+        mailPreviewLines: 2,
+        mailThreadView: true,
+        mailAutoMarkRead: true,
+        calendarWeekStart: 0,
+        calendarDefaultView: 'week',
+        calendarDefaultDuration: 60,
+        calendarDefaultReminder: 30,
+        notificationsEmailEnabled: true,
+        notificationsBrowserEnabled: true,
+        notificationsSoundEnabled: true,
+      };
+    }
   })
 
   /**

@@ -24,6 +24,7 @@ import { GlassAgentSettings } from './GlassAgentSettings';
 import { GlassCapabilitiesPanel } from './capabilities';
 import { GlassVaultPanel } from './vault';
 import { GlassFileSearch } from '@/components/generative/GlassFileSearch';
+import { KnowledgeStoresPanel } from './KnowledgeStoresPanel';
 import { GeminiProxyService } from '@/services/proxy/gemini';
 import { useOptionalLiquidClient } from '@/liquid-engine/react';
 import { cn } from '@/utils/cn';
@@ -66,6 +67,7 @@ export const GlassSettingsApp: React.FC<GlassSettingsAppProps> = () => {
     const [activeTab, setActiveTab] = useState(initialTab);
     const [visualSubTab, setVisualSubTab] = useState<'themes' | 'backgrounds' | 'glass' | 'customization'>('themes');
     const [backgroundFilter, setBackgroundFilter] = useState<'all' | 'element' | 'image' | 'video' | 'ai'>('all');
+    const [knowledgeSubTab, setKnowledgeSubTab] = useState<'stores' | 'inline'>('stores');
 
     // Sync state with URL when it changes
     useEffect(() => {
@@ -339,7 +341,35 @@ export const GlassSettingsApp: React.FC<GlassSettingsAppProps> = () => {
 
                         {/* === KNOWLEDGE BASE === */}
                         {activeTab === 'knowledge' && (
-                            <KnowledgeBasePanel />
+                            <div className="max-w-4xl mx-auto space-y-6">
+                                {/* Sub-tab Navigation */}
+                                <div className="flex gap-2 p-1 rounded-xl bg-white/5 w-fit">
+                                    {[
+                                        { id: 'stores', label: 'Knowledge Stores', icon: Database, description: 'FileSearch RAG' },
+                                        { id: 'inline', label: 'Inline Knowledge', icon: Book, description: 'Static prompts' },
+                                    ].map((sub) => (
+                                        <button
+                                            key={sub.id}
+                                            onClick={() => setKnowledgeSubTab(sub.id as 'stores' | 'inline')}
+                                            className={cn(
+                                                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                                                knowledgeSubTab === sub.id
+                                                    ? "bg-[var(--glass-accent)] text-white"
+                                                    : "text-white/60 hover:text-white hover:bg-white/5"
+                                            )}
+                                        >
+                                            <sub.icon size={16} />
+                                            {sub.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Knowledge Stores (FileSearch RAG) */}
+                                {knowledgeSubTab === 'stores' && <KnowledgeStoresPanel />}
+
+                                {/* Inline Knowledge (existing panel) */}
+                                {knowledgeSubTab === 'inline' && <KnowledgeBasePanel />}
+                            </div>
                         )}
 
                         {/* === CAPABILITIES (Skills, Integrations, Marketplace) === */}

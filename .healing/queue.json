@@ -61,5 +61,22 @@
     "maxAttempts": 3,
     "createdAt": "2026-01-21T22:58:09.069Z",
     "updatedAt": "2026-01-21T22:58:09.069Z"
+  },
+  {
+    "id": "heal_1769117785593_zxxupa",
+    "errorReport": {
+      "type": "client_error",
+      "message": "Test error message",
+      "context": {
+        "componentName": "TestComponent",
+        "url": "/test"
+      },
+      "timestamp": "2026-01-22T21:36:25.589Z"
+    },
+    "status": "queued",
+    "attempts": 0,
+    "maxAttempts": 3,
+    "createdAt": "2026-01-22T21:36:25.593Z",
+    "updatedAt": "2026-01-22T21:36:25.593Z"
   }
 ]

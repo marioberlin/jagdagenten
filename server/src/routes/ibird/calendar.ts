@@ -273,12 +273,12 @@ export const calendarRoutes = new Elysia({ prefix: '/calendars' })
 
   /**
    * Add a reminder to an event
-   * POST /api/v1/ibird/events/:eventId/reminders
+   * POST /api/v1/ibird/events/:id/reminders
    */
   .post(
-    '/events/:eventId/reminders',
+    '/events/:id/reminders',
     async ({ params, body }) => {
-      return await calendarService.addReminder(params.eventId, body.type, body.minutesBefore);
+      return await calendarService.addReminder(params.id, body.type, body.minutesBefore);
     },
     {
       prefix: '',
@@ -305,23 +305,23 @@ export const calendarRoutes = new Elysia({ prefix: '/calendars' })
 
   /**
    * List tasks for a calendar
-   * GET /api/v1/ibird/calendars/:calendarId/tasks
+   * GET /api/v1/ibird/calendars/:id/tasks
    */
-  .get('/:calendarId/tasks', async ({ params, query }) => {
-    return await calendarService.listTasks(params.calendarId, {
+  .get('/:id/tasks', async ({ params, query }) => {
+    return await calendarService.listTasks(params.id, {
       includeCompleted: query.includeCompleted === 'true',
     });
   })
 
   /**
    * Create a task
-   * POST /api/v1/ibird/calendars/:calendarId/tasks
+   * POST /api/v1/ibird/calendars/:id/tasks
    */
   .post(
-    '/:calendarId/tasks',
+    '/:id/tasks',
     async ({ params, body }) => {
       return await calendarService.createTask({
-        calendarId: params.calendarId,
+        calendarId: params.id,
         ...body,
       });
     },

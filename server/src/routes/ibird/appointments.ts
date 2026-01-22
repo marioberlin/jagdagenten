@@ -271,23 +271,23 @@ export const appointmentsRoutes = new Elysia({ prefix: '/appointments' })
 
   /**
    * List overrides for a schedule
-   * GET /api/v1/ibird/appointments/availability/schedules/:scheduleId/overrides
+   * GET /api/v1/ibird/appointments/availability/schedules/:id/overrides
    */
-  .get('/availability/schedules/:scheduleId/overrides', async ({ params, query }) => {
+  .get('/availability/schedules/:id/overrides', async ({ params, query }) => {
     if (!query.startDate || !query.endDate) {
       throw new Error('startDate and endDate required');
     }
-    return await appointmentsService.listOverrides(params.scheduleId, query.startDate, query.endDate);
+    return await appointmentsService.listOverrides(params.id, query.startDate, query.endDate);
   })
 
   /**
    * Set an override
-   * POST /api/v1/ibird/appointments/availability/schedules/:scheduleId/overrides
+   * POST /api/v1/ibird/appointments/availability/schedules/:id/overrides
    */
   .post(
-    '/availability/schedules/:scheduleId/overrides',
+    '/availability/schedules/:id/overrides',
     async ({ params, body }) => {
-      return await appointmentsService.setOverride(params.scheduleId, body);
+      return await appointmentsService.setOverride(params.id, body);
     },
     {
       body: t.Object({
@@ -301,10 +301,10 @@ export const appointmentsRoutes = new Elysia({ prefix: '/appointments' })
 
   /**
    * Delete an override
-   * DELETE /api/v1/ibird/appointments/availability/schedules/:scheduleId/overrides/:date
+   * DELETE /api/v1/ibird/appointments/availability/schedules/:id/overrides/:date
    */
-  .delete('/availability/schedules/:scheduleId/overrides/:date', async ({ params }) => {
-    const deleted = await appointmentsService.deleteOverride(params.scheduleId, params.date);
+  .delete('/availability/schedules/:id/overrides/:date', async ({ params }) => {
+    const deleted = await appointmentsService.deleteOverride(params.id, params.date);
     if (!deleted) throw new Error('Override not found');
     return { success: true };
   })

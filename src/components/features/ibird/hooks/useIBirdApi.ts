@@ -24,7 +24,10 @@ import type {
 const API_BASE = '/api/v1/ibird';
 
 // Helper to get headers (temporary user ID approach)
-function getHeaders(userId = 'demo-user'): HeadersInit {
+// Use a valid UUID format for demo since the backend expects UUID type
+const DEMO_USER_ID = '00000000-0000-4000-8000-000000000001';
+
+function getHeaders(userId = DEMO_USER_ID): HeadersInit {
   return {
     'Content-Type': 'application/json',
     'x-user-id': userId,
@@ -308,7 +311,7 @@ export function useCalendarApi() {
 
   // Calendar methods
   const fetchCalendars = useCallback(async (userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/calendars`, {
+    const response = await fetch(`${API_BASE}/calendars`, {
       headers: getHeaders(userId),
     });
     if (!response.ok) throw new Error('Failed to fetch calendars');
@@ -324,7 +327,7 @@ export function useCalendarApi() {
     timezone?: string;
     isPrimary?: boolean;
   }, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/calendars`, {
+    const response = await fetch(`${API_BASE}/calendars`, {
       method: 'POST',
       headers: getHeaders(userId),
       body: JSON.stringify(calendar),
@@ -336,7 +339,7 @@ export function useCalendarApi() {
   }, [addCalendar]);
 
   const editCalendar = useCallback(async (calendarId: string, updates: Partial<Calendar>, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/calendars/${calendarId}`, {
+    const response = await fetch(`${API_BASE}/calendars/${calendarId}`, {
       method: 'PUT',
       headers: getHeaders(userId),
       body: JSON.stringify(updates),
@@ -348,7 +351,7 @@ export function useCalendarApi() {
   }, [updateCalendar]);
 
   const deleteCalendar = useCallback(async (calendarId: string, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/calendars/${calendarId}`, {
+    const response = await fetch(`${API_BASE}/calendars/${calendarId}`, {
       method: 'DELETE',
       headers: getHeaders(userId),
     });
@@ -369,7 +372,7 @@ export function useCalendarApi() {
       if (options.start) params.set('start', options.start);
       if (options.end) params.set('end', options.end);
 
-      const response = await fetch(`${API_BASE}/calendar/events?${params}`, {
+      const response = await fetch(`${API_BASE}/calendars/events?${params}`, {
         headers: getHeaders(userId),
       });
       if (!response.ok) throw new Error('Failed to fetch events');
@@ -395,7 +398,7 @@ export function useCalendarApi() {
     attendees?: CalendarEvent['attendees'];
     color?: string;
   }, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/events`, {
+    const response = await fetch(`${API_BASE}/calendars/events`, {
       method: 'POST',
       headers: getHeaders(userId),
       body: JSON.stringify(event),
@@ -407,7 +410,7 @@ export function useCalendarApi() {
   }, [addEvent]);
 
   const editEvent = useCallback(async (eventId: string, updates: Partial<CalendarEvent>, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/events/${eventId}`, {
+    const response = await fetch(`${API_BASE}/calendars/events/${eventId}`, {
       method: 'PUT',
       headers: getHeaders(userId),
       body: JSON.stringify(updates),
@@ -419,7 +422,7 @@ export function useCalendarApi() {
   }, [updateEvent]);
 
   const deleteEvent = useCallback(async (eventId: string, userId?: string) => {
-    const response = await fetch(`${API_BASE}/calendar/events/${eventId}`, {
+    const response = await fetch(`${API_BASE}/calendars/events/${eventId}`, {
       method: 'DELETE',
       headers: getHeaders(userId),
     });
@@ -520,7 +523,7 @@ export function useAppointmentsApi() {
 
   // Availability methods
   const fetchAvailabilitySchedules = useCallback(async (userId?: string) => {
-    const response = await fetch(`${API_BASE}/appointments/availability`, {
+    const response = await fetch(`${API_BASE}/appointments/availability/schedules`, {
       headers: getHeaders(userId),
     });
     if (!response.ok) throw new Error('Failed to fetch availability schedules');
@@ -535,7 +538,7 @@ export function useAppointmentsApi() {
     weeklyHours: AvailabilitySchedule['weeklyHours'];
     isDefault?: boolean;
   }, userId?: string) => {
-    const response = await fetch(`${API_BASE}/appointments/availability`, {
+    const response = await fetch(`${API_BASE}/appointments/availability/schedules`, {
       method: 'POST',
       headers: getHeaders(userId),
       body: JSON.stringify(schedule),
@@ -547,7 +550,7 @@ export function useAppointmentsApi() {
   }, [addAvailabilitySchedule]);
 
   const editAvailabilitySchedule = useCallback(async (scheduleId: string, updates: Partial<AvailabilitySchedule>, userId?: string) => {
-    const response = await fetch(`${API_BASE}/appointments/availability/${scheduleId}`, {
+    const response = await fetch(`${API_BASE}/appointments/availability/schedules/${scheduleId}`, {
       method: 'PUT',
       headers: getHeaders(userId),
       body: JSON.stringify(updates),
@@ -559,7 +562,7 @@ export function useAppointmentsApi() {
   }, [updateAvailabilitySchedule]);
 
   const deleteAvailabilitySchedule = useCallback(async (scheduleId: string, userId?: string) => {
-    const response = await fetch(`${API_BASE}/appointments/availability/${scheduleId}`, {
+    const response = await fetch(`${API_BASE}/appointments/availability/schedules/${scheduleId}`, {
       method: 'DELETE',
       headers: getHeaders(userId),
     });

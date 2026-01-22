@@ -110,15 +110,17 @@ export function IBirdEmptyState({ type, searchQuery }: IBirdEmptyStateProps) {
   return (
     <div className="h-full flex items-center justify-center p-8">
       <div className="text-center max-w-sm">
-        {/* Icon */}
+        {/* Icon with Gradient Background */}
         <div
           className={cn(
             'w-16 h-16 mx-auto mb-4 rounded-2xl',
-            'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
-            'flex items-center justify-center'
+            'bg-gradient-to-br from-purple-500/20 to-blue-500/20',
+            'border border-[var(--glass-border)]',
+            'flex items-center justify-center',
+            'shadow-lg shadow-purple-500/10'
           )}
         >
-          <Icon className="w-8 h-8 text-[var(--glass-text-tertiary)]" />
+          <Icon className="w-8 h-8 text-[var(--glass-accent)]" />
         </div>
 
         {/* Title */}
@@ -138,9 +140,10 @@ export function IBirdEmptyState({ type, searchQuery }: IBirdEmptyStateProps) {
           <button
             onClick={handleAction}
             className={cn(
-              'inline-flex items-center gap-2 px-4 py-2 rounded-lg',
+              'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl',
               'bg-[var(--glass-accent)] text-white font-medium',
-              'hover:bg-[var(--glass-accent-hover)] transition-colors duration-150'
+              'hover:bg-[var(--glass-accent-hover)] transition-all duration-150',
+              'shadow-lg shadow-[var(--glass-accent)]/25'
             )}
           >
             <Plus className="w-4 h-4" />

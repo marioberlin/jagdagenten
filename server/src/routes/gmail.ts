@@ -461,12 +461,12 @@ export const gmailRoutes = new Elysia({ prefix: '/api/v1/sparkles' })
    * Get message
    * GET /api/v1/sparkles/messages/:id
    */
-  .get('/messages/:id', async ({ headers, params }) => {
+  .get('/messages/:messageId', async ({ headers, params }) => {
     const sessionId = headers['x-session-id'];
     if (!sessionId) throw new Error('Session ID required');
 
     const service = await getServiceFromSession(sessionId);
-    const message = await service.getMessage(params.id);
+    const message = await service.getMessage(params.messageId);
     if (!message) throw new Error('Message not found');
     return message;
   })

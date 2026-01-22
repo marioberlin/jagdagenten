@@ -37,7 +37,7 @@ export const SERVICE_DESCRIPTIONS: Record<string, ServiceDescription> = {
         description: 'AI Agent Execution Container',
         purpose: 'A sandboxed Docker container that provides isolated environments for executing AI agent code safely.',
         port: 8081,
-        healthEndpoint: 'http://localhost:8081/health',
+        healthEndpoint: 'http://localhost:3000/health/runtime',
         required: false, // Optional - agents can run in demo mode without it
         features: [
             { name: 'Command Execution', description: 'Runs commands with timeout protection (default 5 min)' },

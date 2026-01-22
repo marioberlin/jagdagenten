@@ -23,6 +23,7 @@ import { useMailApi } from '../hooks/useIBirdApi';
 import { IBirdMessageList } from './IBirdMessageList';
 import { IBirdMessageView } from './IBirdMessageView';
 import { IBirdEmptyState } from '../IBirdEmptyState';
+import { IBirdResizeHandle } from '../IBirdResizeHandle';
 import { cn } from '@/lib/utils';
 
 export function IBirdMailView() {
@@ -33,6 +34,7 @@ export function IBirdMailView() {
     selectMessage,
     toggleMessageSelection,
     selectAllMessages,
+    setMailListWidth,
     deselectAllMessages,
     setSearchQuery,
   } = useIBirdStore();
@@ -208,6 +210,11 @@ export function IBirdMailView() {
             />
           )}
         </div>
+
+        {/* Resize Handle: Message List ↔ Reading Pane */}
+        <IBirdResizeHandle
+          onResize={(delta) => setMailListWidth(ui.mailListWidth + delta)}
+        />
 
         {/* Reading Pane */}
         <div className="flex-1 overflow-hidden">

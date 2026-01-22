@@ -65,15 +65,15 @@ export const publicRoutes = new Elysia({ prefix: '/public' })
 
   /**
    * Get a specific appointment type
-   * GET /api/v1/ibird/public/:username/types/:typeId
+   * GET /api/v1/ibird/public/:username/types/:id
    */
-  .get('/:username/types/:typeId', async ({ params }) => {
+  .get('/:username/types/:id', async ({ params }) => {
     const userSettings = await settingsService.getUserByBookingUsername(params.username);
     if (!userSettings) {
       throw new Error('User not found');
     }
 
-    const type = await appointmentsService.getAppointmentType(params.typeId, userSettings.userId);
+    const type = await appointmentsService.getAppointmentType(params.id, userSettings.userId);
     if (!type || !type.isActive) {
       throw new Error('Appointment type not found');
     }
@@ -92,15 +92,15 @@ export const publicRoutes = new Elysia({ prefix: '/public' })
 
   /**
    * Get available dates for an appointment type
-   * GET /api/v1/ibird/public/:username/types/:typeId/dates
+   * GET /api/v1/ibird/public/:username/types/:id/dates
    */
-  .get('/:username/types/:typeId/dates', async ({ params, query }) => {
+  .get('/:username/types/:id/dates', async ({ params, query }) => {
     const userSettings = await settingsService.getUserByBookingUsername(params.username);
     if (!userSettings) {
       throw new Error('User not found');
     }
 
-    const type = await appointmentsService.getAppointmentType(params.typeId, userSettings.userId);
+    const type = await appointmentsService.getAppointmentType(params.id, userSettings.userId);
     if (!type || !type.isActive) {
       throw new Error('Appointment type not found');
     }
@@ -132,15 +132,15 @@ export const publicRoutes = new Elysia({ prefix: '/public' })
 
   /**
    * Get available time slots for a specific date
-   * GET /api/v1/ibird/public/:username/types/:typeId/slots
+   * GET /api/v1/ibird/public/:username/types/:id/slots
    */
-  .get('/:username/types/:typeId/slots', async ({ params, query }) => {
+  .get('/:username/types/:id/slots', async ({ params, query }) => {
     const userSettings = await settingsService.getUserByBookingUsername(params.username);
     if (!userSettings) {
       throw new Error('User not found');
     }
 
-    const type = await appointmentsService.getAppointmentType(params.typeId, userSettings.userId);
+    const type = await appointmentsService.getAppointmentType(params.id, userSettings.userId);
     if (!type || !type.isActive) {
       throw new Error('Appointment type not found');
     }
