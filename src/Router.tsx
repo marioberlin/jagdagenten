@@ -38,6 +38,9 @@ const RemotePasswordDemo = lazy(() => import('./pages/demos/RemotePasswordDemo')
 const NeonTokyoDemo = lazy(() => import('./pages/demos/NeonTokyoDemo').then(mod => ({ default: mod.default })));
 const DemosIndex = lazy(() => import('./pages/demos/DemosIndex').then(mod => ({ default: mod.DemosIndex })));
 
+// iBird Public Booking Page
+const BookingPage = lazy(() => import('./pages/book/BookingPage'));
+
 // Agent Hub
 const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
 const ConsolePage = lazy(() => import('./pages/console/ConsolePage').then(mod => ({ default: mod.ConsolePage })));
@@ -171,6 +174,10 @@ export const AppRouter = () => {
                                     <Route path="/os/docs/generative-extensions" element={<GenerativeExtensionsDocs />} />
                                     <Route path="/os/docs/audit" element={<AuditDocs />} />
                                 </Route>
+
+                                {/* iBird Public Booking Page */}
+                                <Route path="/book/:username" element={<BookingPage />} />
+                                <Route path="/book/:username/:eventType" element={<BookingPage />} />
 
                                 {/* Legacy Redirects - World 2 routes now redirect to LiquidOS */}
                                 <Route path="/terminal/*" element={<Navigate to="/os" replace />} />

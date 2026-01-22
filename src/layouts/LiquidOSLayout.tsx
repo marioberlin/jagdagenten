@@ -16,7 +16,8 @@ import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
 import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
 import ConsolePage from '@/pages/console/ConsolePage';
 import { SparklesApp } from '@/components/features/sparkles';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail } from 'lucide-react';
+import { IBirdApp } from '@/components/features/ibird';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail, Bird } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -104,6 +105,13 @@ export const LiquidOSLayout: React.FC = () => {
             label: 'Sparkles Mail',
             isActive: activePanel === 'sparkles',
             onClick: () => togglePanel('sparkles')
+        },
+        {
+            id: 'ibird-app',
+            icon: Bird,
+            label: 'iBird',
+            isActive: activePanel === 'ibird',
+            onClick: () => togglePanel('ibird')
         },
         {
             id: 'agent-hub',
@@ -457,6 +465,13 @@ export const LiquidOSLayout: React.FC = () => {
                 <AnimatePresence>
                     {activePanel === 'sparkles' && (
                         <SparklesApp />
+                    )}
+                </AnimatePresence>
+
+                {/* iBird App - Full Screen Overlay */}
+                <AnimatePresence>
+                    {activePanel === 'ibird' && (
+                        <IBirdApp />
                     )}
                 </AnimatePresence>
 
