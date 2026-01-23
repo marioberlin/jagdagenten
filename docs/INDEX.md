@@ -71,6 +71,19 @@ Practical how-to documentation.
 
 ---
 
+## LiquidMind (AI Resource Management)
+
+Unified persistent intelligence layer for all apps and agents.
+
+| Document | Description |
+|----------|-------------|
+| [LiquidMind](infrastructure/liquidmind.md) | Architecture, API, database schema, usage guide |
+
+**Resource Types:** Prompts, Memory, Context, Knowledge, Artifacts, Skills, MCP Servers
+**Key Features:** Versioning, sharing, memory decay, consolidation, hybrid context compilation, markdown sync
+
+---
+
 ## Infrastructure
 
 Backend systems and autonomous development.
@@ -80,6 +93,7 @@ Backend systems and autonomous development.
 | [Healer](infrastructure/healer.md) | Self-healing error system |
 | [Orchestrator](infrastructure/orchestrator.md) | Multi-agent coordination |
 | [Containers](infrastructure/containers.md) | Runtime container architecture |
+| [LiquidMind](infrastructure/liquidmind.md) | AI resource management system |
 | [System Docs](infrastructure/SYSTEM_DOCUMENTATION.md) | Full system documentation |
 
 ---

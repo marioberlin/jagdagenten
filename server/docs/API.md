@@ -844,6 +844,228 @@ The App Registry uses PostgreSQL when available, falling back to an in-memory st
 
 ---
 
+## LiquidMind Resource API
+
+The LiquidMind Resource API provides unified management for AI resources (prompts, memory, context, knowledge, artifacts, skills, MCP servers) with full-text search, versioning, sharing, and context compilation.
+
+**Base Path:** `/api/resources`
+
+> For comprehensive documentation including database schema, compilation details, and usage guides, see [LiquidMind Documentation](../../docs/infrastructure/liquidmind.md).
+
+### List Resources
+
+**GET** `/api/resources`
+
+List resources with filtering and pagination.
+
+**Query Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `type` | string | Filter by resource_type (prompt, memory, context, knowledge, artifact, skill, mcp) |
+| `ownerType` | string | Filter by owner_type (app, agent, system, user) |
+| `ownerId` | string | Filter by owner_id |
+| `tags` | string | Comma-separated tag filter |
+| `active` | boolean | Filter active resources (default: true) |
+| `search` | string | Full-text search query |
+| `limit` | number | Page size (default: 50) |
+| `offset` | number | Pagination offset |
+
+**Response (200 OK):**
+```json
+{
+  "resources": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "resourceType": "prompt",
+      "ownerType": "app",
+      "ownerId": "crypto-advisor",
+      "name": "Market Analysis Prompt",
+      "content": "You are a crypto analyst...",
+      "typeMetadata": { "type": "prompt", "template": "...", "variables": [] },
+      "version": 2,
+      "isActive": true,
+      "isPinned": false,
+      "tags": ["trading"],
+      "provenance": "user_input",
+      "usageFrequency": 12,
+      "createdAt": "2026-01-20T10:00:00Z",
+      "updatedAt": "2026-01-23T08:30:00Z"
+    }
+  ],
+  "total": 15,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+---
+
+### Get Resource
+
+**GET** `/api/resources/:id`
+
+Get a single resource with its shares.
+
+**Response (200 OK):**
+```json
+{
+  "id": "...",
+  "resourceType": "memory",
+  "name": "User prefers technical analysis",
+  "content": "...",
+  "shares": [
+    { "targetType": "agent", "targetId": "trade-bot", "permission": "read" }
+  ]
+}
+```
+
+---
+
+### Create Resource
+
+**POST** `/api/resources`
+
+**Request Body:**
+```json
+{
+  "resourceType": "prompt",
+  "ownerType": "app",
+  "ownerId": "crypto-advisor",
+  "name": "System Prompt",
+  "content": "You are a helpful crypto advisor...",
+  "typeMetadata": { "type": "prompt", "template": "...", "variables": [] },
+  "tags": ["system"],
+  "provenance": "user_input"
+}
+```
+
+**Response (201 Created):** The created resource object.
+
+---
+
+### Update Resource
+
+**PATCH** `/api/resources/:id`
+
+Updates trigger automatic versioning when content or metadata changes.
+
+**Request Body:**
+```json
+{
+  "content": "Updated content...",
+  "typeMetadata": { "type": "prompt", "template": "new template" }
+}
+```
+
+---
+
+### Delete Resource
+
+**DELETE** `/api/resources/:id`
+
+Soft delete (sets `is_active = false`). Resource remains in database for rollback.
+
+---
+
+### Search Resources
+
+**GET** `/api/resources/search?q=trading+analysis`
+
+Full-text search with PostgreSQL `ts_rank` ranking.
+
+---
+
+### Share Resource
+
+**POST** `/api/resources/:id/share`
+
+```json
+{
+  "targetType": "agent",
+  "targetId": "crypto-advisor",
+  "permission": "read"
+}
+```
+
+**Permissions:** `read` (include in context), `write` (can modify), `copy` (duplicate)
+
+---
+
+### Remove Share
+
+**DELETE** `/api/resources/:id/share/:targetType/:targetId`
+
+---
+
+### Version History
+
+**GET** `/api/resources/:id/versions`
+
+Returns all versions of a resource.
+
+---
+
+### Revert to Version
+
+**POST** `/api/resources/:id/revert/:version`
+
+Reverts resource content/metadata to a specific version.
+
+---
+
+### Compile Context
+
+**POST** `/api/resources/compile/:ownerType/:ownerId`
+
+Compile all resources for a target into a structured context.
+
+**Request Body:**
+```json
+{
+  "currentQuery": "What is the BTC trend?",
+  "tokenBudget": 8000
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "systemPrompt": "...",
+  "tools": [{ "name": "analyze_chart", "description": "...", "parameters": {} }],
+  "ragStoreIds": ["store-123"],
+  "tokenCount": 6420,
+  "budgetRemaining": 1580,
+  "deferredResources": ["resource-id-1"]
+}
+```
+
+---
+
+### Migrate from localStorage
+
+**POST** `/api/resources/migrate-localStorage`
+
+Bulk migrate legacy resources from localStorage format.
+
+**Request Body:**
+```json
+{
+  "resources": [
+    {
+      "resourceType": "prompt",
+      "ownerType": "app",
+      "ownerId": "global",
+      "name": "Migrated Prompt",
+      "content": "...",
+      "tags": ["migrated"]
+    }
+  ]
+}
+```
+
+---
+
 ## Support
 
 For issues and feature requests, please open an issue on GitHub.

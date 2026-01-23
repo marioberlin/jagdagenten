@@ -43,16 +43,24 @@ LiquidCrypto is a **comprehensive React component library and cryptocurrency tra
 │ React 19 · TypeScript 5.7 · Vite 6 · Tailwind 3.4          │
 │ Framer Motion 11 · React Router 7 · Chart.js 4             │
 ├─────────────────────────────────────────────────────────────┤
+│ LIQUIDMIND (AI Resource Layer)                              │
+│ Zustand Store · Context Compiler · Type Editors · Clipboard │
+├─────────────────────────────────────────────────────────────┤
 │ BACKEND                                                     │
 │ Bun Runtime · Elysia Framework · Redis · WebSocket         │
 ├─────────────────────────────────────────────────────────────┤
 │ AI SERVICES                                                 │
 │ Google Gemini 2.0 · Anthropic Claude Sonnet 4              │
 ├─────────────────────────────────────────────────────────────┤
+│ LIQUIDMIND (Persistence Layer)                              │
+│ PostgreSQL · Memory Lifecycle · Context Compiler · .ai/ Sync│
+├─────────────────────────────────────────────────────────────┤
 │ INFRASTRUCTURE                                              │
 │ Vercel (Frontend) · Railway/PM2 (Backend) · Redis Cloud    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+> **LiquidMind** is the unified AI resource management system. See [LiquidMind Documentation](infrastructure/liquidmind.md) for full details.
 
 ---
 

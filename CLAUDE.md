@@ -128,6 +128,79 @@ For system documentation and implementation details, see [`docs/SYSTEM_DOCUMENTA
 
 ---
 
+## LiquidMind: AI Resource Management
+
+**All new apps and agents MUST use LiquidMind for AI resource persistence.** Never use localStorage for prompts, memory, knowledge, or other AI data.
+
+### What is LiquidMind?
+
+LiquidMind is the unified persistent intelligence layer. It stores AI resources (prompts, memory, context, knowledge, artifacts, skills, MCP) in PostgreSQL with versioning, sharing, decay, and context compilation.
+
+**Full documentation:** `docs/infrastructure/liquidmind.md`
+
+### Rules for New Apps/Agents
+
+1. **Store all AI resources via the Resource API** (`/api/resources`), not localStorage
+2. **Set correct ownership:**
+   - Apps: `{ ownerType: 'app', ownerId: 'your-app-id' }`
+   - Agents: `{ ownerType: 'agent', ownerId: 'your-agent-id' }`
+3. **Use the Zustand store** (`useResourceStore()`) for frontend CRUD
+4. **Context is compiled automatically** — resources are assembled into system prompts by the context compiler
+5. **Share resources** between apps/agents via the Share API when cross-target context is needed
+6. **Pin critical resources** (`isPinned: true`) to prevent memory decay
+7. **Never duplicate the artifacts system** — use `resourceType: 'artifact'` with an `artifactId` reference
+
+### Resource Types
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| `prompt` | System prompts, templates | "You are a crypto analyst..." |
+| `memory` | Persistent facts, learnings | "User prefers RSI analysis" |
+| `context` | App state, configuration | Current trading pair, timeframe |
+| `knowledge` | Static docs, domain info | "RSI divergence patterns..." |
+| `artifact` | Generated outputs | Code, charts, documents |
+| `skill` | AI-invokable tools | "analyze_chart", "place_order" |
+| `mcp` | External tool servers | Stdio/SSE/HTTP MCP servers |
+
+### Quick Reference
+
+```typescript
+// Frontend: Create a resource
+import { useResourceStore } from '@/stores/resourceStore';
+const { createResource } = useResourceStore();
+await createResource({
+  resourceType: 'prompt',
+  ownerType: 'app',
+  ownerId: 'my-app',
+  name: 'System Prompt',
+  content: 'You are...',
+  tags: ['system'],
+  provenance: 'user_input',
+});
+
+// Frontend: Compile context for current target
+import { compileContext } from '@/utils/compileContext';
+const compiled = compileContext(resources, { tokenBudget: 8000 });
+
+// Backend: Compile context for an agent
+// POST /api/resources/compile/agent/my-agent-id
+// Body: { currentQuery: "user message", tokenBudget: 8000 }
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `server/src/resources/` | Backend (store, routes, compiler, lifecycle) |
+| `src/stores/resourceStore.ts` | Frontend Zustand store |
+| `src/utils/compileContext.ts` | Client-side context compiler |
+| `src/hooks/useFocusedTarget.ts` | Resolve focused app/agent |
+| `src/hooks/useResourcesForTarget.ts` | Fetch resources for a target |
+| `src/applications/ai-explorer/` | UI for browsing/editing resources |
+| `server/sql/008_ai_resources.sql` | Database migration |
+
+---
+
 ## Summary
 
 You sit between human intent (directives) and deterministic execution (scripts). Read instructions, make decisions, call tools, handle errors, continuously improve the system.
