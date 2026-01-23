@@ -19,11 +19,12 @@ const SignatureDemo = lazy(() => import('@/pages/demos/SignatureDemo'));
 const ExtensionDemo = lazy(() => import('@/pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
 const RemotePasswordDemo = lazy(() => import('@/pages/demos/RemotePasswordDemo'));
 const NeonTokyoDemo = lazy(() => import('@/pages/demos/NeonTokyoDemo'));
+const OneFlowStatusDemo = lazy(() => import('@/pages/demos/OneFlowStatusDemo'));
 
 type DemoId = 'aurora-weather' | 'ai-researcher' | 'copilot-form' | 'dynamic-dashboard'
   | 'extension' | 'foundation' | 'qa-agent' | 'research-canvas' | 'signature'
   | 'state-machine' | 'travel-planner' | 'remote-password' | 'neon-tokyo'
-  | 'generative' | 'generative-extensions';
+  | 'oneflow-status' | 'generative' | 'generative-extensions';
 
 interface DemoEntry {
   id: DemoId;
@@ -48,6 +49,7 @@ const DEMOS: DemoEntry[] = [
   { id: 'travel-planner', title: 'Travel Planner', description: 'AI-powered travel itinerary planning', icon: Map, tags: ['Agent', 'Maps'], status: 'stable' },
   { id: 'remote-password', title: 'Remote Password', description: 'Remote A2A agent for password generation', icon: Globe, tags: ['Remote', 'A2A'], status: 'stable' },
   { id: 'neon-tokyo', title: 'Neon Tokyo', description: 'Hyper-personalized travel concierge', icon: Sparkles, tags: ['Travel', 'A2A'], status: 'experimental' },
+  { id: 'oneflow-status', title: 'OneFlow Status', description: 'Remote A2A agent for workflow status checking', icon: Globe, tags: ['Remote', 'A2A', 'Status'], status: 'stable' },
   { id: 'generative', title: 'Generative Showcase', description: 'Generative UI component showcase', icon: Sparkles, tags: ['Generative'], status: 'stable' },
   { id: 'generative-extensions', title: 'Generative Extensions', description: 'Generative extensions capabilities', icon: Sparkles, tags: ['Extensions'], status: 'beta' },
 ];
@@ -67,6 +69,7 @@ function DemoComponent({ id }: { id: DemoId }) {
     case 'travel-planner': return <TravelPlannerDemo />;
     case 'remote-password': return <RemotePasswordDemo />;
     case 'neon-tokyo': return <NeonTokyoDemo />;
+    case 'oneflow-status': return <OneFlowStatusDemo />;
     case 'generative': return <GenerativeShowcase />;
     case 'generative-extensions': return <GenerativeExtensions />;
     default: return null;

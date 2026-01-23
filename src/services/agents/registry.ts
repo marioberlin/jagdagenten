@@ -27,6 +27,7 @@ import {
     FileWarning,
     KeyRound,
     Sparkles,
+    Activity,
 } from 'lucide-react';
 
 
@@ -537,6 +538,26 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         authentication: 'bearer',
         color: '#DC2626',
     },
+    {
+        id: 'remote-oneflow',
+        name: 'OneFlow Status Checker',
+        description: 'Remote A2A agent for checking workflow statuses and system health. Connects to an external OneFlow service with streaming support.\n\n**What I can do:**\n• Check workflow statuses\n• Monitor task progress\n• Query system health\n• Get real-time status updates\n\n**Try saying:** "What is the current status?" or "Check workflow progress" or "Show system health"',
+        shortDescription: 'Remote A2A workflow status checker',
+        url: '/remote-oneflow',
+        version: '1.0.0',
+        icon: Activity,
+        category: 'productivity',
+        tags: ['status', 'workflow', 'remote', 'external', 'a2a', 'oneflow'],
+        featured: false,
+        verified: true,
+        rating: 4.7,
+        reviewCount: 128,
+        addedAt: '2026-01-23',
+        provider: { name: 'ShowHeroes', url: 'https://showheroes.com', verified: true },
+        capabilities: { streaming: true, a2ui: false, pushNotifications: false, fileUpload: false },
+        authentication: 'bearer',
+        color: '#10B981',
+    },
 ];
 
 
@@ -565,6 +586,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     FileWarning,
     KeyRound,
     Sparkles,
+    Activity,
 };
 
 

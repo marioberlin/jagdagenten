@@ -39,7 +39,15 @@ export const REMOTE_AGENTS: RemoteAgentConfig[] = [
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYjc3ZWNlYS0wZGQ3LTRmMDUtYjAwMy0yNDcwNzVkMTdjODkiLCJhZ2VudF9pZCI6IjYzNmEzMTVkLWE4M2EtNDMwOC1iOWMyLTJkMWE2YmE1OTBlZSIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjYzMzUzNzR9.4XwjmQW6NJxLH55KgDtsBxcfDsY2WRmg_-9yNmUd1B4',
         changeOrigin: true,
     },
-    // Add more remote agents here as needed
+    {
+        id: 'remote-oneflow',
+        name: 'OneFlow Status Checker',
+        proxyPath: '/remote-oneflow',
+        targetUrl: 'https://wr-demo.showheroes.com',
+        authType: 'bearer',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0N2IxODUzOC0yNGI2LTRmOTQtOTU3My1kYTA4MmVkMGYyOWUiLCJhZ2VudF9pZCI6IjE4MDZkY2IzLTkzZWYtNGI1Zi04Nzk2LWE2NDY0ZTI4OTA2NiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjY3OTA2NzJ9.ZTgv0CL2JrS0NOZztDZQgB2a8I7NW-Uud5MihIk_PoQ',
+        changeOrigin: true,
+    },
 ];
 
 /**

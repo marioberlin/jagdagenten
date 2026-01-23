@@ -120,6 +120,17 @@ export default defineConfig({
                 },
                 rewrite: (path) => path.replace(/^\/remote-a2a\/?/, '/api/v1/a2a/636a315d-a83a-4308-b9c2-2d1a6ba590ee/'),
             },
+            // Remote A2A OneFlow Status Checker agent
+            // Config source of truth: src/config/remote-agents.config.ts (id: 'remote-oneflow')
+            '/remote-oneflow': {
+                target: 'https://wr-demo.showheroes.com',
+                changeOrigin: true,
+                secure: true,
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0N2IxODUzOC0yNGI2LTRmOTQtOTU3My1kYTA4MmVkMGYyOWUiLCJhZ2VudF9pZCI6IjE4MDZkY2IzLTkzZWYtNGI1Zi04Nzk2LWE2NDY0ZTI4OTA2NiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjY3OTA2NzJ9.ZTgv0CL2JrS0NOZztDZQgB2a8I7NW-Uud5MihIk_PoQ'
+                },
+                rewrite: (path) => path.replace(/^\/remote-oneflow\/?/, '/api/v1/a2a/1806dcb3-93ef-4b5f-8796-a6464e289066/'),
+            },
         },
     },
     build: {

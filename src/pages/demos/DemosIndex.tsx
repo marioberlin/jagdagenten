@@ -196,6 +196,14 @@ const DEMOS: DemoCardProps[] = [
         status: 'stable',
     },
     {
+        title: 'OneFlow Status',
+        description: 'Connects to a remote A2A agent for workflow status checking',
+        href: '/os/demos/oneflow-status',
+        icon: Globe,
+        tags: ['Remote', 'A2A', 'Status'],
+        status: 'stable',
+    },
+    {
         title: 'Neon Tokyo',
         description: 'Hyper-personalized travel concierge with atmosphere-reactive UI',
         href: '/os/demos/neon-tokyo',
