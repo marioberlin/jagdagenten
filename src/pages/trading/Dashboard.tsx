@@ -8,13 +8,13 @@ import { cn } from '@/utils/cn';
 import { GlassContainer, GlassButton } from '@/components';
 
 // Dashboard Components
-import { DashboardHeader } from '../../components/trading/DashboardHeader';
-import { PortfolioMetrics } from '../../components/trading/PortfolioMetrics';
-import { PortfolioChart } from '../../components/trading/PortfolioChart';
-import { AssetAllocation } from '../../components/trading/AssetAllocation';
-import { BotOverview } from '../../components/trading/BotOverview';
-import { PositionsTable } from '../../components/trading/PositionsTable';
-import { RecentActivity } from '../../components/trading/RecentActivity';
+import { DashboardHeader } from '@/applications/rush-hour-trading/components/DashboardHeader';
+import { PortfolioMetrics } from '@/applications/rush-hour-trading/components/PortfolioMetrics';
+import { PortfolioChart } from '@/applications/rush-hour-trading/components/PortfolioChart';
+import { AssetAllocation } from '@/applications/rush-hour-trading/components/AssetAllocation';
+import { BotOverview } from '@/applications/rush-hour-trading/components/BotOverview';
+import { PositionsTable } from '@/applications/rush-hour-trading/components/PositionsTable';
+import { RecentActivity } from '@/applications/rush-hour-trading/components/RecentActivity';
 
 // Hooks
 import { useDashboardData } from '../../hooks/trading/useDashboardData';

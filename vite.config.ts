@@ -88,6 +88,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "@apps": path.resolve(__dirname, "./src/applications"),
             "@liquidcrypto/a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
             "a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
         },
@@ -161,6 +162,15 @@ export default defineConfig({
                     }
                     if (id.includes('/src/pages/demos/')) {
                         return 'feat-demos';
+                    }
+                    // Per-app chunks for the applications directory
+                    // Handles both top-level (ibird) and nested (_system/app-store) apps
+                    if (id.includes('/src/applications/')) {
+                        const match = id.match(/\/src\/applications\/(.+?)\/(?:App\.tsx|components\/|hooks\/|store|modals\/|mail\/|calendar\/|appointments\/)/);
+                        if (match) return `app-${match[1].replace('/', '-')}`;
+                        // Fallback: first directory segment
+                        const simple = id.match(/\/src\/applications\/([^/]+)\//);
+                        if (simple) return `app-${simple[1]}`;
                     }
                 }
             }

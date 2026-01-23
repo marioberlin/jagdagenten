@@ -8,15 +8,16 @@
 1. [System Overview](#system-overview)
 2. [High-Level Architecture](#high-level-architecture)
 3. [Frontend Architecture](#frontend-architecture)
-4. [Backend Architecture](#backend-architecture)
-5. [AI Integration (Liquid Engine)](#ai-integration-liquid-engine)
-6. [A2A Protocol Integration](#a2a-protocol-integration)
-7. [Agent Hub UI](#agent-hub-ui)
-8. [LiquidContainer Runtime](#liquidcontainer-runtime)
-9. [Data Flow](#data-flow)
-10. [Design System](#design-system)
-11. [Security Architecture](#security-architecture)
-12. [Deployment Architecture](#deployment-architecture)
+4. [App Store & Application Lifecycle](#app-store--application-lifecycle)
+5. [Backend Architecture](#backend-architecture)
+6. [AI Integration (Liquid Engine)](#ai-integration-liquid-engine)
+7. [A2A Protocol Integration](#a2a-protocol-integration)
+8. [Agent Hub UI](#agent-hub-ui)
+9. [LiquidContainer Runtime](#liquidcontainer-runtime)
+10. [Data Flow](#data-flow)
+11. [Design System](#design-system)
+12. [Security Architecture](#security-architecture)
+13. [Deployment Architecture](#deployment-architecture)
 
 ---
 
@@ -151,6 +152,13 @@ LiquidCrypto is a **comprehensive React component library and cryptocurrency tra
 
 ```
 src/
+├── system/              # Core system services
+│   └── app-store/       # App lifecycle manager (store, loader, permissions)
+├── applications/        # Self-contained app bundles (manifest.json + App.tsx)
+│   ├── _system/         # System apps (app-store, settings)
+│   ├── ibird/           # Email/Calendar app
+│   ├── aurora-weather/  # Weather app
+│   └── .../             # Other installed apps
 ├── components/           # UI Component Library (161+ components)
 │   ├── primitives/      # Base components (Button, Input, Container)
 │   ├── forms/           # Form system (react-hook-form + zod)
@@ -274,6 +282,53 @@ src/
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## App Store & Application Lifecycle
+
+The App Store provides a manifest-driven application lifecycle system. Each app is a self-contained bundle in `src/applications/<app-id>/` with a declarative manifest.
+
+### Architecture Layers
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              App Store UI                                │
+│  src/applications/_system/app-store/                    │
+│  (Browse, Install, Publish, Search, Manage)             │
+├─────────────────────────────────────────────────────────┤
+│           System Core                                    │
+│  src/system/app-store/                                  │
+│  (AppLoader, Permissions, IntegrationRegistry, Store)   │
+├─────────────────────────────────────────────────────────┤
+│          Server Registry                                 │
+│  server/src/registry/                                   │
+│  (REST API, PostgreSQL, Bundle Storage)                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### App State Machine
+
+```
+[Not Installed] ──install()──> [Installed]
+[Installed] ──openApp()──> [Active]
+[Active] ──closeApp()──> [Installed]
+[Installed] ──uninstall()──> [Not Installed]
+```
+
+### Key Features
+
+| Feature | Implementation |
+|---------|---------------|
+| Manifest-driven apps | `manifest.json` per app with declarative config |
+| Capability-based security | 14 permission types, 3 risk levels |
+| Lazy loading | Per-app Vite chunks via `manualChunks` |
+| Remote marketplace | REST API + PostgreSQL + in-memory fallback |
+| Bundle integrity | SHA-256 hash verification |
+| Iframe sandbox | Untrusted apps isolated via `<iframe sandbox>` |
+| Integration hooks | Dock, menu bar, shortcuts, AI context, commands |
+
+**Full documentation:** [docs/app-store/README.md](app-store/README.md)
 
 ---
 

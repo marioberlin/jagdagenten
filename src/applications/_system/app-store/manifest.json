@@ -1,0 +1,39 @@
+{
+  "id": "_system/app-store",
+  "name": "App Store",
+  "version": "1.0.0",
+  "description": "Browse, install, and manage LiquidOS applications",
+  "longDescription": "The LiquidOS App Store lets you discover new applications, install them with a single click, manage permissions, and keep your apps up to date. Browse by category, search for specific tools, and install apps from local bundles or remote registries.",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "system",
+  "keywords": ["apps", "store", "install", "manage", "marketplace"],
+  "icon": "Store",
+
+  "entry": "./App.tsx",
+  "store": "./store.ts",
+
+  "window": {
+    "mode": "fullscreen",
+    "title": "App Store"
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 1
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "app-store-open", "label": "Open App Store", "category": "System" },
+        { "id": "app-store-search", "label": "Search Apps", "category": "System" },
+        { "id": "app-store-updates", "label": "Check for Updates", "category": "System" }
+      ]
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "storage:local"
+  ]
+}

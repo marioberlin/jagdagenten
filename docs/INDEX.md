@@ -97,6 +97,21 @@ Email client integrated into LiquidOS with Gmail and Calendar support.
 
 ---
 
+## App Store (LiquidOS)
+
+Manifest-driven app lifecycle system with marketplace UI.
+
+| Document | Description |
+|----------|-------------|
+| [App Store Overview](app-store/README.md) | Architecture, manifest schema, lifecycle, permissions |
+| [Remote App Provider Guide](app-store/REMOTE_APP_PROVIDER_GUIDE.md) | Requirements for third-party app publishers |
+| [API Reference](app-store/README.md#api-reference) | REST endpoints for app registry |
+| [Bundle Storage](app-store/README.md#bundle-storage) | App bundle storage and integrity verification |
+| [Permission System](app-store/README.md#permission-system) | Capability-based security model |
+| [Testing](app-store/README.md#testing) | 49 unit tests for store + permissions |
+
+---
+
 ## Trading
 
 Crypto trading bot and dashboard.

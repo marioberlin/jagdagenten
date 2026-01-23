@@ -27,6 +27,7 @@ import { gmailRoutes } from './routes/gmail.js';
 import { icloudRoutes } from './routes/icloud.js';
 import { ibirdRoutes } from './routes/ibird/index.js';
 import { fileSearchRoutes } from './routes/fileSearch.js';
+import { appRoutes } from './registry/app-routes.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -630,6 +631,9 @@ async function startServer() {
 
         // Trading REST API (Phase 5)
         .use(createTradingRestApi())
+
+        // App Store Registry API
+        .use(appRoutes)
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)

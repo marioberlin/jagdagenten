@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useBinanceStream } from '../hooks/useBinanceStream';
-import { RealTimeOrderBook } from '../components/trading/RealTimeOrderBook';
-import { SymbolSelector } from '../components/trading/SymbolSelector';
-import { IntervalSelector } from '../components/trading/IntervalSelector';
+import { RealTimeOrderBook } from '@/applications/rush-hour-trading/components/RealTimeOrderBook';
+import { SymbolSelector } from '@/applications/rush-hour-trading/components/SymbolSelector';
+import { IntervalSelector } from '@/applications/rush-hour-trading/components/IntervalSelector';
 import { GlassMetric } from '../components/data-display/GlassMetric';
 import { GlassCard } from '../components/data-display/GlassCard';
 import { GlassCandlestickChart } from '../components/data-display/GlassCandlestickChart';

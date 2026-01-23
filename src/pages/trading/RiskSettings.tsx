@@ -27,7 +27,7 @@ import {
     GlassFormDescription
 } from '@/components';
 import { tradingService } from '../../services/trading';
-import { TradingBreadcrumb } from '../../components/trading/TradingBreadcrumb';
+import { TradingBreadcrumb } from '@/applications/rush-hour-trading/components/TradingBreadcrumb';
 import type { RiskSettings as RiskSettingsType } from '../../types/trading';
 
 const defaultSettings: RiskSettingsType = {

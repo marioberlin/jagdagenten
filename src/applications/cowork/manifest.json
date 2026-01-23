@@ -1,0 +1,32 @@
+{
+  "id": "cowork",
+  "name": "Cowork Mode",
+  "version": "1.0.0",
+  "description": "Collaborative workspace for team sessions",
+  "author": "LiquidOS",
+  "category": "productivity",
+  "keywords": ["cowork", "collaboration", "workspace", "team"],
+  "icon": "Briefcase",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Cowork Mode",
+    "defaultSize": { "width": 900, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 12
+    },
+    "menuBar": {},
+    "shortcuts": {},
+    "aiContext": null,
+    "commandPalette": {
+      "commands": [
+        { "id": "open-cowork", "label": "Open Cowork Mode", "keywords": ["collaborate", "team"] }
+      ]
+    }
+  },
+  "capabilities": ["network:http", "ai:llm"]
+}

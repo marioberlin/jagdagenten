@@ -11,6 +11,10 @@ import { LiquidFilter } from './components/Effects/LiquidFilter'
 import { syncHydrateTheme } from './stores/utils/syncHydrate'
 syncHydrateTheme()
 
+// Initialize App Store - discover and register local applications
+import { initializeAppStore } from './system/app-store/appDiscovery'
+initializeAppStore()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <GlassProvider>

@@ -11,15 +11,15 @@ import { AuroraWeatherService, WeatherUpdate } from '../../services/a2a/AuroraWe
 import { v4 as uuidv4 } from 'uuid';
 
 // Imported Extracted Components
-import { WeatherHero, WeatherHeroSkeleton } from '@/components/features/weather/WeatherHero';
-import { WeatherDetailsGrid, WeatherDetailsSkeleton } from '@/components/features/weather/WeatherDetails';
-import { EnhancedHourlyTimeline, HourlyForecastSkeleton, DailyForecast, DailyForecastSkeleton, SunTimes } from '@/components/features/weather/Forecasts';
-import { WeatherAlerts } from '@/components/features/weather/WeatherAlerts';
-import { AirQualityCard } from '@/components/features/weather/AirQuality';
-import { ActivityRecommendations } from '@/components/features/weather/ActivityRecommendations';
-import { QuickGlanceSummary } from '@/components/features/weather/QuickGlance';
-import { LocationSearch, LocationChip, GeolocationButton } from '@/components/features/weather/LocationControls';
-import { SkeletonPulse } from '@/components/features/weather/WeatherUtils';
+import { WeatherHero, WeatherHeroSkeleton } from '@/applications/aurora-weather/components/WeatherHero';
+import { WeatherDetailsGrid, WeatherDetailsSkeleton } from '@/applications/aurora-weather/components/WeatherDetails';
+import { EnhancedHourlyTimeline, HourlyForecastSkeleton, DailyForecast, DailyForecastSkeleton, SunTimes } from '@/applications/aurora-weather/components/Forecasts';
+import { WeatherAlerts } from '@/applications/aurora-weather/components/WeatherAlerts';
+import { AirQualityCard } from '@/applications/aurora-weather/components/AirQuality';
+import { ActivityRecommendations } from '@/applications/aurora-weather/components/ActivityRecommendations';
+import { QuickGlanceSummary } from '@/applications/aurora-weather/components/QuickGlance';
+import { LocationSearch, LocationChip, GeolocationButton } from '@/applications/aurora-weather/components/LocationControls';
+import { SkeletonPulse } from '@/applications/aurora-weather/components/WeatherUtils';
 
 // Initialize the engine client
 const liquidClient = new LiquidClient();

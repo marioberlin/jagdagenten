@@ -600,6 +600,250 @@ while (true) {
 
 ---
 
+---
+
+## App Store Registry API
+
+The App Store Registry provides REST endpoints for browsing, searching, installing, and publishing LiquidOS applications.
+
+**Base Path:** `/api/v1/apps`
+
+### List Apps
+
+**GET** `/api/v1/apps`
+
+List and filter available apps with pagination.
+
+**Query Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `q` | string | Search query (matches name, description, keywords) |
+| `category` | string | Filter by category |
+| `author` | string | Filter by author |
+| `featured` | boolean | Only featured apps |
+| `limit` | number | Page size (default: 50) |
+| `offset` | number | Pagination offset |
+
+**Response (200 OK):**
+```json
+{
+  "apps": [
+    {
+      "id": "pomodoro-timer",
+      "manifest": {
+        "id": "pomodoro-timer",
+        "name": "Pomodoro Timer",
+        "version": "1.2.0",
+        "description": "Focus timer with work/break intervals",
+        "author": "Liquid Labs",
+        "category": "productivity",
+        "keywords": ["timer", "focus"],
+        "icon": "Timer",
+        "window": { "mode": "floating", "title": "Pomodoro Timer" },
+        "integrations": { "dock": { "enabled": true } },
+        "capabilities": ["notification:push", "storage:local"]
+      },
+      "publishedAt": "2025-11-01T00:00:00Z",
+      "updatedAt": "2025-12-15T00:00:00Z",
+      "publishedBy": "liquid-labs",
+      "downloads": 1240,
+      "rating": 4.7,
+      "reviewCount": 89,
+      "featured": true,
+      "verified": true,
+      "bundleUrl": "/api/v1/apps/pomodoro-timer/bundle",
+      "bundleHash": "a1b2c3d4...",
+      "bundleSize": 45000
+    }
+  ],
+  "total": 6,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+---
+
+### Get App
+
+**GET** `/api/v1/apps/:id`
+
+Get a single app by ID.
+
+**Response (200 OK):** Single `AppRegistryEntry` object (same shape as list items).
+
+**Response (404):**
+```json
+{ "error": "App not found" }
+```
+
+---
+
+### Search Apps
+
+**GET** `/api/v1/apps/search`
+
+Search apps by name, description, or keywords.
+
+**Query Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `q` | string | Search query |
+| `limit` | number | Max results (default: 20) |
+
+**Response (200 OK):**
+```json
+{
+  "apps": [...],
+  "total": 3
+}
+```
+
+---
+
+### Featured Apps
+
+**GET** `/api/v1/apps/featured`
+
+Get apps marked as featured.
+
+**Response (200 OK):**
+```json
+{
+  "apps": [...]
+}
+```
+
+---
+
+### Categories
+
+**GET** `/api/v1/apps/categories`
+
+Get category names with app counts.
+
+**Response (200 OK):**
+```json
+[
+  { "name": "productivity", "count": 3 },
+  { "name": "developer", "count": 2 },
+  { "name": "finance", "count": 1 }
+]
+```
+
+---
+
+### Registry Stats
+
+**GET** `/api/v1/apps/stats`
+
+Get aggregate registry statistics.
+
+**Response (200 OK):**
+```json
+{
+  "totalApps": 6,
+  "totalDownloads": 17450,
+  "categories": 5,
+  "featuredCount": 4
+}
+```
+
+---
+
+### Publish App
+
+**POST** `/api/v1/apps`
+
+Publish or update an app in the registry.
+
+**Request Body:**
+```json
+{
+  "manifest": {
+    "id": "my-app",
+    "name": "My App",
+    "version": "1.0.0",
+    "description": "Description",
+    "author": "Author",
+    "category": "productivity",
+    "keywords": ["keyword"],
+    "icon": "Box",
+    "window": { "mode": "panel", "title": "My App", "resizable": true },
+    "integrations": { "dock": { "enabled": true } },
+    "capabilities": ["storage:local"]
+  },
+  "bundleData": "<optional base64-encoded JS bundle>"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "app": { ... }
+}
+```
+
+**Response (400):**
+```json
+{ "error": "Invalid manifest: missing required fields" }
+```
+
+---
+
+### Download Bundle
+
+**GET** `/api/v1/apps/:id/bundle`
+
+Download the compiled JS bundle for an app.
+
+**Response (200 OK):**
+```
+Content-Type: application/javascript
+Content-Length: 45000
+X-Bundle-Hash: a1b2c3d4e5f6...
+Cache-Control: public, max-age=31536000, immutable
+
+<bundle content>
+```
+
+**Response (404):**
+```json
+{ "error": "Bundle not found" }
+```
+
+---
+
+### Delete App
+
+**DELETE** `/api/v1/apps/:id`
+
+Remove an app from the registry.
+
+**Response (200 OK):**
+```json
+{ "success": true }
+```
+
+**Response (404):**
+```json
+{ "error": "App not found" }
+```
+
+---
+
+### Storage Backend
+
+The App Registry uses PostgreSQL when available, falling back to an in-memory store. On startup:
+1. Attempts database migration (CREATE TABLE IF NOT EXISTS)
+2. If successful, all operations use PostgreSQL
+3. If unavailable, uses in-memory Map with sample seed data
+
+---
+
 ## Support
 
 For issues and feature requests, please open an issue on GitHub.

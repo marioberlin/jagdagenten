@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BotList } from '../../components/trading/BotList';
-import { BotEditor } from '../../components/trading/BotEditor';
-import { TradingBreadcrumb } from '../../components/trading/TradingBreadcrumb';
+import { BotList } from '@/applications/rush-hour-trading/components/BotList';
+import { BotEditor } from '@/applications/rush-hour-trading/components/BotEditor';
+import { TradingBreadcrumb } from '@/applications/rush-hour-trading/components/TradingBreadcrumb';
 import type { Bot, LogicLayer, BotLogicLayerMapping } from '../../types/trading';
 
 // Mock data for development

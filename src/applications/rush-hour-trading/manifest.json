@@ -1,0 +1,48 @@
+{
+  "id": "rush-hour-trading",
+  "name": "RushHour Trading",
+  "version": "1.0.0",
+  "description": "Cryptocurrency trading dashboard with AI-powered bots",
+  "longDescription": "A comprehensive crypto trading platform with real-time market data, portfolio tracking, automated trading bots, and risk management settings. Features an integrated AI chat for market analysis and trading advice.",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "finance",
+  "keywords": ["trading", "crypto", "portfolio", "bots", "market", "risk"],
+  "icon": "TrendingUp",
+
+  "entry": "./App.tsx",
+
+  "window": {
+    "mode": "floating",
+    "title": "RushHour Trading",
+    "defaultSize": { "width": 1100, "height": 700 },
+    "resizable": true
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 2
+    },
+    "menuBar": {
+      "hookPath": "./hooks/useMenuBar.ts"
+    },
+    "aiContext": {
+      "systemPrompt": "You are a crypto trading assistant helping the user analyze markets and manage their portfolio."
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "rushhour-open", "label": "Open Trading Dashboard", "category": "Trading" },
+        { "id": "rushhour-portfolio", "label": "View Portfolio", "category": "Trading" }
+      ]
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "network:websocket",
+    "storage:local",
+    "ai:llm",
+    "notification:toast"
+  ]
+}

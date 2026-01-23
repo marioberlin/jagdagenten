@@ -1,0 +1,46 @@
+{
+  "id": "neon-tokyo",
+  "name": "Neon Tokyo",
+  "version": "1.0.0",
+  "description": "Hyper-personalized travel concierge with atmosphere-reactive UI",
+  "longDescription": "A futuristic travel planning experience powered by AI. Get personalized itineraries for Tokyo with real-time atmosphere detection, holographic tickets, world time clocks, and dynamic packing lists. Features an interactive map with activity markers and a conversational AI assistant.",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "travel",
+  "keywords": ["travel", "tokyo", "ai", "concierge", "itinerary", "atmosphere"],
+  "icon": "Plane",
+
+  "entry": "./App.tsx",
+
+  "window": {
+    "mode": "floating",
+    "title": "Neon Tokyo",
+    "defaultSize": { "width": 1000, "height": 700 },
+    "resizable": true
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 6
+    },
+    "aiContext": {
+      "systemPrompt": "You are a hyper-personalized Tokyo travel concierge. Help users plan their trips with local insights, cultural tips, and atmosphere-reactive suggestions.",
+      "agentId": "neon-tokyo-agent"
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "neon-tokyo-open", "label": "Open Neon Tokyo", "category": "Travel" },
+        { "id": "neon-tokyo-plan", "label": "Plan Tokyo Trip", "category": "Travel" }
+      ]
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "storage:local",
+    "ai:llm",
+    "a2a:connect",
+    "notification:toast"
+  ]
+}

@@ -175,9 +175,9 @@ import { GlassSplitButton } from '@/components/compound/GlassSplitButton';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 
 // === TRADING (6) ===
-import { GlassMarketTicker } from '@/components/trading/GlassMarketTicker';
-import { GlassOrderEntry } from '@/components/trading/GlassOrderEntry';
-import { GlassPositionsList } from '@/components/trading/GlassPositionsList';
+import { GlassMarketTicker } from '@/applications/rush-hour-trading/components/GlassMarketTicker';
+import { GlassOrderEntry } from '@/applications/rush-hour-trading/components/GlassOrderEntry';
+import { GlassPositionsList } from '@/applications/rush-hour-trading/components/GlassPositionsList';
 
 // ============================================
 // Types & Interfaces

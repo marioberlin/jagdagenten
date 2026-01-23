@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
@@ -6,46 +6,45 @@ import { EmptyDesktop } from '@/components/layout/EmptyDesktop';
 import { GlassDock } from '@/components/navigation/GlassDock';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
-import { GlassSettingsApp } from '@/components/settings/GlassSettingsApp';
-import { GlassShowcaseApp } from '@/components/settings/GlassShowcaseApp';
-import { GlassCoworkApp } from '@/components/cowork/GlassCoworkApp';
-import { GlassFinderApp } from '@/components/features/GlassFinderApp';
-import { NeonTokyoApp } from '@/components/features/NeonTokyoApp';
-import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
-import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
-import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
-import ConsolePage from '@/pages/console/ConsolePage';
-import { ICloudApp } from '@/components/features/icloud';
-import { IBirdApp } from '@/components/features/ibird';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail, CloudCog } from 'lucide-react';
-
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
-import { useDesktopStore, PanelId } from '@/stores/desktopStore';
+import { Command, Compass, Layout } from 'lucide-react';
+
+import { useAppStoreStore, selectDockItems } from '@/system/app-store/appStoreStore';
+import { useAppComponent } from '@/system/app-store/AppLoader';
+import { resolveIconComponent } from '@/system/app-store/iconResolver';
+import type { InstalledApp } from '@/system/app-store/types';
 
 /**
  * LiquidOSLayout
- * 
+ *
  * The Spatial Operating System environment.
- * Uses centralized desktopStore for panel state management.
+ * Uses appStoreStore for dynamic, registry-driven panel and dock management.
  */
 export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
     const [dockVisible, setDockVisible] = useState(true);
 
-    // Centralized panel state from desktopStore
-    const { activePanel, openPanel, closePanel } = useDesktopStore();
+    // Dynamic app state from appStoreStore
+    const activeAppId = useAppStoreStore((s) => s.activeAppId);
+    const openApp = useAppStoreStore((s) => s.openApp);
+    const closeApp = useAppStoreStore((s) => s.closeApp);
+    const dockApps = useAppStoreStore(selectDockItems);
+    const installedApps = useAppStoreStore((s) => s.installedApps);
 
-    // Track if any panel is open
-    const hasPanelOpen = activePanel !== null;
+    // Track if any app is open
+    const hasAppOpen = activeAppId !== null;
 
-    // Panel toggle helper
-    const togglePanel = useCallback((panelId: Exclude<PanelId, null>) => {
-        if (activePanel === panelId) {
-            closePanel();
+    // Get active app's manifest for window config
+    const activeApp = activeAppId ? installedApps[activeAppId] : null;
+
+    // Toggle app panel
+    const toggleApp = useCallback((appId: string) => {
+        if (activeAppId === appId) {
+            closeApp();
         } else {
-            openPanel(panelId);
+            openApp(appId);
         }
-    }, [activePanel, openPanel, closePanel]);
+    }, [activeAppId, openApp, closeApp]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -56,16 +55,16 @@ export const LiquidOSLayout: React.FC = () => {
                 setDockVisible(prev => !prev);
             }
 
-            // Escape: Close active panel
-            if (e.key === 'Escape' && activePanel !== null) {
+            // Escape: Close active app
+            if (e.key === 'Escape' && activeAppId !== null) {
                 e.preventDefault();
-                closePanel();
+                closeApp();
             }
         };
 
         // Listen for Cowork Toggle from Menu Bar
         const handleCoworkToggle = () => {
-            togglePanel('cowork');
+            toggleApp('cowork');
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -75,113 +74,10 @@ export const LiquidOSLayout: React.FC = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('liquid:toggle-cowork', handleCoworkToggle);
         };
-    }, [activePanel, closePanel, togglePanel]);
+    }, [activeAppId, closeApp, toggleApp]);
 
-    // Dock is always visible when dockVisible is true (user can toggle with Shift+Space)
-    const showDock = dockVisible;
-
-    // Dock Items Configuration
-    const dockItems = [
-        {
-            id: 'os-home',
-            icon: Command,
-            label: 'Command Center',
-            isActive: !hasPanelOpen,
-            onClick: () => {
-                if (hasPanelOpen) closePanel();
-                navigate('/os');
-            }
-        },
-        {
-            id: 'rush-hour',
-            icon: TrendingUp,
-            label: 'RushHour Trading',
-            isActive: activePanel === 'rushHourTrading',
-            onClick: () => togglePanel('rushHourTrading')
-        },
-        {
-            id: 'ibird-app',
-            icon: Mail,
-            label: 'iBird Mail',
-            isActive: activePanel === 'ibird',
-            onClick: () => togglePanel('ibird')
-        },
-        {
-            id: 'agent-hub',
-            icon: Compass,
-            label: 'Agent Hub',
-            onClick: () => navigate('/os/agents')
-        },
-        {
-            id: 'finder-app',
-            icon: HardDrive,
-            label: 'Finder',
-            isActive: activePanel === 'finder',
-            onClick: () => togglePanel('finder')
-        },
-        {
-            id: 'neon-tokyo',
-            icon: Plane,
-            label: 'Neon Tokyo',
-            isActive: activePanel === 'neonTokyo',
-            onClick: () => togglePanel('neonTokyo')
-        },
-        {
-            id: 'aurora-weather',
-            icon: Cloud,
-            label: 'Aurora Weather',
-            isActive: activePanel === 'auroraWeather',
-            onClick: () => togglePanel('auroraWeather')
-        },
-        {
-            id: 'aurora-travel',
-            icon: Map,
-            label: 'Aurora Travel',
-            isActive: activePanel === 'auroraTravel',
-            onClick: () => togglePanel('auroraTravel')
-        },
-        {
-            id: 'icloud-app',
-            icon: CloudCog,
-            label: 'iCloud',
-            isActive: activePanel === 'icloud',
-            onClick: () => togglePanel('icloud')
-        },
-        {
-            id: 'a2a-console',
-            icon: Terminal,
-            label: 'A2A Console',
-            isActive: activePanel === 'console',
-            onClick: () => togglePanel('console')
-        },
-        {
-            id: 'cowork-mode',
-            icon: Briefcase,
-            label: 'Cowork Mode',
-            isActive: activePanel === 'cowork',
-            onClick: () => togglePanel('cowork')
-        },
-        {
-            id: 'design-system',
-            icon: Layout,
-            label: 'Design Explorer',
-            onClick: () => navigate('/os/design')
-        },
-        {
-            id: 'showcase',
-            icon: Sparkles,
-            label: 'Component Library',
-            isActive: activePanel === 'showcase',
-            onClick: () => togglePanel('showcase')
-        },
-        {
-            id: 'settings',
-            icon: Settings,
-            label: 'Settings',
-            isActive: activePanel === 'settings',
-            onClick: () => togglePanel('settings')
-        }
-    ];
+    // Build dock items dynamically from registry
+    const dockItems = buildDockItems(dockApps, activeAppId, toggleApp, navigate, hasAppOpen, closeApp);
 
     // Panel animation variants
     const panelVariants = {
@@ -201,13 +97,12 @@ export const LiquidOSLayout: React.FC = () => {
             {/* 1. Menu Bar - Top Layer, Persistent */}
             <LiquidMenuBar />
 
-            {/* 2. Content Area - Handles Dimensional Jump */}
+            {/* 2. Content Area */}
             <PortalFrame activeMode="os" className="pt-[30px]">
                 {/* 3. Spatial Environment - The "Desktop" */}
-                {/* When a panel is open, show EmptyDesktop; otherwise show page content */}
                 <SpatialCanvas>
                     <AnimatePresence mode="wait">
-                        {hasPanelOpen ? (
+                        {hasAppOpen ? (
                             <motion.div
                                 key="empty-desktop"
                                 initial={{ opacity: 0 }}
@@ -233,269 +128,23 @@ export const LiquidOSLayout: React.FC = () => {
                     </AnimatePresence>
                 </SpatialCanvas>
 
-                {/* 4. Windows Layer - Floats ABOVE the Spatial Environment */}
-                {/* These specific windows are "OS Level" overlays */}
-
-                {/* System Settings Overlay Window */}
+                {/* 4. Dynamic App Panel Layer */}
                 <AnimatePresence>
-                    {activePanel === 'settings' && (
-                        <motion.div
-                            key="settings-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="settings-window"
-                                title="System Preferences"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <GlassSettingsApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
+                    {activeApp && (
+                        <DynamicAppPanel
+                            key={activeAppId!}
+                            appId={activeAppId!}
+                            manifest={activeApp.manifest}
+                            panelVariants={panelVariants}
+                            panelTransition={panelTransition}
+                            onClose={closeApp}
+                        />
                     )}
                 </AnimatePresence>
 
-                {/* Component Showcase Overlay Window */}
+                {/* 5. System Dock - Fixed Bottom */}
                 <AnimatePresence>
-                    {activePanel === 'showcase' && (
-                        <motion.div
-                            key="showcase-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="showcase-window"
-                                title="Component Library"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <GlassShowcaseApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Cowork Mode Overlay Window */}
-                <AnimatePresence>
-                    {activePanel === 'cowork' && (
-                        <motion.div
-                            key="cowork-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="cowork-window"
-                                title="Cowork Mode"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <GlassCoworkApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Finder App Window */}
-                <AnimatePresence>
-                    {activePanel === 'finder' && (
-                        <motion.div
-                            key="finder-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="finder-window"
-                                title="Finder"
-                                initialPosition={{ x: window.innerWidth * 0.1, y: 50 }}
-                                initialSize={{ width: 800, height: 600 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <GlassFinderApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Neon Tokyo App Window */}
-                <AnimatePresence>
-                    {activePanel === 'neonTokyo' && (
-                        <motion.div
-                            key="neon-tokyo-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="neon-tokyo-window"
-                                title="Neon Tokyo"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <NeonTokyoApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Aurora Weather App Window */}
-                <AnimatePresence>
-                    {activePanel === 'auroraWeather' && (
-                        <motion.div
-                            key="aurora-weather-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="aurora-weather-window"
-                                title="Aurora Weather"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <AuroraWeatherApp />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Aurora Travel App Window */}
-                <AnimatePresence>
-                    {activePanel === 'auroraTravel' && (
-                        <motion.div
-                            key="aurora-travel-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="aurora-travel-window"
-                                title="Aurora Travel Weather"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <AuroraTravelApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* RushHour Trading App Window */}
-                <AnimatePresence>
-                    {activePanel === 'rushHourTrading' && (
-                        <motion.div
-                            key="rushhour-trading-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="rushhour-trading-window"
-                                title="RushHour Trading"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <RushHourTradingApp onClose={closePanel} />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* A2A Console Window */}
-                <AnimatePresence>
-                    {activePanel === 'console' && (
-                        <motion.div
-                            key="console-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="console-window"
-                                title="A2A Console"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <ConsolePage />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* iCloud App Window */}
-                <AnimatePresence>
-                    {activePanel === 'icloud' && (
-                        <motion.div
-                            key="icloud-panel"
-                            variants={panelVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={panelTransition}
-                        >
-                            <GlassWindow
-                                id="icloud-window"
-                                title="iCloud"
-                                initialPosition={{ x: window.innerWidth * 0.05, y: 30 }}
-                                initialSize={{ width: window.innerWidth * 0.9, height: window.innerHeight * 0.85 }}
-                                isActive={true}
-                                onClose={closePanel}
-                            >
-                                <ICloudApp />
-                            </GlassWindow>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* iBird App - Full Screen Overlay */}
-                <AnimatePresence>
-                    {activePanel === 'ibird' && (
-                        <IBirdApp />
-                    )}
-                </AnimatePresence>
-
-                {/* 5. System Dock - Fixed Bottom, Always Visible */}
-                <AnimatePresence>
-                    {showDock && (
+                    {dockVisible && (
                         <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
                             <motion.div
                                 initial={{ y: 100, opacity: 0 }}
@@ -516,3 +165,154 @@ export const LiquidOSLayout: React.FC = () => {
     );
 };
 
+// ============================================================================
+// Dynamic App Panel Renderer
+// ============================================================================
+
+interface DynamicAppPanelProps {
+    appId: string;
+    manifest: any;
+    panelVariants: any;
+    panelTransition: any;
+    onClose: () => void;
+}
+
+function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onClose }: DynamicAppPanelProps) {
+    const AppComponent = useAppComponent(appId);
+
+    if (!AppComponent) {
+        return (
+            <motion.div
+                key={`panel-${appId}`}
+                variants={panelVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={panelTransition}
+            >
+                <GlassWindow
+                    id={`${appId}-window`}
+                    title={manifest.name}
+                    initialPosition={{ x: window.innerWidth * 0.1, y: 50 }}
+                    initialSize={{ width: 600, height: 400 }}
+                    isActive={true}
+                    onClose={onClose}
+                >
+                    <div className="flex items-center justify-center h-full text-label-glass-tertiary">
+                        <p>App &ldquo;{manifest.name}&rdquo; component not found</p>
+                    </div>
+                </GlassWindow>
+            </motion.div>
+        );
+    }
+
+    const windowMode = manifest.window?.mode ?? 'floating';
+
+    // Fullscreen apps render directly (no GlassWindow wrapper)
+    if (windowMode === 'fullscreen' || windowMode === 'panel') {
+        return (
+            <Suspense fallback={
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                </div>
+            }>
+                <AppComponent />
+            </Suspense>
+        );
+    }
+
+    // Floating/windowed apps render inside GlassWindow
+    const defaultSize = manifest.window?.defaultSize ?? { width: 900, height: 600 };
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.85;
+    const width = Math.min(defaultSize.width, maxWidth);
+    const height = Math.min(defaultSize.height, maxHeight);
+
+    return (
+        <motion.div
+            key={`panel-${appId}`}
+            variants={panelVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={panelTransition}
+        >
+            <GlassWindow
+                id={`${appId}-window`}
+                title={manifest.window?.title ?? manifest.name}
+                initialPosition={{
+                    x: (window.innerWidth - width) / 2,
+                    y: (window.innerHeight - height) / 2 - 20
+                }}
+                initialSize={{ width, height }}
+                isActive={true}
+                onClose={onClose}
+            >
+                <Suspense fallback={
+                    <div className="flex items-center justify-center h-full">
+                        <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                    </div>
+                }>
+                    <AppComponent />
+                </Suspense>
+            </GlassWindow>
+        </motion.div>
+    );
+}
+
+// ============================================================================
+// Dock Items Builder
+// ============================================================================
+
+function buildDockItems(
+    dockApps: InstalledApp[],
+    activeAppId: string | null,
+    toggleApp: (id: string) => void,
+    navigate: (path: string) => void,
+    hasAppOpen: boolean,
+    closeApp: () => void
+) {
+    // Static navigation items that aren't apps
+    const navItems = [
+        {
+            id: 'os-home',
+            icon: Command,
+            label: 'Command Center',
+            isActive: !hasAppOpen,
+            onClick: () => {
+                if (hasAppOpen) closeApp();
+                navigate('/os');
+            }
+        },
+    ];
+
+    // Dynamic app items from registry
+    const appItems = dockApps.map((app) => {
+        const IconComponent = resolveIconComponent(app.manifest.icon);
+        return {
+            id: app.id,
+            icon: IconComponent ?? Command,
+            label: app.manifest.name,
+            isActive: activeAppId === app.id,
+            onClick: () => toggleApp(app.id),
+        };
+    });
+
+    // Static navigation items at the end
+    const trailingNavItems = [
+        {
+            id: 'agent-hub',
+            icon: Compass,
+            label: 'Agent Hub',
+            onClick: () => navigate('/os/agents')
+        },
+        {
+            id: 'design-system',
+            icon: Layout,
+            label: 'Design Explorer',
+            onClick: () => navigate('/os/design')
+        },
+    ];
+
+    return [...navItems, ...appItems, ...trailingNavItems];
+}

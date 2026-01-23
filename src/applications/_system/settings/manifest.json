@@ -1,0 +1,32 @@
+{
+  "id": "_system/settings",
+  "name": "System Preferences",
+  "version": "1.0.0",
+  "description": "Configure LiquidOS system settings",
+  "author": "LiquidOS",
+  "category": "system",
+  "keywords": ["settings", "preferences", "configuration", "theme"],
+  "icon": "Settings",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "System Preferences",
+    "defaultSize": { "width": 900, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 99
+    },
+    "menuBar": {},
+    "shortcuts": {},
+    "aiContext": null,
+    "commandPalette": {
+      "commands": [
+        { "id": "open-settings", "label": "Open Settings", "keywords": ["preferences", "config"] }
+      ]
+    }
+  },
+  "capabilities": ["storage:local"]
+}

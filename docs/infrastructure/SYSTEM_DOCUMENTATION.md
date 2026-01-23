@@ -20,7 +20,8 @@ This document contains detailed system documentation extracted from AGENTS.md.
 9. [Phase 8: SDK Intelligence](#phase-8-sdk-intelligence-system)
 10. [Phase 9: Cowork Mode](#phase-9-cowork-mode-deep-work-system)
 11. [Phase 10: Generative Media](#phase-10-generative-media-pipeline)
-12. [Architecture Summary](#architecture-summary)
+12. [Phase 11: App Store](#phase-11-app-store--application-lifecycle)
+13. [Architecture Summary](#architecture-summary)
 13. [Environment Variables](#environment-variables)
 14. [Test Coverage](#test-coverage)
 
@@ -42,6 +43,7 @@ This document contains detailed system documentation extracted from AGENTS.md.
 | **Phase 8** | ✅ Complete | SDK Intelligence, Auto-Configuration, Smart Defaults, Task Analyzer |
 | **Phase 9** | ✅ Complete | Cowork Mode, Task Orchestration, Sandbox System, Agent Manager, Permissions |
 | **Phase 10** | ✅ Complete | Generative Media, Video Backgrounds, Gemini Image, Veo Video, Job Queue |
+| **Phase 11** | ✅ Complete | App Store, App Lifecycle, Manifest-Driven Apps, Bundle Storage, PostgreSQL Registry |
 
 ---
 
@@ -642,6 +644,83 @@ bun scripts/pre-generate-backgrounds.ts
 
 ---
 
+## Phase 11: App Store & Application Lifecycle
+
+### 11.1 Overview
+
+Manifest-driven application lifecycle system with Apple App Store-inspired marketplace UI. Transforms the static app system into a dynamic, registry-based architecture.
+
+**Status:** ✅ Complete (5 implementation phases)
+
+### 11.2 System Core
+**Directory:** `src/system/app-store/`
+
+| File | Purpose |
+|------|---------|
+| `types.ts` | AppManifest, AppCapability, AppCategory, InstalledApp |
+| `appStoreStore.ts` | Central Zustand store for app lifecycle |
+| `AppLoader.tsx` | Dynamic component loader (`import.meta.glob`) |
+| `AppPanel.tsx` | Generic panel renderer |
+| `IntegrationRegistry.ts` | Menu bar, shortcuts, AI context |
+| `permissions.ts` | Capability-based permission manager |
+| `appDiscovery.ts` | Build-time manifest scanner |
+| `remoteAppLoader.ts` | Remote catalog + bundle installer |
+| `SandboxedApp.tsx` | Iframe sandbox for untrusted apps |
+
+### 11.3 App Store UI
+**Directory:** `src/applications/_system/app-store/`
+
+| View | Description |
+|------|-------------|
+| Home | Hero banner, installed grid, marketplace catalog |
+| Detail | App info, permissions, integrations, install/remove |
+| Categories | Browse by category with counts |
+| Search | Search installed + remote catalog |
+| Installed | Manage installed apps |
+| Publish | Submit new app to registry |
+
+### 11.4 Server Registry
+**Directory:** `server/src/registry/`
+
+| File | Purpose |
+|------|---------|
+| `app-routes.ts` | REST API (`/api/v1/apps`) with PostgreSQL + in-memory fallback |
+| `app-store-db.ts` | PostgreSQL CRUD layer with JSONB indexes |
+| `app-types.ts` | Server-side type definitions |
+| `bundle-storage.ts` | Filesystem bundle storage with SHA-256 integrity |
+
+**Database:** `app_registry` table with JSONB manifest, download counts, ratings, verified status.
+
+### 11.5 Security Model
+
+- **14 capability types** across 3 risk levels (low/medium/high)
+- 4 auto-granted capabilities (storage, toast, fullscreen)
+- Permission dialog at install time for sensitive capabilities
+- SHA-256 bundle integrity verification
+- Iframe sandbox for untrusted remote apps
+
+### 11.6 Build Integration
+
+Per-app code splitting via Vite `manualChunks`:
+```typescript
+// Each app gets its own chunk: app-ibird.js, app-_system-app-store.js
+if (id.includes('/src/applications/')) {
+  const match = id.match(/\/src\/applications\/(.+?)\/(?:App\.tsx|components\/|...)/);
+  if (match) return `app-${match[1].replace('/', '-')}`;
+}
+```
+
+### 11.7 Test Coverage
+
+| Suite | Tests | Coverage |
+|-------|-------|----------|
+| `appStoreStore.test.ts` | 25 | Lifecycle, dock, panels, bulk ops |
+| `permissions.test.ts` | 24 | Grants, revocation, risk classification |
+
+**Full documentation:** See [docs/app-store/README.md](../app-store/README.md)
+
+---
+
 ## Architecture Summary
 
 
@@ -652,12 +731,15 @@ bun scripts/pre-generate-backgrounds.ts
 │                                                                      │
 │  Frontend (React 19 + TypeScript 5.7)                               │
 │  ├── src/liquid-engine/        # AI client                          │
+│  ├── src/system/app-store/     # App lifecycle system               │
+│  ├── src/applications/         # Self-contained app bundles         │
 │  ├── src/components/wrapped/   # ErrorBoundary wrappers             │
 │  ├── src/a2a/                  # A2A client & transformer           │
 │  ├── src/components/agents/    # Agent Hub components               │
 │  └── src/layouts/              # LiquidOS unified spatial layout        │
 │                                                                      │
 │  Backend (Bun + Elysia)                                             │
+│  ├── server/src/registry/      # App Store registry & bundles       │
 │  ├── server/src/a2a/           # A2A protocol handler               │
 │  ├── server/src/healer/        # Self-healing system                │
 │  ├── server/src/orchestrator/  # Multi-agent coordination          │
@@ -716,6 +798,8 @@ JWT_SECRET=change-in-production
 | `registry.test.ts` | 46 | Validation, security |
 | `a2a.test.ts` | 30+ | A2UI transformation |
 | `container-pool.test.ts` | 28 | Pool, scheduler |
+| `appStoreStore.test.ts` | 25 | App lifecycle, dock, panels |
+| `permissions.test.ts` | 24 | Permission grants, revocation |
 
 **Run tests:**
 ```bash

@@ -24,7 +24,7 @@ import {
   Globe,
   AlertCircle,
 } from 'lucide-react';
-import { usePublicBookingApi } from '@/components/features/ibird/hooks/useIBirdApi';
+import { usePublicBookingApi } from '@/applications/ibird/hooks/useIBirdApi';
 import { cn } from '@/lib/utils';
 
 // =============================================================================

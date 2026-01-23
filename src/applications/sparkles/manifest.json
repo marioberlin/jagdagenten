@@ -1,0 +1,49 @@
+{
+  "id": "sparkles",
+  "name": "Sparkles Mail",
+  "version": "1.0.0",
+  "description": "Gmail client with Smart Inbox & Gatekeeper",
+  "longDescription": "An advanced email client with smart inbox categorization, email scheduling, snooze functionality, and an AI-powered Gatekeeper that filters and prioritizes your incoming mail.",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "communication",
+  "keywords": ["email", "gmail", "inbox", "smart", "gatekeeper", "schedule"],
+  "icon": "Sparkles",
+
+  "entry": "./App.tsx",
+  "store": "./store.ts",
+
+  "window": {
+    "mode": "fullscreen",
+    "title": "Sparkles Mail"
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 4
+    },
+    "menuBar": {
+      "hookPath": "./hooks/useMenuBar.ts"
+    },
+    "shortcuts": {
+      "hookPath": "./hooks/useShortcuts.ts"
+    },
+    "aiContext": {
+      "systemPrompt": "You are helping the user manage their Gmail inbox with Sparkles Mail."
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "sparkles-compose", "label": "Compose Email", "shortcut": "Cmd+N", "category": "Sparkles" },
+        { "id": "sparkles-search", "label": "Search Mail", "shortcut": "Cmd+F", "category": "Sparkles" }
+      ]
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "storage:local",
+    "ai:llm",
+    "notification:toast"
+  ]
+}

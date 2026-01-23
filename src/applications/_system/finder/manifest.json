@@ -1,0 +1,32 @@
+{
+  "id": "_system/finder",
+  "name": "Finder",
+  "version": "1.0.0",
+  "description": "Browse and manage files in LiquidOS",
+  "author": "LiquidOS",
+  "category": "system",
+  "keywords": ["files", "finder", "browse", "storage"],
+  "icon": "HardDrive",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Finder",
+    "defaultSize": { "width": 800, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 5
+    },
+    "menuBar": {},
+    "shortcuts": {},
+    "aiContext": null,
+    "commandPalette": {
+      "commands": [
+        { "id": "open-finder", "label": "Open Finder", "keywords": ["files", "browse"] }
+      ]
+    }
+  },
+  "capabilities": ["storage:local", "storage:indexeddb"]
+}

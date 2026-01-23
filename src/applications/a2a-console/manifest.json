@@ -1,0 +1,32 @@
+{
+  "id": "a2a-console",
+  "name": "A2A Console",
+  "version": "1.0.0",
+  "description": "Agent-to-Agent protocol console and debugging",
+  "author": "LiquidOS",
+  "category": "developer",
+  "keywords": ["a2a", "console", "agents", "debug", "protocol"],
+  "icon": "Terminal",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "A2A Console",
+    "defaultSize": { "width": 900, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 10
+    },
+    "menuBar": {},
+    "shortcuts": {},
+    "aiContext": null,
+    "commandPalette": {
+      "commands": [
+        { "id": "open-console", "label": "Open A2A Console", "keywords": ["terminal", "debug"] }
+      ]
+    }
+  },
+  "capabilities": ["network:http", "a2a:connect"]
+}
