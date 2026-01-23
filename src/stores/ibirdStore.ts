@@ -4,6 +4,7 @@
  * Zustand store following Sparkles patterns for the iBird application.
  */
 
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware';
@@ -1263,19 +1264,21 @@ export const useInboxUnreadCount = () =>
     ).length;
   });
 
-export const useFilteredMessages = () =>
-  useIBirdStore((state) => {
-    const { ui, messages, labels } = state;
+export const useFilteredMessages = () => {
+  const messages = useIBirdStore((state) => state.messages);
+  const searchQuery = useIBirdStore((state) => state.ui.searchQuery);
+
+  return useMemo(() => {
     let filtered = [...messages];
 
     // Filter by search query
-    if (ui.searchQuery) {
-      const query = ui.searchQuery.toLowerCase();
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (m) =>
           m.subject?.toLowerCase().includes(query) ||
-          m.from.email.toLowerCase().includes(query) ||
-          m.from.name?.toLowerCase().includes(query) ||
+          m.from?.email?.toLowerCase().includes(query) ||
+          m.from?.name?.toLowerCase().includes(query) ||
           m.snippet?.toLowerCase().includes(query)
       );
     }
@@ -1286,7 +1289,8 @@ export const useFilteredMessages = () =>
     );
 
     return filtered;
-  });
+  }, [messages, searchQuery]);
+};
 
 export const useVisibleCalendars = () =>
   useIBirdStore((state) => state.calendars.filter((c) => c.isVisible));

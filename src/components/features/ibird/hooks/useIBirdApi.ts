@@ -108,6 +108,11 @@ export function useMailApi() {
     smtpSecure?: boolean;
     authType: 'password' | 'oauth2';
     password?: string;
+    oauthTokens?: {
+      accessToken: string;
+      refreshToken?: string;
+      expiresAt?: string;
+    };
   }, userId?: string) => {
     const response = await fetch(`${API_BASE}/mail/accounts`, {
       method: 'POST',
@@ -128,6 +133,20 @@ export function useMailApi() {
     if (!response.ok) throw new Error('Failed to delete account');
     removeAccount(accountId);
   }, [removeAccount]);
+
+  const syncAccount = useCallback(async (accountId: string, userId?: string) => {
+    setSyncing(true);
+    try {
+      const response = await fetch(`${API_BASE}/mail/accounts/${accountId}/sync`, {
+        method: 'POST',
+        headers: getHeaders(userId),
+      });
+      if (!response.ok) throw new Error('Failed to sync account');
+      return await response.json() as { synced: number; errors: string[] };
+    } finally {
+      setSyncing(false);
+    }
+  }, [setSyncing]);
 
   // Folder methods
   const fetchFolders = useCallback(async (accountId: string, userId?: string) => {
@@ -179,9 +198,9 @@ export function useMailApi() {
 
   const markAsRead = useCallback(async (messageIds: string[], read: boolean, userId?: string) => {
     const response = await fetch(`${API_BASE}/mail/messages/read`, {
-      method: 'PUT',
+      method: 'POST',
       headers: getHeaders(userId),
-      body: JSON.stringify({ messageIds, read }),
+      body: JSON.stringify({ ids: messageIds, read }),
     });
     if (!response.ok) throw new Error('Failed to update read status');
     return response.json();
@@ -189,7 +208,7 @@ export function useMailApi() {
 
   const toggleStar = useCallback(async (messageId: string, starred: boolean, userId?: string) => {
     const response = await fetch(`${API_BASE}/mail/messages/${messageId}/star`, {
-      method: 'PUT',
+      method: 'POST',
       headers: getHeaders(userId),
       body: JSON.stringify({ starred }),
     });
@@ -276,6 +295,7 @@ export function useMailApi() {
     fetchAccounts,
     createAccount,
     deleteAccount,
+    syncAccount,
     // Folders
     fetchFolders,
     // Messages

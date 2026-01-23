@@ -20,6 +20,8 @@ const SCOPES: Record<string, string[]> = {
     gmail_oauth: [
         'https://www.googleapis.com/auth/gmail.readonly',
         'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
     ],
     gdrive_oauth: [
         'https://www.googleapis.com/auth/drive.file',
@@ -80,8 +82,10 @@ export const authRoutes = new Elysia({ prefix: '/api/v1/auth' })
 
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-        set.redirect = authUrl;
-        return null;
+        // Return HTML page that performs the redirect client-side
+        // This avoids issues with Elysia CORS middleware consuming 302 status
+        set.headers['content-type'] = 'text/html';
+        return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${authUrl}"></head><body><p>Redirecting to Google...</p><script>window.location.href="${authUrl}";</script></body></html>`;
     })
 
     /**
@@ -89,6 +93,8 @@ export const authRoutes = new Elysia({ prefix: '/api/v1/auth' })
      * GET /api/v1/auth/google/callback?code=...&state=...
      */
     .get('/google/callback', async ({ query, set }) => {
+        set.headers['content-type'] = 'text/html; charset=utf-8';
+
         const code = query.code as string;
         const state = query.state as string;
         const error = query.error as string;

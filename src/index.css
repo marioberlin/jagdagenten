@@ -3,6 +3,12 @@
 
 /* Keep custom glass design system (not covered by Tailwind) */
 
+/* Blinking cursor animation for compose editor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 @layer base {
     html {
         /* Enables SF Pro Display vs Text auto-switching where supported */

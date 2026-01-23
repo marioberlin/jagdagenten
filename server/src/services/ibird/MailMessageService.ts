@@ -116,6 +116,11 @@ export class MailMessageService {
     sizeBytes?: number;
     rawHeaders?: string;
   }): Promise<MailMessage> {
+    // Use message_id conflict for Gmail (uid is null), uid conflict for IMAP
+    const conflictClause = data.uid
+      ? `ON CONFLICT (account_id, folder_id, uid) WHERE uid IS NOT NULL`
+      : `ON CONFLICT (account_id, message_id) WHERE message_id IS NOT NULL`;
+
     const result = await pool.query(
       `INSERT INTO ibird_mail_messages (
         account_id, folder_id, message_id, thread_id, uid,
@@ -123,8 +128,8 @@ export class MailMessageService {
         reply_to_address, sent_at, received_at, snippet,
         body_text, body_html, has_attachments,
         is_read, is_starred, is_draft, size_bytes, raw_headers
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-      ON CONFLICT (account_id, folder_id, uid) WHERE uid IS NOT NULL
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb, $10::jsonb, $11::jsonb, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      ${conflictClause}
       DO UPDATE SET
         subject = EXCLUDED.subject,
         from_address = EXCLUDED.from_address,

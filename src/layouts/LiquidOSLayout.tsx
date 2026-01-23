@@ -15,10 +15,9 @@ import { AuroraWeatherApp } from '@/components/features/AuroraWeatherApp';
 import { AuroraTravelApp } from '@/components/features/AuroraTravelApp';
 import { RushHourTradingApp } from '@/components/features/RushHourTradingApp';
 import ConsolePage from '@/pages/console/ConsolePage';
-import { SparklesApp } from '@/components/features/sparkles';
 import { ICloudApp } from '@/components/features/icloud';
 import { IBirdApp } from '@/components/features/ibird';
-import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail, CloudCog, Bird } from 'lucide-react';
+import { Settings, Layout, Command, Compass, Sparkles, Briefcase, Terminal, HardDrive, Plane, Cloud, TrendingUp, Map, Mail, CloudCog } from 'lucide-react';
 
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { useDesktopStore, PanelId } from '@/stores/desktopStore';
@@ -101,16 +100,9 @@ export const LiquidOSLayout: React.FC = () => {
             onClick: () => togglePanel('rushHourTrading')
         },
         {
-            id: 'sparkles-mail',
-            icon: Mail,
-            label: 'Sparkles Mail',
-            isActive: activePanel === 'sparkles',
-            onClick: () => togglePanel('sparkles')
-        },
-        {
             id: 'ibird-app',
-            icon: Bird,
-            label: 'iBird',
+            icon: Mail,
+            label: 'iBird Mail',
             isActive: activePanel === 'ibird',
             onClick: () => togglePanel('ibird')
         },
@@ -466,13 +458,6 @@ export const LiquidOSLayout: React.FC = () => {
                                 <ConsolePage />
                             </GlassWindow>
                         </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Sparkles Mail App - Full Screen Overlay */}
-                <AnimatePresence>
-                    {activePanel === 'sparkles' && (
-                        <SparklesApp />
                     )}
                 </AnimatePresence>
 

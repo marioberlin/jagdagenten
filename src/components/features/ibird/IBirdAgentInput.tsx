@@ -59,7 +59,8 @@ export function IBirdAgentInput({ onSend, isLoading = false }: IBirdAgentInputPr
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
                 <div className={cn(
                     'flex-1 flex items-center gap-2 px-4 py-2.5 rounded-xl',
-                    'bg-[var(--glass-surface)] border border-[var(--glass-border)]',
+                    'bg-white/10 backdrop-blur-xl',
+                    'border border-white/20',
                     'focus-within:ring-2 focus-within:ring-[var(--glass-accent)]/50',
                     'transition-all duration-150'
                 )}>
@@ -72,7 +73,7 @@ export function IBirdAgentInput({ onSend, isLoading = false }: IBirdAgentInputPr
                         disabled={isLoading}
                         className={cn(
                             'flex-1 bg-transparent text-sm',
-                            'text-[var(--glass-text-primary)] placeholder:text-[var(--glass-text-tertiary)]',
+                            'text-white placeholder:text-white/50',
                             'focus:outline-none',
                             'disabled:opacity-50'
                         )}
@@ -83,8 +84,8 @@ export function IBirdAgentInput({ onSend, isLoading = false }: IBirdAgentInputPr
                         type="button"
                         className={cn(
                             'p-1.5 rounded-lg',
-                            'text-[var(--glass-text-tertiary)] hover:text-[var(--glass-text-secondary)]',
-                            'hover:bg-white/5 transition-colors duration-150'
+                            'text-white/50 hover:text-white',
+                            'hover:bg-white/10 transition-colors duration-150'
                         )}
                         aria-label="Voice input"
                     >

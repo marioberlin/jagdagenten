@@ -8,6 +8,7 @@ import {
   mailAccountService,
   mailMessageService,
 } from '../../services/ibird/index.js';
+import { gmailSyncService } from '../../services/ibird/GmailSyncService.js';
 
 // Temporary: Get user ID from header
 const getUserId = (headers: Record<string, string | undefined>): string => {
@@ -120,6 +121,35 @@ export const mailRoutes = new Elysia({ prefix: '/mail' })
     // TODO: Implement actual IMAP connection test
     // For now, return success if account exists
     return { success: true, message: 'Connection test not yet implemented' };
+  })
+
+  /**
+   * Sync emails from Gmail
+   * POST /api/v1/ibird/mail/accounts/:id/sync
+   */
+  .post('/accounts/:id/sync', async ({ headers, params }) => {
+    const userId = getUserId(headers);
+    const account = await mailAccountService.getAccount(params.id, userId);
+    if (!account) throw new Error('Account not found');
+
+    const result = await gmailSyncService.syncInbox(params.id, userId);
+    return result;
+  })
+
+  /**
+   * List messages for an account's folder (account-scoped route)
+   * GET /api/v1/ibird/mail/accounts/:id/folders/:folderId/messages
+   */
+  .get('/accounts/:id/folders/:folderId/messages', async ({ headers, params, query }) => {
+    const userId = getUserId(headers);
+    // Verify account belongs to user
+    const account = await mailAccountService.getAccount(params.id, userId);
+    if (!account) throw new Error('Account not found');
+
+    const page = query.page ? parseInt(query.page) : 1;
+    const limit = query.limit ? parseInt(query.limit) : 50;
+
+    return await mailMessageService.listMessages(params.folderId, { page, limit });
   })
 
   // ==========================================================================

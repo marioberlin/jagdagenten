@@ -71,13 +71,12 @@ export function IBirdApp() {
   // Register keyboard shortcuts
   useIBirdShortcuts();
 
-  // Track if initial data has been loaded to prevent infinite re-fetching
+  // Track if initial data has been loaded
   const hasLoadedRef = useRef(false);
 
   // Initial data loading - runs only once on mount
   // Each API call is wrapped individually so failures don't crash the app
   useEffect(() => {
-    // Guard against multiple calls
     if (hasLoadedRef.current) return;
     hasLoadedRef.current = true;
 
@@ -108,6 +107,17 @@ export function IBirdApp() {
       const state = useIBirdStore.getState();
       for (const account of state.accounts) {
         await safeCall(`folders for ${account.email}`, () => fetchFolders(account.id));
+      }
+
+      // Set active folder to inbox if not already set
+      const updatedState = useIBirdStore.getState();
+      if (updatedState.accounts.length > 0 && !updatedState.ui.activeFolderId) {
+        const accountId = updatedState.ui.activeAccountId || updatedState.accounts[0].id;
+        const folders = updatedState.folders[accountId] || [];
+        const inboxFolder = folders.find((f) => f.folderType === 'inbox');
+        if (inboxFolder) {
+          useIBirdStore.getState().setActiveFolder(inboxFolder.id, 'inbox');
+        }
       }
 
       // Fetch events for the current month
@@ -159,7 +169,7 @@ export function IBirdApp() {
   const showSetup = ui.activeModule === 'mail' && accounts.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-glass-base rounded-b-xl overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex flex-col bg-glass-base overflow-hidden pb-[72px]">
       {/* Aurora-style Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-blue-900/10 to-transparent pointer-events-none" />
 
@@ -275,40 +285,42 @@ export function IBirdApp() {
         )}
 
         {/* Main Content Area */}
-        <div className="flex flex-1 overflow-hidden">
-          {showSetup ? (
-            <IBirdEmptyState type="no-accounts" />
-          ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={ui.activeModule}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 overflow-hidden"
-              >
-                {renderModuleView}
-              </motion.div>
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <div className="flex-1 overflow-hidden relative">
+            {showSetup ? (
+              <IBirdEmptyState type="no-accounts" />
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={ui.activeModule}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 overflow-hidden h-full"
+                >
+                  {renderModuleView}
+                </motion.div>
+              </AnimatePresence>
+            )}
+
+            {/* Compose Windows (Mail) - covers content area above agent input */}
+            <AnimatePresence>
+              {(ui.composeWindows ?? []).map((compose) => (
+                <IBirdComposeModal key={compose.id} compose={compose} />
+              ))}
             </AnimatePresence>
-          )}
+          </div>
+
+          {/* Agent Input Bar - always visible at bottom */}
+          <IBirdAgentInput
+            onSend={(message) => {
+              console.log('[iBird Agent]:', message);
+              // TODO: Wire up to A2A agent service
+            }}
+          />
         </div>
       </div>
-
-      {/* Agent Input Bar (Aurora-style fixed footer) */}
-      <IBirdAgentInput
-        onSend={(message) => {
-          console.log('[iBird Agent]:', message);
-          // TODO: Wire up to A2A agent service
-        }}
-      />
-
-      {/* Compose Windows (Mail) */}
-      <AnimatePresence>
-        {(ui.composeWindows ?? []).map((compose) => (
-          <IBirdComposeModal key={compose.id} compose={compose} />
-        ))}
-      </AnimatePresence>
 
       {/* Modals (Settings, Add Account, etc.) */}
       <IBirdModals />

@@ -28,6 +28,7 @@
         "dockerode": "^4.0.9",
         "duck-duck-scrape": "^2.2.7",
         "elysia": "^1.0.0",
+        "glob": "^13.0.0",
         "googleapis": "^170.0.0",
         "ioredis": "^5.4.1",
         "pg": "^8.17.1",

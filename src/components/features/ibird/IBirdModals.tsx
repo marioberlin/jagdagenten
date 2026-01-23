@@ -25,62 +25,102 @@ import { cn } from '@/lib/utils';
 // =============================================================================
 
 function AddAccountModal({ onClose }: { onClose: () => void }) {
-  const { createAccount } = useMailApi();
+  const { createAccount, syncAccount, fetchFolders, fetchMessages } = useMailApi();
+  const { setActiveFolder } = useIBirdStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGmailOAuth = async () => {
+  const handleGmailOAuth = () => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      // Initiate Gmail OAuth flow
-      // In a real implementation, this would:
-      // 1. Open a popup or redirect to Google's OAuth consent screen
-      // 2. User grants permission
-      // 3. Receive auth code and exchange for tokens
-      // 4. Create account with OAuth tokens
+    // Open backend OAuth endpoint in a popup
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    const authUrl = `${apiBaseUrl}/api/v1/auth/google?type=gmail_oauth`;
+    const popup = window.open(authUrl, '_blank', 'width=500,height=600');
 
-      // For now, simulate the OAuth flow
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!popup) {
+      setError('Popup blocked. Please allow popups and try again.');
+      setIsLoading(false);
+      return;
+    }
 
-      if (!clientId) {
-        // Demo mode - show what would happen
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    // Listen for OAuth success message from popup
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type !== 'OAUTH_SUCCESS' || event.data?.credentialType !== 'gmail_oauth') {
+        return;
+      }
+      window.removeEventListener('message', handleMessage);
 
-        // Create a mock account for demo purposes
-        await createAccount({
-          email: 'demo@gmail.com',
-          displayName: 'Demo User',
+      try {
+        const tokens = event.data.tokens;
+
+        // Fetch user info from Google using the access token
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        });
+
+        let email = 'user@gmail.com';
+        let displayName = 'Gmail User';
+        if (userInfoRes.ok) {
+          const userInfo = await userInfoRes.json();
+          email = userInfo.email || email;
+          displayName = userInfo.name || email;
+        }
+
+        // Create account via backend API with OAuth tokens
+        const account = await createAccount({
+          email,
+          displayName,
           provider: 'gmail',
           imapHost: 'imap.gmail.com',
           imapPort: 993,
+          imapSecure: true,
           smtpHost: 'smtp.gmail.com',
           smtpPort: 587,
-          authType: 'oauth2' as const,
+          smtpSecure: true,
+          authType: 'oauth2',
+          oauthTokens: {
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            expiresAt: tokens.expires_in
+              ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
+              : undefined,
+          },
         });
 
+        // Auto-sync inbox after account creation
+        try {
+          await syncAccount(account.id);
+          // Fetch folders and messages
+          const folders = await fetchFolders(account.id);
+          const inboxFolder = folders.find((f: any) => f.folderType === 'inbox');
+          if (inboxFolder) {
+            setActiveFolder(inboxFolder.id, 'inbox');
+            await fetchMessages(account.id, inboxFolder.id);
+          }
+        } catch (syncErr) {
+          console.warn('[iBird] Auto-sync failed:', syncErr);
+        }
+
         onClose();
-        return;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create account');
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      // Real OAuth flow
-      const redirectUri = `${window.location.origin}/auth/google/callback`;
-      const scope = encodeURIComponent('https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile');
-      const state = crypto.randomUUID();
+    window.addEventListener('message', handleMessage);
 
-      // Store state for verification
-      sessionStorage.setItem('oauth_state', state);
-      sessionStorage.setItem('oauth_callback', 'ibird_add_account');
-
-      // Redirect to Google OAuth
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}&access_type=offline&prompt=consent`;
-
-      window.location.href = authUrl;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to Gmail');
-      setIsLoading(false);
-    }
+    // Clean up if popup is closed without completing
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handleMessage);
+        setIsLoading(false);
+      }
+    }, 1000);
   };
 
   return (

@@ -63,7 +63,9 @@ export class MailAccountService {
       password: input.password,
       accessToken: input.oauthTokens?.accessToken,
       refreshToken: input.oauthTokens?.refreshToken,
-      expiresAt: input.oauthTokens?.expiresAt?.toISOString(),
+      expiresAt: input.oauthTokens?.expiresAt instanceof Date
+        ? input.oauthTokens.expiresAt.toISOString()
+        : input.oauthTokens?.expiresAt as string | undefined,
     };
 
     const encryptedCreds = encryptCredentials(credentials);
@@ -190,9 +192,9 @@ export class MailAccountService {
   ): Promise<void> {
     await pool.query(
       `UPDATE ibird_mail_accounts
-       SET status = $2, last_error = $3, last_sync_at = CASE WHEN $2 = 'active' THEN NOW() ELSE last_sync_at END
+       SET status = $2, last_error = $3, last_sync_at = CASE WHEN $4 = 'active' THEN NOW() ELSE last_sync_at END
        WHERE id = $1`,
-      [accountId, status, error || null]
+      [accountId, status, error || null, status]
     );
   }
 

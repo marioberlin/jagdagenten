@@ -5,14 +5,10 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Archive,
   Trash2,
-  Star,
-  MoreHorizontal,
   RefreshCw,
-  ChevronDown,
   CheckSquare,
   Square,
   Search,
@@ -30,8 +26,9 @@ export function IBirdMailView() {
   const {
     ui,
     selectedMessage,
-    setActiveFolder,
     selectMessage,
+    setSelectedMessage,
+    updateMessage,
     toggleMessageSelection,
     selectAllMessages,
     setMailListWidth,
@@ -40,23 +37,26 @@ export function IBirdMailView() {
   } = useIBirdStore();
 
   const messages = useFilteredMessages();
-  const { fetchMessages, markAsRead, deleteMessages, moveMessages } = useMailApi();
+  const { fetchMessages, fetchMessage, markAsRead, deleteMessages, moveMessages } = useMailApi();
 
-  // Fetch messages when folder changes
+  // Fetch messages when folder changes, clear selected message
   useEffect(() => {
     if (ui.activeAccountId && ui.activeFolderId) {
+      setSelectedMessage(null);
       fetchMessages(ui.activeAccountId, ui.activeFolderId);
     }
-  }, [ui.activeAccountId, ui.activeFolderId, fetchMessages]);
+  }, [ui.activeAccountId, ui.activeFolderId, fetchMessages, setSelectedMessage]);
 
   // Handle message selection
   const handleMessageClick = useCallback(
     (messageId: string) => {
       selectMessage(messageId);
-      // Mark as read when selected
+      // Fetch full message content and mark as read
+      fetchMessage(messageId);
+      updateMessage(messageId, { isRead: true });
       markAsRead([messageId], true);
     },
-    [selectMessage, markAsRead]
+    [selectMessage, fetchMessage, updateMessage, markAsRead]
   );
 
   // Handle bulk actions

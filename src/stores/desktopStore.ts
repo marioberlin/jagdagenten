@@ -31,7 +31,6 @@ export type PanelId =
     | 'auroraWeather'
     | 'auroraTravel'
     | 'rushHourTrading'
-    | 'sparkles'
     | 'icloud'
     | 'ibird'
     | null;

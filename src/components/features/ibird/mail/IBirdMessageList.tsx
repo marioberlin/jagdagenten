@@ -115,7 +115,7 @@ export function IBirdMessageList({
                       : 'font-semibold text-[var(--glass-text-primary)]'
                   )}
                 >
-                  {message.from.name || message.from.email}
+                  {message.from?.name || message.from?.email || 'Unknown'}
                 </span>
 
                 {/* Date */}
