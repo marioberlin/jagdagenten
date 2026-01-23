@@ -30,26 +30,50 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
         accessToken
     } = useGoogleDrive();
     const [recentFiles, setRecentFiles] = useState<ParsedFile[]>([]);
+    const [isLoadingFiles, setIsLoadingFiles] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
 
+    // Fetch recent spreadsheets from Google Drive when authenticated
     useEffect(() => {
-        const stored = localStorage.getItem('liquid_recent_sheets');
-        if (stored) {
+        if (!isAuthenticated || !accessToken) return;
+
+        async function fetchRecentFiles() {
+            setIsLoadingFiles(true);
             try {
-                setRecentFiles(JSON.parse(stored));
+                const params = new URLSearchParams({
+                    q: "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",
+                    orderBy: 'viewedByMeTime desc',
+                    pageSize: '20',
+                    fields: 'files(id,name,viewedByMeTime,modifiedTime)',
+                });
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const files: ParsedFile[] = (data.files || []).map((f: any) => ({
+                        id: f.id,
+                        name: f.name,
+                        url: `https://docs.google.com/spreadsheets/d/${f.id}/edit`,
+                        lastOpened: f.viewedByMeTime ? new Date(f.viewedByMeTime).getTime() : undefined,
+                    }));
+                    setRecentFiles(files);
+                }
             } catch (e) {
-                console.error('Failed to parse recent files', e);
+                console.error('Failed to fetch recent Drive files', e);
+            } finally {
+                setIsLoadingFiles(false);
             }
         }
-    }, []);
+        fetchRecentFiles();
+    }, [isAuthenticated, accessToken]);
 
     const handleFileSelect = (file: { id: string, name: string, url: string }) => {
         const newFile: ParsedFile = { ...file, lastOpened: Date.now() };
 
-        const updated = [newFile, ...recentFiles.filter(f => f.id !== file.id)].slice(0, 10);
+        const updated = [newFile, ...recentFiles.filter(f => f.id !== file.id)].slice(0, 20);
         setRecentFiles(updated);
-        localStorage.setItem('liquid_recent_sheets', JSON.stringify(updated));
 
         if (onFileOpen) {
             onFileOpen(newFile);
@@ -253,7 +277,12 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
 
                 {/* File list */}
                 <div className="flex-1 overflow-y-auto">
-                    {recentFiles.length === 0 ? (
+                    {isLoadingFiles ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-3">
+                            <Loader2 size={20} className="animate-spin text-white/30" />
+                            <p className="text-xs text-white/30">Loading files...</p>
+                        </div>
+                    ) : recentFiles.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3 px-8">
                             <Sparkles size={20} className="text-white/15" />
                             <div className="text-center space-y-1">
