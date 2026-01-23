@@ -4,6 +4,7 @@ import { Activity, CheckCircle2, XCircle, Clock, Zap, TrendingUp, ArrowRight } f
 import { GlassContainer } from '@/components/primitives/GlassContainer';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { GlassChip } from '@/components/primitives/GlassChip';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 
 interface DashboardStats {
     totalTasks: number;
@@ -213,7 +214,7 @@ export function DashboardTab() {
                         <GlassButton
                             variant="secondary"
                             className="w-full justify-between"
-                            onClick={() => window.location.href = '/os/agents'}
+                            onClick={() => useAppStoreStore.getState().openApp('agent-hub')}
                         >
                             <span>Browse Agents</span>
                             <ArrowRight size={16} />
@@ -222,7 +223,7 @@ export function DashboardTab() {
                         <GlassButton
                             variant="secondary"
                             className="w-full justify-between"
-                            onClick={() => window.location.href = '/os/artifacts'}
+                            onClick={() => useAppStoreStore.getState().openApp('artifacts')}
                         >
                             <span>View Artifacts</span>
                             <ArrowRight size={16} />

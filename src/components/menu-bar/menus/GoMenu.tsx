@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useMenuBar } from '@/context/MenuBarContext';
 import { MenuItemDef } from '@/context/MenuBarContext';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { REMOTE_AGENTS } from '@/config/remote-agents.config';
 import {
     Layout,
@@ -19,6 +20,7 @@ import {
 export const useGoMenuItems = (): MenuItemDef[] => {
     const navigate = useNavigate();
     const { setOpenMenuId: _setOpenMenuId } = useMenuBar();
+    const openApp = useAppStoreStore((s) => s.openApp);
     // LeftZone uses setOpenMenuId. 
     // Wait, setCoworkOpen is typically in LiquidOSLayout state, likely passed down or in a persistent store. 
     // If not in MenuBarContext, we might need to rely on 'Cowork Mode' being an App that routes or finding a way to toggle.
@@ -66,21 +68,21 @@ export const useGoMenuItems = (): MenuItemDef[] => {
                 },
                 {
                     id: 'app-rushhour',
-                    label: 'RushHour Terminal',
+                    label: 'Rush Hour Trading',
                     icon: Zap,
-                    action: () => navigate('/terminal')
+                    action: () => openApp('rush-hour-trading')
                 },
                 {
                     id: 'app-hub',
                     label: 'Agent Hub',
                     icon: Compass,
-                    action: () => navigate('/os/agents')
+                    action: () => openApp('agent-hub')
                 },
                 {
                     id: 'app-console',
                     label: 'A2A Console',
                     icon: Terminal,
-                    action: () => navigate('/os/console')
+                    action: () => openApp('a2a-console')
                 }
             ]
         },
@@ -91,26 +93,26 @@ export const useGoMenuItems = (): MenuItemDef[] => {
                 id: `agent-${agent.id}`,
                 label: agent.name,
                 icon: Bot,
-                action: () => navigate(`/os/agents/${agent.id}`)
+                action: () => openApp('agent-hub')
             }))
         },
         {
             id: 'demos',
             label: 'Demos',
             submenu: [
-                { id: 'demo-neon', label: 'Neon Tokyo', icon: Map, action: () => navigate('/os/demos/neon-tokyo') },
-                { id: 'demo-weather', label: 'Aurora Weather', icon: Gauge, action: () => navigate('/os/demos/aurora-weather') },
-                { id: 'demo-sheets', label: 'Glass Sheets', icon: FileCode, action: () => navigate('/os/demos/sheets') },
-                { id: 'demo-research', label: 'Research Canvas', icon: Layers, action: () => navigate('/os/demos/research-canvas') }
+                { id: 'demo-neon', label: 'Neon Tokyo', icon: Map, action: () => openApp('neon-tokyo') },
+                { id: 'demo-weather', label: 'Aurora Weather', icon: Gauge, action: () => openApp('aurora-weather') },
+                { id: 'demo-sheets', label: 'Liquid Sheets', icon: FileCode, action: () => openApp('sheets') },
+                { id: 'demo-research', label: 'Research Canvas', icon: Layers, action: () => openApp('demos') }
             ]
         },
         {
             id: 'showcase',
             label: 'Showcase',
             submenu: [
-                { id: 'sc-foundation', label: 'Foundation', icon: Palette, action: () => navigate('/os/showcase/foundation') },
-                { id: 'sc-components', label: 'Components', icon: Layers, action: () => navigate('/os/showcase/components') },
-                { id: 'sc-patterns', label: 'Patterns', icon: FileCode, action: () => navigate('/os/showcase/patterns') }
+                { id: 'sc-foundation', label: 'Foundation', icon: Palette, action: () => openApp('_system/showcase') },
+                { id: 'sc-components', label: 'Components', icon: Layers, action: () => openApp('_system/showcase') },
+                { id: 'sc-patterns', label: 'Patterns', icon: FileCode, action: () => openApp('_system/showcase') }
             ]
         }
     ];

@@ -5,7 +5,7 @@
  * Provides actions for managing AI agents.
  */
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import {
     Play,
     Square,
@@ -20,7 +20,7 @@ import {
 import type { MenuItemDef } from '@/context/MenuBarContext';
 
 export function useAgentMenuItems(): MenuItemDef[] {
-    const navigate = useNavigate();
+    const openApp = useAppStoreStore((s) => s.openApp);
 
     return useMemo<MenuItemDef[]>(() => [
         {
@@ -57,7 +57,7 @@ export function useAgentMenuItems(): MenuItemDef[] {
             label: 'Agent Console',
             icon: Terminal,
             shortcut: '⌘J',
-            action: () => navigate('/os/console'),
+            action: () => openApp('a2a-console'),
         },
         {
             id: 'agent-logs',
@@ -104,7 +104,7 @@ export function useAgentMenuItems(): MenuItemDef[] {
             id: 'agent-hub',
             label: 'Agent Hub',
             icon: Users,
-            action: () => navigate('/os/agents'),
+            action: () => openApp('agent-hub'),
         },
         {
             id: 'agent-settings',
@@ -114,5 +114,5 @@ export function useAgentMenuItems(): MenuItemDef[] {
                 console.log('Agent settings');
             },
         },
-    ], [navigate]);
+    ], [openApp]);
 }

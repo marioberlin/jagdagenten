@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
 import { EmptyDesktop } from '@/components/layout/EmptyDesktop';
@@ -7,7 +7,7 @@ import { GlassDock } from '@/components/navigation/GlassDock';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
-import { Command, Compass, Layout } from 'lucide-react';
+import { Command } from 'lucide-react';
 
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppComponent } from '@/system/app-store/AppLoader';
@@ -22,12 +22,7 @@ import type { InstalledApp } from '@/system/app-store/types';
  */
 export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const [dockVisible, setDockVisible] = useState(true);
-
-    // Routes that should render inside a GlassWindow container
-    const windowedRoutes = ['/os/agents', '/os/design'];
-    const isWindowedRoute = windowedRoutes.includes(location.pathname);
 
     // Dynamic app state from appStoreStore
     const activeAppId = useAppStoreStore((s) => s.activeAppId);
@@ -88,7 +83,7 @@ export const LiquidOSLayout: React.FC = () => {
     }, [activeAppId, closeApp, toggleApp]);
 
     // Build dock items dynamically from registry
-    const dockItems = buildDockItems(dockApps, activeAppId, toggleApp, navigate, hasAppOpen, closeApp, location.pathname);
+    const dockItems = buildDockItems(dockApps, activeAppId, toggleApp, navigate, hasAppOpen, closeApp);
 
     // Panel animation variants
     const panelVariants = {
@@ -123,20 +118,6 @@ export const LiquidOSLayout: React.FC = () => {
                                 className="w-full h-full"
                             >
                                 <EmptyDesktop />
-                            </motion.div>
-                        ) : isWindowedRoute ? (
-                            <motion.div
-                                key="windowed-route"
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                                className="w-full h-full"
-                            >
-                                <WindowedRoutePanel
-                                    title={location.pathname === '/os/agents' ? 'Agent Hub' : 'Design Explorer'}
-                                    onClose={() => navigate('/os')}
-                                />
                             </motion.div>
                         ) : (
                             <motion.div
@@ -247,8 +228,6 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
     }
 
     // Floating/windowed apps render inside GlassWindow
-    // Size to fill available space: below menu bar (30px), 30px from left/right edges,
-    // and 30px above the dock (dock is 64px tall)
     const MENU_BAR_HEIGHT = 30;
     const DOCK_HEIGHT = 64;
     const EDGE_MARGIN = 30;
@@ -288,39 +267,6 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
 }
 
 // ============================================================================
-// Windowed Route Panel
-// ============================================================================
-
-interface WindowedRoutePanelProps {
-    title: string;
-    onClose: () => void;
-}
-
-function WindowedRoutePanel({ title, onClose }: WindowedRoutePanelProps) {
-    const MENU_BAR_HEIGHT = 30;
-    const DOCK_HEIGHT = 64;
-    const EDGE_MARGIN = 30;
-    const width = window.innerWidth - (EDGE_MARGIN * 2);
-    const height = window.innerHeight - MENU_BAR_HEIGHT - DOCK_HEIGHT - (EDGE_MARGIN * 2);
-
-    return (
-        <GlassWindow
-            id={`route-${title.toLowerCase().replace(/\s+/g, '-')}`}
-            title={title}
-            initialPosition={{
-                x: EDGE_MARGIN,
-                y: MENU_BAR_HEIGHT + EDGE_MARGIN
-            }}
-            initialSize={{ width, height }}
-            isActive={true}
-            onClose={onClose}
-        >
-            <Outlet />
-        </GlassWindow>
-    );
-}
-
-// ============================================================================
 // Dock Items Builder
 // ============================================================================
 
@@ -330,16 +276,15 @@ function buildDockItems(
     toggleApp: (id: string) => void,
     navigate: (path: string) => void,
     hasAppOpen: boolean,
-    closeApp: () => void,
-    currentPath: string
+    closeApp: () => void
 ) {
-    // Static navigation items that aren't apps
+    // Static navigation item: Command Center (home)
     const navItems = [
         {
             id: 'os-home',
             icon: Command,
             label: 'Command Center',
-            isActive: !hasAppOpen && currentPath === '/os',
+            isActive: !hasAppOpen,
             onClick: () => {
                 if (hasAppOpen) closeApp();
                 navigate('/os');
@@ -359,29 +304,5 @@ function buildDockItems(
         };
     });
 
-    // Static navigation items at the end
-    const trailingNavItems = [
-        {
-            id: 'agent-hub',
-            icon: Compass,
-            label: 'Agent Hub',
-            isActive: currentPath === '/os/agents',
-            onClick: () => {
-                if (hasAppOpen) closeApp();
-                navigate(currentPath === '/os/agents' ? '/os' : '/os/agents');
-            }
-        },
-        {
-            id: 'design-system',
-            icon: Layout,
-            label: 'Design Explorer',
-            isActive: currentPath === '/os/design',
-            onClick: () => {
-                if (hasAppOpen) closeApp();
-                navigate(currentPath === '/os/design' ? '/os' : '/os/design');
-            }
-        },
-    ];
-
-    return [...navItems, ...appItems, ...trailingNavItems];
+    return [...navItems, ...appItems];
 }

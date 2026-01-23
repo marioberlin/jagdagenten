@@ -1,0 +1,27 @@
+{
+  "id": "agent-hub",
+  "name": "Agent Hub",
+  "version": "1.0.0",
+  "description": "Discover and connect to AI agents",
+  "author": "LiquidOS",
+  "category": "developer",
+  "keywords": ["agents", "a2a", "discover", "hub", "ai"],
+  "icon": "Compass",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Agent Hub"
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 11
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-agent-hub", "label": "Open Agent Hub", "category": "System" }
+      ]
+    }
+  },
+  "capabilities": ["network:http", "a2a:connect"]
+}

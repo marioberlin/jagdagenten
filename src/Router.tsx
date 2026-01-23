@@ -10,61 +10,12 @@ import { ErrorBoundary } from '@/components';
 
 // Layouts
 import { LiquidOSLayout } from './layouts/LiquidOSLayout';
-// RushHourLayout removed - now integrated as Glass App
 
 // Lazy-loaded pages
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
-const GlassSettingsApp = lazy(() => import('./components/settings/GlassSettingsApp').then(mod => ({ default: mod.GlassSettingsApp })));
-const Showcase = lazy(() => import('./pages/Showcase').then(mod => ({ default: mod.Showcase })));
-
-const DesignGuide = lazy(() => import('./pages/DesignGuide').then(mod => ({ default: mod.default })));
-
-// Demos
-const SheetsDemo = lazy(() => import('./pages/SheetsDemo').then(mod => ({ default: mod.SheetsDemo })));
-const GenerativeShowcase = lazy(() => import('./pages/demos/GenerativeShowcase').then(mod => ({ default: mod.default })));
-const GenerativeExtensions = lazy(() => import('./pages/demos/GenerativeExtensions').then(mod => ({ default: mod.default })));
-const CopilotFormDemo = lazy(() => import('./pages/demos/CopilotFormDemo').then(mod => ({ default: mod.default })));
-const DynamicDashboardDemo = lazy(() => import('./pages/demos/DynamicDashboardDemo').then(mod => ({ default: mod.default })));
-const StateMachineDemo = lazy(() => import('./pages/demos/StateMachineDemo').then(mod => ({ default: mod.default })));
-const QAAgentDemo = lazy(() => import('./pages/demos/QAAgentDemo').then(mod => ({ default: mod.default })));
-const ResearchCanvasDemo = lazy(() => import('./pages/demos/ResearchCanvasDemo').then(mod => ({ default: mod.default })));
-const TravelPlannerDemo = lazy(() => import('./pages/demos/TravelPlannerDemo').then(mod => ({ default: mod.default })));
-const AuroraWeatherDemo = lazy(() => import('./pages/demos/AuroraWeatherDemo').then(mod => ({ default: mod.default })));
-const AIResearcherDemo = lazy(() => import('./pages/demos/AIResearcherDemo').then(mod => ({ default: mod.default })));
-const FoundationDemo = lazy(() => import('./pages/demos/FoundationDemo').then(mod => ({ default: mod.default })));
-const SignatureDemo = lazy(() => import('./pages/demos/SignatureDemo').then(mod => ({ default: mod.default })));
-const ExtensionDemo = lazy(() => import('./pages/demos/ExtensionDemo').then(mod => ({ default: mod.ExtensionDemo })));
-const RemotePasswordDemo = lazy(() => import('./pages/demos/RemotePasswordDemo').then(mod => ({ default: mod.default })));
-const NeonTokyoDemo = lazy(() => import('./pages/demos/NeonTokyoDemo').then(mod => ({ default: mod.default })));
-const DemosIndex = lazy(() => import('./pages/demos/DemosIndex').then(mod => ({ default: mod.DemosIndex })));
 
 // iBird Public Booking Page
 const BookingPage = lazy(() => import('./pages/book/BookingPage'));
-
-// Agent Hub
-const AgentHub = lazy(() => import('./pages/agents/AgentHub').then(mod => ({ default: mod.AgentHub })));
-const ConsolePage = lazy(() => import('./pages/console/ConsolePage').then(mod => ({ default: mod.ConsolePage })));
-
-// Artifacts
-const ArtifactsPage = lazy(() => import('./pages/artifacts/ArtifactsPage').then(mod => ({ default: mod.ArtifactsPage })));
-
-// Cowork Mode
-const CoworkPage = lazy(() => import('./pages/cowork/CoworkPage').then(mod => ({ default: mod.CoworkPage })));
-
-// Docs
-const CopilotDocs = lazy(() => import('./pages/showcase/CopilotDocs').then(mod => ({ default: mod.default })));
-const AIResearcherDocs = lazy(() => import('./pages/showcase/AIResearcherDocs').then(mod => ({ default: mod.default })));
-const DynamicDashboardDocs = lazy(() => import('./pages/showcase/DynamicDashboardDocs').then(mod => ({ default: mod.default })));
-const QAAgentDocs = lazy(() => import('./pages/showcase/QAAgentDocs').then(mod => ({ default: mod.default })));
-const ResearchCanvasDocs = lazy(() => import('./pages/showcase/ResearchCanvasDocs').then(mod => ({ default: mod.default })));
-const StateMachineDocs = lazy(() => import('./pages/showcase/StateMachineDocs').then(mod => ({ default: mod.default })));
-const TravelPlannerDocs = lazy(() => import('./pages/showcase/TravelPlannerDocs').then(mod => ({ default: mod.default })));
-const GenerativeShowcaseDocs = lazy(() => import('./pages/showcase/GenerativeShowcaseDocs').then(mod => ({ default: mod.default })));
-const GenerativeExtensionsDocs = lazy(() => import('./pages/showcase/GenerativeExtensionsDocs').then(mod => ({ default: mod.default })));
-const AuditDocs = lazy(() => import('./pages/showcase/AuditDocs').then(mod => ({ default: mod.default })));
-
-// Trading components - now embedded in RushHourTradingApp Glass App
-// Legacy pages removed: TradingDashboard, TradingRiskSettings, TradingBotConfig, SmartAnalytics, MarketOverview
 
 // Loading fallback component
 function PageLoader() {
@@ -81,7 +32,7 @@ function PageLoader() {
 export const AppRouter = () => {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
-    // Global ⌘K / Ctrl+K keyboard shortcut
+    // Global Cmd+K / Ctrl+K keyboard shortcut
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -104,7 +55,7 @@ export const AppRouter = () => {
                     {/* Persistent Menu Bar - Always visible across all apps */}
                     <LiquidMenuBar />
 
-                    {/* Global Command Palette (⌘K) - Constant across worlds */}
+                    {/* Global Command Palette (Cmd+K) */}
                     <GlassCommandPalette
                         isOpen={commandPaletteOpen}
                         onClose={() => setCommandPaletteOpen(false)}
@@ -128,62 +79,22 @@ export const AppRouter = () => {
                     >
                         <Suspense fallback={<PageLoader />}>
                             <Routes>
-                                {/* --- WORLD 1: LIQUID OS (Spatial) --- */}
+                                {/* --- LIQUID OS --- */}
                                 <Route element={<LiquidOSLayout />}>
                                     <Route path="/" element={<Navigate to="/os" replace />} />
                                     <Route path="/os" element={<Home />} />
-
-                                    {/* System Apps */}
-                                    <Route path="/os/settings/*" element={<GlassSettingsApp />} />
-                                    <Route path="/os/design" element={<DesignGuide />} />
-                                    <Route path="/os/showcase" element={<Showcase />} />
-
-                                    <Route path="/os/agents" element={<AgentHub />} />
-                                    <Route path="/os/artifacts" element={<ArtifactsPage />} />
-                                    <Route path="/os/console" element={<ConsolePage />} />
-                                    <Route path="/os/cowork" element={<CoworkPage />} />
-
-                                    {/* Demos */}
-                                    <Route path="/os/demos" element={<DemosIndex />} />
-                                    <Route path="/os/demos/generative" element={<GenerativeShowcase />} />
-                                    <Route path="/os/demos/generative-extensions" element={<GenerativeExtensions />} />
-                                    <Route path="/os/demos/copilot-form" element={<CopilotFormDemo />} />
-                                    <Route path="/os/demos/dynamic-dashboard" element={<DynamicDashboardDemo />} />
-                                    <Route path="/os/demos/state-machine" element={<StateMachineDemo />} />
-                                    <Route path="/os/demos/qa-agent" element={<QAAgentDemo />} />
-                                    <Route path="/os/demos/research-canvas" element={<ResearchCanvasDemo />} />
-                                    <Route path="/os/demos/travel-planner" element={<TravelPlannerDemo />} />
-                                    <Route path="/os/demos/aurora-weather" element={<AuroraWeatherDemo />} />
-                                    <Route path="/os/demos/ai-researcher" element={<AIResearcherDemo />} />
-                                    <Route path="/os/demos/foundation" element={<FoundationDemo />} />
-                                    <Route path="/os/demos/signature" element={<SignatureDemo />} />
-                                    <Route path="/os/demos/extension" element={<ExtensionDemo />} />
-                                    <Route path="/os/demos/remote-password" element={<RemotePasswordDemo />} />
-                                    <Route path="/os/demos/neon-tokyo" element={<NeonTokyoDemo />} />
-                                    <Route path="/os/sheets" element={<SheetsDemo />} />
-
-                                    {/* Documentation */}
-                                    <Route path="/os/docs/copilot" element={<CopilotDocs />} />
-                                    <Route path="/os/docs/ai-researcher" element={<AIResearcherDocs />} />
-                                    <Route path="/os/docs/dynamic-dashboard" element={<DynamicDashboardDocs />} />
-                                    <Route path="/os/docs/qa-agent" element={<QAAgentDocs />} />
-                                    <Route path="/os/docs/research-canvas" element={<ResearchCanvasDocs />} />
-                                    <Route path="/os/docs/state-machine" element={<StateMachineDocs />} />
-                                    <Route path="/os/docs/travel-planner" element={<TravelPlannerDocs />} />
-                                    <Route path="/os/docs/generative-showcase" element={<GenerativeShowcaseDocs />} />
-                                    <Route path="/os/docs/generative-extensions" element={<GenerativeExtensionsDocs />} />
-                                    <Route path="/os/docs/audit" element={<AuditDocs />} />
                                 </Route>
 
                                 {/* iBird Public Booking Page */}
                                 <Route path="/book/:username" element={<BookingPage />} />
                                 <Route path="/book/:username/:eventType" element={<BookingPage />} />
 
-                                {/* Legacy Redirects - World 2 routes now redirect to LiquidOS */}
+                                {/* Legacy Redirects */}
                                 <Route path="/terminal/*" element={<Navigate to="/os" replace />} />
                                 <Route path="/trading" element={<Navigate to="/os" replace />} />
-                                <Route path="/settings" element={<Navigate to="/os/settings" replace />} />
-                                <Route path="/design-guide" element={<Navigate to="/os/design" replace />} />
+                                <Route path="/settings" element={<Navigate to="/os" replace />} />
+                                <Route path="/design-guide" element={<Navigate to="/os" replace />} />
+                                <Route path="/os/*" element={<Navigate to="/os" replace />} />
 
                                 {/* Fallback */}
                                 <Route path="*" element={<Navigate to="/os" replace />} />

@@ -6,7 +6,6 @@
  */
 
 import { useEffect } from 'react';
-import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppStoreUIStore } from './store';
 import { fetchCatalog } from '@/system/app-store/remoteAppLoader';
 import { AppStoreSidebar } from './components/AppStoreSidebar';
@@ -17,10 +16,9 @@ import { AppCategoryView } from './components/AppCategoryView';
 import { AppSearchResults } from './components/AppSearchResults';
 import { AppPublishView } from './components/AppPublishView';
 import { AppStoreDialogs } from './components/AppStoreDialogs';
-import { X, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 export default function AppStoreApp() {
-  const closePanel = useAppStoreStore((s) => s.closeApp);
   const { currentView, goBack } = useAppStoreUIStore();
 
   // Fetch remote catalog on mount
@@ -33,7 +31,7 @@ export default function AppStoreApp() {
   const showBackButton = currentView !== 'home';
 
   return (
-    <div className="fixed inset-0 z-40 flex bg-[var(--glass-bg-regular)] backdrop-blur-2xl">
+    <div className="w-full h-full flex bg-[var(--glass-bg-regular)]">
       {/* Dialogs */}
       <AppStoreDialogs />
 
@@ -42,28 +40,20 @@ export default function AppStoreApp() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Title Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
-          <div className="flex items-center gap-3">
-            {showBackButton && (
-              <button
-                onClick={goBack}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-glass-surface-hover transition-colors text-label-glass-secondary"
-              >
-                <ChevronLeft size={18} />
-              </button>
-            )}
-            <h1 className="text-lg font-semibold text-label-glass-primary">
+        {/* Navigation Bar */}
+        {showBackButton && (
+          <div className="flex items-center px-6 py-3 border-b border-[var(--glass-border)]">
+            <button
+              onClick={goBack}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-glass-surface-hover transition-colors text-label-glass-secondary"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <h1 className="ml-2 text-sm font-medium text-label-glass-secondary">
               {getViewTitle(currentView)}
             </h1>
           </div>
-          <button
-            onClick={closePanel}
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-glass-surface-hover transition-colors text-label-glass-tertiary hover:text-label-glass-primary"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">

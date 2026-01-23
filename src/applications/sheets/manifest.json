@@ -1,0 +1,26 @@
+{
+  "id": "sheets",
+  "name": "Liquid Sheets",
+  "version": "1.0.0",
+  "description": "Smart spreadsheet integration with AI agent bridge",
+  "author": "LiquidOS",
+  "category": "productivity",
+  "keywords": ["sheets", "spreadsheet", "google", "data", "ai"],
+  "icon": "FileSpreadsheet",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Liquid Sheets"
+  },
+  "integrations": {
+    "dock": {
+      "enabled": false
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-sheets", "label": "Open Liquid Sheets", "category": "Productivity" }
+      ]
+    }
+  },
+  "capabilities": ["network:http", "storage:local"]
+}

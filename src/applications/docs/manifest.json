@@ -1,0 +1,26 @@
+{
+  "id": "docs",
+  "name": "Documentation",
+  "version": "1.0.0",
+  "description": "Feature documentation and guides",
+  "author": "LiquidOS",
+  "category": "developer",
+  "keywords": ["docs", "documentation", "guides", "help", "reference"],
+  "icon": "BookOpen",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Documentation"
+  },
+  "integrations": {
+    "dock": {
+      "enabled": false
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-docs", "label": "Open Documentation", "category": "Developer" }
+      ]
+    }
+  },
+  "capabilities": []
+}

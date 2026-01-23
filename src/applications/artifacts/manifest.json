@@ -1,0 +1,27 @@
+{
+  "id": "artifacts",
+  "name": "Artifacts",
+  "version": "1.0.0",
+  "description": "Browse and manage AI-generated artifacts",
+  "author": "LiquidOS",
+  "category": "productivity",
+  "keywords": ["artifacts", "files", "generated", "ai", "browse"],
+  "icon": "Package",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Artifacts"
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 13
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-artifacts", "label": "Open Artifacts", "category": "System" }
+      ]
+    }
+  },
+  "capabilities": ["storage:local", "network:http"]
+}

@@ -5,7 +5,7 @@
  * Provides documentation and support access.
  */
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import {
     Search,
     HelpCircle,
@@ -18,7 +18,7 @@ import {
 import type { MenuItemDef } from '@/context/MenuBarContext';
 
 export function useHelpMenuItems(): MenuItemDef[] {
-    const navigate = useNavigate();
+    const openApp = useAppStoreStore((s) => s.openApp);
 
     return useMemo<MenuItemDef[]>(() => [
         {
@@ -63,7 +63,7 @@ export function useHelpMenuItems(): MenuItemDef[] {
                 {
                     id: 'docs-components',
                     label: 'Component Reference',
-                    action: () => navigate('/os/showcase'),
+                    action: () => openApp('_system/showcase'),
                 },
                 {
                     id: 'docs-agents',
@@ -102,5 +102,5 @@ export function useHelpMenuItems(): MenuItemDef[] {
                 console.log('Contact support');
             },
         },
-    ], [navigate]);
+    ], [openApp]);
 }
