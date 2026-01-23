@@ -14,7 +14,7 @@
   "store": "./store.ts",
 
   "window": {
-    "mode": "fullscreen",
+    "mode": "floating",
     "title": "App Store"
   },
 
