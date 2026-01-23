@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
@@ -9,7 +9,7 @@ import { PortalFrame } from '@/components/layout/PortalFrame';
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { Command, Compass, Layout } from 'lucide-react';
 
-import { useAppStoreStore, selectDockItems } from '@/system/app-store/appStoreStore';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppComponent } from '@/system/app-store/AppLoader';
 import { resolveIconComponent } from '@/system/app-store/iconResolver';
 import type { InstalledApp } from '@/system/app-store/types';
@@ -28,8 +28,14 @@ export const LiquidOSLayout: React.FC = () => {
     const activeAppId = useAppStoreStore((s) => s.activeAppId);
     const openApp = useAppStoreStore((s) => s.openApp);
     const closeApp = useAppStoreStore((s) => s.closeApp);
-    const dockApps = useAppStoreStore(selectDockItems);
+    const dockAppIds = useAppStoreStore((s) => s.dockApps);
     const installedApps = useAppStoreStore((s) => s.installedApps);
+    const dockApps = useMemo(() =>
+        dockAppIds
+            .map(id => installedApps[id])
+            .filter((app): app is InstalledApp => app !== undefined),
+        [dockAppIds, installedApps]
+    );
 
     // Track if any app is open
     const hasAppOpen = activeAppId !== null;

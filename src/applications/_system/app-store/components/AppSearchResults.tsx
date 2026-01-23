@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppStoreUIStore } from '../store';
 import { AppCard } from './AppCard';
@@ -5,9 +6,11 @@ import { CatalogCard } from './CatalogCard';
 
 export function AppSearchResults() {
   const { searchQuery, navigateTo } = useAppStoreUIStore();
-  const installedApps = useAppStoreStore((s) => Object.values(s.installedApps));
-  const installedIds = useAppStoreStore((s) => new Set(Object.keys(s.installedApps)));
+  const installedAppsRecord = useAppStoreStore((s) => s.installedApps);
   const catalog = useAppStoreStore((s) => s.catalog);
+
+  const installedApps = useMemo(() => Object.values(installedAppsRecord), [installedAppsRecord]);
+  const installedIds = useMemo(() => new Set(Object.keys(installedAppsRecord)), [installedAppsRecord]);
 
   const query = searchQuery.toLowerCase().trim();
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppStoreUIStore } from '../store';
 import { AppCard } from './AppCard';
@@ -7,7 +8,8 @@ interface InstalledAppsViewProps {
 }
 
 export function InstalledAppsView({ showUpdatesOnly = false }: InstalledAppsViewProps) {
-  const installedApps = useAppStoreStore((s) => Object.values(s.installedApps));
+  const installedAppsRecord = useAppStoreStore((s) => s.installedApps);
+  const installedApps = useMemo(() => Object.values(installedAppsRecord), [installedAppsRecord]);
   const { navigateTo } = useAppStoreUIStore();
 
   const apps = showUpdatesOnly

@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppStoreUIStore } from '../store';
 import { AppCard } from './AppCard';
 
 export function AppCategoryView() {
   const { selectedCategory, navigateTo } = useAppStoreUIStore();
-  const installedApps = useAppStoreStore((s) => Object.values(s.installedApps));
+  const installedAppsRecord = useAppStoreStore((s) => s.installedApps);
+  const installedApps = useMemo(() => Object.values(installedAppsRecord), [installedAppsRecord]);
 
   const filteredApps = selectedCategory
     ? installedApps.filter(app => app.manifest.category === selectedCategory)

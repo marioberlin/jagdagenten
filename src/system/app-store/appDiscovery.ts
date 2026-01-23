@@ -133,10 +133,22 @@ export function initializeAppStore(): void {
     // First run or stale data — register all apps fresh
     store.registerLocalApps(apps);
   } else {
-    // Only install truly new apps
+    // Remove apps that are no longer discovered (e.g., deleted from disk)
+    const staleIds = [...existingIds].filter(id => !discoveredIds.has(id));
+    for (const id of staleIds) {
+      store.uninstallApp(id);
+    }
+
+    // Install truly new apps
     const newApps = apps.filter(app => !existingIds.has(app.id));
     for (const app of newApps) {
       store.installApp(app, 'local');
+    }
+
+    // Update manifests for existing apps (in case manifest changed)
+    const existingApps = apps.filter(app => existingIds.has(app.id));
+    for (const app of existingApps) {
+      store.updateApp(app.id, app);
     }
   }
 

@@ -1,4 +1,4 @@
-import type { ElementType } from 'react';
+import { type ElementType, useMemo } from 'react';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppStoreUIStore } from '../store';
 import { AppCard } from './AppCard';
@@ -25,14 +25,16 @@ const FEATURED_CATEGORIES: { title: string; icon: ElementType; filter: (app: Ins
 ];
 
 export function AppStoreHome() {
-  const installedApps = useAppStoreStore((s) => Object.values(s.installedApps));
-  const installedIds = useAppStoreStore((s) => new Set(Object.keys(s.installedApps)));
+  const installedAppsRecord = useAppStoreStore((s) => s.installedApps);
   const catalog = useAppStoreStore((s) => s.catalog);
   const isLoadingCatalog = useAppStoreStore((s) => s.isLoadingCatalog);
   const { navigateTo } = useAppStoreUIStore();
 
+  const installedApps = useMemo(() => Object.values(installedAppsRecord), [installedAppsRecord]);
+  const installedIds = useMemo(() => new Set(Object.keys(installedAppsRecord)), [installedAppsRecord]);
+
   // Remote apps that aren't already installed
-  const availableRemoteApps = catalog.filter(e => !installedIds.has(e.manifest.id));
+  const availableRemoteApps = useMemo(() => catalog.filter(e => !installedIds.has(e.manifest.id)), [catalog, installedIds]);
 
   return (
     <div className="p-6 space-y-8">
