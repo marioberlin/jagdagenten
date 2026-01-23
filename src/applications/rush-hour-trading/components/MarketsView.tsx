@@ -15,7 +15,7 @@ import {
     BarChart3,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { GlassContainer, GlassButton, GlassInput } from '@/components';
+import { GlassContainer, GlassButton } from '@/components';
 
 // Types
 interface MarketAsset {

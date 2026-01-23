@@ -13,13 +13,10 @@ import {
     MapPin,
     Calendar,
     Check,
-    Plus,
     Search,
     Trash2,
     GripVertical,
     Sun,
-    Cloud,
-    CloudRain,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassContainer, GlassButton, GlassInput } from '@/components';

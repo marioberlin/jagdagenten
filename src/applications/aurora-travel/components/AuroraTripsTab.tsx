@@ -45,7 +45,7 @@ const SectionToggle: React.FC<SectionToggleProps> = ({
     activeSection,
     onSectionChange,
     tripCount,
-    routeCount,
+    routeCount: _routeCount,
     recommendedCount,
 }) => (
     <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--glass-bg-subtle)]">
@@ -150,7 +150,7 @@ export const AuroraTripsTab: React.FC = () => {
     const [showTripFlow, setShowTripFlow] = useState(false);
     const [showRouteModal, setShowRouteModal] = useState(false);
     const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
-    const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+    const [_editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
     // Store data - select raw arrays and compute derived data with useMemo
     const { trips, activeTripId, routesToWatch } = useAuroraTravelStore(

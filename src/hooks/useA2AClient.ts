@@ -198,7 +198,7 @@ export function useA2AClient(options: UseA2AClientOptions): [UseA2AClientState, 
     // Extract text from message parts
     const text = statusMessage.parts
       .filter(v1.isTextPart)
-      .map(p => p.text)
+      .map((p: any) => p.text)
       .join('\n');
 
     // Extract A2UI messages from artifacts
@@ -440,7 +440,7 @@ export function useAgentCapabilities(agentCard: v1.AgentCard | null) {
     supportsStreaming: agentCard?.capabilities?.streaming ?? false,
     supportsPushNotifications: agentCard?.capabilities?.pushNotifications ?? false,
     supportsA2UI: agentCard?.capabilities?.extensions?.some(
-      ext => ext.uri.includes('a2ui')
+      (ext: any) => ext.uri.includes('a2ui')
     ) ?? false,
     skills: agentCard?.skills ?? [],
     defaultInputModes: agentCard?.defaultInputModes ?? ['text/plain'],

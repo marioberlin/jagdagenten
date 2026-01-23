@@ -22,7 +22,7 @@ interface SkillStore {
     togglePlugin: (id: string, enabled: boolean) => Promise<void>;
 }
 
-export const useSkillStore = create<SkillStore>((set, get) => ({
+export const useSkillStore = create<SkillStore>((set, _get) => ({
     skills: [],
     plugins: [],
     isLoading: false,

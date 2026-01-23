@@ -15,37 +15,22 @@ import { AtmosphericBackground } from '../../components/atmospheric/AtmosphericB
 import { AtmosphereIndicator } from '../../components/atmospheric/AtmosphereIndicator';
 import { HolographicTicket } from '../../components/travel/HolographicTicket';
 import { DynamicPackingList } from '../../components/travel/DynamicPackingList';
-import type { TicketData } from '../../services/a2a/NeonTokyoService';
 import {
-    Sparkles,
     MapPin,
     Calendar,
     Plane,
-    CheckCircle,
-    Circle,
-    Luggage,
     Book,
-    // Activity icons
     Train,
     Hotel,
     Building2,
     UtensilsCrossed,
     Landmark,
     Coffee,
-    Castle,
-    // Packing icons
-    FileText,
-    Plug,
-    Wifi,
-    Shirt,
-    Footprints,
-    Umbrella,
-    Glasses,
-    Backpack
+    Castle
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
-import { NeonTokyoService, NeonTokyoData, PackingItem, ItineraryDay } from '../../services/a2a/NeonTokyoService';
+import { NeonTokyoService, NeonTokyoData, ItineraryDay } from '../../services/a2a/NeonTokyoService';
 import { v4 as uuidv4 } from 'uuid';
 
 // Icon mapping with Liquid Glass colors
@@ -60,17 +45,6 @@ const ACTIVITY_ICONS: Record<string, { icon: React.ElementType; color: string }>
     palace: { icon: Castle, color: '#a855f7' }
 };
 
-const PACKING_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
-    passport: { icon: FileText, color: '#3b82f6' },
-    charger: { icon: Plug, color: '#f59e0b' },
-    wifi: { icon: Wifi, color: '#06b6d4' },
-    jacket: { icon: Shirt, color: '#8b5cf6' },
-    shoes: { icon: Footprints, color: '#ec4899' },
-    umbrella: { icon: Umbrella, color: '#6366f1' },
-    sunglasses: { icon: Glasses, color: '#f97316' },
-    backpack: { icon: Backpack, color: '#22c55e' }
-};
-
 // Helper to render activity icon
 function ActivityIcon({ iconKey, size = 16 }: { iconKey: string; size?: number }) {
     const config = ACTIVITY_ICONS[iconKey];
@@ -79,61 +53,8 @@ function ActivityIcon({ iconKey, size = 16 }: { iconKey: string; size?: number }
     return <Icon size={size} style={{ color: config.color }} />;
 }
 
-// Helper to render packing icon
-function PackingIcon({ iconKey, size = 16 }: { iconKey: string; size?: number }) {
-    const config = PACKING_ICONS[iconKey];
-    if (!config) return null;
-    const Icon = config.icon;
-    return <Icon size={size} style={{ color: config.color }} />;
-}
-
 // Initialize the engine client
 const liquidClient = new LiquidClient();
-
-// Packing List Component
-function PackingList({ items, onToggle }: { items: PackingItem[]; onToggle: (id: string) => void }) {
-    if (!items.length) return null;
-
-    return (
-        <GlassContainer className="p-4" border material="thin">
-            <h3 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
-                <Luggage size={16} className="text-accent-primary" />
-                Smart Packing
-            </h3>
-            <div className="space-y-2 max-h-64 overflow-auto">
-                {items.map(item => (
-                    <button
-                        key={item.id}
-                        onClick={() => onToggle(item.id)}
-                        className={cn(
-                            "w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all",
-                            "hover:bg-white/5",
-                            item.checked && "opacity-60"
-                        )}
-                    >
-                        {item.checked ? (
-                            <CheckCircle size={16} className="text-green-400 shrink-0" />
-                        ) : (
-                            <Circle size={16} className="text-white/30 shrink-0" />
-                        )}
-                        {item.icon && <PackingIcon iconKey={item.icon} size={14} />}
-                        <span className={cn(
-                            "flex-1 text-sm",
-                            item.checked ? "line-through text-white/50" : "text-white/80"
-                        )}>
-                            {item.name}
-                        </span>
-                        {item.weatherReason && (
-                            <span className="text-xs text-white/40 hidden sm:inline">
-                                {item.weatherReason}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
-        </GlassContainer>
-    );
-}
 
 // Itinerary Stream Component with List/Kanban morph
 function ItineraryStream({ days }: { days: ItineraryDay[] }) {
@@ -351,8 +272,8 @@ function NeonTokyoContent({ atmosphere, destination }: { atmosphere?: NeonTokyoD
         }));
     }, []);
 
-    // Create A2A service
-    const agentService = useMemo(
+    // Create A2A service (instantiated for side effects)
+    useMemo(
         () => new NeonTokyoService(sessionId, handleDataUpdate),
         [sessionId, handleDataUpdate]
     );

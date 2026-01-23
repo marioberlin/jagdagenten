@@ -74,7 +74,7 @@ export function useMailApi() {
   const {
     setAccounts,
     addAccount,
-    updateAccount,
+    updateAccount: _updateAccount,
     removeAccount,
     setFolders,
     setMessages,

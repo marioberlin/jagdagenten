@@ -76,8 +76,8 @@ function StateMachineContent() {
         }
     }, []);
 
-    // Create A2A service (for sidebar integration)
-    const _agentService = useMemo(
+    // Create A2A service (instantiated for side effects)
+    useMemo(
         () => new StateMachineService(sessionId, handleDataUpdate),
         [sessionId, handleDataUpdate]
     );

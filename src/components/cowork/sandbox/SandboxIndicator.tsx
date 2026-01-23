@@ -6,7 +6,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, Loader2, Check, X } from 'lucide-react';
+import { Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import { useSandboxStore } from '@/stores/sandboxStore';
 
 export function SandboxIndicator() {

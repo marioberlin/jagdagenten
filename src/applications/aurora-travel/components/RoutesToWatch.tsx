@@ -18,9 +18,7 @@ import {
     Clock,
     MapPin,
     ArrowRight,
-    Bell,
     Plus,
-    ChevronRight,
     CheckCircle2,
     AlertCircle,
 } from 'lucide-react';

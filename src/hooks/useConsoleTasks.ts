@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { TaskFiltersState, TaskState } from '@/components/console/TaskFilters';
+import type { TaskFiltersState } from '@/components/console/TaskFilters';
 import type { Task } from '@/components/console/TaskTable';
 
 interface UseConsoleTasksOptions {

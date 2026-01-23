@@ -7,7 +7,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { AuroraWeatherService, WeatherUpdate } from '@/services/a2a/AuroraWeatherService';
-import { GlassContainer } from '@/components';
 import { Cloud } from 'lucide-react';
 import { AuroraWeatherChatInput } from './AuroraWeatherChatInput';
 
@@ -57,15 +56,6 @@ export const AuroraWeatherApp: React.FC = () => {
         setIsLoading(true);
         try {
             await agentService.sendMessage(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleRefresh = async () => {
-        setIsLoading(true);
-        try {
-            await agentService.sendMessage('Refresh the weather data');
         } finally {
             setIsLoading(false);
         }

@@ -5,7 +5,6 @@
  */
 import React from 'react';
 import {
-    MapPin,
     Calendar,
     Clock,
     Car,
@@ -13,13 +12,11 @@ import {
     Cloud,
     CloudRain,
     CloudSnow,
-    Thermometer,
     GripVertical,
     MoreVertical,
     Trash2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/utils/cn';
 import { GlassContainer } from '@/components';
 import type { TripDestination, WeatherCondition } from '@/stores/auroraTravelStore';
 
@@ -114,11 +111,11 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
     destination,
     weather,
     isFirst = false,
-    isLast = false,
+    isLast: _isLast = false,
     showDragHandle = false,
     onRemove,
     onEdit,
-    onClick,
+    onClick: _onClick,
 }) => {
     const WeatherIcon = weather ? getWeatherIcon(weather.condition) : Cloud;
 

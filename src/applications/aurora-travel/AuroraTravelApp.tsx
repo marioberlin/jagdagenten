@@ -20,7 +20,7 @@ import { AuroraWeatherService, WeatherUpdate } from '@/services/a2a/AuroraWeathe
 import { AuroraWeatherChatInput } from '@/applications/aurora-weather/AuroraWeatherChatInput';
 
 // Tab Components
-import { AuroraHomeTab, AuroraHomeTabSkeleton } from './components/AuroraHomeTab';
+import { AuroraHomeTab } from './components/AuroraHomeTab';
 import { AuroraProfileTab } from './components/AuroraProfileTab';
 import { AuroraTripsTab } from './components/AuroraTripsTab';
 import { AuroraMapTab } from './components/AuroraMapTab';
@@ -51,7 +51,7 @@ interface AuroraTravelAppProps {
 // Component
 // ============================================================================
 
-export const AuroraTravelApp: React.FC<AuroraTravelAppProps> = ({ onClose }) => {
+export const AuroraTravelApp: React.FC<AuroraTravelAppProps> = ({ onClose: _onClose }) => {
     // Store state
     const activeTab = useAuroraTravelStore(state => state.activeTab);
     const setActiveTab = useAuroraTravelStore(state => state.setActiveTab);

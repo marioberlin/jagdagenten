@@ -6,7 +6,7 @@
  */
 import React, { useState, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Plane, MapPin, Calendar, Luggage, CheckCircle, Circle, Train, Hotel, Building2, UtensilsCrossed, Landmark, Coffee, Castle } from 'lucide-react';
+import { Plane, MapPin, Calendar, Train, Hotel, Building2, UtensilsCrossed, Landmark, Coffee, Castle } from 'lucide-react';
 import { GlassContainer } from '@/components';
 import { GlassGoogleMap, type MapMarker } from '@/components/data-display/GlassGoogleMap';
 import { AtmosphereIndicator } from '@/components/atmospheric/AtmosphereIndicator';
@@ -165,7 +165,7 @@ interface NeonTokyoAppProps {
     onClose?: () => void;
 }
 
-export const NeonTokyoApp: React.FC<NeonTokyoAppProps> = ({ onClose }) => {
+export const NeonTokyoApp: React.FC<NeonTokyoAppProps> = ({ onClose: _onClose }) => {
     const [sessionId] = useState(() => uuidv4());
     const [isLoading, setIsLoading] = useState(false);
     const [lastResponse, setLastResponse] = useState<string | null>(null);

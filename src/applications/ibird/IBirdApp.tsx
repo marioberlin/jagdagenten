@@ -11,7 +11,7 @@
 
 import { useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Calendar, Clock, X, Settings, RefreshCw, Send } from 'lucide-react';
+import { Mail, Calendar, Clock, X, Settings, RefreshCw } from 'lucide-react';
 import { IBirdAgentInput } from './components/IBirdAgentInput';
 import { IBirdResizeHandle } from './components/IBirdResizeHandle';
 import { useIBirdStore, type IBirdModule } from './store';
@@ -54,9 +54,9 @@ export function IBirdApp() {
   const {
     accounts,
     ui,
-    settings,
+    settings: _settings,
     setActiveModule,
-    toggleSidebar,
+    toggleSidebar: _toggleSidebar,
     setSidebarWidth,
   } = useIBirdStore();
 

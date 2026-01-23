@@ -1,4 +1,4 @@
-import { ILiquidLLMService, ChatOptions } from '../types';
+import { ChatOptions } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Weather data types matching backend

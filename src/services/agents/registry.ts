@@ -305,7 +305,7 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         url: 'http://127.0.0.1:3000/agents/maintenance',
         version: '1.0.0',
         icon: Bitcoin,
-        category: 'utility',
+        category: 'developer',
         tags: ['system', 'health', 'maintenance', 'diagnostics'],
         featured: false,
         verified: true,

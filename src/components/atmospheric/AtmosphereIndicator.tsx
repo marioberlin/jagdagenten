@@ -64,7 +64,7 @@ const SIZE_CONFIG = {
  */
 function BadgeVariant({
     config,
-    destination,
+    destination: _destination,
     size = 'md',
     showDetails,
     className

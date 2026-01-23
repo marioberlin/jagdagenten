@@ -30,7 +30,7 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     initialPosition = { x: 100, y: 100 },
     initialSize = { width: 600, height: 400 },
     onClose,
-    onMinimize,
+    onMinimize: _onMinimize,
     isActive = false,
     onFocus,
     className
@@ -45,7 +45,7 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     const previousState = useRef({ position: initialPosition, size: initialSize });
 
     // Resizing State
-    const [isResizing, setIsResizing] = useState(false);
+    const [_isResizing, setIsResizing] = useState(false);
     const resizeRef = useRef<{
         startX: number;
         startY: number;
@@ -57,7 +57,7 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     } | null>(null);
 
     // Sync drag position
-    const handleDragEnd = (event: any, info: any) => {
+    const handleDragEnd = (_event: any, info: any) => {
         if (!isMaximized) {
             const newPos = { x: position.x + info.offset.x, y: position.y + info.offset.y };
             setPosition(newPos);

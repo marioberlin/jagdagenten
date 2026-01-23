@@ -20,8 +20,6 @@ import {
     ChevronRight,
     ChevronDown,
     ChevronLeft,
-    ArrowLeft,
-    ArrowRight,
     Search,
     RefreshCw,
     Check,
@@ -53,16 +51,13 @@ import {
     ChevronUp,
     Minus,
     Maximize2,
-    GripVertical,
     Trash2,
     Info,
     Edit3,
     Copy,
     ExternalLink,
     FolderSymlink,
-    Scissors,
     Plus,
-    MoreVertical,
 } from 'lucide-react';
 
 // ============================================================================
@@ -409,7 +404,7 @@ const FinderTitleBar: React.FC<{
     onBack: () => void;
     onForward: () => void;
     onDragStart: (e: React.MouseEvent) => void;
-}> = ({ title, currentPath, canGoBack, canGoForward, onClose, onMinimize, onMaximize, isMaximized, onBack, onForward, onDragStart }) => {
+}> = ({ title: _title, currentPath, canGoBack, canGoForward, onClose, onMinimize, onMaximize, isMaximized, onBack, onForward, onDragStart }) => {
     const folderName = currentPath.split('/').filter(Boolean).pop() || 'Root';
 
     return (
@@ -818,7 +813,7 @@ export const GlassFilePicker: React.FC<GlassFilePickerProps> = ({
     // State
     const [currentPath, setCurrentPath] = useState<string>('');
     const [listing, setListing] = useState<DirectoryListing | null>(null);
-    const [quickAccess, setQuickAccess] = useState<QuickAccessLocation[]>([]);
+    const [_quickAccess, setQuickAccess] = useState<QuickAccessLocation[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');

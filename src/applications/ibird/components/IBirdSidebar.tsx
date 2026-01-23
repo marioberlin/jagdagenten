@@ -21,8 +21,8 @@ import {
   Shield,
   AlertTriangle,
 } from 'lucide-react';
-import { useIBirdStore, useAccountFolders, useAccountLabels } from '../store';
-import type { MailFolder, Calendar as CalendarType, AppointmentType, FolderType } from '../store';
+import { useIBirdStore } from '../store';
+import type { FolderType } from '../store';
 import { cn } from '@/lib/utils';
 
 // =============================================================================

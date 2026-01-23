@@ -8,14 +8,13 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
-  Clock,
   Plus,
   Trash2,
   Copy,
   Loader2,
   Check,
 } from 'lucide-react';
-import { useIBirdStore, type AvailabilitySchedule, type TimeSlot } from '../store';
+import { useIBirdStore, type AvailabilitySchedule, type TimeSlot, type WeeklyHours } from '../store';
 import { useAppointmentsApi } from '../hooks/useIBirdApi';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +52,7 @@ export function IBirdAvailabilityEditor() {
     updateAvailabilitySchedule,
   } = useIBirdStore();
 
-  const { createAvailabilitySchedule, updateAvailabilitySchedule: apiUpdate } = useAppointmentsApi();
+  const { createAvailabilitySchedule, editAvailabilitySchedule } = useAppointmentsApi();
   const [isSaving, setIsSaving] = useState(false);
   const [scheduleName, setScheduleName] = useState('Working Hours');
 
@@ -63,7 +62,7 @@ export function IBirdAvailabilityEditor() {
     if (existingSchedule?.weeklyHours) {
       const hours: Record<DayOfWeek, DaySchedule> = {} as any;
       for (const day of DAYS) {
-        const dayHours = (existingSchedule.weeklyHours as Record<string, TimeSlot[]>)[day.key];
+        const dayHours = existingSchedule.weeklyHours[day.key];
         hours[day.key] = {
           enabled: dayHours && dayHours.length > 0,
           slots: dayHours || [{ start: '09:00', end: '17:00' }],
@@ -152,15 +151,23 @@ export function IBirdAvailabilityEditor() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Convert to API format
-      const weeklyHoursData: Record<string, TimeSlot[]> = {};
+      // Convert to API format - build WeeklyHours with empty arrays for disabled days
+      const weeklyHoursData: WeeklyHours = {
+        sunday: [],
+        monday: [],
+        tuesday: [],
+        wednesday: [],
+        thursday: [],
+        friday: [],
+        saturday: [],
+      };
       for (const day of DAYS) {
         if (weeklyHours[day.key].enabled) {
           weeklyHoursData[day.key] = weeklyHours[day.key].slots;
         }
       }
 
-      const scheduleData = {
+      const scheduleData: { name: string; timezone: string; weeklyHours: WeeklyHours; isDefault: boolean } = {
         name: scheduleName,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         weeklyHours: weeklyHoursData,
@@ -169,7 +176,7 @@ export function IBirdAvailabilityEditor() {
 
       const existingSchedule = availabilitySchedules[0];
       if (existingSchedule) {
-        await apiUpdate(existingSchedule.id, scheduleData);
+        await editAvailabilitySchedule(existingSchedule.id, scheduleData);
         updateAvailabilitySchedule(existingSchedule.id, scheduleData as Partial<AvailabilitySchedule>);
       } else {
         const newSchedule = await createAvailabilitySchedule(scheduleData);

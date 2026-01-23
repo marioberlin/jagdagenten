@@ -129,7 +129,7 @@ export function AtmosphericBackground({
 }: AtmosphericBackgroundProps) {
     const config = useAtmosphere(atmosphere, destination);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [videoLoaded, setVideoLoaded] = useState(false);
+    const [_videoLoaded, _setVideoLoaded] = useState(false);
 
     // Apply CSS custom properties
     useEffect(() => {

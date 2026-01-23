@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { GlassContainer } from '@/components/primitives/GlassContainer';
-import { GlassCard } from '@/components/data-display/GlassCard';
 import { cn } from '@/utils/cn';
 import {
     Rocket,

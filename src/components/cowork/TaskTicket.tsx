@@ -29,7 +29,6 @@ import {
     Copy,
     AlertTriangle,
 } from 'lucide-react';
-import type { CoworkSubTask, SubTaskStatus } from '../../types/cowork';
 
 export interface QueuedTask {
     id: string;

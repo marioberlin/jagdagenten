@@ -5,19 +5,13 @@
  * Supports viewing, editing, and deleting trips.
  */
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     X,
     Calendar,
-    MapPin,
     Sun,
-    Cloud,
-    CloudRain,
-    CloudSnow,
     Pencil,
     Trash2,
-    ChevronDown,
-    ChevronUp,
     Navigation,
     Clock,
     AlertTriangle,
@@ -82,7 +76,7 @@ interface TripHeaderProps {
     onDelete: () => void;
 }
 
-const TripHeader: React.FC<TripHeaderProps> = ({ trip, onClose, onEdit, onDelete }) => {
+const TripHeader: React.FC<TripHeaderProps> = ({ trip, onClose, onEdit: _onEdit, onDelete: _onDelete }) => {
     const weather = getWeatherScore(trip);
 
     return (
@@ -149,8 +143,6 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({ destinations }) => 
                 <DestinationCard
                     key={dest.id}
                     destination={dest}
-                    position={dest.position}
-                    totalDestinations={destinations.length}
                     // Mock weather data - in production would come from store
                     weather={{
                         temperature: 20 + Math.floor(Math.random() * 8),
@@ -230,7 +222,7 @@ export const TripDetailSheet: React.FC<TripDetailSheetProps> = ({
     onEdit,
 }) => {
     const deleteTrip = useAuroraTravelStore(state => state.deleteTrip);
-    const [showPackingList, setShowPackingList] = useState(false);
+    const [_showPackingList, setShowPackingList] = useState(false);
 
     const handleDelete = () => {
         if (confirm(`Delete "${trip.name}"? This cannot be undone.`)) {

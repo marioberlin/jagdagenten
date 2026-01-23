@@ -8,11 +8,10 @@
  * - Category grouping (essentials, clothing, accessories)
  * - Progress indicator
  */
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { cn } from '@/utils/cn';
 import {
     Check,
-    Circle,
     Sparkles,
     Sun,
     CloudRain,
@@ -210,7 +209,7 @@ function CategorySection({
     category,
     items,
     onToggle,
-    weatherCondition,
+    weatherCondition: _weatherCondition,
     accentColor
 }: {
     category: Category;

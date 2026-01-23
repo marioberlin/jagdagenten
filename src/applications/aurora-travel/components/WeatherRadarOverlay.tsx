@@ -6,8 +6,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Cloud, Layers, Play, Pause, RotateCcw } from 'lucide-react';
-import { cn } from '@/utils/cn';
-import { GlassContainer, GlassButton } from '@/components';
+import { GlassContainer } from '@/components';
 
 // ============================================================================
 // Types
@@ -59,7 +58,6 @@ async function fetchRadarData(): Promise<RadarData | null> {
 
 class RadarTileLayer {
     private tileSize: google.maps.Size;
-    private map: google.maps.Map | null = null;
     private host: string = '';
     private currentPath: string = '';
     private opacity: number = 0.6;
@@ -74,7 +72,6 @@ class RadarTileLayer {
     }
 
     setMap(map: google.maps.Map | null) {
-        this.map = map;
         if (map) {
             // Force redraw
             this.tiles.forEach(tile => {

@@ -81,7 +81,7 @@ const emptyStateConfig: Record<EmptyStateType, {
 };
 
 export function IBirdEmptyState({ type, searchQuery }: IBirdEmptyStateProps) {
-  const { openCompose, openEventEditor, openAppointmentTypeEditor, openModal } = useIBirdStore();
+  const { openCompose: _openCompose, openEventEditor, openAppointmentTypeEditor, openModal } = useIBirdStore();
 
   const config = emptyStateConfig[type];
   const Icon = config.icon;

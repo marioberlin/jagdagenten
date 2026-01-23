@@ -8,9 +8,9 @@
  * - Atmosphere-reactive accent colors
  * - Tear-off perforation line effect
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { cn } from '@/utils/cn';
-import { Plane, Train, Building2, Clock, MapPin, User, QrCode } from 'lucide-react';
+import { Plane, Train, Building2, Clock, User } from 'lucide-react';
 import type { TicketData } from '../../services/a2a/NeonTokyoService';
 
 interface HolographicTicketProps {

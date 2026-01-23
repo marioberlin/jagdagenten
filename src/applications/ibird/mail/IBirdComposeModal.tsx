@@ -37,7 +37,6 @@ import {
 } from 'lucide-react';
 import type { ComposeState } from '../store';
 import { useIBirdStore } from '../store';
-import { cn } from '@/lib/utils';
 
 interface IBirdComposeModalProps {
   compose: ComposeState;

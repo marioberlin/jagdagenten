@@ -8,13 +8,11 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Zap,
     ArrowUp,
     ArrowDown,
     Minus,
     ChevronDown,
     Flame,
-    Clock,
 } from 'lucide-react';
 
 export type PriorityLevel = 'critical' | 'high' | 'normal' | 'low';

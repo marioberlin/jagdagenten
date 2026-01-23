@@ -10,7 +10,6 @@ import {
   Reply,
   ReplyAll,
   Forward,
-  Archive,
   Trash2,
   Star,
   MoreHorizontal,
@@ -43,7 +42,7 @@ function formatFullDate(dateStr: string): string {
 export function IBirdMessageView({ message }: IBirdMessageViewProps) {
   const [showDetails, setShowDetails] = useState(false);
   const { openCompose } = useIBirdStore();
-  const { toggleStar, deleteMessages, moveMessages } = useMailApi();
+  const { toggleStar, deleteMessages, moveMessages: _moveMessages } = useMailApi();
 
   // Format recipients
   const toRecipients = useMemo(() => {

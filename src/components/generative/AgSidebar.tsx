@@ -27,7 +27,7 @@ interface AgSidebarProps {
 }
 
 export const AgSidebar: React.FC<AgSidebarProps> = ({
-    apiKey = '',
+    apiKey: _apiKey = '',
     claudeApiKey = '',
     initialService
 }) => {
@@ -46,7 +46,7 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
 
     // Agent Config Integration
     const location = useLocation();
-    const { getConfigForRoute, runtimeMode } = useAgentConfig();
+    const { getConfigForRoute, runtimeMode: _runtimeMode } = useAgentConfig();
 
     React.useEffect(() => {
         const config = getConfigForRoute(location.pathname);

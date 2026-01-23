@@ -151,8 +151,8 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         // v1.0 format: Extract from status message
         if (task.status.message) {
             content = task.status.message.parts
-                ?.filter((p): p is v1.TextPart => 'text' in p && typeof (p as any).text === 'string')
-                ?.map((p) => p.text)
+                ?.filter((p: any): p is v1.TextPart => 'text' in p && typeof (p as any).text === 'string')
+                ?.map((p: any) => p.text)
                 ?.join('\n') ?? '';
         }
 

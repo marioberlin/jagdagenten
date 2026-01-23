@@ -15,7 +15,6 @@ import {
     Home,
     Briefcase,
     ChevronRight,
-    Check,
 } from 'lucide-react';
 import { GlassContainer, GlassButton } from '@/components';
 import { cn } from '@/utils/cn';

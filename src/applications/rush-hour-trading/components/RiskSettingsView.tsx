@@ -21,7 +21,7 @@ import {
     Info,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { GlassContainer, GlassButton, GlassSlider } from '@/components';
+import { GlassContainer, GlassButton } from '@/components';
 
 // Types
 interface RiskSettings {
@@ -170,7 +170,7 @@ export const RiskSettingsView: React.FC<RiskSettingsViewProps> = ({
                         <RefreshCw className="w-4 h-4" />
                     </GlassButton>
                     <GlassButton
-                        variant="accent"
+                        variant="primary"
                         size="sm"
                         onClick={saveSettings}
                         disabled={!hasChanges || isSaving}

@@ -1,4 +1,3 @@
-import { LiquidClient } from '../../liquid-engine/client';
 
 export class DashboardAgentService {
     private baseUrl: string;
@@ -62,7 +61,7 @@ export class DashboardAgentService {
         }
     }
 
-    setModel(model: string) {
+    setModel(_model: string) {
         // No-op for this specific agent
     }
 }

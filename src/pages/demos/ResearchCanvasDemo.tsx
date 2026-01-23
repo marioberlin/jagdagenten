@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { GlassContainer, GlassButton, GlassInput } from '@/components';
+import { useState, useEffect, useMemo } from 'react';
+import { GlassContainer, GlassButton } from '@/components';
 import { AgSidebar } from '../../components/generative/AgSidebar';
 import { LiquidClient } from '../../liquid-engine/client';
 import { LiquidProvider } from '../../liquid-engine/react';
-import { BookOpen, FileText, Link, Quote, Trash2, GripVertical, Book } from 'lucide-react';
+import { BookOpen, FileText, Link, Quote, Book } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GlassBreadcrumb } from '../../components/layout/GlassBreadcrumb';
 import { ResearchAgentService } from '@/services/a2a/ResearchAgentService';
@@ -20,109 +20,6 @@ interface ContentBlock {
     content: string;
     source?: string;
     url?: string;
-}
-
-// Inner component with hooks
-function ResearchContent() {
-    const [topic, setTopic] = useState('Artificial Intelligence in Healthcare');
-    const [blocks, setBlocks] = useState<ContentBlock[]>([]);
-
-    // Agent Service Initialization
-    const agentService = useMemo(() => new ResearchAgentService('demo-session', (data: any) => {
-        if (data.topic) setTopic(data.topic);
-        if (data.blocks) setBlocks(data.blocks);
-    }), []);
-
-    // Initial Load
-    useEffect(() => {
-        // Trigger generic "hello" or "load" to get initial state
-        agentService.sendMessage("Load the current research canvas state.");
-    }, [agentService]);
-
-    const blockIcons = {
-        text: FileText,
-        quote: Quote,
-        source: Link
-    };
-
-    return (
-        <div className="flex flex-col h-full">
-            {/* Topic Header */}
-            <div className="mb-6">
-                <label className="text-xs text-secondary mb-1 block">Research Topic</label>
-                <div className="text-lg font-medium text-white">{topic}</div>
-                <p className="text-xs text-white/40 mt-1">Use the AI chat to change the topic.</p>
-            </div>
-
-            {/* Content Blocks */}
-            <div className="flex-1 space-y-3 overflow-auto">
-                {blocks.map(block => {
-                    const Icon = blockIcons[block.type] || FileText;
-
-                    return (
-                        <GlassContainer
-                            key={block.id}
-                            className={cn(
-                                "p-4 group relative",
-                                block.type === 'quote' && "border-l-4 border-l-amber-500/50",
-                                block.type === 'source' && "border-l-4 border-l-blue-500/50"
-                            )}
-                            border
-                            material="thin"
-                        >
-                            <div className="flex gap-3 pl-4">
-                                <div className={cn(
-                                    "p-1.5 rounded-lg h-fit",
-                                    block.type === 'text' && "bg-white/10 text-secondary",
-                                    block.type === 'quote' && "bg-amber-500/10 text-amber-400",
-                                    block.type === 'source' && "bg-blue-500/10 text-blue-400"
-                                )}>
-                                    <Icon size={14} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className={cn(
-                                        "text-sm leading-relaxed",
-                                        block.type === 'quote' ? "italic text-amber-100/80" : "text-secondary"
-                                    )}>
-                                        {block.content}
-                                    </p>
-                                    {block.source && (
-                                        <p className="text-xs text-white/40 mt-2">
-                                            — {block.source}
-                                            {block.url && (
-                                                <a
-                                                    href={block.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="ml-2 text-accent-primary hover:underline"
-                                                >
-                                                    View →
-                                                </a>
-                                            )}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="text-[10px] text-white/20 mt-2 pl-4">ID: {block.id}</div>
-                        </GlassContainer>
-                    );
-                })}
-
-                {/* Empty State */}
-                {blocks.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="p-4 rounded-full bg-white/5 inline-block mb-4">
-                            <BookOpen size={32} className="text-secondary" />
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-2">Start your research</h3>
-                        <p className="text-sm text-secondary mb-4">
-                            Ask the AI to "Add a note about..." or "Search for sources on..."
-                        </p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
 }
 
 export default function ResearchCanvasDemo() {

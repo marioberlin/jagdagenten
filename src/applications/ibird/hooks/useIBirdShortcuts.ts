@@ -19,8 +19,6 @@ export function useIBirdShortcuts() {
     toggleSidebar,
     setCalendarViewMode,
     navigateCalendar,
-    markAsRead,
-    deleteMessages,
   } = useIBirdStore();
 
   const handleKeyDown = useCallback(

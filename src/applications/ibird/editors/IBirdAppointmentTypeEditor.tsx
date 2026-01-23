@@ -4,19 +4,14 @@
  * Modal for creating and editing appointment types (like Calendly event types).
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Clock,
-  MapPin,
   Video,
-  DollarSign,
-  Palette,
   Loader2,
   Plus,
-  Trash2,
-  Link,
   Globe,
   Phone,
   Building,
@@ -91,7 +86,7 @@ export function IBirdAppointmentTypeEditor() {
     updateAppointmentType,
   } = useIBirdStore();
 
-  const { createAppointmentType, updateAppointmentType: apiUpdateType } = useAppointmentsApi();
+  const { createAppointmentType, editAppointmentType } = useAppointmentsApi();
   const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
@@ -105,20 +100,20 @@ export function IBirdAppointmentTypeEditor() {
       return {
         name: type.name || '',
         description: type.description || '',
-        duration: type.duration || 30,
+        duration: type.durationMinutes || 30,
         color: type.color || '#3b82f6',
         locationType: type.locationType || 'video',
-        locationDetails: type.locationDetails || '',
+        locationDetails: type.locationAddress || '',
         videoProvider: type.videoProvider || null,
-        customVideoLink: type.customVideoLink || '',
-        price: type.price || null,
-        currency: type.currency || 'USD',
-        bufferBefore: type.bufferBefore || 0,
-        bufferAfter: type.bufferAfter || 0,
-        minNotice: type.minNotice || 24,
-        maxAdvance: type.maxAdvance || 60,
+        customVideoLink: '',
+        price: null,
+        currency: 'USD',
+        bufferBefore: type.bufferBeforeMinutes || 0,
+        bufferAfter: type.bufferAfterMinutes || 0,
+        minNotice: 24,
+        maxAdvance: 60,
         isActive: type.isActive ?? true,
-        customQuestions: type.customQuestions || [],
+        customQuestions: (type.customFields || []).map(f => ({ question: f.label, required: f.required })),
       };
     }
 
@@ -150,27 +145,25 @@ export function IBirdAppointmentTypeEditor() {
       const typeData: Partial<AppointmentType> = {
         name: formData.name,
         description: formData.description || undefined,
-        duration: formData.duration,
+        durationMinutes: formData.duration,
         color: formData.color,
         locationType: formData.locationType,
-        locationDetails: formData.locationDetails || undefined,
+        locationAddress: formData.locationDetails || undefined,
         videoProvider: formData.videoProvider || undefined,
-        customVideoLink: formData.customVideoLink || undefined,
-        price: formData.price || undefined,
-        currency: formData.currency,
-        bufferBefore: formData.bufferBefore,
-        bufferAfter: formData.bufferAfter,
-        minNotice: formData.minNotice,
-        maxAdvance: formData.maxAdvance,
+        bufferBeforeMinutes: formData.bufferBefore,
+        bufferAfterMinutes: formData.bufferAfter,
         isActive: formData.isActive,
-        customQuestions: formData.customQuestions.length > 0 ? formData.customQuestions : undefined,
+        customFields: formData.customQuestions.length > 0
+          ? formData.customQuestions.map(q => ({ name: q.question.toLowerCase().replace(/\s+/g, '_'), label: q.question, type: 'text' as const, required: q.required }))
+          : undefined,
       };
 
       if (isEditing && ui.editingAppointmentType?.id) {
-        await apiUpdateType(ui.editingAppointmentType.id, typeData);
+        await editAppointmentType(ui.editingAppointmentType.id, typeData);
         updateAppointmentType(ui.editingAppointmentType.id, typeData as AppointmentType);
       } else {
-        const newType = await createAppointmentType(typeData as Omit<AppointmentType, 'id' | 'userId' | 'slug' | 'createdAt' | 'updatedAt'>);
+        const slug = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const newType = await createAppointmentType({ ...typeData, slug, name: formData.name } as Parameters<typeof createAppointmentType>[0]);
         addAppointmentType(newType);
       }
 

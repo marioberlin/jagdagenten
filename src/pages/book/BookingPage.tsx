@@ -9,7 +9,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar,
   Clock,
   Video,
   MapPin,
@@ -43,11 +42,6 @@ interface AppointmentType {
   currency?: string;
 }
 
-interface TimeSlot {
-  time: string; // HH:mm
-  available: boolean;
-}
-
 interface BookingFormData {
   name: string;
   email: string;
@@ -61,12 +55,12 @@ interface BookingFormData {
 
 export default function BookingPage() {
   const { username, eventType } = useParams<{ username: string; eventType?: string }>();
-  const [searchParams] = useSearchParams();
+  const [_searchParams] = useSearchParams();
 
   const {
     fetchPublicProfile,
     fetchAvailableSlots,
-    createPublicBooking,
+    createBooking,
   } = usePublicBookingApi();
 
   // State
@@ -76,11 +70,11 @@ export default function BookingPage() {
   const [selectedType, setSelectedType] = useState<AppointmentType | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [step, setStep] = useState<'type' | 'datetime' | 'form' | 'confirmed'>('type');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [_bookingId, setBookingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<BookingFormData>({
     name: '',
@@ -199,14 +193,14 @@ export default function BookingPage() {
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + selectedType.durationMinutes);
 
-      const booking = await createPublicBooking(username, {
-        appointmentTypeId: selectedType.id,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        attendeeName: formData.name,
-        attendeeEmail: formData.email,
+      const booking = await createBooking(username!, {
+        typeId: selectedType.id,
+        date: selectedDate!.toISOString().split('T')[0],
+        startTime: selectedTime,
+        inviteeName: formData.name,
+        inviteeEmail: formData.email,
         notes: formData.notes || undefined,
-        customResponses: Object.keys(formData.responses).length > 0 ? formData.responses : undefined,
+        customFieldResponses: Object.keys(formData.responses).length > 0 ? formData.responses : undefined,
       });
 
       setBookingId(booking.id);

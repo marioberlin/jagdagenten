@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react';
 import { Calendar, Clock, ChevronRight } from 'lucide-react';
-import { useIBirdStore, useEventsInRange, useUpcomingBookings } from '../store';
+import { useEventsInRange, useUpcomingBookings } from '../store';
 import { cn } from '@/lib/utils';
 
 interface IBirdQuickGlanceProps {

@@ -4,22 +4,18 @@
  * Modal for creating and editing calendar events.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Calendar,
-  Clock,
   MapPin,
   Video,
   Users,
   Repeat,
-  Bell,
   Palette,
   Loader2,
   Plus,
-  Trash2,
-  Link,
 } from 'lucide-react';
 import { useIBirdStore, type CalendarEvent, type EventAttendee, type RecurrenceRule } from '../store';
 import { useCalendarApi } from '../hooks/useIBirdApi';
@@ -74,7 +70,7 @@ export function IBirdEventEditor() {
     updateEvent,
   } = useIBirdStore();
 
-  const { createEvent, updateEvent: apiUpdateEvent } = useCalendarApi();
+  const { createEvent, editEvent } = useCalendarApi();
   const [isSaving, setIsSaving] = useState(false);
   const [showRecurrence, setShowRecurrence] = useState(false);
   const [showAttendees, setShowAttendees] = useState(false);
@@ -171,10 +167,10 @@ export function IBirdEventEditor() {
       };
 
       if (isEditing && ui.editingEvent?.id) {
-        await apiUpdateEvent(ui.editingEvent.id, eventData);
+        await editEvent(ui.editingEvent.id, eventData);
         updateEvent(ui.editingEvent.id, eventData as CalendarEvent);
       } else {
-        const newEvent = await createEvent(eventData);
+        const newEvent = await createEvent(eventData as Parameters<typeof createEvent>[0]);
         addEvent(newEvent);
       }
 

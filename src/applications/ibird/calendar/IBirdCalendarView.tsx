@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  MoreHorizontal,
   GripVertical,
 } from 'lucide-react';
 import { useIBirdStore, useVisibleEvents } from '../store';

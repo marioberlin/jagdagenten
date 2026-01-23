@@ -1,4 +1,4 @@
-import { ILiquidLLMService, ChatOptions, ToolSchema } from '../types';
+import { ChatOptions } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class RemoteAgentService  {
@@ -6,7 +6,6 @@ export class RemoteAgentService  {
     private authToken: string;
     private contextId: string;
     private onDataUpdate?: (data: any) => void;
-    private modelName: string = 'remote-agent';
 
     constructor(
         url: string,
@@ -23,21 +22,21 @@ export class RemoteAgentService  {
     /**
      * Set the model - No-op for remote agents as they decide their own model
      */
-    setModel(modelName: string): void {
-        this.modelName = modelName;
+    setModel(_modelName: string): void {
+        // No-op for remote agents
     }
 
     /**
      * Configure file search - No-op for now
      */
-    setFileSearchConfig(config: any): void {
+    setFileSearchConfig(_config: any): void {
         // Not implemented
     }
 
     /**
      * Chat method for simple interactions
      */
-    async chat(prompt: string, systemPrompt?: string, options?: ChatOptions): Promise<string> {
+    async chat(prompt: string, _systemPrompt?: string, _options?: ChatOptions): Promise<string> {
         return this.sendMessage(prompt);
     }
 

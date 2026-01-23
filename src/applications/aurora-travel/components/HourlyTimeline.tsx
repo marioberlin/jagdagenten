@@ -92,13 +92,9 @@ interface HourCardProps {
     tempRange: { min: number; max: number };
 }
 
-const HourCard: React.FC<HourCardProps> = ({ forecast, isNow, isSunrise, isSunset, tempRange }) => {
+const HourCard: React.FC<HourCardProps> = ({ forecast, isNow, isSunrise, isSunset, tempRange: _tempRange }) => {
     const Icon = getConditionIcon(forecast.condition);
     const iconColor = getConditionColor(forecast.condition);
-
-    // Normalize temperature for visual representation (0-100%)
-    const range = tempRange.max - tempRange.min || 1;
-    const tempPercent = ((forecast.temperature - tempRange.min) / range) * 100;
 
     // Precipitation bar height
     const precipHeight = Math.min(forecast.precipitationProbability, 100);
@@ -240,7 +236,7 @@ export const HourlyTimeline: React.FC<HourlyTimelineProps> = ({
                 className="flex gap-1 overflow-x-auto pb-2 custom-scrollbar"
                 style={{ scrollbarWidth: 'thin' }}
             >
-                {hourlyData.slice(0, 24).map((forecast, index) => {
+                {hourlyData.slice(0, 24).map((forecast, _index) => {
                     const hour = new Date(forecast.time).getHours();
                     return (
                         <HourCard

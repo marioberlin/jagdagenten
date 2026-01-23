@@ -14,7 +14,7 @@ import {
     MonitorPlay, Ear, FileJson, FileText, Bot, BarChart3,
     AlertTriangle, ShieldAlert, Clock, Lock, Brain, Wand2, FileSearch,
     Book, Tag, Globe, Edit3, Star, StarOff,
-    Package, Server, ShieldCheck, Puzzle, Shield,
+    Server, Puzzle, Shield,
     Lightbulb, Type, Layers, Layout, Settings2, Move, Minimize2, Info, Key,
     Mail, Calendar, ChevronLeft,
 } from 'lucide-react';

@@ -4,15 +4,12 @@
  * AI-generated packing suggestions based on trip weather.
  * Categories with checkable items, persisted to local storage.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Package,
     Shirt,
     Umbrella,
-    Sun,
-    Thermometer,
-    Wind,
     Camera,
     Briefcase,
     Check,
@@ -23,7 +20,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { GlassContainer, GlassButton, GlassInput } from '@/components';
+import { GlassContainer, GlassButton } from '@/components';
 import type { Trip } from '@/stores/auroraTravelStore';
 
 // ============================================================================
@@ -48,19 +45,6 @@ export interface PackingListProps {
     trip: Trip;
     onClose?: () => void;
 }
-
-// ============================================================================
-// Category Icons
-// ============================================================================
-
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-    clothing: Shirt,
-    weather: Umbrella,
-    sun: Sun,
-    tech: Camera,
-    documents: Briefcase,
-    default: Package,
-};
 
 // ============================================================================
 // Generate Packing List from Weather

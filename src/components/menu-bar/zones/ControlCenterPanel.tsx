@@ -21,7 +21,7 @@ interface ControlCenterPanelProps {
 
 export const ControlCenterPanel: React.FC<ControlCenterPanelProps> = ({
     isOpen,
-    onClose,
+    onClose: _onClose,
 }) => {
     const { theme, toggleTheme } = useTheme();
 
