@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
 import { FileSpreadsheet, FileText, Presentation, Cloud, Loader2, Sparkles, LogIn, LogOut, FolderOpen, Plus, ExternalLink } from 'lucide-react';
+import { DriveContextMenu, DriveFile } from './DriveContextMenu';
 
 type DriveFileType = 'spreadsheet' | 'document' | 'presentation';
 type TabFilter = 'all' | DriveFileType;
@@ -72,6 +74,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
     const [creatingType, setCreatingType] = useState<DriveFileType | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabFilter>('all');
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: DriveFile } | null>(null);
 
     // Fetch recent Docs, Sheets, and Slides from Google Drive
     useEffect(() => {
@@ -384,6 +387,20 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                                     <button
                                         key={file.id}
                                         onClick={() => handleFileSelect(file)}
+                                        onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            setContextMenu({
+                                                x: e.clientX,
+                                                y: e.clientY,
+                                                file: {
+                                                    id: file.id,
+                                                    name: file.name,
+                                                    url: file.url,
+                                                    mimeType: file.mimeType,
+                                                    fileType: file.fileType,
+                                                },
+                                            });
+                                        }}
                                         className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors rounded-md group"
                                     >
                                         <div className={`p-1.5 rounded-md ${config.bgColor} ${config.color} group-hover:opacity-80 transition-colors flex-shrink-0`}>
@@ -411,6 +428,28 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                 </span>
                 <span className="text-[10px] text-white/20">Google Drive</span>
             </div>
+
+            {/* Context Menu */}
+            <AnimatePresence>
+                {contextMenu && accessToken && (
+                    <DriveContextMenu
+                        x={contextMenu.x}
+                        y={contextMenu.y}
+                        file={contextMenu.file}
+                        accessToken={accessToken}
+                        onClose={() => setContextMenu(null)}
+                        onFileUpdated={(action, _file, newFile) => {
+                            if (action === 'duplicate' && newFile) {
+                                setRecentFiles(prev => [{ ...newFile, fileType: getFileType(newFile.mimeType), lastOpened: Date.now() }, ...prev]);
+                            } else if (action === 'rename' && newFile) {
+                                setRecentFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, name: newFile.name } : f));
+                            } else if (action === 'delete') {
+                                setRecentFiles(prev => prev.filter(f => f.id !== _file.id));
+                            }
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

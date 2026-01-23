@@ -2,7 +2,8 @@
  * FinderFileList - List/grid view with column headers and file entries
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import {
   Folder,
   File,
@@ -19,6 +20,7 @@ import {
   FolderSymlink,
 } from 'lucide-react';
 import type { FileEntry, ViewMode, SortColumn, SortDirection } from './types';
+import { LocalFileContextMenu } from './LocalFileContextMenu';
 
 // File extension to icon/color mapping
 const FILE_ICON_MAP: Record<string, { icon: React.ElementType; color: string }> = {
@@ -87,6 +89,7 @@ interface FinderFileListProps {
   error: string | null;
   onNavigate: (path: string) => void;
   onSortChange: (column: SortColumn) => void;
+  onFileUpdated?: () => void;
 }
 
 export const FinderFileList: React.FC<FinderFileListProps> = ({
@@ -98,7 +101,14 @@ export const FinderFileList: React.FC<FinderFileListProps> = ({
   error,
   onNavigate,
   onSortChange,
+  onFileUpdated,
 }) => {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entry: FileEntry } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, entry: FileEntry) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, entry });
+  };
   const SortIndicator = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) return null;
     return sortDirection === 'asc'
@@ -132,92 +142,123 @@ export const FinderFileList: React.FC<FinderFileListProps> = ({
 
   if (viewMode === 'grid') {
     return (
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="grid grid-cols-4 gap-3">
-          {entries.map(entry => {
-            const { icon: IconComp, color } = getFileIconInfo(entry);
-            return (
-              <button
-                key={entry.path}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-lg hover:bg-white/5 transition-colors group"
-                onDoubleClick={() => entry.type === 'directory' && onNavigate(entry.path)}
-              >
-                <IconComp size={28} className={`${color} group-hover:scale-110 transition-transform`} />
-                <span className="text-[11px] text-white/80 truncate w-full text-center leading-tight">
-                  {entry.name}
-                </span>
-              </button>
-            );
-          })}
+      <>
+        <div className="flex-1 overflow-y-auto p-3">
+          <div className="grid grid-cols-4 gap-3">
+            {entries.map(entry => {
+              const { icon: IconComp, color } = getFileIconInfo(entry);
+              return (
+                <button
+                  key={entry.path}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                  onDoubleClick={() => entry.type === 'directory' && onNavigate(entry.path)}
+                  onContextMenu={(e) => handleContextMenu(e, entry)}
+                >
+                  <IconComp size={28} className={`${color} group-hover:scale-110 transition-transform`} />
+                  <span className="text-[11px] text-white/80 truncate w-full text-center leading-tight">
+                    {entry.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+        <AnimatePresence>
+          {contextMenu && (
+            <LocalFileContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              entry={contextMenu.entry}
+              onClose={() => setContextMenu(null)}
+              onNavigate={onNavigate}
+              onFileUpdated={onFileUpdated}
+            />
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 
   // List view
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Column headers */}
-      <div className="flex items-center px-3 py-1.5 border-b border-white/10 text-[10px] font-medium text-white/40 uppercase tracking-wider flex-shrink-0">
-        <button
-          className="flex items-center gap-1 flex-1 min-w-0 hover:text-white/60 transition-colors"
-          onClick={() => onSortChange('name')}
-        >
-          Name <SortIndicator column="name" />
-        </button>
-        <button
-          className="flex items-center gap-1 w-28 hover:text-white/60 transition-colors"
-          onClick={() => onSortChange('modified')}
-        >
-          Modified <SortIndicator column="modified" />
-        </button>
-        <button
-          className="flex items-center gap-1 w-20 hover:text-white/60 transition-colors"
-          onClick={() => onSortChange('size')}
-        >
-          Size <SortIndicator column="size" />
-        </button>
-        <button
-          className="flex items-center gap-1 w-24 hover:text-white/60 transition-colors"
-          onClick={() => onSortChange('kind')}
-        >
-          Kind <SortIndicator column="kind" />
-        </button>
+    <>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Column headers */}
+        <div className="flex items-center px-3 py-1.5 border-b border-white/10 text-[10px] font-medium text-white/40 uppercase tracking-wider flex-shrink-0">
+          <button
+            className="flex items-center gap-1 flex-1 min-w-0 hover:text-white/60 transition-colors"
+            onClick={() => onSortChange('name')}
+          >
+            Name <SortIndicator column="name" />
+          </button>
+          <button
+            className="flex items-center gap-1 w-28 hover:text-white/60 transition-colors"
+            onClick={() => onSortChange('modified')}
+          >
+            Modified <SortIndicator column="modified" />
+          </button>
+          <button
+            className="flex items-center gap-1 w-20 hover:text-white/60 transition-colors"
+            onClick={() => onSortChange('size')}
+          >
+            Size <SortIndicator column="size" />
+          </button>
+          <button
+            className="flex items-center gap-1 w-24 hover:text-white/60 transition-colors"
+            onClick={() => onSortChange('kind')}
+          >
+            Kind <SortIndicator column="kind" />
+          </button>
+        </div>
+
+        {/* File rows */}
+        <div className="flex-1 overflow-y-auto">
+          {entries.map(entry => {
+            const { icon: IconComp, color } = getFileIconInfo(entry);
+            return (
+              <button
+                key={entry.path}
+                className="w-full flex items-center px-3 py-1.5 hover:bg-white/5 transition-colors text-left group"
+                onDoubleClick={() => entry.type === 'directory' && onNavigate(entry.path)}
+                onContextMenu={(e) => handleContextMenu(e, entry)}
+              >
+                {/* Name */}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <IconComp size={14} className={color} />
+                  <span className={`text-xs truncate ${entry.isHidden ? 'text-white/40' : 'text-white/80'}`}>
+                    {entry.name}
+                  </span>
+                </div>
+                {/* Modified */}
+                <div className="w-28 text-[11px] text-white/40">
+                  {formatDate(entry.modifiedAt)}
+                </div>
+                {/* Size */}
+                <div className="w-20 text-[11px] text-white/40">
+                  {entry.type === 'directory' ? '--' : formatSize(entry.size)}
+                </div>
+                {/* Kind */}
+                <div className="w-24 text-[11px] text-white/40 truncate">
+                  {getFileKind(entry)}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* File rows */}
-      <div className="flex-1 overflow-y-auto">
-        {entries.map(entry => {
-          const { icon: IconComp, color } = getFileIconInfo(entry);
-          return (
-            <button
-              key={entry.path}
-              className="w-full flex items-center px-3 py-1.5 hover:bg-white/5 transition-colors text-left group"
-              onDoubleClick={() => entry.type === 'directory' && onNavigate(entry.path)}
-            >
-              {/* Name */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <IconComp size={14} className={color} />
-                <span className={`text-xs truncate ${entry.isHidden ? 'text-white/40' : 'text-white/80'}`}>
-                  {entry.name}
-                </span>
-              </div>
-              {/* Modified */}
-              <div className="w-28 text-[11px] text-white/40">
-                {formatDate(entry.modifiedAt)}
-              </div>
-              {/* Size */}
-              <div className="w-20 text-[11px] text-white/40">
-                {entry.type === 'directory' ? '--' : formatSize(entry.size)}
-              </div>
-              {/* Kind */}
-              <div className="w-24 text-[11px] text-white/40 truncate">
-                {getFileKind(entry)}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+      <AnimatePresence>
+        {contextMenu && (
+          <LocalFileContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            entry={contextMenu.entry}
+            onClose={() => setContextMenu(null)}
+            onNavigate={onNavigate}
+            onFileUpdated={onFileUpdated}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
