@@ -19,6 +19,8 @@ export interface UseSecureNLWebOptions {
     baseUrl?: string;
     /** Knowledge base items from Settings (Schema.org JSON-LD or plain text) */
     knowledgeBase?: string[];
+    /** Gemini FileSearch store names for semantic RAG retrieval */
+    fileSearchStores?: string[];
     /** Initial session state (for restoring from storage) */
     initialSession?: Partial<SecureSession>;
     /** Callback when the main agent should generate a response */
@@ -75,7 +77,7 @@ function createDefaultSession(): SecureSession {
 // ============================================================================
 
 export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebReturn {
-    const { baseUrl = 'http://localhost:3000', knowledgeBase = [], initialSession, onSynthesize } = options;
+    const { baseUrl = 'http://localhost:3000', knowledgeBase = [], fileSearchStores = [], initialSession, onSynthesize } = options;
 
     // State
     const [stage, setStage] = useState<PipelineStage>('idle');
@@ -133,6 +135,7 @@ export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebRe
                 session,
                 conversationHistory: conversationHistory.current,
                 knowledgeBase,
+                fileSearchStores,
                 onStageChange: handleStageChange,
             });
 
@@ -171,7 +174,7 @@ export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebRe
         } finally {
             setIsProcessing(false);
         }
-    }, [geminiService, session, knowledgeBase, handleStageChange, onSynthesize]);
+    }, [geminiService, session, knowledgeBase, fileSearchStores, handleStageChange, onSynthesize]);
 
     // History management
     const addToHistory = useCallback((role: 'user' | 'assistant', content: string) => {

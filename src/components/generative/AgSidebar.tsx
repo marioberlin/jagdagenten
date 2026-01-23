@@ -52,13 +52,16 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
         const config = getConfigForRoute(location.pathname);
         if (!config.systemPrompt && (!config.knowledge || config.knowledge.length === 0)) return;
 
+        const fileSearchStores = config.fileSearch?.enabled ? config.fileSearch.stores : [];
+
         const unregister = client.registerReadable({
             id: 'agent_configuration',
             description: 'CRITICAL: System Instructions and Knowledge Base for the current page',
             value: {
                 current_page: location.pathname,
                 system_instructions: config.systemPrompt,
-                knowledge_base: config.knowledge
+                knowledge_base: config.knowledge,
+                file_search_stores: fileSearchStores,
             }
         });
 

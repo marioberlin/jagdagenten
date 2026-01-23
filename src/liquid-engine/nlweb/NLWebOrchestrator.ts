@@ -56,6 +56,7 @@ export interface OrchestratorConfig {
     session: SecureSession;
     conversationHistory: ConversationTurn[];
     knowledgeBase?: string[];       // Schema.org JSON-LD or plain text from Settings
+    fileSearchStores?: string[];    // Gemini FileSearch store names for semantic RAG
     customBlacklist?: string[];     // Custom security filter phrases from Settings
     onStageChange?: (stage: PipelineStage, message: string) => void;
 }
@@ -93,6 +94,7 @@ export class NLWebOrchestrator {
     private session: SecureSession;
     private conversationHistory: ConversationTurn[];
     private knowledgeBase: string[];
+    private fileSearchStores: string[];
     private customBlacklist: string[];
     private onStageChange?: (stage: PipelineStage, message: string) => void;
 
@@ -101,6 +103,7 @@ export class NLWebOrchestrator {
         this.session = config.session;
         this.conversationHistory = config.conversationHistory;
         this.knowledgeBase = config.knowledgeBase || [];
+        this.fileSearchStores = config.fileSearchStores || [];
         this.customBlacklist = config.customBlacklist || [];
         this.onStageChange = config.onStageChange;
     }
@@ -244,13 +247,35 @@ export class NLWebOrchestrator {
     }
 
     private async retrieveKnowledge(query: string): Promise<string[]> {
-        // For now, return the static knowledge base from Settings
-        // TODO: Integrate with GlassFileSearch for vector retrieval
+        // Strategy 1: Gemini File Search RAG (semantic retrieval)
+        if (this.fileSearchStores.length > 0) {
+            try {
+                const response = await fetch('/api/file-search/query-multi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storeNames: this.fileSearchStores,
+                        prompt: query,
+                    }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.text) {
+                        return data.text
+                            .split(/\n{2,}/)
+                            .map((p: string) => p.trim())
+                            .filter((p: string) => p.length > 0);
+                    }
+                }
+            } catch (err) {
+                console.warn('[NLWeb] File search RAG failed, falling back to keyword:', err);
+            }
+        }
+
+        // Strategy 2: Keyword matching fallback (static knowledge from Settings)
         if (this.knowledgeBase.length === 0) {
             return [];
         }
-
-        // Simple keyword matching for now (can be enhanced with embeddings)
         const queryTerms = query.toLowerCase().split(/\s+/);
         return this.knowledgeBase.filter(item => {
             const itemLower = item.toLowerCase();
