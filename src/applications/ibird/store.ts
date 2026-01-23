@@ -4,6 +4,7 @@
  * Zustand store following Sparkles patterns for the iBird application.
  */
 
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware';
@@ -1263,14 +1264,16 @@ export const useInboxUnreadCount = () =>
     ).length;
   });
 
-export const useFilteredMessages = () =>
-  useIBirdStore((state) => {
-    const { ui, messages, labels } = state;
+export const useFilteredMessages = () => {
+  const messages = useIBirdStore((state) => state.messages);
+  const searchQuery = useIBirdStore((state) => state.ui.searchQuery);
+
+  return useMemo(() => {
     let filtered = [...messages];
 
     // Filter by search query
-    if (ui.searchQuery) {
-      const query = ui.searchQuery.toLowerCase();
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (m) =>
           m.subject?.toLowerCase().includes(query) ||
@@ -1286,74 +1289,87 @@ export const useFilteredMessages = () =>
     );
 
     return filtered;
-  });
+  }, [messages, searchQuery]);
+};
 
-export const useVisibleCalendars = () =>
-  useIBirdStore((state) => state.calendars.filter((c) => c.isVisible));
+export const useVisibleCalendars = () => {
+  const calendars = useIBirdStore((state) => state.calendars);
+  return useMemo(() => calendars.filter((c) => c.isVisible), [calendars]);
+};
 
-export const useVisibleEvents = () =>
-  useIBirdStore((state) => {
-    const visibleCalendarIds = state.calendars
+export const useVisibleEvents = () => {
+  const calendars = useIBirdStore((state) => state.calendars);
+  const events = useIBirdStore((state) => state.events);
+  return useMemo(() => {
+    const visibleCalendarIds = calendars
       .filter((c) => c.isVisible)
       .map((c) => c.id);
-    return state.events.filter((e) => visibleCalendarIds.includes(e.calendarId));
-  });
+    return events.filter((e) => visibleCalendarIds.includes(e.calendarId));
+  }, [calendars, events]);
+};
 
-export const useEventsForDate = (date: string) =>
-  useIBirdStore((state) => {
-    const visibleCalendarIds = state.calendars
+export const useEventsForDate = (date: string) => {
+  const calendars = useIBirdStore((state) => state.calendars);
+  const events = useIBirdStore((state) => state.events);
+  return useMemo(() => {
+    const visibleCalendarIds = calendars
       .filter((c) => c.isVisible)
       .map((c) => c.id);
 
-    return state.events.filter((e) => {
+    return events.filter((e) => {
       if (!visibleCalendarIds.includes(e.calendarId)) return false;
-
       const eventDate = e.startTime.split('T')[0];
       return eventDate === date;
     });
-  });
+  }, [calendars, events, date]);
+};
 
-export const useEventsInRange = (startDate: string, endDate: string) =>
-  useIBirdStore((state) => {
-    const visibleCalendarIds = state.calendars
+export const useEventsInRange = (startDate: string, endDate: string) => {
+  const calendars = useIBirdStore((state) => state.calendars);
+  const events = useIBirdStore((state) => state.events);
+  return useMemo(() => {
+    const visibleCalendarIds = calendars
       .filter((c) => c.isVisible)
       .map((c) => c.id);
 
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
 
-    return state.events.filter((e) => {
+    return events.filter((e) => {
       if (!visibleCalendarIds.includes(e.calendarId)) return false;
-
       const eventStart = new Date(e.startTime).getTime();
       const eventEnd = new Date(e.endTime).getTime();
-
       return eventStart <= end && eventEnd >= start;
     });
-  });
+  }, [calendars, events, startDate, endDate]);
+};
 
-export const useTodayEvents = () =>
-  useIBirdStore((state) => {
+export const useTodayEvents = () => {
+  const calendars = useIBirdStore((state) => state.calendars);
+  const events = useIBirdStore((state) => state.events);
+  return useMemo(() => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    const visibleCalendarIds = state.calendars
+    const visibleCalendarIds = calendars
       .filter((c) => c.isVisible)
       .map((c) => c.id);
 
-    return state.events
+    return events
       .filter((e) => {
         if (!visibleCalendarIds.includes(e.calendarId)) return false;
         const eventDate = e.startTime.split('T')[0];
         return eventDate === todayStr;
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  });
+  }, [calendars, events]);
+};
 
-export const useUpcomingBookings = () =>
-  useIBirdStore((state) => {
+export const useUpcomingBookings = () => {
+  const bookings = useIBirdStore((state) => state.bookings);
+  return useMemo(() => {
     const now = new Date();
-    return state.bookings
+    return bookings
       .filter((b) => {
         const bookingDate = new Date(`${b.scheduledDate}T${b.startTime}`);
         return bookingDate >= now && b.status !== 'cancelled';
@@ -1363,10 +1379,13 @@ export const useUpcomingBookings = () =>
         const dateB = new Date(`${b.scheduledDate}T${b.startTime}`);
         return dateA.getTime() - dateB.getTime();
       });
-  });
+  }, [bookings]);
+};
 
-export const useActiveAppointmentTypes = () =>
-  useIBirdStore((state) => state.appointmentTypes.filter((t) => t.isActive));
+export const useActiveAppointmentTypes = () => {
+  const appointmentTypes = useIBirdStore((state) => state.appointmentTypes);
+  return useMemo(() => appointmentTypes.filter((t) => t.isActive), [appointmentTypes]);
+};
 
 export const useDefaultAvailabilitySchedule = () =>
   useIBirdStore((state) => state.availabilitySchedules.find((s) => s.isDefault));
