@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Share2, Shield, Eye, Pencil, Copy, Trash2, Plus } from 'lucide-react';
 import { useResourceStore, type AIResource } from '@/stores/resourceStore';
-import { useAppStoreStore } from '@/stores/appStoreStore';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 
 interface ShareDialogProps {
   resource: AIResource;
@@ -28,11 +28,11 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ resource, onClose }) =
 
   // Build share targets from installed apps
   useEffect(() => {
-    const appTargets: ShareTarget[] = installedApps.map(app => ({
-      id: app.id,
-      name: app.name,
-      type: (app.category === 'agent' || app.id.startsWith('agent-')) ? 'agent' as const : 'app' as const,
-      icon: app.icon,
+    const appTargets: ShareTarget[] = Object.values(installedApps).map(app => ({
+      id: app.manifest.id,
+      name: app.manifest.name,
+      type: (app.manifest.category === 'agent' || app.manifest.id.startsWith('agent-')) ? 'agent' as const : 'app' as const,
+      icon: app.manifest.icon,
     }));
     setTargets(appTargets);
   }, [installedApps]);
