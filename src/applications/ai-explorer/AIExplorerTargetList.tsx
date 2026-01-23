@@ -1,13 +1,28 @@
 import React, { useMemo } from 'react';
-import { AppWindow, Bot, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  AppWindow, Bot, ChevronDown, ChevronRight, Cpu,
+  Shield, Replace, HeartPulse, FolderSearch, Network, Sparkles,
+  TrendingUp, MessageCircle, GitFork, FileSearch, Layers, CalendarCheck,
+} from 'lucide-react';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { CURATED_AGENTS } from '@/services/agents/registry';
+import { MISC_COMPONENTS } from './miscRegistry';
 import type { AITarget, ResourceType } from './types';
 import { getStorageKey } from './types';
 
 interface AIExplorerTargetListProps {
   activeResource: ResourceType;
   onSelectTarget: (target: AITarget) => void;
+}
+
+const MISC_ICON_MAP: Record<string, React.ElementType> = {
+  Shield, Replace, HeartPulse, FolderSearch, Network, Sparkles,
+  TrendingUp, MessageCircle, GitFork, FileSearch, Layers, CalendarCheck,
+};
+
+function MiscIcon({ name, size, className }: { name?: string; size: number; className?: string }) {
+  const Icon = name ? MISC_ICON_MAP[name] || Cpu : Cpu;
+  return <Icon size={size} className={className} />;
 }
 
 function getItemCount(resource: ResourceType, target: AITarget): number {
@@ -41,6 +56,15 @@ export const AIExplorerTargetList: React.FC<AIExplorerTargetListProps> = ({
       type: 'agent' as const,
       id: agent.id,
       name: agent.name,
+    })),
+  []);
+
+  const miscTargets: AITarget[] = useMemo(() =>
+    MISC_COMPONENTS.map(comp => ({
+      type: 'misc' as const,
+      id: comp.id,
+      name: comp.name,
+      icon: comp.icon,
     })),
   []);
 
@@ -80,10 +104,15 @@ export const AIExplorerTargetList: React.FC<AIExplorerTargetListProps> = ({
                   <div className="w-5 h-5 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
                     {target.type === 'app'
                       ? <AppWindow size={12} className="text-blue-400" />
-                      : <Bot size={12} className="text-purple-400" />
+                      : target.type === 'agent'
+                      ? <Bot size={12} className="text-purple-400" />
+                      : <MiscIcon name={target.icon} size={12} className="text-amber-400" />
                     }
                   </div>
-                  <span className="text-xs text-white/80 truncate flex-1">{target.name}</span>
+                  <span className="text-xs text-white/80 truncate flex-1">
+                    {target.name}
+                    {count > 0 && <span className="text-[10px] text-emerald-400/60 font-medium ml-1">(+)</span>}
+                  </span>
                   {count > 0 && (
                     <span className="text-[10px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded-full">
                       {count}
@@ -102,6 +131,7 @@ export const AIExplorerTargetList: React.FC<AIExplorerTargetListProps> = ({
     <div className="flex-1 overflow-y-auto py-2">
       {renderSection('Apps', 'apps', apps, <AppWindow size={10} className="text-blue-400" />)}
       {renderSection('A2A Agents', 'agents', agents, <Bot size={10} className="text-purple-400" />)}
+      {renderSection('Misc', 'misc', miscTargets, <Cpu size={10} className="text-amber-400" />)}
     </div>
   );
 };

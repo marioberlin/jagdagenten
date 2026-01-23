@@ -1,5 +1,5 @@
 export type ResourceType = 'prompts' | 'memory' | 'context' | 'knowledge' | 'artifacts' | 'skills' | 'mcp';
-export type TargetType = 'app' | 'agent';
+export type TargetType = 'app' | 'agent' | 'misc';
 
 export interface AITarget {
   type: TargetType;

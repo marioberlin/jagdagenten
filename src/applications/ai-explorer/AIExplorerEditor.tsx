@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Pin, PinOff, Edit3 } from 'lucide-react';
 import type { AITarget, ResourceType } from './types';
-import { RESOURCE_TYPES } from './types';
+import { RESOURCE_TYPES, getStoredItems } from './types';
 import { useResourceStore, type AIResource } from '@/stores/resourceStore';
 import { ShareDialog } from './ShareDialog';
 import { PromptEditor } from './editors/PromptEditor';
@@ -65,11 +65,12 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
 
   const resourceConfig = RESOURCE_TYPES.find(r => r.id === resource);
   const apiType = toApiType(resource);
-  const ownerType = target.type === 'app' ? 'app' : 'agent';
+  const ownerType = target.type === 'misc' ? 'system' : target.type;
 
-  // Fetch resources for this target + type
+  // Fetch resources from both API (PostgreSQL) and localStorage, merge results
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
+    let apiItems: AIResource[] = [];
     try {
       const params = new URLSearchParams({
         type: apiType,
@@ -80,14 +81,39 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
       const response = await fetch(`/api/resources/?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        setItems(data.resources || []);
+        apiItems = data.resources || [];
       }
     } catch (err) {
-      console.error('[AIExplorer] Error fetching resources:', err);
-    } finally {
-      setIsLoading(false);
+      console.error('[AIExplorer] API fetch failed:', err);
     }
-  }, [apiType, ownerType, target.id]);
+    // Also load from localStorage (seeded data)
+    const localItems = getStoredItems(resource, target);
+    const localAsResources: AIResource[] = localItems.map(item => ({
+      id: item.id,
+      resourceType: apiType as any,
+      ownerType: ownerType as any,
+      ownerId: target.id,
+      name: item.metadata?.source || `${resourceConfig?.label} item`,
+      content: item.content,
+      parts: [],
+      typeMetadata: item.metadata || {},
+      version: 1,
+      isActive: true,
+      isPinned: false,
+      tags: [],
+      createdAt: new Date(item.addedAt).toISOString(),
+      updatedAt: new Date(item.addedAt).toISOString(),
+      accessedAt: new Date(item.addedAt).toISOString(),
+      provenance: 'imported' as const,
+      usageFrequency: 0,
+      syncToFile: false,
+    }));
+    // Merge: API items first, then localStorage items not already in API (by id)
+    const apiIds = new Set(apiItems.map(i => i.id));
+    const merged = [...apiItems, ...localAsResources.filter(i => !apiIds.has(i.id))];
+    setItems(merged);
+    setIsLoading(false);
+  }, [apiType, ownerType, target.id, resource, target, resourceConfig]);
 
   useEffect(() => {
     fetchItems();
@@ -183,7 +209,7 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
             {resourceConfig?.label} for {target.name}
           </h2>
           <p className="text-[10px] text-white/35 truncate">
-            {target.type === 'app' ? 'App' : 'A2A Agent'} &middot; {items.length} {items.length === 1 ? 'item' : 'items'}
+            {target.type === 'app' ? 'App' : target.type === 'agent' ? 'A2A Agent' : 'System'} &middot; {items.length} {items.length === 1 ? 'item' : 'items'}
           </p>
         </div>
         <button
@@ -206,7 +232,7 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
             <p className="text-sm text-white/30">No {resourceConfig?.label?.toLowerCase()} yet</p>
             <p className="text-[11px] text-white/20 max-w-[200px]">
-              Add items to configure {resourceConfig?.label?.toLowerCase()} for this {target.type === 'app' ? 'app' : 'agent'}.
+              Add items to configure {resourceConfig?.label?.toLowerCase()} for this {target.type === 'app' ? 'app' : target.type === 'agent' ? 'agent' : 'system component'}.
             </p>
           </div>
         ) : (

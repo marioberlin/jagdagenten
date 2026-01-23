@@ -1,12 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AIExplorerSidebar } from './AIExplorerSidebar';
 import { AIExplorerTargetList } from './AIExplorerTargetList';
 import { AIExplorerEditor } from './AIExplorerEditor';
+import { seedMiscResources, isMiscSeeded, markMiscSeeded } from './seedMiscResources';
 import type { ResourceType, AITarget } from './types';
 
 export const AIExplorerBrowser: React.FC = () => {
   const [activeResource, setActiveResource] = useState<ResourceType>('prompts');
   const [selectedTarget, setSelectedTarget] = useState<AITarget | null>(null);
+
+  // One-time seed of misc resources from source files
+  useEffect(() => {
+    if (!isMiscSeeded()) {
+      seedMiscResources();
+      markMiscSeeded();
+    }
+  }, []);
 
   const handleSelectResource = useCallback((resource: ResourceType) => {
     setActiveResource(resource);
