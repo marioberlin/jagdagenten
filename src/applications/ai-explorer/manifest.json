@@ -1,0 +1,32 @@
+{
+  "id": "ai-explorer",
+  "name": "AI Explorer",
+  "version": "1.0.0",
+  "description": "Browse and edit AI resources for apps and agents",
+  "author": "LiquidOS",
+  "category": "system",
+  "keywords": ["ai", "prompts", "memory", "context", "knowledge", "agents"],
+  "icon": "Brain",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "AI Explorer",
+    "defaultSize": { "width": 850, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 6
+    },
+    "menuBar": {},
+    "shortcuts": {},
+    "aiContext": null,
+    "commandPalette": {
+      "commands": [
+        { "id": "open-ai-explorer", "label": "Open AI Explorer", "keywords": ["ai", "prompts", "memory", "agents"] }
+      ]
+    }
+  },
+  "capabilities": ["storage:local", "storage:indexeddb"]
+}
