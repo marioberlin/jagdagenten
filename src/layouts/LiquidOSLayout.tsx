@@ -199,8 +199,8 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
                 <GlassWindow
                     id={`${appId}-window`}
                     title={manifest.name}
-                    initialPosition={{ x: window.innerWidth * 0.1, y: 50 }}
-                    initialSize={{ width: 600, height: 400 }}
+                    initialPosition={{ x: 30, y: 60 }}
+                    initialSize={{ width: window.innerWidth - 60, height: window.innerHeight - 154 }}
                     isActive={true}
                     onClose={onClose}
                 >
@@ -228,11 +228,13 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
     }
 
     // Floating/windowed apps render inside GlassWindow
-    const defaultSize = manifest.window?.defaultSize ?? { width: 900, height: 600 };
-    const maxWidth = window.innerWidth * 0.9;
-    const maxHeight = window.innerHeight * 0.85;
-    const width = Math.min(defaultSize.width, maxWidth);
-    const height = Math.min(defaultSize.height, maxHeight);
+    // Size to fill available space: below menu bar (30px), 30px from left/right edges,
+    // and 30px above the dock (dock is 64px tall)
+    const MENU_BAR_HEIGHT = 30;
+    const DOCK_HEIGHT = 64;
+    const EDGE_MARGIN = 30;
+    const width = window.innerWidth - (EDGE_MARGIN * 2);
+    const height = window.innerHeight - MENU_BAR_HEIGHT - DOCK_HEIGHT - (EDGE_MARGIN * 2);
 
     return (
         <motion.div
@@ -247,8 +249,8 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
                 id={`${appId}-window`}
                 title={manifest.window?.title ?? manifest.name}
                 initialPosition={{
-                    x: (window.innerWidth - width) / 2,
-                    y: (window.innerHeight - height) / 2 - 20
+                    x: EDGE_MARGIN,
+                    y: MENU_BAR_HEIGHT + EDGE_MARGIN
                 }}
                 initialSize={{ width, height }}
                 isActive={true}
