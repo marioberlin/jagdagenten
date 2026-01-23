@@ -10,17 +10,25 @@ declare global {
                 };
             };
             picker?: {
-                ViewId: { SPREADSHEETS: string };
+                ViewId: { SPREADSHEETS: string; DOCS: string; PRESENTATIONS: string };
                 Feature: { NAV_HIDDEN: string; MULTISELECT_ENABLED: string };
                 Action: { PICKED: string; CANCEL: string };
                 Response: { ACTION: string; DOCUMENTS: string; DOC: string };
-                Document: { ID: string; NAME: string; URL: string };
+                Document: { ID: string; NAME: string; URL: string; MIME_TYPE: string };
                 View: new (viewId: string) => any;
+                DocsView: new () => DocsViewInstance;
                 PickerBuilder: new () => any;
             };
         };
         gapi: any;
     }
+}
+
+interface DocsViewInstance {
+    setIncludeFolders: (include: boolean) => DocsViewInstance;
+    setSelectFolderEnabled: (enabled: boolean) => DocsViewInstance;
+    setStarred: (starred: boolean) => DocsViewInstance;
+    setMimeTypes: (mimeTypes: string) => DocsViewInstance;
 }
 
 interface TokenClientConfig {

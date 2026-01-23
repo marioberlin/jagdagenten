@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
-import { FileSpreadsheet, FileText, Presentation, Clock, Cloud, Loader2, Sparkles, LogIn, LogOut, FolderOpen, Plus, ExternalLink } from 'lucide-react';
+import { FileSpreadsheet, FileText, Presentation, Cloud, Loader2, Sparkles, LogIn, LogOut, FolderOpen, Plus, ExternalLink } from 'lucide-react';
 
 type DriveFileType = 'spreadsheet' | 'document' | 'presentation';
+type TabFilter = 'all' | DriveFileType;
 
 interface ParsedFile {
     id: string;
@@ -25,11 +26,18 @@ const MIME_TYPES: Record<DriveFileType, string> = {
     presentation: 'application/vnd.google-apps.presentation',
 };
 
-const FILE_TYPE_CONFIG: Record<DriveFileType, { label: string; color: string; bgColor: string; urlBase: string }> = {
-    spreadsheet: { label: 'Sheets', color: 'text-green-400', bgColor: 'bg-green-500/10', urlBase: 'https://docs.google.com/spreadsheets/d/' },
-    document: { label: 'Docs', color: 'text-blue-400', bgColor: 'bg-blue-500/10', urlBase: 'https://docs.google.com/document/d/' },
-    presentation: { label: 'Slides', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', urlBase: 'https://docs.google.com/presentation/d/' },
+const FILE_TYPE_CONFIG: Record<DriveFileType, { label: string; singular: string; color: string; bgColor: string; urlBase: string }> = {
+    spreadsheet: { label: 'Sheets', singular: 'Sheet', color: 'text-green-400', bgColor: 'bg-green-500/10', urlBase: 'https://docs.google.com/spreadsheets/d/' },
+    document: { label: 'Docs', singular: 'Doc', color: 'text-blue-400', bgColor: 'bg-blue-500/10', urlBase: 'https://docs.google.com/document/d/' },
+    presentation: { label: 'Slides', singular: 'Slide', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', urlBase: 'https://docs.google.com/presentation/d/' },
 };
+
+const TABS: { id: TabFilter; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'document', label: 'Docs' },
+    { id: 'spreadsheet', label: 'Sheets' },
+    { id: 'presentation', label: 'Slides' },
+];
 
 function getFileType(mimeType?: string): DriveFileType {
     if (mimeType?.includes('spreadsheet')) return 'spreadsheet';
@@ -63,6 +71,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
     const [isLoadingFiles, setIsLoadingFiles] = useState(false);
     const [creatingType, setCreatingType] = useState<DriveFileType | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<TabFilter>('all');
 
     // Fetch recent Docs, Sheets, and Slides from Google Drive
     useEffect(() => {
@@ -108,6 +117,11 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
         fetchRecentFiles();
     }, [isAuthenticated, accessToken]);
 
+    const filteredFiles = useMemo(() => {
+        if (activeTab === 'all') return recentFiles;
+        return recentFiles.filter(f => f.fileType === activeTab);
+    }, [recentFiles, activeTab]);
+
     const handleFileSelect = (file: ParsedFile) => {
         if (onFileOpen) {
             onFileOpen(file);
@@ -135,7 +149,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
 
             const config = FILE_TYPE_CONFIG[type];
             const metadata = {
-                name: `Untitled ${config.label.slice(0, -1)} - ${new Date().toLocaleDateString()}`,
+                name: `Untitled ${config.singular} - ${new Date().toLocaleDateString()}`,
                 mimeType: MIME_TYPES[type],
             };
 
@@ -253,7 +267,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                 >
                     <FolderOpen size={14} className="text-blue-400" />
-                    <span className="text-xs text-white/80">Open</span>
+                    <span className="text-xs text-white/80">Browse Drive</span>
                 </button>
                 <div className="w-px h-5 bg-white/10 flex-shrink-0" />
                 <button
@@ -313,34 +327,57 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                 </div>
             )}
 
-            {/* Recent files list */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                {/* Section header */}
-                <div className="flex items-center gap-2 px-4 py-2 text-[10px] font-medium text-white/40 uppercase tracking-wider flex-shrink-0">
-                    <Clock size={10} />
-                    Recent Files
-                </div>
+            {/* Tabs */}
+            <div className="flex items-center gap-0.5 px-4 pt-2 pb-1 flex-shrink-0">
+                {TABS.map(tab => {
+                    const isActive = activeTab === tab.id;
+                    const count = tab.id === 'all'
+                        ? recentFiles.length
+                        : recentFiles.filter(f => f.fileType === tab.id).length;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
+                                isActive
+                                    ? 'bg-white/10 text-white/90'
+                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                            }`}
+                        >
+                            {tab.label}
+                            {count > 0 && (
+                                <span className={`ml-1.5 text-[9px] ${isActive ? 'text-white/50' : 'text-white/25'}`}>
+                                    {count}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
 
-                {/* File list */}
+            {/* File list */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     {isLoadingFiles ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3">
                             <Loader2 size={20} className="animate-spin text-white/30" />
                             <p className="text-xs text-white/30">Loading files...</p>
                         </div>
-                    ) : recentFiles.length === 0 ? (
+                    ) : filteredFiles.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3 px-8">
                             <Sparkles size={20} className="text-white/15" />
                             <div className="text-center space-y-1">
-                                <p className="text-xs text-white/30">No recent files</p>
+                                <p className="text-xs text-white/30">
+                                    No {activeTab === 'all' ? 'recent' : FILE_TYPE_CONFIG[activeTab as DriveFileType].label} files
+                                </p>
                                 <p className="text-[11px] text-white/20">
-                                    Open a file from Drive or create a new document to get started.
+                                    Open a file from Drive or create a new one to get started.
                                 </p>
                             </div>
                         </div>
                     ) : (
                         <div className="px-1">
-                            {recentFiles.map((file) => {
+                            {filteredFiles.map((file) => {
                                 const type = file.fileType || getFileType(file.mimeType);
                                 const config = FILE_TYPE_CONFIG[type];
                                 return (
@@ -370,7 +407,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
             {/* Footer status */}
             <div className="flex items-center justify-between px-4 py-1.5 border-t border-white/10 flex-shrink-0">
                 <span className="text-[10px] text-white/30">
-                    {recentFiles.length} {recentFiles.length === 1 ? 'file' : 'files'}
+                    {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
                 </span>
                 <span className="text-[10px] text-white/20">Google Drive</span>
             </div>
