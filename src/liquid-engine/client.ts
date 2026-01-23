@@ -3,6 +3,7 @@ import { parsePartialJson } from './parser';
 import { ReadableContext, ContextStrategy } from './strategies/definitions';
 import { FlatContextStrategy } from './strategies/flat';
 import { TreeContextStrategy } from './strategies/tree';
+import type { ClientCompiledContext } from '@/utils/compileContext';
 
 // Re-export for consumers
 export type { ReadableContext } from './strategies/definitions';
@@ -44,6 +45,9 @@ export class LiquidClient {
 
     // NEW: Action registry for AI-invokable functions
     private actions: Map<string, ActionDefinition> = new Map();
+
+    // Compiled persistent context from resource store
+    private compiledContext: ClientCompiledContext | null = null;
 
     constructor() {
         // Default to Flat strategy (backward compatibility)
@@ -160,10 +164,53 @@ export class LiquidClient {
     }
 
     /**
-     * Build a system prompt section using the active strategy
+     * Build a system prompt section using the active strategy.
+     * Merges ephemeral (component-registered) contexts with compiled persistent contexts.
      */
     public buildContextPrompt(): string {
-        return this.strategy.buildPrompt(this.readableContexts, this.activeFocusId);
+        const ephemeral = this.strategy.buildPrompt(this.readableContexts, this.activeFocusId);
+
+        // If we have compiled persistent context, merge it before ephemeral
+        if (this.compiledContext?.systemPrompt) {
+            return `${this.compiledContext.systemPrompt}\n\n${ephemeral}`;
+        }
+
+        return ephemeral;
+    }
+
+    /**
+     * Set the compiled persistent context from the resource store.
+     * Called by useLiquidAssistant after client-side or server-side compilation.
+     */
+    public setCompiledContext(context: ClientCompiledContext | null): void {
+        this.compiledContext = context;
+    }
+
+    /**
+     * Get the current compiled context (for use in chat flows).
+     */
+    public getCompiledContext(): ClientCompiledContext | null {
+        return this.compiledContext;
+    }
+
+    /**
+     * Get merged function declarations: compiled skill tools + registered actions.
+     */
+    public buildMergedFunctionDeclarations(): object[] {
+        const actionDecls = this.buildFunctionDeclarations();
+        const compiledTools = this.compiledContext?.tools?.map(t => ({
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters,
+        })) || [];
+        return [...compiledTools, ...actionDecls];
+    }
+
+    /**
+     * Get RAG store IDs from compiled context for FileSearch grounding.
+     */
+    public getRAGStoreIds(): string[] {
+        return this.compiledContext?.ragStoreIds || [];
     }
 
     // ============ Action Registry API ============

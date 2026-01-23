@@ -1,7 +1,8 @@
 /**
  * EditMenu
- * 
- * Standard Edit menu with clipboard operations and
+ *
+ * Standard Edit menu with clipboard operations,
+ * resource clipboard for AI resources, and
  * "Paste As Context" submenu for AI agent context blocks.
  */
 import { useMemo } from 'react';
@@ -19,11 +20,18 @@ import {
     Briefcase,
     FileText,
     CreditCard,
-    Receipt
+    Receipt,
+    Package,
 } from 'lucide-react';
 import type { MenuItemDef } from '@/context/MenuBarContext';
+import { useResourceStore } from '@/stores/resourceStore';
+import { useFocusedTarget } from '@/hooks/useFocusedTarget';
 
 export function useEditMenuItems(): MenuItemDef[] {
+    const clipboard = useResourceStore((s) => s.clipboard);
+    const { pasteResource, clearClipboard } = useResourceStore();
+    const target = useFocusedTarget();
+
     return useMemo<MenuItemDef[]>(() => [
         {
             id: 'cut',
@@ -53,12 +61,35 @@ export function useEditMenuItems(): MenuItemDef[] {
             },
         },
         { id: 'sep-1', label: '', dividerAfter: true },
+
+        // Resource Clipboard
+        {
+            id: 'paste-resource',
+            label: clipboard
+                ? `Paste Resource: ${clipboard.resource.name}`
+                : 'Paste Resource',
+            icon: Package,
+            shortcut: '⌘⇧V',
+            disabled: !clipboard,
+            action: () => {
+                if (clipboard) {
+                    pasteResource(target.ownerType, target.ownerId);
+                }
+            },
+        },
+        ...(clipboard ? [{
+            id: 'clear-clipboard',
+            label: 'Clear Resource Clipboard',
+            action: () => clearClipboard(),
+        }] : []),
+        { id: 'sep-2', label: '', dividerAfter: true },
+
+        // Paste As Context
         {
             id: 'paste-as-context',
             label: 'Paste As Context',
             icon: ClipboardList,
             submenu: [
-                // Private / Personal context blocks
                 {
                     id: 'personal-profile',
                     label: 'Personal Profile',
@@ -90,7 +121,6 @@ export function useEditMenuItems(): MenuItemDef[] {
                     action: () => console.log('Paste: Bank Details'),
                 },
                 { id: 'sep-context-1', label: '', dividerAfter: true },
-                // Corporate / Business context blocks
                 {
                     id: 'company-profile',
                     label: 'Company Profile',
@@ -123,5 +153,5 @@ export function useEditMenuItems(): MenuItemDef[] {
                 },
             ],
         },
-    ], []);
+    ], [clipboard, pasteResource, clearClipboard, target]);
 }

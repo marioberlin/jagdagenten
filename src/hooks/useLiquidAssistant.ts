@@ -5,7 +5,11 @@
  * Provides chat functionality with the Gemini-powered knowledge agent.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useResourceStore } from '@/stores/resourceStore';
+import { compileContext, type ClientCompiledContext } from '@/utils/compileContext';
+import { useFocusedTarget } from '@/hooks/useFocusedTarget';
+import { useOptionalLiquidClient } from '@/liquid-engine/react';
 
 export interface Message {
     id: string;
@@ -37,6 +41,21 @@ export function useLiquidAssistant(): UseLiquidAssistantReturn {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const target = useFocusedTarget();
+    const compiledRef = useRef<ClientCompiledContext | null>(null);
+    const liquidClient = useOptionalLiquidClient();
+
+    // Sync compiled context to LiquidClient whenever target changes
+    useEffect(() => {
+        const cached = useResourceStore.getState().targetCache[`${target.ownerType}:${target.ownerId}`] || [];
+        if (cached.length > 0) {
+            const compiled = compileContext(cached, { tokenBudget: 8000 });
+            compiledRef.current = compiled;
+            liquidClient?.setCompiledContext(compiled);
+        } else {
+            liquidClient?.setCompiledContext(null);
+        }
+    }, [target.ownerType, target.ownerId, liquidClient]);
 
     const sendMessage = useCallback(async (prompt: string) => {
         if (!prompt.trim() || isLoading) return;
@@ -53,10 +72,37 @@ export function useLiquidAssistant(): UseLiquidAssistantReturn {
         setError(null);
 
         try {
+            // Client-side context compilation (fast path)
+            const cached = useResourceStore.getState().targetCache[`${target.ownerType}:${target.ownerId}`] || [];
+            if (cached.length > 0) {
+                compiledRef.current = compileContext(cached, { tokenBudget: 8000 });
+            }
+
+            // Also trigger server-side canonical compilation (async, updates for next message)
+            fetch(`${API_BASE}/api/resources/compile/${target.ownerType}/${target.ownerId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentQuery: prompt, tokenBudget: 8000 }),
+            }).then(async (res) => {
+                if (res.ok) {
+                    const serverCompiled = await res.json();
+                    // Update compiled context with richer server result for next message
+                    if (serverCompiled.systemPrompt) {
+                        compiledRef.current = serverCompiled;
+                        liquidClient?.setCompiledContext(serverCompiled);
+                    }
+                }
+            }).catch(() => { /* non-blocking */ });
+
             const response = await fetch(`${API_BASE}/agents/project-assistant/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({
+                    prompt,
+                    context: compiledRef.current?.systemPrompt || undefined,
+                    tools: compiledRef.current?.tools || undefined,
+                    ragStoreIds: compiledRef.current?.ragStoreIds || undefined,
+                }),
             });
 
             if (!response.ok) {

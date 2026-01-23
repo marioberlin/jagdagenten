@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
-import type { AITarget, ResourceType, ResourceItem } from './types';
-import { RESOURCE_TYPES, getStoredItems, setStoredItems } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Pin, PinOff, Edit3 } from 'lucide-react';
+import type { AITarget, ResourceType } from './types';
+import { RESOURCE_TYPES } from './types';
+import { useResourceStore, type AIResource } from '@/stores/resourceStore';
+import { ShareDialog } from './ShareDialog';
+import { PromptEditor } from './editors/PromptEditor';
+import { MemoryEditor } from './editors/MemoryEditor';
+import { ContextEditor } from './editors/ContextEditor';
+import { KnowledgeEditor } from './editors/KnowledgeEditor';
+import { ArtifactEditor } from './editors/ArtifactEditor';
+import { SkillEditor } from './editors/SkillEditor';
+import { MCPEditor } from './editors/MCPEditor';
 
 interface AIExplorerEditorProps {
   resource: ResourceType;
@@ -9,51 +18,152 @@ interface AIExplorerEditorProps {
   onBack: () => void;
 }
 
+/** Map legacy plural resource types to API resource types */
+function toApiType(resource: ResourceType): string {
+  if (resource === 'prompts') return 'prompt';
+  if (resource === 'artifacts') return 'artifact';
+  if (resource === 'skills') return 'skill';
+  return resource;
+}
+
+/** Render the type-specific editor for a resource */
+function TypeEditor({ resource, onSave }: { resource: AIResource; onSave: (updates: Partial<AIResource>) => Promise<void> }) {
+  const type = resource.resourceType || (resource.typeMetadata as any)?.type;
+  switch (type) {
+    case 'prompt':
+      return <PromptEditor resource={resource} onSave={onSave} />;
+    case 'memory':
+      return <MemoryEditor resource={resource} onSave={onSave} />;
+    case 'context':
+      return <ContextEditor resource={resource} onSave={onSave} />;
+    case 'knowledge':
+      return <KnowledgeEditor resource={resource} onSave={onSave} />;
+    case 'artifact':
+      return <ArtifactEditor resource={resource} onSave={onSave} />;
+    case 'skill':
+      return <SkillEditor resource={resource} onSave={onSave} />;
+    case 'mcp':
+      return <MCPEditor resource={resource} onSave={onSave} />;
+    default:
+      return null;
+  }
+}
+
 export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
   resource,
   target,
   onBack,
 }) => {
-  const [items, setItems] = useState<ResourceItem[]>([]);
+  const [items, setItems] = useState<AIResource[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [shareItem, setShareItem] = useState<AIResource | null>(null);
+  const [expandedEditor, setExpandedEditor] = useState<string | null>(null);
+
+  const { createResource, updateResource, deleteResource, copyResource } = useResourceStore();
 
   const resourceConfig = RESOURCE_TYPES.find(r => r.id === resource);
+  const apiType = toApiType(resource);
+  const ownerType = target.type === 'app' ? 'app' : 'agent';
+
+  // Fetch resources for this target + type
+  const fetchItems = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        type: apiType,
+        ownerType,
+        ownerId: target.id,
+        active: 'true',
+      });
+      const response = await fetch(`/api/resources/?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data.resources || []);
+      }
+    } catch (err) {
+      console.error('[AIExplorer] Error fetching resources:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiType, ownerType, target.id]);
 
   useEffect(() => {
-    setItems(getStoredItems(resource, target));
-  }, [resource, target]);
+    fetchItems();
+  }, [fetchItems]);
 
-  const saveItems = (newItems: ResourceItem[]) => {
-    setItems(newItems);
-    setStoredItems(resource, target, newItems);
-  };
-
-  const handleAdd = () => {
-    const newItem: ResourceItem = {
-      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-      content: '',
-      addedAt: Date.now(),
-    };
-    const newItems = [...items, newItem];
-    saveItems(newItems);
-    setEditingId(newItem.id);
-  };
-
-  const handleDelete = (id: string) => {
-    saveItems(items.filter(item => item.id !== id));
-    if (editingId === id) setEditingId(null);
-  };
-
-  const handleUpdate = (id: string, content: string) => {
-    saveItems(items.map(item => item.id === id ? { ...item, content } : item));
-  };
-
-  const handleSave = (id: string) => {
-    setEditingId(null);
-    const item = items.find(i => i.id === id);
-    if (item && !item.content.trim()) {
-      saveItems(items.filter(i => i.id !== id));
+  const handleAdd = async () => {
+    try {
+      const created = await createResource({
+        resourceType: apiType as any,
+        ownerType: ownerType as any,
+        ownerId: target.id,
+        name: `New ${resourceConfig?.label || 'Resource'}`,
+        content: '',
+        tags: [],
+        provenance: 'user_input',
+      });
+      setItems(prev => [created, ...prev]);
+      setEditingId(created.id);
+      setEditContent('');
+      setExpandedEditor(created.id);
+    } catch (err) {
+      console.error('[AIExplorer] Error creating resource:', err);
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteResource(id);
+      setItems(prev => prev.filter(item => item.id !== id));
+      if (editingId === id) setEditingId(null);
+      if (expandedEditor === id) setExpandedEditor(null);
+    } catch (err) {
+      console.error('[AIExplorer] Error deleting resource:', err);
+    }
+  };
+
+  const handleStartEdit = (item: AIResource) => {
+    setEditingId(item.id);
+    setEditContent(item.content || '');
+  };
+
+  const handleSave = async (id: string) => {
+    setEditingId(null);
+    if (!editContent.trim()) {
+      await handleDelete(id);
+      return;
+    }
+    try {
+      const updated = await updateResource(id, { content: editContent });
+      setItems(prev => prev.map(item => item.id === id ? updated : item));
+    } catch (err) {
+      console.error('[AIExplorer] Error updating resource:', err);
+    }
+  };
+
+  const handleTypedSave = async (id: string, updates: Partial<AIResource>) => {
+    try {
+      const updated = await updateResource(id, updates);
+      setItems(prev => prev.map(item => item.id === id ? updated : item));
+      setExpandedEditor(null);
+    } catch (err) {
+      console.error('[AIExplorer] Error saving typed resource:', err);
+    }
+  };
+
+  const handleTogglePin = async (item: AIResource) => {
+    try {
+      const updated = await updateResource(item.id, { isPinned: !item.isPinned } as any);
+      setItems(prev => prev.map(i => i.id === item.id ? updated : i));
+    } catch (err) {
+      console.error('[AIExplorer] Error toggling pin:', err);
+    }
+  };
+
+  const handleCopy = (item: AIResource) => {
+    copyResource(item);
   };
 
   return (
@@ -76,11 +186,23 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
             {target.type === 'app' ? 'App' : 'A2A Agent'} &middot; {items.length} {items.length === 1 ? 'item' : 'items'}
           </p>
         </div>
+        <button
+          onClick={() => items.length > 0 && setShareItem(items[0])}
+          className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-white/50 hover:text-white/80 transition-all"
+          title="Share resources"
+        >
+          <Share2 size={10} />
+          Share
+        </button>
       </div>
 
       {/* Items List */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {items.length === 0 && !editingId ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-xs text-white/30 animate-pulse">Loading...</p>
+          </div>
+        ) : items.length === 0 && !editingId ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
             <p className="text-sm text-white/30">No {resourceConfig?.label?.toLowerCase()} yet</p>
             <p className="text-[11px] text-white/20 max-w-[200px]">
@@ -90,23 +212,40 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
         ) : (
           items.map(item => {
             const isEditing = editingId === item.id;
+            const isExpanded = expandedEditor === item.id;
             return (
               <div
                 key={item.id}
                 className={'rounded-lg border transition-colors ' + (
-                  isEditing
+                  isEditing || isExpanded
                     ? 'border-blue-500/30 bg-blue-500/5'
                     : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
                 )}
               >
-                {isEditing ? (
+                {isExpanded ? (
+                  <div>
+                    <div className="flex items-center justify-between px-3 pt-2">
+                      <p className="text-[11px] font-medium text-white/60">{item.name}</p>
+                      <button
+                        onClick={() => setExpandedEditor(null)}
+                        className="text-[9px] text-white/30 hover:text-white/60"
+                      >
+                        Collapse
+                      </button>
+                    </div>
+                    <TypeEditor
+                      resource={item}
+                      onSave={(updates) => handleTypedSave(item.id, updates)}
+                    />
+                  </div>
+                ) : isEditing ? (
                   <div className="p-3">
                     <textarea
                       autoFocus
-                      value={item.content}
-                      onChange={(e) => handleUpdate(item.id, e.target.value)}
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Escape') handleSave(item.id);
+                        if (e.key === 'Escape') { setEditingId(null); }
                         if (e.key === 'Enter' && e.metaKey) handleSave(item.id);
                       }}
                       placeholder={'Enter ' + (resourceConfig?.label?.toLowerCase() || 'resource') + ' content...'}
@@ -126,27 +265,59 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
                 ) : (
                   <div className="flex items-start gap-2 p-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white/70 whitespace-pre-wrap break-words">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[11px] font-medium text-white/60 truncate">{item.name}</p>
+                        {item.isPinned && <Pin size={9} className="text-amber-400/60" />}
+                      </div>
+                      <p className="text-xs text-white/70 whitespace-pre-wrap break-words mt-0.5">
                         {item.content || <span className="text-white/25 italic">Empty</span>}
                       </p>
                       <p className="text-[9px] text-white/20 mt-1.5">
-                        Added {new Date(item.addedAt).toLocaleDateString()}
+                        v{item.version} &middot; {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
                       <button
-                        onClick={() => setEditingId(item.id)}
-                        className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
-                        title="Edit"
+                        onClick={() => setExpandedEditor(item.id)}
+                        className="p-1 rounded text-white/30 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                        title="Type Editor"
                       >
-                        <Save size={12} />
+                        <Edit3 size={11} />
+                      </button>
+                      <button
+                        onClick={() => handleTogglePin(item)}
+                        className="p-1 rounded text-white/30 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        title={item.isPinned ? 'Unpin' : 'Pin'}
+                      >
+                        {item.isPinned ? <PinOff size={11} /> : <Pin size={11} />}
+                      </button>
+                      <button
+                        onClick={() => handleCopy(item)}
+                        className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                        title="Copy"
+                      >
+                        <Copy size={11} />
+                      </button>
+                      <button
+                        onClick={() => setShareItem(item)}
+                        className="p-1 rounded text-white/30 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                        title="Share"
+                      >
+                        <Share2 size={11} />
+                      </button>
+                      <button
+                        onClick={() => handleStartEdit(item)}
+                        className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                        title="Edit Content"
+                      >
+                        <Save size={11} />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                         title="Delete"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={11} />
                       </button>
                     </div>
                   </div>
@@ -170,6 +341,14 @@ export const AIExplorerEditor: React.FC<AIExplorerEditorProps> = ({
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
       </div>
+
+      {/* Share Dialog */}
+      {shareItem && (
+        <ShareDialog
+          resource={shareItem}
+          onClose={() => setShareItem(null)}
+        />
+      )}
     </div>
   );
 };

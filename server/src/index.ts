@@ -28,6 +28,7 @@ import { icloudRoutes } from './routes/icloud.js';
 import { ibirdRoutes } from './routes/ibird/index.js';
 import { fileSearchRoutes } from './routes/fileSearch.js';
 import { appRoutes } from './registry/app-routes.js';
+import { registerResourceRoutes, MemoryDecayService } from './resources/index.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -255,6 +256,27 @@ async function startServer() {
             componentLoggers.http.info('Initialized A2A Task Store for tracking');
         } catch (error) {
             componentLoggers.http.error({ error: (error as Error).message }, 'Failed to initialize A2A Task Store');
+        }
+    }
+
+    // Start Memory Decay background job (runs every hour)
+    if (process.env.DATABASE_URL) {
+        try {
+            const { resourceStore } = await import('./resources/routes.js');
+            const decayService = new MemoryDecayService(resourceStore);
+            setInterval(async () => {
+                try {
+                    const result = await decayService.applyDecay();
+                    if (result.archived > 0 || result.decayed > 0) {
+                        componentLoggers.http.info(result, '[MemoryDecay] Cycle complete');
+                    }
+                } catch (err) {
+                    componentLoggers.http.error({ error: (err as Error).message }, '[MemoryDecay] Error');
+                }
+            }, 60 * 60 * 1000); // Every hour
+            componentLoggers.http.info('[MemoryDecay] Background job scheduled (hourly)');
+        } catch (err) {
+            componentLoggers.http.warn({ error: (err as Error).message }, '[MemoryDecay] Failed to start');
         }
     }
 
@@ -631,6 +653,9 @@ async function startServer() {
 
         // Trading REST API (Phase 5)
         .use(createTradingRestApi())
+
+        // AI Resource Management Routes
+        .use(registerResourceRoutes)
 
         // App Store Registry API
         .use(appRoutes)
