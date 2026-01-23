@@ -1,18 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { GlassButton } from '@/components/primitives/GlassButton';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
-import { FileSpreadsheet, Clock, Cloud, Loader2, Sparkles, LogIn, LogOut, FolderOpen, Plus, ExternalLink } from 'lucide-react';
+import { FileSpreadsheet, FileText, Presentation, Clock, Cloud, Loader2, Sparkles, LogIn, LogOut, FolderOpen, Plus, ExternalLink } from 'lucide-react';
+
+type DriveFileType = 'spreadsheet' | 'document' | 'presentation';
 
 interface ParsedFile {
     id: string;
     name: string;
     url: string;
+    mimeType?: string;
+    fileType?: DriveFileType;
     lastOpened?: number;
 }
 
 interface GlassFinderAppProps {
     onClose?: () => void;
     onFileOpen?: (file: ParsedFile) => void;
+}
+
+const MIME_TYPES: Record<DriveFileType, string> = {
+    spreadsheet: 'application/vnd.google-apps.spreadsheet',
+    document: 'application/vnd.google-apps.document',
+    presentation: 'application/vnd.google-apps.presentation',
+};
+
+const FILE_TYPE_CONFIG: Record<DriveFileType, { label: string; color: string; bgColor: string; urlBase: string }> = {
+    spreadsheet: { label: 'Sheets', color: 'text-green-400', bgColor: 'bg-green-500/10', urlBase: 'https://docs.google.com/spreadsheets/d/' },
+    document: { label: 'Docs', color: 'text-blue-400', bgColor: 'bg-blue-500/10', urlBase: 'https://docs.google.com/document/d/' },
+    presentation: { label: 'Slides', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', urlBase: 'https://docs.google.com/presentation/d/' },
+};
+
+function getFileType(mimeType?: string): DriveFileType {
+    if (mimeType?.includes('spreadsheet')) return 'spreadsheet';
+    if (mimeType?.includes('presentation')) return 'presentation';
+    return 'document';
+}
+
+function FileIcon({ type, size = 16 }: { type: DriveFileType; size?: number }) {
+    switch (type) {
+        case 'spreadsheet': return <FileSpreadsheet size={size} />;
+        case 'presentation': return <Presentation size={size} />;
+        default: return <FileText size={size} />;
+    }
 }
 
 export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
@@ -31,33 +61,42 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
     } = useGoogleDrive();
     const [recentFiles, setRecentFiles] = useState<ParsedFile[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
+    const [creatingType, setCreatingType] = useState<DriveFileType | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
 
-    // Fetch recent spreadsheets from Google Drive when authenticated
+    // Fetch recent Docs, Sheets, and Slides from Google Drive
     useEffect(() => {
         if (!isAuthenticated || !accessToken) return;
 
         async function fetchRecentFiles() {
             setIsLoadingFiles(true);
             try {
+                const mimeQuery = Object.values(MIME_TYPES)
+                    .map(m => `mimeType='${m}'`)
+                    .join(' or ');
                 const params = new URLSearchParams({
-                    q: "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",
+                    q: `(${mimeQuery}) and trashed=false`,
                     orderBy: 'viewedByMeTime desc',
-                    pageSize: '20',
-                    fields: 'files(id,name,viewedByMeTime,modifiedTime)',
+                    pageSize: '30',
+                    fields: 'files(id,name,mimeType,viewedByMeTime,modifiedTime)',
                 });
                 const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
                     headers: { 'Authorization': `Bearer ${accessToken}` },
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    const files: ParsedFile[] = (data.files || []).map((f: any) => ({
-                        id: f.id,
-                        name: f.name,
-                        url: `https://docs.google.com/spreadsheets/d/${f.id}/edit`,
-                        lastOpened: f.viewedByMeTime ? new Date(f.viewedByMeTime).getTime() : undefined,
-                    }));
+                    const files: ParsedFile[] = (data.files || []).map((f: any) => {
+                        const fileType = getFileType(f.mimeType);
+                        const config = FILE_TYPE_CONFIG[fileType];
+                        return {
+                            id: f.id,
+                            name: f.name,
+                            mimeType: f.mimeType,
+                            fileType,
+                            url: `${config.urlBase}${f.id}/edit`,
+                            lastOpened: f.viewedByMeTime ? new Date(f.viewedByMeTime).getTime() : undefined,
+                        };
+                    });
                     setRecentFiles(files);
                 }
             } catch (e) {
@@ -69,18 +108,12 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
         fetchRecentFiles();
     }, [isAuthenticated, accessToken]);
 
-    const handleFileSelect = (file: { id: string, name: string, url: string }) => {
-        const newFile: ParsedFile = { ...file, lastOpened: Date.now() };
-
-        const updated = [newFile, ...recentFiles.filter(f => f.id !== file.id)].slice(0, 20);
-        setRecentFiles(updated);
-
+    const handleFileSelect = (file: ParsedFile) => {
         if (onFileOpen) {
-            onFileOpen(newFile);
+            onFileOpen(file);
         } else {
-            window.open(newFile.url, '_blank');
+            window.open(file.url, '_blank');
         }
-
         if (onClose) onClose();
     };
 
@@ -91,8 +124,8 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
         });
     };
 
-    const handleCreateNew = async () => {
-        setIsCreating(true);
+    const handleCreateNew = async (type: DriveFileType) => {
+        setCreatingType(type);
         setCreateError(null);
         try {
             if (!isAuthenticated || !accessToken) {
@@ -100,58 +133,45 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                 throw new Error("Please sign in to Google Drive first.");
             }
 
-            const userEmail = prompt('Enter your Google Email (to ensure template access):', 'user@example.com');
-            if (!userEmail) {
-                setIsCreating(false);
-                return;
-            }
-
-            try {
-                const shareResponse = await fetch('http://localhost:3000/api/v1/sheets/share-template', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: userEmail })
-                });
-                if (!shareResponse.ok) console.warn("Share template warning:", await shareResponse.text());
-            } catch (e) {
-                console.warn("Share template failed, proceeding anyway...", e);
-            }
-
-            const templateId = import.meta.env.VITE_GOOGLE_MASTER_TEMPLATE_ID;
-            if (!templateId) throw new Error("Template ID not configured in environment");
-
+            const config = FILE_TYPE_CONFIG[type];
             const metadata = {
-                name: `LiquidCrypto Smart Sheet - ${new Date().toLocaleDateString()}`,
-                mimeType: 'application/vnd.google-apps.spreadsheet'
+                name: `Untitled ${config.label.slice(0, -1)} - ${new Date().toLocaleDateString()}`,
+                mimeType: MIME_TYPES[type],
             };
 
-            const copyRes = await fetch(`https://www.googleapis.com/drive/v3/files/${templateId}/copy`, {
+            const res = await fetch('https://www.googleapis.com/drive/v3/files', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(metadata)
+                body: JSON.stringify(metadata),
             });
 
-            if (!copyRes.ok) {
-                const errData = await copyRes.json();
-                throw new Error(errData.error?.message || "Failed to copy file to your Drive");
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error?.message || `Failed to create ${config.label}`);
             }
 
-            const newFile = await copyRes.json();
-
-            handleFileSelect({
+            const newFile = await res.json();
+            const created: ParsedFile = {
                 id: newFile.id,
                 name: newFile.name,
-                url: `https://docs.google.com/spreadsheets/d/${newFile.id}/edit`
-            });
+                fileType: type,
+                mimeType: MIME_TYPES[type],
+                url: `${config.urlBase}${newFile.id}/edit`,
+                lastOpened: Date.now(),
+            };
+
+            // Open immediately and prepend to list
+            setRecentFiles(prev => [created, ...prev]);
+            window.open(created.url, '_blank');
 
         } catch (err: any) {
             console.error('Create failed', err);
-            setCreateError(err.message || 'Failed to create sheet');
+            setCreateError(err.message || 'Failed to create file');
         } finally {
-            setIsCreating(false);
+            setCreatingType(null);
         }
     };
 
@@ -179,7 +199,7 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                     <div className="text-center space-y-2">
                         <h3 className="text-sm font-medium text-white/80">Connect to Google Drive</h3>
                         <p className="text-xs text-white/40 max-w-[240px]">
-                            Sign in to browse files, open spreadsheets, and create new sheets from templates.
+                            Sign in to browse files, open spreadsheets, docs, and presentations.
                         </p>
                     </div>
                     <GlassButton
@@ -226,28 +246,54 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
             </div>
 
             {/* Actions row */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 flex-shrink-0">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 flex-shrink-0 overflow-x-auto">
                 <button
                     onClick={handleOpenPicker}
                     disabled={!isApiLoaded}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                 >
                     <FolderOpen size={14} className="text-blue-400" />
-                    <span className="text-xs text-white/80">Open from Drive</span>
+                    <span className="text-xs text-white/80">Open</span>
+                </button>
+                <div className="w-px h-5 bg-white/10 flex-shrink-0" />
+                <button
+                    onClick={() => handleCreateNew('document')}
+                    disabled={creatingType !== null}
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                    title="New Google Doc"
+                >
+                    {creatingType === 'document' ? (
+                        <Loader2 size={13} className="animate-spin text-blue-400" />
+                    ) : (
+                        <FileText size={13} className="text-blue-400" />
+                    )}
+                    <Plus size={10} className="text-white/50" />
                 </button>
                 <button
-                    onClick={handleCreateNew}
-                    disabled={isCreating}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => handleCreateNew('spreadsheet')}
+                    disabled={creatingType !== null}
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                    title="New Google Sheet"
                 >
-                    {isCreating ? (
-                        <Loader2 size={14} className="animate-spin text-green-400" />
+                    {creatingType === 'spreadsheet' ? (
+                        <Loader2 size={13} className="animate-spin text-green-400" />
                     ) : (
-                        <Plus size={14} className="text-green-400" />
+                        <FileSpreadsheet size={13} className="text-green-400" />
                     )}
-                    <span className="text-xs text-white/80">
-                        {isCreating ? 'Creating...' : 'New Smart Sheet'}
-                    </span>
+                    <Plus size={10} className="text-white/50" />
+                </button>
+                <button
+                    onClick={() => handleCreateNew('presentation')}
+                    disabled={creatingType !== null}
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                    title="New Google Slides"
+                >
+                    {creatingType === 'presentation' ? (
+                        <Loader2 size={13} className="animate-spin text-yellow-400" />
+                    ) : (
+                        <Presentation size={13} className="text-yellow-400" />
+                    )}
+                    <Plus size={10} className="text-white/50" />
                 </button>
             </div>
 
@@ -288,30 +334,34 @@ export const GlassFinderApp: React.FC<GlassFinderAppProps> = ({
                             <div className="text-center space-y-1">
                                 <p className="text-xs text-white/30">No recent files</p>
                                 <p className="text-[11px] text-white/20">
-                                    Open a file from Drive or create a new sheet to get started.
+                                    Open a file from Drive or create a new document to get started.
                                 </p>
                             </div>
                         </div>
                     ) : (
                         <div className="px-1">
-                            {recentFiles.map((file) => (
-                                <button
-                                    key={file.id}
-                                    onClick={() => handleFileSelect(file)}
-                                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors rounded-md group"
-                                >
-                                    <div className="p-1.5 rounded-md bg-green-500/10 text-green-400 group-hover:bg-green-500/15 transition-colors flex-shrink-0">
-                                        <FileSpreadsheet size={16} />
-                                    </div>
-                                    <div className="min-w-0 flex-1 text-left">
-                                        <div className="text-xs font-medium text-white/80 truncate">{file.name}</div>
-                                        <div className="text-[10px] text-white/35 truncate">
-                                            Google Sheet {file.lastOpened ? `\u00b7 ${new Date(file.lastOpened).toLocaleDateString()}` : ''}
+                            {recentFiles.map((file) => {
+                                const type = file.fileType || getFileType(file.mimeType);
+                                const config = FILE_TYPE_CONFIG[type];
+                                return (
+                                    <button
+                                        key={file.id}
+                                        onClick={() => handleFileSelect(file)}
+                                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors rounded-md group"
+                                    >
+                                        <div className={`p-1.5 rounded-md ${config.bgColor} ${config.color} group-hover:opacity-80 transition-colors flex-shrink-0`}>
+                                            <FileIcon type={type} size={16} />
                                         </div>
-                                    </div>
-                                    <ExternalLink size={12} className="text-white/0 group-hover:text-white/30 transition-colors flex-shrink-0" />
-                                </button>
-                            ))}
+                                        <div className="min-w-0 flex-1 text-left">
+                                            <div className="text-xs font-medium text-white/80 truncate">{file.name}</div>
+                                            <div className="text-[10px] text-white/35 truncate">
+                                                {config.label} {file.lastOpened ? `\u00b7 ${new Date(file.lastOpened).toLocaleDateString()}` : ''}
+                                            </div>
+                                        </div>
+                                        <ExternalLink size={12} className="text-white/0 group-hover:text-white/30 transition-colors flex-shrink-0" />
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
