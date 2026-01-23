@@ -28,5 +28,5 @@
       ]
     }
   },
-  "capabilities": ["storage:local", "storage:indexeddb"]
+  "capabilities": ["storage:local", "storage:indexeddb", "network:http"]
 }
