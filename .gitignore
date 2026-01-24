@@ -158,3 +158,7 @@ trades.json
 
 # Antigravity skill symlinks (auto-generated)
 .agent/skills/
+
+# SSH Keys
+LiquidCryptooSSH
+LiquidCryptooSSH.pub
