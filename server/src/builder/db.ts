@@ -122,6 +122,13 @@ export async function listBuilds(limit = 50): Promise<BuildRecord[]> {
 }
 
 /**
+ * Delete a build by ID.
+ */
+export async function deleteBuild(buildId: string): Promise<void> {
+  await query('DELETE FROM builder_builds WHERE id = $1', [buildId]);
+}
+
+/**
  * List builds for a specific app.
  */
 export async function listBuildsByApp(appId: string): Promise<BuildRecord[]> {

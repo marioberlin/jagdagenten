@@ -340,6 +340,18 @@ export class BuilderOrchestrator {
   }
 
   /**
+   * Delete a build from memory and DB.
+   */
+  async deleteBuild(buildId: string): Promise<void> {
+    this.builds.delete(buildId);
+    try {
+      await builderDb.deleteBuild(buildId);
+    } catch (err) {
+      console.warn(`[Builder] DB delete failed for ${buildId}:`, err);
+    }
+  }
+
+  /**
    * Resume a build that was paused for review.
    */
   async resumeBuild(buildId: string): Promise<BuildRecord> {

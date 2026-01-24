@@ -79,6 +79,11 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { ...record, phase: record.phase };
   })
 
+  .delete('/builds/:id', async ({ params }) => {
+    await orchestrator.deleteBuild(params.id);
+    return { success: true };
+  })
+
   .post('/builds/:id/install', ({ params }) => {
     const result = orchestrator.installBuild(params.id);
     if (result.error) return { success: false, error: result.error };

@@ -51,6 +51,7 @@ interface BuilderState {
   loadHistory: () => Promise<void>;
   loadContext: (appId: string) => Promise<void>;
   loadAppDocs: (appId: string) => Promise<void>;
+  deleteBuild: (buildId: string) => Promise<void>;
   editApp: (appId: string) => void;
 }
 
@@ -193,6 +194,18 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
       set({ appDocs: data.docs || [] });
     } catch {
       set({ appDocs: [] });
+    }
+  },
+
+  deleteBuild: async (buildId) => {
+    try {
+      await fetch(`${API_BASE}/builds/${buildId}`, { method: 'DELETE' });
+      set((state) => ({
+        builds: state.builds.filter(b => b.id !== buildId),
+        activeBuildId: state.activeBuildId === buildId ? null : state.activeBuildId,
+      }));
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Delete failed' });
     }
   },
 
