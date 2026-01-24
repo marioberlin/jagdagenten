@@ -4,11 +4,11 @@
  * Table view of past builds with status and timestamps.
  */
 
-import { Check, X, Clock, Loader2 } from 'lucide-react';
+import { Check, X, Clock, Loader2, Pencil } from 'lucide-react';
 import { useBuilderStore } from '../store';
 
 export function BuildHistory() {
-  const { builds } = useBuilderStore();
+  const { builds, editApp } = useBuilderStore();
 
   if (builds.length === 0) {
     return (
@@ -25,7 +25,7 @@ export function BuildHistory() {
         {builds.map(build => (
           <div
             key={build.id}
-            className="flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5"
+            className="flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5 group"
           >
             <PhaseIcon phase={build.phase} />
             <div className="flex-1 min-w-0">
@@ -42,6 +42,16 @@ export function BuildHistory() {
             }`}>
               {build.phase}
             </div>
+            {build.phase === 'complete' && (
+              <button
+                onClick={() => editApp(build.appId)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-md text-xs text-accent hover:bg-accent/10"
+                title="Edit this app"
+              >
+                <Pencil size={12} />
+                Edit
+              </button>
+            )}
           </div>
         ))}
       </div>

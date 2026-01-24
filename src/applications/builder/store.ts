@@ -43,6 +43,7 @@ interface BuilderState {
   pollStatus: (buildId: string) => Promise<void>;
   loadHistory: () => Promise<void>;
   loadContext: (appId: string) => Promise<void>;
+  editApp: (appId: string) => void;
 }
 
 interface BuildOptions {
@@ -157,5 +158,9 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
     } catch {
       set({ contextFiles: [] });
     }
+  },
+
+  editApp: (appId) => {
+    set({ selectedAppId: appId, currentTab: 'edit' });
   },
 }));
