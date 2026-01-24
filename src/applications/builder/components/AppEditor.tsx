@@ -37,7 +37,7 @@ export function AppEditor({ appId }: AppEditorProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${API_BASE}/${appId}/edit`, {
+      const res = await fetch(`${API_BASE}/apps/${appId}/edit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: userMessage }),
@@ -75,7 +75,7 @@ export function AppEditor({ appId }: AppEditorProps) {
     if (!editBuildId) return;
     setIsSubmitting(true);
     try {
-      await fetch(`${API_BASE}/${editBuildId}/execute`, { method: 'POST' });
+      await fetch(`${API_BASE}/builds/${editBuildId}/execute`, { method: 'POST' });
       setEditPhase('implementing');
       setMessages(prev => [...prev, {
         role: 'assistant',

@@ -34,7 +34,7 @@ export function RAGBrowser({ appId, storeName }: RAGBrowserProps) {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/${appId}/rag/documents`);
+      const res = await fetch(`${API_BASE}/apps/${appId}/rag/documents`);
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents || []);
@@ -55,7 +55,7 @@ export function RAGBrowser({ appId, storeName }: RAGBrowserProps) {
     setIsQuerying(true);
     setQueryResult(null);
     try {
-      const res = await fetch(`${API_BASE}/${appId}/rag/query`, {
+      const res = await fetch(`${API_BASE}/apps/${appId}/rag/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: query.trim() }),
@@ -74,7 +74,7 @@ export function RAGBrowser({ appId, storeName }: RAGBrowserProps) {
   const handleDelete = async () => {
     if (selected.size === 0) return;
     for (const docName of selected) {
-      await fetch(`${API_BASE}/${appId}/rag/documents/${encodeURIComponent(docName)}`, {
+      await fetch(`${API_BASE}/apps/${appId}/rag/documents/${encodeURIComponent(docName)}`, {
         method: 'DELETE',
       });
     }
@@ -83,7 +83,7 @@ export function RAGBrowser({ appId, storeName }: RAGBrowserProps) {
   };
 
   const handlePrune = async () => {
-    await fetch(`${API_BASE}/${appId}/rag/prune`, {
+    await fetch(`${API_BASE}/apps/${appId}/rag/prune`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ keepPinned: true, maxIterations: 5 }),

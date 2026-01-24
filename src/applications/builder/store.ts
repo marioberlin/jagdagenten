@@ -69,7 +69,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
   submitBuild: async (description, options = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/create`, {
+      const res = await fetch(`${API_BASE}/builds/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description, ...options }),
@@ -89,7 +89,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
   approveBuild: async (buildId) => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/${buildId}/execute`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/builds/${buildId}/execute`, { method: 'POST' });
       const record = await res.json();
       set((state) => ({
         builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
@@ -102,7 +102,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
 
   cancelBuild: async (buildId) => {
     try {
-      await fetch(`${API_BASE}/${buildId}/cancel`, { method: 'POST' });
+      await fetch(`${API_BASE}/builds/${buildId}/cancel`, { method: 'POST' });
       set((state) => ({
         builds: state.builds.map(b => b.id === buildId ? { ...b, phase: 'failed', error: 'Cancelled' } : b),
         activeBuildId: state.activeBuildId === buildId ? null : state.activeBuildId,
@@ -114,7 +114,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
 
   pollStatus: async (buildId) => {
     try {
-      const res = await fetch(`${API_BASE}/${buildId}/status`);
+      const res = await fetch(`${API_BASE}/builds/${buildId}/status`);
       const record = await res.json();
       set((state) => ({
         builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
@@ -127,7 +127,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
   loadHistory: async () => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/history`);
+      const res = await fetch(`${API_BASE}/builds/history`);
       const builds = await res.json();
       set({ builds, isLoading: false });
     } catch (err) {

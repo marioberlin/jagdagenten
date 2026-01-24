@@ -19,7 +19,7 @@ const orchestrator = new BuilderOrchestrator();
 export const builderRoutes = new Elysia({ prefix: '/api/builder' })
   // === Build Lifecycle ===
 
-  .post('/create', async ({ body }) => {
+  .post('/builds/create', async ({ body }) => {
     const record = await orchestrator.createBuild(body as BuildRequest);
     return record;
   }, {
@@ -36,30 +36,30 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }),
   })
 
-  .post('/:id/execute', async ({ params }) => {
+  .post('/builds/:id/execute', async ({ params }) => {
     const record = await orchestrator.executeBuild(params.id);
     return record;
   })
 
-  .get('/:id/status', ({ params }) => {
+  .get('/builds/:id/status', ({ params }) => {
     const record = orchestrator.getStatus(params.id);
     if (!record) return { error: 'Build not found' };
     return record;
   })
 
-  .post('/:id/cancel', async ({ params }) => {
+  .post('/builds/:id/cancel', async ({ params }) => {
     await orchestrator.cancelBuild(params.id);
     return { success: true };
   })
 
-  .get('/history', () => {
+  .get('/builds/history', () => {
     return orchestrator.listBuilds();
   })
 
   // === Context / Drop Folder ===
 
-  .get('/context/:appId', ({ params }) => {
-    const dir = `.builder/context/${params.appId}`;
+  .get('/context/:id', ({ params }) => {
+    const dir = `.builder/context/${params.id}`;
     if (!fs.existsSync(dir)) return { files: [] };
 
     const files = fs.readdirSync(dir)
@@ -72,8 +72,8 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { files };
   })
 
-  .post('/context/:appId/upload', async ({ params, body }: { params: { appId: string }; body: unknown }) => {
-    const dir = `.builder/context/${params.appId}`;
+  .post('/context/:id/upload', async ({ params, body }: { params: { id: string }; body: unknown }) => {
+    const dir = `.builder/context/${params.id}`;
     fs.mkdirSync(dir, { recursive: true });
 
     const { fileName, content } = body as { fileName: string; content: string };
@@ -88,8 +88,8 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }),
   })
 
-  .delete('/context/:appId/:file', ({ params }) => {
-    const filePath = `.builder/context/${params.appId}/${params.file}`;
+  .delete('/context/:id/:file', ({ params }) => {
+    const filePath = `.builder/context/${params.id}/${params.file}`;
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       return { success: true };
@@ -113,11 +113,11 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
 
   // === Edit Mode ===
 
-  .post('/:appId/edit', async ({ params, body }) => {
+  .post('/apps/:id/edit', async ({ params, body }) => {
     const { description } = body as { description: string };
     const record = await orchestrator.createBuild({
       description: `Edit: ${description}`,
-      appId: params.appId,
+      appId: params.id,
       researchMode: 'standard',
     });
     return record;
@@ -129,8 +129,8 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
 
   // === RAG Management ===
 
-  .get('/:appId/rag/documents', async ({ params }) => {
-    const storeName = `builder-${params.appId}`;
+  .get('/apps/:id/rag/documents', async ({ params }) => {
+    const storeName = `builder-${params.id}`;
     try {
       const documents = await ragManager.listDocuments(storeName);
       return { documents };
@@ -139,9 +139,9 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }
   })
 
-  .post('/:appId/rag/query', async ({ params, body }) => {
+  .post('/apps/:id/rag/query', async ({ params, body }) => {
     const { query } = body as { query: string };
-    const storeName = `builder-${params.appId}`;
+    const storeName = `builder-${params.id}`;
     try {
       const result = await ragManager.queryAppHistory(storeName, query);
       return { result };
@@ -154,17 +154,17 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }),
   })
 
-  .delete('/:appId/rag/documents/:docName', async ({ params }) => {
+  .delete('/apps/:id/rag/documents/:file', async ({ params }) => {
     try {
-      const success = await ragManager.deleteDocumentByName(params.docName);
+      const success = await ragManager.deleteDocumentByName(params.file);
       return { success };
     } catch {
       return { success: false };
     }
   })
 
-  .post('/:appId/rag/prune', async ({ params, body }) => {
-    const storeName = `builder-${params.appId}`;
+  .post('/apps/:id/rag/prune', async ({ params, body }) => {
+    const storeName = `builder-${params.id}`;
     const options = (body || {}) as { keepPinned?: boolean; maxIterations?: number; maxAge?: string };
     try {
       const result = await ragManager.pruneCorpus(storeName, options);
@@ -174,8 +174,8 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }
   })
 
-  .delete('/:appId/rag', async ({ params }) => {
-    const storeName = `builder-${params.appId}`;
+  .delete('/apps/:id/rag', async ({ params }) => {
+    const storeName = `builder-${params.id}`;
     try {
       const success = await ragManager.deleteCorpus(storeName);
       return { success };
@@ -186,9 +186,9 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
 
   // === Documentation ===
 
-  .get('/:appId/docs/suggestions', ({ params }) => {
+  .get('/apps/:id/docs/suggestions', ({ params }) => {
     const builds = orchestrator.listBuilds();
-    const build = builds.find(b => b.appId === params.appId && b.plan);
+    const build = builds.find(b => b.appId === params.id && b.plan);
     if (!build?.plan) return { suggestions: [] };
-    return { suggestions: suggestDocUpdates(params.appId, build.plan) };
+    return { suggestions: suggestDocUpdates(params.id, build.plan) };
   });
