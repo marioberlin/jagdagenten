@@ -383,6 +383,120 @@ export class BuilderOrchestrator {
   }
 
   /**
+   * Resume an interrupted build (not awaiting-review, but mid-phase).
+   * Loads from DB if not in memory, then continues from last known phase.
+   */
+  async resumeInterruptedBuild(buildId: string): Promise<BuildRecord | null> {
+    let record = this.builds.get(buildId);
+
+    // Try loading from DB if not in memory
+    if (!record) {
+      const dbRecord = await builderDb.getBuild(buildId);
+      if (!dbRecord) return null;
+      record = dbRecord;
+      this.builds.set(buildId, record);
+    }
+
+    // Can only resume non-terminal phases
+    if (record.phase === 'complete' || record.phase === 'failed') {
+      return null;
+    }
+
+    // If awaiting-review, use the existing resume flow
+    if (record.phase === 'awaiting-review') {
+      return this.resumeBuild(buildId);
+    }
+
+    // Resume from current phase onwards
+    const phaseOrder: BuildPhase[] = [
+      'staging', 'deep-research', 'thinking', 'researching',
+      'planning', 'scaffolding', 'implementing',
+      'components', 'verifying', 'documenting', 'complete',
+    ];
+    const currentIdx = phaseOrder.indexOf(record.phase);
+    if (currentIdx < 0) return null;
+
+    // For phases before planning, re-run the full build
+    if (currentIdx <= phaseOrder.indexOf('planning')) {
+      this.executeBuild(buildId).catch(err => {
+        console.error(`[Builder] Resumed build ${buildId} failed:`, err);
+      });
+      return record;
+    }
+
+    // For phases after planning, continue from scaffolding onward
+    const architecture = record.plan?.architecture;
+    if (!architecture) {
+      // No plan = can't resume post-planning phases
+      record.error = 'Cannot resume: no plan found';
+      await this.updatePhase(buildId, 'failed');
+      return record;
+    }
+
+    // Run remaining phases in background
+    (async () => {
+      try {
+        if (currentIdx <= phaseOrder.indexOf('scaffolding')) {
+          this.updatePhase(buildId, 'scaffolding');
+          await scaffoldApp(record!.appId, architecture, record!.request.category);
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('implementing')) {
+          this.updatePhase(buildId, 'implementing');
+          const prd = record!.plan!.prd;
+          if (record!.request.executionMode === 'container' && this.containerPool) {
+            const containerRunner = new BuilderContainerRunner(this.containerPool);
+            for (const story of prd.userStories) {
+              record!.progress.currentStory = story.title;
+              const result = await containerRunner.executeRalphIteration(record!, story);
+              if (result.success) {
+                record!.progress.completed++;
+              } else {
+                record!.error = `Story "${story.id}" failed: ${result.error || 'unknown'}`;
+                await this.updatePhase(buildId, 'failed');
+                return;
+              }
+            }
+          } else {
+            await this.initRalph(prd, record!);
+            for (const story of prd.userStories) {
+              record!.progress.currentStory = story.title;
+              record!.progress.completed++;
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          }
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('components') && architecture.newComponents?.length) {
+          this.updatePhase(buildId, 'components');
+          const factory = new ComponentFactory();
+          for (const spec of architecture.newComponents) {
+            await factory.createComponent(spec);
+          }
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('verifying')) {
+          this.updatePhase(buildId, 'verifying');
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('documenting')) {
+          this.updatePhase(buildId, 'documenting');
+          if (record!.plan) {
+            try { await generateAppDocs(record!.appId, record!.plan); } catch {}
+          }
+        }
+
+        await this.updatePhase(buildId, 'complete');
+      } catch (err) {
+        record!.error = err instanceof Error ? err.message : String(err);
+        await this.updatePhase(buildId, 'failed');
+      }
+    })();
+
+    return record;
+  }
+
+  /**
    * List all builds. Returns in-memory active builds merged with DB history.
    */
   async listBuilds(): Promise<BuildRecord[]> {
@@ -524,17 +638,11 @@ export class BuilderOrchestrator {
       record.phase = phase;
       record.updatedAt = new Date().toISOString();
       updateSessionPhase(phase);
-      // Terminal phases must be awaited to guarantee DB persistence
-      if (phase === 'complete' || phase === 'failed') {
-        try {
-          await builderDb.updateBuild(record);
-        } catch (err) {
-          console.warn(`[Builder] DB update failed for ${buildId} (${phase}):`, err);
-        }
-      } else {
-        builderDb.updateBuild(record).catch(err =>
-          console.warn(`[Builder] DB update failed for ${buildId}:`, err)
-        );
+      // Always persist phase changes to DB for resume support
+      try {
+        await builderDb.updateBuild(record);
+      } catch (err) {
+        console.warn(`[Builder] DB update failed for ${buildId} (${phase}):`, err);
       }
     }
   }

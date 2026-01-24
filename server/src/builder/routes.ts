@@ -33,6 +33,7 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
       windowMode: t.Optional(t.String()),
       executionMode: t.Optional(t.String()),
       researchMode: t.Optional(t.String()),
+      buildMode: t.Optional(t.String()),
     }),
   })
 
@@ -70,6 +71,12 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
   .post('/builds/:id/cancel', async ({ params }) => {
     await orchestrator.cancelBuild(params.id);
     return { success: true };
+  })
+
+  .post('/builds/:id/resume', async ({ params }) => {
+    const record = await orchestrator.resumeInterruptedBuild(params.id);
+    if (!record) return { error: 'Build not found or not resumable' };
+    return { ...record, phase: record.phase };
   })
 
   .post('/builds/:id/install', ({ params }) => {
@@ -137,6 +144,39 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
       });
 
     return { files };
+  })
+
+  // === Build Artifacts (generated docs) ===
+
+  .get('/builds/:id/docs', ({ params }) => {
+    // Find the build to get appId
+    const record = orchestrator.getStatus(params.id);
+    const appId = record?.appId || params.id;
+    const docsDir = `.builder/staging/${appId}/app/docs`;
+    if (!fs.existsSync(docsDir)) return { docs: [] };
+
+    const docs = fs.readdirSync(docsDir)
+      .filter((f: string) => f.endsWith('.md'))
+      .map((f: string) => {
+        const content = fs.readFileSync(path.join(docsDir, f), 'utf8');
+        return { name: f, content };
+      });
+
+    return { docs };
+  })
+
+  .get('/apps/:id/docs', ({ params }) => {
+    const docsDir = `.builder/staging/${params.id}/app/docs`;
+    if (!fs.existsSync(docsDir)) return { docs: [] };
+
+    const docs = fs.readdirSync(docsDir)
+      .filter((f: string) => f.endsWith('.md'))
+      .map((f: string) => {
+        const content = fs.readFileSync(path.join(docsDir, f), 'utf8');
+        return { name: f, content };
+      });
+
+    return { docs };
   })
 
   // === Edit Mode ===

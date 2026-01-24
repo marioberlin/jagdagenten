@@ -4,11 +4,11 @@
  * Table view of past builds with status and timestamps.
  */
 
-import { Check, X, Clock, Loader2, Pencil } from 'lucide-react';
+import { Check, X, Clock, Loader2, Pencil, Play } from 'lucide-react';
 import { useBuilderStore } from '../store';
 
 export function BuildHistory() {
-  const { builds, editApp } = useBuilderStore();
+  const { builds, editApp, resumeBuild } = useBuilderStore();
 
   if (builds.length === 0) {
     return (
@@ -50,6 +50,16 @@ export function BuildHistory() {
               >
                 <Pencil size={12} />
                 Edit
+              </button>
+            )}
+            {build.phase !== 'complete' && build.phase !== 'failed' && (
+              <button
+                onClick={() => resumeBuild(build.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-md text-xs text-emerald-400 hover:bg-emerald-500/10"
+                title="Resume this build"
+              >
+                <Play size={12} />
+                Resume
               </button>
             )}
           </div>

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { Hammer, Plus, Activity, Pencil, History } from 'lucide-react';
+import { Hammer, Plus, Activity, Pencil, History, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import { useBuilderStore, type BuilderTab } from './store';
 import { BuildForm } from './components/BuildForm';
 import { ProgressPanel } from './components/ProgressPanel';
@@ -123,8 +123,9 @@ function ActiveBuildView() {
 }
 
 function EditView() {
-  const { builds, selectedAppId, contextFiles, loadContext } = useBuilderStore();
+  const { builds, selectedAppId, contextFiles, appDocs, loadContext, loadAppDocs } = useBuilderStore();
   const [selectedApp, setSelectedApp] = useState<string | null>(selectedAppId);
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const completedBuilds = builds.filter(b => b.phase === 'complete');
 
   // Sync with store's selectedAppId (e.g., when navigating from History → Edit)
@@ -132,13 +133,15 @@ function EditView() {
     if (selectedAppId && selectedAppId !== selectedApp) {
       setSelectedApp(selectedAppId);
       loadContext(selectedAppId);
+      loadAppDocs(selectedAppId);
     }
   }, [selectedAppId]);
 
   const handleSelectApp = useCallback((appId: string) => {
     setSelectedApp(appId);
     loadContext(appId);
-  }, [loadContext]);
+    loadAppDocs(appId);
+  }, [loadContext, loadAppDocs]);
 
   const handleUploadFile = useCallback(async (file: File) => {
     if (!selectedApp) return;
@@ -166,6 +169,8 @@ function EditView() {
       </div>
     );
   }
+
+  const selectedBuild = completedBuilds.find(b => b.appId === selectedApp);
 
   return (
     <div className="flex h-full">
@@ -197,7 +202,7 @@ function EditView() {
               files={[]}
               skills={[]}
               resources={[]}
-              lastBuilt={completedBuilds.find(b => b.appId === selectedApp)?.updatedAt}
+              lastBuilt={selectedBuild?.updatedAt}
             />
             <DropZone
               appId={selectedApp}
@@ -209,10 +214,46 @@ function EditView() {
         )}
       </div>
 
-      {/* Right: Editor + RAG */}
+      {/* Right: Description + Docs + Editor + RAG */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {selectedApp ? (
           <>
+            {/* Build description */}
+            {selectedBuild && (
+              <div className="p-3 border-b border-white/10 bg-white/3">
+                <div className="text-xs text-secondary mb-1">Original Description</div>
+                <div className="text-sm text-primary">{selectedBuild.description}</div>
+              </div>
+            )}
+
+            {/* Generated docs */}
+            {appDocs.length > 0 && (
+              <div className="border-b border-white/10 max-h-64 overflow-y-auto">
+                <div className="px-3 py-2 text-xs text-secondary font-medium flex items-center gap-1.5">
+                  <FileText size={12} />
+                  Generated Docs ({appDocs.length})
+                </div>
+                <div className="space-y-px">
+                  {appDocs.map(doc => (
+                    <div key={doc.name}>
+                      <button
+                        onClick={() => setExpandedDoc(expandedDoc === doc.name ? null : doc.name)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-primary hover:bg-white/5 transition-colors"
+                      >
+                        {expandedDoc === doc.name ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                        {doc.name}
+                      </button>
+                      {expandedDoc === doc.name && (
+                        <pre className="px-4 py-2 text-xs text-secondary/80 bg-white/3 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
+                          {doc.content}
+                        </pre>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex-1 overflow-hidden">
               <AppEditor appId={selectedApp} />
             </div>

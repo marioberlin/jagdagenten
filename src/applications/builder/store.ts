@@ -25,12 +25,18 @@ export interface ContextFile {
   modified: string;
 }
 
+export interface AppDoc {
+  name: string;
+  content: string;
+}
+
 interface BuilderState {
   currentTab: BuilderTab;
   builds: BuildRecord[];
   activeBuildId: string | null;
   selectedAppId: string | null;
   contextFiles: ContextFile[];
+  appDocs: AppDoc[];
   isLoading: boolean;
   error: string | null;
 
@@ -38,11 +44,13 @@ interface BuilderState {
   setTab: (tab: BuilderTab) => void;
   submitBuild: (description: string, options?: BuildOptions) => Promise<void>;
   approveBuild: (buildId: string) => Promise<void>;
+  resumeBuild: (buildId: string) => Promise<void>;
   cancelBuild: (buildId: string) => Promise<void>;
   installBuild: (buildId: string) => Promise<void>;
   pollStatus: (buildId: string) => Promise<void>;
   loadHistory: () => Promise<void>;
   loadContext: (appId: string) => Promise<void>;
+  loadAppDocs: (appId: string) => Promise<void>;
   editApp: (appId: string) => void;
 }
 
@@ -64,6 +72,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
   activeBuildId: null,
   selectedAppId: null,
   contextFiles: [],
+  appDocs: [],
   isLoading: false,
   error: null,
 
@@ -103,6 +112,22 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
       }));
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Approve failed', isLoading: false });
+    }
+  },
+
+  resumeBuild: async (buildId) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/builds/${buildId}/resume`, { method: 'POST' });
+      const record = await res.json();
+      set((state) => ({
+        builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
+        activeBuildId: buildId,
+        currentTab: 'active',
+        isLoading: false,
+      }));
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Resume failed', isLoading: false });
     }
   },
 
@@ -158,6 +183,16 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
       set({ contextFiles: data.files || [], selectedAppId: appId });
     } catch {
       set({ contextFiles: [] });
+    }
+  },
+
+  loadAppDocs: async (appId) => {
+    try {
+      const res = await fetch(`${API_BASE}/apps/${appId}/docs`);
+      const data = await res.json();
+      set({ appDocs: data.docs || [] });
+    } catch {
+      set({ appDocs: [] });
     }
   },
 
