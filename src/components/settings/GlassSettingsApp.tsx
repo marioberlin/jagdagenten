@@ -22,6 +22,7 @@ import { GlassContainerSettings } from './GlassContainerSettings';
 import { GlassAgentSettings } from './GlassAgentSettings';
 import { GlassCapabilitiesPanel } from './capabilities';
 import { GlassVaultPanel } from './vault';
+import { SecurityPanel } from './SecurityPanel';
 import { GlassFileSearch } from '@/components/generative/GlassFileSearch';
 import { KnowledgeStoresPanel } from './KnowledgeStoresPanel';
 import { GeminiProxyService } from '@/services/proxy/gemini';
@@ -47,6 +48,7 @@ const tabs = [
     { id: 'accessibility', label: 'Accessibility', icon: Eye, description: 'Motion, vision, audio' },
     { id: 'keyboard', label: 'Shortcuts', icon: Keyboard, description: 'Keyboard shortcuts' },
     { id: 'credentials', label: 'Credentials', icon: Key, description: 'API keys & secrets' },
+    { id: 'security', label: 'Security', icon: Lock, description: 'Authentication & lock screen' },
     { id: 'data', label: 'Data', icon: Database, description: 'Export, import, reset' },
     { id: 'system', label: 'System', icon: Monitor, description: 'Rate limits, environment' },
 ];
@@ -376,6 +378,13 @@ export const GlassSettingsApp: React.FC<GlassSettingsAppProps> = () => {
                         {/* === KEYBOARD SHORTCUTS === */}
                         {activeTab === 'keyboard' && (
                             <KeyboardShortcutsPanel />
+                        )}
+
+                        {/* === SECURITY === */}
+                        {activeTab === 'security' && (
+                            <div className="max-w-3xl mx-auto">
+                                <SecurityPanel />
+                            </div>
                         )}
 
                         {/* === DATA MANAGEMENT === */}

@@ -9,6 +9,7 @@ import { PortalFrame } from '@/components/layout/PortalFrame';
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { Command } from 'lucide-react';
 
+import { AuthGate } from '@/components/auth/AuthGate';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppComponent } from '@/system/app-store/AppLoader';
 import { resolveIconComponent } from '@/system/app-store/iconResolver';
@@ -99,6 +100,7 @@ export const LiquidOSLayout: React.FC = () => {
     };
 
     return (
+        <AuthGate>
         <div className="relative w-full h-full text-foreground">
             {/* 1. Menu Bar - Top Layer, Persistent */}
             <LiquidMenuBar />
@@ -168,6 +170,7 @@ export const LiquidOSLayout: React.FC = () => {
                 </AnimatePresence>
             </PortalFrame>
         </div>
+        </AuthGate>
     );
 };
 
