@@ -1,0 +1,147 @@
+/**
+ * Builder Store
+ *
+ * Zustand state management for the Builder app.
+ */
+
+import { create } from 'zustand';
+
+export type BuilderTab = 'new' | 'active' | 'edit' | 'history';
+
+export interface BuildRecord {
+  id: string;
+  appId: string;
+  phase: string;
+  progress: { completed: number; total: number; currentStory?: string };
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  error?: string;
+}
+
+export interface ContextFile {
+  name: string;
+  size: number;
+  modified: string;
+}
+
+interface BuilderState {
+  currentTab: BuilderTab;
+  builds: BuildRecord[];
+  activeBuildId: string | null;
+  selectedAppId: string | null;
+  contextFiles: ContextFile[];
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  setTab: (tab: BuilderTab) => void;
+  submitBuild: (description: string, options?: BuildOptions) => Promise<void>;
+  approveBuild: (buildId: string) => Promise<void>;
+  cancelBuild: (buildId: string) => Promise<void>;
+  pollStatus: (buildId: string) => Promise<void>;
+  loadHistory: () => Promise<void>;
+  loadContext: (appId: string) => Promise<void>;
+}
+
+interface BuildOptions {
+  appId?: string;
+  category?: string;
+  hasAgent?: boolean;
+  hasResources?: boolean;
+  hasCustomComponents?: boolean;
+  researchMode?: 'standard' | 'deep';
+}
+
+const API_BASE = '/api/builder';
+
+export const useBuilderStore = create<BuilderState>((set, _get) => ({
+  currentTab: 'new',
+  builds: [],
+  activeBuildId: null,
+  selectedAppId: null,
+  contextFiles: [],
+  isLoading: false,
+  error: null,
+
+  setTab: (tab) => set({ currentTab: tab }),
+
+  submitBuild: async (description, options = {}) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, ...options }),
+      });
+      const record = await res.json();
+      set((state) => ({
+        builds: [...state.builds, record],
+        activeBuildId: record.id,
+        isLoading: false,
+        currentTab: 'active',
+      }));
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Build failed', isLoading: false });
+    }
+  },
+
+  approveBuild: async (buildId) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/${buildId}/execute`, { method: 'POST' });
+      const record = await res.json();
+      set((state) => ({
+        builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
+        isLoading: false,
+      }));
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Approve failed', isLoading: false });
+    }
+  },
+
+  cancelBuild: async (buildId) => {
+    try {
+      await fetch(`${API_BASE}/${buildId}/cancel`, { method: 'POST' });
+      set((state) => ({
+        builds: state.builds.map(b => b.id === buildId ? { ...b, phase: 'failed', error: 'Cancelled' } : b),
+        activeBuildId: state.activeBuildId === buildId ? null : state.activeBuildId,
+      }));
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Cancel failed' });
+    }
+  },
+
+  pollStatus: async (buildId) => {
+    try {
+      const res = await fetch(`${API_BASE}/${buildId}/status`);
+      const record = await res.json();
+      set((state) => ({
+        builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
+      }));
+    } catch {
+      // Silently fail on poll
+    }
+  },
+
+  loadHistory: async () => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/history`);
+      const builds = await res.json();
+      set({ builds, isLoading: false });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Load failed', isLoading: false });
+    }
+  },
+
+  loadContext: async (appId) => {
+    try {
+      const res = await fetch(`${API_BASE}/context/${appId}`);
+      const data = await res.json();
+      set({ contextFiles: data.files || [], selectedAppId: appId });
+    } catch {
+      set({ contextFiles: [] });
+    }
+  },
+}));

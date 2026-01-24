@@ -1,0 +1,45 @@
+# LiquidContainer Claude CLI Image
+#
+# Container image with Claude Code CLI installed for isolated, sandboxed builds.
+# Used by BuilderContainerRunner for Docker-based execution mode.
+#
+# Build:
+#   docker build -f Dockerfile.base -t liquid-container-base:latest .
+#   docker build -f Dockerfile.claude-cli -t liquid-container-claude-cli:latest .
+
+ARG BASE_IMAGE=liquid-container-base:latest
+FROM ${BASE_IMAGE}
+
+# Install Claude Code CLI
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && claude --version
+
+# Install project tools Claude needs
+RUN bun add -g typescript @types/react
+
+# Pre-configure Claude for non-interactive use
+ENV CLAUDE_NONINTERACTIVE=1
+ENV CLAUDE_OUTPUT_FORMAT=stream-json
+
+# Mount points
+VOLUME ["/app", "/sessions", "/secrets"]
+
+# Working directory for builds
+WORKDIR /app
+
+# Switch to non-root user
+USER agent
+
+# Environment defaults
+ENV LIQUID_RUNTIME_PORT=8080
+ENV LIQUID_RUNTIME_MODE=builder
+ENV LIQUID_MAX_EXECUTION_TIME=600000
+ENV LIQUID_MAX_MEMORY_MB=1024
+ENV LIQUID_LOG_LEVEL=info
+
+# Health check
+HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=3 \
+    CMD claude --version || exit 1
+
+# Start the runtime server (accepts build commands via HTTP)
+ENTRYPOINT ["bun", "run", "/opt/liquid-runtime/server.ts"]

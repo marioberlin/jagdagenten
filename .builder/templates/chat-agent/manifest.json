@@ -1,0 +1,26 @@
+{
+  "id": "{{appId}}",
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "LiquidOS Builder",
+  "category": "{{category}}",
+  "keywords": [],
+  "icon": "Bot",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "{{appName}}",
+    "defaultSize": { "width": 500, "height": 650 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": { "enabled": true },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-{{appId}}", "label": "Open {{appName}}", "keywords": ["chat", "agent"] }
+      ]
+    }
+  },
+  "capabilities": ["network:http", "a2a:connect", "ai:agent"]
+}

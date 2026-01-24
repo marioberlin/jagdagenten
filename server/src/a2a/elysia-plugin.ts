@@ -15,7 +15,8 @@ import {
   type MessageStore,
   type SessionStore,
 } from './adapter/index.js';
-import { LiquidCryptoExecutor, getLiquidCryptoAgentCard } from './executors/index.js';
+import { LiquidCryptoExecutor, getLiquidCryptoAgentCard, OrchestratorExecutor, getOrchestratorAgentCard, BuilderExecutor, getBuilderAgentCard } from './executors/index.js';
+import { RouterExecutor } from './executors/router.js';
 import {
   instrumentTaskStore,
   instrumentPushNotificationStore,
@@ -81,12 +82,16 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
     console.log('[A2A] Telemetry instrumentation enabled');
   }
 
-  // Create executor and adapter
-  const executor = new LiquidCryptoExecutor();
-  const agentCard = getLiquidCryptoAgentCard(baseUrl);
+  // Create router with registered executors
+  const router = new RouterExecutor();
+  router.register('liquidcrypto', new LiquidCryptoExecutor(), getLiquidCryptoAgentCard(baseUrl));
+  router.register('orchestrator', new OrchestratorExecutor(), getOrchestratorAgentCard(baseUrl));
+  router.register('builder', new BuilderExecutor(), getBuilderAgentCard(baseUrl));
+
+  const agentCard = router.getMergedAgentCard(baseUrl);
   const adapter = new ElysiaA2AAdapter({
     agentCard,
-    executor,
+    executor: router,
     taskStore,
     pushNotificationStore,
     // A2A v1.0 persistence stores
@@ -101,7 +106,7 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
   return new Elysia({ name: 'a2a' })
     // A2A v1.0: Agent Card discovery at canonical path
     .get('/.well-known/agent-card.json', () => {
-      return getLiquidCryptoAgentCard(baseUrl);
+      return agentCard;
     })
 
     // Main A2A JSON-RPC endpoint

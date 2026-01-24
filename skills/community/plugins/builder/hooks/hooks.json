@@ -1,0 +1,22 @@
+{
+  "description": "Builder hooks for RAG ingestion and emoji enforcement during builds",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-write-hook.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/emoji-check-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

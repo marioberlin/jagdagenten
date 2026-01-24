@@ -29,6 +29,7 @@ import { ibirdRoutes } from './routes/ibird/index.js';
 import { fileSearchRoutes } from './routes/fileSearch.js';
 import { appRoutes } from './registry/app-routes.js';
 import { registerResourceRoutes, MemoryDecayService } from './resources/index.js';
+import { builderRoutes } from './builder/routes.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -656,6 +657,9 @@ async function startServer() {
 
         // AI Resource Management Routes
         .use(registerResourceRoutes)
+
+        // Builder API (AI-powered app creation)
+        .use(builderRoutes)
 
         // App Store Registry API
         .use(appRoutes)

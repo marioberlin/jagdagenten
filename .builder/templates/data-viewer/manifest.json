@@ -1,0 +1,26 @@
+{
+  "id": "{{appId}}",
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "LiquidOS Builder",
+  "category": "{{category}}",
+  "keywords": [],
+  "icon": "Table2",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "{{appName}}",
+    "defaultSize": { "width": 900, "height": 600 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": { "enabled": true },
+    "commandPalette": {
+      "commands": [
+        { "id": "open-{{appId}}", "label": "Open {{appName}}", "keywords": ["data", "table", "list"] }
+      ]
+    }
+  },
+  "capabilities": ["network:http"]
+}

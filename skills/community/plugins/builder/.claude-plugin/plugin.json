@@ -1,0 +1,8 @@
+{
+  "name": "builder",
+  "description": "LiquidOS Builder - AI-powered app creation with RAG history",
+  "version": "1.0.0",
+  "author": { "name": "LiquidOS" },
+  "hooks": "../hooks/hooks.json",
+  "commands": ["../commands"]
+}

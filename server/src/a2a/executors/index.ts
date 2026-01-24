@@ -34,3 +34,9 @@ export {
 
 // Orchestrator Executor
 export { OrchestratorExecutor, getOrchestratorAgentCard } from './orchestrator.js';
+
+// Builder Executor
+export { BuilderExecutor, getBuilderAgentCard } from './builder.js';
+
+// Router Executor (multi-executor routing)
+export { RouterExecutor } from './router.js';

@@ -6,6 +6,7 @@
 #   ./build.sh           # Build all images
 #   ./build.sh base      # Build only base image
 #   ./build.sh runtime   # Build only runtime image
+#   ./build.sh claude-cli # Build Claude CLI image (for Builder)
 #   ./build.sh push      # Build and push to registry
 #
 
@@ -16,6 +17,7 @@ REGISTRY="${LIQUID_CONTAINER_REGISTRY:-ghcr.io/liquidcrypto}"
 VERSION="${LIQUID_CONTAINER_VERSION:-latest}"
 BASE_IMAGE="liquid-container-base"
 RUNTIME_IMAGE="liquid-container"
+CLAUDE_CLI_IMAGE="liquid-container-claude-cli"
 
 # Colors
 RED='\033[0;31m'
@@ -88,6 +90,26 @@ build_runtime() {
     log "Runtime image built successfully"
 }
 
+build_claude_cli() {
+    log "Building Claude CLI image: ${CLAUDE_CLI_IMAGE}:${VERSION}"
+
+    # Ensure base image exists
+    if ! docker image inspect "${BASE_IMAGE}:${VERSION}" &> /dev/null; then
+        warn "Base image not found, building first..."
+        build_base
+    fi
+
+    docker build \
+        -f Dockerfile.claude-cli \
+        -t "${CLAUDE_CLI_IMAGE}:${VERSION}" \
+        -t "${CLAUDE_CLI_IMAGE}:latest" \
+        --build-arg BASE_IMAGE="${BASE_IMAGE}:${VERSION}" \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        .
+
+    log "Claude CLI image built successfully"
+}
+
 push_images() {
     log "Pushing images to registry: ${REGISTRY}"
 
@@ -96,12 +118,16 @@ push_images() {
     docker tag "${BASE_IMAGE}:latest" "${REGISTRY}/${BASE_IMAGE}:latest"
     docker tag "${RUNTIME_IMAGE}:${VERSION}" "${REGISTRY}/${RUNTIME_IMAGE}:${VERSION}"
     docker tag "${RUNTIME_IMAGE}:latest" "${REGISTRY}/${RUNTIME_IMAGE}:latest"
+    docker tag "${CLAUDE_CLI_IMAGE}:${VERSION}" "${REGISTRY}/${CLAUDE_CLI_IMAGE}:${VERSION}"
+    docker tag "${CLAUDE_CLI_IMAGE}:latest" "${REGISTRY}/${CLAUDE_CLI_IMAGE}:latest"
 
     # Push
     docker push "${REGISTRY}/${BASE_IMAGE}:${VERSION}"
     docker push "${REGISTRY}/${BASE_IMAGE}:latest"
     docker push "${REGISTRY}/${RUNTIME_IMAGE}:${VERSION}"
     docker push "${REGISTRY}/${RUNTIME_IMAGE}:latest"
+    docker push "${REGISTRY}/${CLAUDE_CLI_IMAGE}:${VERSION}"
+    docker push "${REGISTRY}/${CLAUDE_CLI_IMAGE}:latest"
 
     log "Images pushed successfully"
 }
@@ -114,17 +140,22 @@ case "${1:-all}" in
     runtime)
         build_runtime
         ;;
+    claude-cli)
+        build_claude_cli
+        ;;
     push)
         build_base
         build_runtime
+        build_claude_cli
         push_images
         ;;
     all)
         build_base
         build_runtime
+        build_claude_cli
         ;;
     *)
-        echo "Usage: $0 {base|runtime|push|all}"
+        echo "Usage: $0 {base|runtime|claude-cli|push|all}"
         exit 1
         ;;
 esac
