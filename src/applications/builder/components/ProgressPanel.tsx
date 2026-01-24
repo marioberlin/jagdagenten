@@ -5,13 +5,13 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Check, Circle, Loader2, AlertTriangle, Download } from 'lucide-react';
+import { Check, Circle, Loader2, AlertTriangle, Download, PlayCircle } from 'lucide-react';
 import { useBuilderStore, type BuildRecord } from '../store';
 
 const PHASES = [
   'staging', 'deep-research', 'thinking', 'researching',
-  'planning', 'scaffolding', 'implementing', 'components',
-  'storybook', 'verifying', 'documenting', 'complete',
+  'planning', 'awaiting-review', 'scaffolding', 'implementing',
+  'components', 'storybook', 'verifying', 'documenting', 'complete',
 ];
 
 interface ProgressPanelProps {
@@ -19,11 +19,11 @@ interface ProgressPanelProps {
 }
 
 export function ProgressPanel({ build }: ProgressPanelProps) {
-  const { pollStatus, installBuild } = useBuilderStore();
+  const { pollStatus, installBuild, approveBuild } = useBuilderStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (build.phase !== 'complete' && build.phase !== 'failed') {
+    if (build.phase !== 'complete' && build.phase !== 'failed' && build.phase !== 'awaiting-review') {
       intervalRef.current = setInterval(() => {
         pollStatus(build.id);
       }, 3000);
@@ -101,6 +101,17 @@ export function ProgressPanel({ build }: ProgressPanelProps) {
             <span>{build.error}</span>
           </div>
         </div>
+      )}
+
+      {/* Approve button — shown when awaiting review */}
+      {build.phase === 'awaiting-review' && (
+        <button
+          onClick={() => approveBuild(build.id)}
+          className="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 rounded-xl text-emerald-400 text-sm font-medium transition-colors"
+        >
+          <PlayCircle size={16} />
+          Approve & Build
+        </button>
       )}
 
       {/* Install button — shown when build is complete */}

@@ -54,6 +54,19 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { ...record, description: record.request?.description || record.appId };
   })
 
+  .post('/builds/:id/approve', ({ params }) => {
+    const record = orchestrator.getStatus(params.id);
+    if (!record) return { error: 'Build not found' };
+    if (record.phase !== 'awaiting-review') return { error: 'Build is not awaiting review' };
+
+    // Resume build in background
+    orchestrator.resumeBuild(params.id).catch((err) => {
+      console.error(`[Builder] Build ${params.id} resume failed:`, err);
+    });
+
+    return { ...record, phase: 'scaffolding' };
+  })
+
   .post('/builds/:id/cancel', async ({ params }) => {
     await orchestrator.cancelBuild(params.id);
     return { success: true };

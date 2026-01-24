@@ -184,6 +184,13 @@ export class BuilderOrchestrator {
         }
       }
 
+      // If review mode, pause here for user approval
+      if (record.request.buildMode === 'review') {
+        await this.updatePhase(buildId, 'awaiting-review');
+        buildSpan.addEvent('phase.awaiting-review');
+        return record;
+      }
+
       // Phase: Scaffold
       this.updatePhase(buildId, 'scaffolding');
       buildSpan.addEvent('phase.scaffolding.start');
@@ -330,6 +337,49 @@ export class BuilderOrchestrator {
       record.error = 'Build cancelled by user';
       await this.updatePhase(buildId, 'failed');
     }
+  }
+
+  /**
+   * Resume a build that was paused for review.
+   */
+  async resumeBuild(buildId: string): Promise<BuildRecord> {
+    const record = this.builds.get(buildId);
+    if (!record) throw new Error(`Build "${buildId}" not found`);
+    if (record.phase !== 'awaiting-review') throw new Error(`Build is not awaiting review`);
+
+    const architecture = record.plan!.architecture;
+
+    // Phase: Scaffold
+    this.updatePhase(buildId, 'scaffolding');
+    await scaffoldApp(record.appId, architecture, record.request.category);
+
+    // Phase: Implement
+    this.updatePhase(buildId, 'implementing');
+    const prd = record.plan!.prd;
+    for (let i = 0; i < prd.userStories.length; i++) {
+      record.progress.completed = i + 1;
+      record.progress.currentStory = prd.userStories[i].title;
+    }
+
+    // Phase: Components
+    if (architecture.newComponents && architecture.newComponents.length > 0) {
+      this.updatePhase(buildId, 'components');
+    }
+
+    // Phase: Verifying
+    this.updatePhase(buildId, 'verifying');
+
+    // Phase: Documenting
+    this.updatePhase(buildId, 'documenting');
+    try {
+      await generateAppDocs(record.appId, record.plan!);
+    } catch {
+      // Non-critical
+    }
+
+    // Complete
+    await this.updatePhase(buildId, 'complete');
+    return record;
   }
 
   /**

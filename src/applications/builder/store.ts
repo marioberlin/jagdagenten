@@ -53,6 +53,7 @@ interface BuildOptions {
   hasResources?: boolean;
   hasCustomComponents?: boolean;
   researchMode?: 'standard' | 'deep';
+  buildMode?: 'automatic' | 'review';
 }
 
 const API_BASE = '/api/builder';
@@ -94,7 +95,7 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
   approveBuild: async (buildId) => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/builds/${buildId}/execute`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/builds/${buildId}/approve`, { method: 'POST' });
       const record = await res.json();
       set((state) => ({
         builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),

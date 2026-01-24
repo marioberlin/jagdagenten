@@ -105,7 +105,7 @@ export default defineConfig({
                 '**/prd.json',
                 '**/progress.txt',
                 '**/.builder/**',
-                '**/server/.claude/**',
+                '**/.claude/**',
             ],
         },
         proxy: {
