@@ -127,6 +127,14 @@ function EditView() {
   const [selectedApp, setSelectedApp] = useState<string | null>(selectedAppId);
   const completedBuilds = builds.filter(b => b.phase === 'complete');
 
+  // Sync with store's selectedAppId (e.g., when navigating from History → Edit)
+  useEffect(() => {
+    if (selectedAppId && selectedAppId !== selectedApp) {
+      setSelectedApp(selectedAppId);
+      loadContext(selectedAppId);
+    }
+  }, [selectedAppId]);
+
   const handleSelectApp = useCallback((appId: string) => {
     setSelectedApp(appId);
     loadContext(appId);
