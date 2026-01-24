@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Check, Circle, Loader2, AlertTriangle } from 'lucide-react';
+import { Check, Circle, Loader2, AlertTriangle, Download } from 'lucide-react';
 import { useBuilderStore, type BuildRecord } from '../store';
 
 const PHASES = [
@@ -19,7 +19,7 @@ interface ProgressPanelProps {
 }
 
 export function ProgressPanel({ build }: ProgressPanelProps) {
-  const { pollStatus } = useBuilderStore();
+  const { pollStatus, installBuild } = useBuilderStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -34,19 +34,20 @@ export function ProgressPanel({ build }: ProgressPanelProps) {
   }, [build.id, build.phase, pollStatus]);
 
   const currentPhaseIndex = PHASES.indexOf(build.phase);
+  const buildIsComplete = build.phase === 'complete';
 
   return (
     <div className="flex flex-col gap-4">
       <h3 className="text-sm font-semibold text-primary">
-        Building: {build.appId}
+        {buildIsComplete ? 'Built' : 'Building'}: {build.appId}
       </h3>
 
       {/* Phase Stepper */}
       <div className="flex flex-col gap-1">
         {PHASES.map((phase, idx) => {
-          const isComplete = idx < currentPhaseIndex;
-          const isCurrent = idx === currentPhaseIndex;
-          const isFailed = build.phase === 'failed' && isCurrent;
+          const isComplete = idx < currentPhaseIndex || buildIsComplete;
+          const isCurrent = idx === currentPhaseIndex && !buildIsComplete;
+          const isFailed = build.phase === 'failed' && idx === currentPhaseIndex;
 
           return (
             <div key={phase} className="flex items-center gap-2 py-1">
@@ -100,6 +101,17 @@ export function ProgressPanel({ build }: ProgressPanelProps) {
             <span>{build.error}</span>
           </div>
         </div>
+      )}
+
+      {/* Install button — shown when build is complete */}
+      {build.phase === 'complete' && (
+        <button
+          onClick={() => installBuild(build.id)}
+          className="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent/20 hover:bg-accent/30 border border-accent/40 rounded-xl text-accent text-sm font-medium transition-colors"
+        >
+          <Download size={16} />
+          Install App
+        </button>
       )}
     </div>
   );

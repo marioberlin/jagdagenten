@@ -87,8 +87,9 @@ function NewBuildView() {
 }
 
 function ActiveBuildView() {
-  const { builds } = useBuilderStore();
-  const activeBuilds = builds.filter(b => b.phase !== 'complete' && b.phase !== 'failed');
+  const { builds, activeBuildId } = useBuilderStore();
+  // Show in-progress and recently completed builds (not failed)
+  const activeBuilds = builds.filter(b => b.phase !== 'failed' && (b.phase !== 'complete' || b.id === activeBuildId));
 
   if (activeBuilds.length === 0) {
     return (

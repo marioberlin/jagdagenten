@@ -1,17 +1,46 @@
 {
-  "projectName": "Self-Heal: PortfolioOverview - 9d33f8fc0e4497ae",
-  "branchName": "fix/self-heal-9d33f8fc0e4497ae",
-  "stories": [
+  "projectName": "a simple to do list",
+  "branchName": "builder/a-simple-to-do-list",
+  "userStories": [
     {
-      "id": "FIX-9d33f8fc0e4497ae",
-      "title": "Fix error in PortfolioOverview",
-      "priority": "high",
-      "status": "pending",
+      "id": "US-001",
+      "title": "Create app manifest and entry component",
+      "priority": 10,
       "passes": false,
+      "description": "Create the app scaffold for a-simple-to-do-list so it loads in LiquidOS",
       "acceptanceCriteria": [
-        "Resolve the error: \"Autonomy Verification Success\"",
-        "Prevent regression in PortfolioOverview",
-        "Component must pass its respective tests after fix"
+        "manifest.json exists at src/applications/a-simple-to-do-list/manifest.json",
+        "App.tsx renders without errors",
+        "App appears in Dock when dock.enabled is true",
+        "Typecheck passes"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Create useasimpletodolistStore Zustand store",
+      "priority": 9,
+      "passes": false,
+      "description": "Create Zustand store useasimpletodolistStore with fields: data, loading, error",
+      "acceptanceCriteria": [
+        "useasimpletodolistStore.ts exists in src/applications/a-simple-to-do-list/",
+        "Store exports a use* hook",
+        "Store has fields: data, loading, error",
+        "Typecheck passes"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Design audit and final verification",
+      "priority": 1,
+      "passes": false,
+      "description": "Verify all components follow Liquid Glass design system",
+      "acceptanceCriteria": [
+        "No hex colors in component files",
+        "No emojis in any source files",
+        "All icons use lucide-react imports",
+        "All components use semantic tokens (text-primary, bg-glass-surface, etc.)",
+        "Typecheck passes",
+        "Verify in browser using browser tool"
       ]
     }
   ]

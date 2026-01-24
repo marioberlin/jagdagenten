@@ -164,7 +164,7 @@ export class BuilderExecutor extends BaseA2UIExecutor {
     context: AgentExecutionContext
   ): Promise<AgentExecutionResult> {
     const contextId = context.metadata?.contextId as string | undefined;
-    const builds = this.orchestrator.listBuilds();
+    const builds = await this.orchestrator.listBuilds();
     const active = builds.filter(b => b.phase !== 'complete' && b.phase !== 'failed');
 
     if (active.length === 0) {
@@ -185,7 +185,7 @@ export class BuilderExecutor extends BaseA2UIExecutor {
     context: AgentExecutionContext
   ): Promise<AgentExecutionResult> {
     const contextId = context.metadata?.contextId as string | undefined;
-    const builds = this.orchestrator.listBuilds();
+    const builds = await this.orchestrator.listBuilds();
 
     if (builds.length === 0) {
       return this.createTextResponse('No build history yet.', contextId);

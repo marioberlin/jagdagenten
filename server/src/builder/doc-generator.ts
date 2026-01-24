@@ -7,13 +7,16 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getProjectRoot } from './paths.js';
 import type { BuildPlan, DocUpdateSuggestion } from './types.js';
 
 /**
  * Generate documentation files for a built app.
+ * Writes to `.builder/staging/{appId}/app/docs/` so docs are installed alongside the app.
  */
 export async function generateAppDocs(appId: string, plan: BuildPlan): Promise<string[]> {
-  const docsDir = `src/applications/${appId}/docs`;
+  const root = getProjectRoot();
+  const docsDir = path.join(root, `.builder/staging/${appId}/app/docs`);
   fs.mkdirSync(docsDir, { recursive: true });
   const createdFiles: string[] = [];
 

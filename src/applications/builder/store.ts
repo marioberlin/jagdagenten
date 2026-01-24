@@ -39,6 +39,7 @@ interface BuilderState {
   submitBuild: (description: string, options?: BuildOptions) => Promise<void>;
   approveBuild: (buildId: string) => Promise<void>;
   cancelBuild: (buildId: string) => Promise<void>;
+  installBuild: (buildId: string) => Promise<void>;
   pollStatus: (buildId: string) => Promise<void>;
   loadHistory: () => Promise<void>;
   loadContext: (appId: string) => Promise<void>;
@@ -81,6 +82,9 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
         isLoading: false,
         currentTab: 'active',
       }));
+
+      // Immediately start execution (runs in background on server)
+      await fetch(`${API_BASE}/builds/${record.id}/execute`, { method: 'POST' });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Build failed', isLoading: false });
     }
@@ -97,6 +101,16 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
       }));
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Approve failed', isLoading: false });
+    }
+  },
+
+  installBuild: async (buildId) => {
+    set({ isLoading: true });
+    try {
+      await fetch(`${API_BASE}/builds/${buildId}/install`, { method: 'POST' });
+      // Page will reload due to Vite detecting new files — that's expected
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Install failed', isLoading: false });
     }
   },
 

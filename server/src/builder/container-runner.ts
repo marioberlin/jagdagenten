@@ -36,6 +36,7 @@ export interface IterationResult {
   storyId: string;
   output: string;
   durationMs: number;
+  error?: string;
 }
 
 /**

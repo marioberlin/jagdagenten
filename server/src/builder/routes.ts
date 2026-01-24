@@ -36,15 +36,22 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     }),
   })
 
-  .post('/builds/:id/execute', async ({ params }) => {
-    const record = await orchestrator.executeBuild(params.id);
-    return record;
+  .post('/builds/:id/execute', ({ params }) => {
+    const record = orchestrator.getStatus(params.id);
+    if (!record) return { error: 'Build not found' };
+
+    // Run build in background (don't await) — client polls via /status
+    orchestrator.executeBuild(params.id).catch((err) => {
+      console.error(`[Builder] Build ${params.id} failed:`, err);
+    });
+
+    return { ...record, phase: 'thinking' };
   })
 
   .get('/builds/:id/status', ({ params }) => {
     const record = orchestrator.getStatus(params.id);
     if (!record) return { error: 'Build not found' };
-    return record;
+    return { ...record, description: record.request?.description || record.appId };
   })
 
   .post('/builds/:id/cancel', async ({ params }) => {
@@ -52,8 +59,16 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { success: true };
   })
 
-  .get('/builds/history', () => {
-    return orchestrator.listBuilds();
+  .post('/builds/:id/install', ({ params }) => {
+    const result = orchestrator.installBuild(params.id);
+    if (result.error) return { success: false, error: result.error };
+    return { success: true, installed: result.installed.length };
+  })
+
+  .get('/builds/history', async () => {
+    const builds = await orchestrator.listBuilds();
+    // Add top-level description for frontend compatibility
+    return builds.map(b => ({ ...b, description: b.request?.description || b.appId }));
   })
 
   // === Context / Drop Folder ===
@@ -186,8 +201,8 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
 
   // === Documentation ===
 
-  .get('/apps/:id/docs/suggestions', ({ params }) => {
-    const builds = orchestrator.listBuilds();
+  .get('/apps/:id/docs/suggestions', async ({ params }) => {
+    const builds = await orchestrator.listBuilds();
     const build = builds.find(b => b.appId === params.id && b.plan);
     if (!build?.plan) return { suggestions: [] };
     return { suggestions: suggestDocUpdates(params.id, build.plan) };

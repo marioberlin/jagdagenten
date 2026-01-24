@@ -97,6 +97,17 @@ export default defineConfig({
         host: true,
         port: 5173,
         strictPort: false,
+        watch: {
+            // Ignore builder staging/output to prevent page reloads during builds.
+            // Builder writes to .builder/staging/ and only installs to src/applications/
+            // on completion, producing a single expected page reload.
+            ignored: [
+                '**/prd.json',
+                '**/progress.txt',
+                '**/.builder/**',
+                '**/server/.claude/**',
+            ],
+        },
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',

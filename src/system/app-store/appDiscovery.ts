@@ -57,6 +57,7 @@ export function validateManifest(manifest: any): string[] {
   const validCategories = [
     'productivity', 'communication', 'finance', 'weather',
     'travel', 'developer', 'utilities', 'entertainment', 'system',
+    'general',
   ];
   if (manifest.category && !validCategories.includes(manifest.category)) {
     errors.push(`Invalid category: ${manifest.category}`);

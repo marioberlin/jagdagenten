@@ -285,6 +285,7 @@ function buildDockItems(
             icon: Command,
             label: 'Command Center',
             isActive: !hasAppOpen,
+            isPermanent: true,
             onClick: () => {
                 if (hasAppOpen) closeApp();
                 navigate('/os');

@@ -7,6 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getProjectRoot } from './paths.js';
 import type { BuildRecord, RalphPRD } from './types.js';
 
 const SESSION_FILE = '.claude/builder-session.local.md';
@@ -69,8 +70,10 @@ export function removeSessionFile(): void {
  * Initialize the Ralph PRD file and progress tracking.
  */
 export function initializeRalph(prd: RalphPRD): void {
-  // Write prd.json
-  const prdPath = path.resolve('prd.json');
+  const root = getProjectRoot();
+
+  // Write prd.json to project root
+  const prdPath = path.join(root, 'prd.json');
   fs.writeFileSync(prdPath, JSON.stringify({
     projectName: prd.project,
     branchName: prd.branchName,
@@ -78,7 +81,7 @@ export function initializeRalph(prd: RalphPRD): void {
   }, null, 2));
 
   // Initialize progress.txt if needed
-  const progressPath = path.resolve('progress.txt');
+  const progressPath = path.join(root, 'progress.txt');
   if (!fs.existsSync(progressPath) || fs.readFileSync(progressPath, 'utf8').trim() === '') {
     const header = [
       '## Codebase Patterns',
@@ -99,7 +102,8 @@ export function initializeRalph(prd: RalphPRD): void {
  * Read the current Ralph status from prd.json.
  */
 export function getRalphStatus(): RalphStatus | null {
-  const prdPath = path.resolve('prd.json');
+  const root = getProjectRoot();
+  const prdPath = path.join(root, 'prd.json');
   if (!fs.existsSync(prdPath)) return null;
 
   try {
