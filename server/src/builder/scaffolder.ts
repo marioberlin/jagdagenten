@@ -23,13 +23,66 @@ function toTitleCase(str: string): string {
  * Detects common patterns (counter, timer, todo, notes) and generates
  * working implementations instead of placeholder text.
  */
-function generateMainComponent(appId: string, appName: string, plan: ArchitecturePlan): string {
-  const description = appId.toLowerCase();
+function generateMainComponent(appId: string, appName: string, plan: ArchitecturePlan, requestDescription?: string): string {
+  const desc = (requestDescription || appId).toLowerCase();
   const displayName = toTitleCase(appId).replace(/([A-Z])/g, ' $1').trim();
   const iconName = plan.components[0]?.icon || 'Layout';
 
   // Counter app pattern
-  if (description.includes('counter')) {
+  // Word counter pattern
+  if (desc.includes('word') && (desc.includes('count') || desc.includes('counter'))) {
+    return [
+      `import { useState, useMemo } from 'react';`,
+      `import { ${iconName}, Type, Hash, AlignLeft } from 'lucide-react';`,
+      '',
+      `export function ${appName}App() {`,
+      '  const [text, setText] = useState("");',
+      '',
+      '  const stats = useMemo(() => {',
+      '    const trimmed = text.trim();',
+      '    const words = trimmed ? trimmed.split(/\\s+/).length : 0;',
+      '    const chars = text.length;',
+      '    const charsNoSpaces = text.replace(/\\s/g, "").length;',
+      '    const sentences = trimmed ? trimmed.split(/[.!?]+/).filter(Boolean).length : 0;',
+      '    const paragraphs = trimmed ? trimmed.split(/\\n\\s*\\n/).filter(Boolean).length : 0;',
+      '    return { words, chars, charsNoSpaces, sentences, paragraphs };',
+      '  }, [text]);',
+      '',
+      '  return (',
+      '    <div className="flex flex-col h-full bg-glass-surface/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">',
+      '      <div className="flex items-center gap-3 mb-4">',
+      `        <${iconName} size={20} className="text-accent" />`,
+      `        <h1 className="text-lg font-semibold text-primary">${displayName}</h1>`,
+      '      </div>',
+      '      <div className="grid grid-cols-5 gap-3 mb-4">',
+      '        {[',
+      "          { label: 'Words', value: stats.words, icon: Type },",
+      "          { label: 'Characters', value: stats.chars, icon: Hash },",
+      "          { label: 'No Spaces', value: stats.charsNoSpaces, icon: Hash },",
+      "          { label: 'Sentences', value: stats.sentences, icon: AlignLeft },",
+      "          { label: 'Paragraphs', value: stats.paragraphs, icon: AlignLeft },",
+      '        ].map(stat => (',
+      '          <div key={stat.label} className="p-3 rounded-lg bg-white/5 border border-white/10 text-center">',
+      '            <div className="text-2xl font-bold text-primary tabular-nums">{stat.value}</div>',
+      '            <div className="text-xs text-secondary mt-1">{stat.label}</div>',
+      '          </div>',
+      '        ))}',
+      '      </div>',
+      '      <textarea',
+      '        value={text}',
+      '        onChange={e => setText(e.target.value)}',
+      '        placeholder="Start typing or paste text here..."',
+      '        className="flex-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-primary text-sm placeholder:text-secondary/50 outline-none focus:border-accent/40 resize-none"',
+      '      />',
+      '    </div>',
+      '  );',
+      '}',
+      '',
+    ].join('\n');
+  }
+
+  // Counter app pattern
+  if (desc.includes('counter')) {
     return [
       `import { useState } from 'react';`,
       `import { ${iconName}, Plus, Minus, RotateCcw } from 'lucide-react';`,
@@ -74,7 +127,7 @@ function generateMainComponent(appId: string, appName: string, plan: Architectur
   }
 
   // Timer/stopwatch pattern
-  if (description.includes('timer') || description.includes('stopwatch')) {
+  if (desc.includes('timer') || desc.includes('stopwatch')) {
     return [
       `import { useState, useRef } from 'react';`,
       `import { ${iconName}, Play, Pause, RotateCcw } from 'lucide-react';`,
@@ -130,7 +183,7 @@ function generateMainComponent(appId: string, appName: string, plan: Architectur
   }
 
   // Todo/task list pattern
-  if (description.includes('todo') || description.includes('task')) {
+  if (desc.includes('todo') || desc.includes('task')) {
     return [
       `import { useState } from 'react';`,
       `import { ${iconName}, Plus, Check, Trash2 } from 'lucide-react';`,
@@ -190,7 +243,7 @@ function generateMainComponent(appId: string, appName: string, plan: Architectur
   }
 
   // Notes/notepad pattern
-  if (description.includes('note') || description.includes('notepad')) {
+  if (desc.includes('note') || desc.includes('notepad')) {
     return [
       `import { useState } from 'react';`,
       `import { ${iconName}, Save } from 'lucide-react';`,
@@ -316,7 +369,7 @@ export function installStagedApp(appId: string): string[] {
  * Files are written to `.builder/staging/{appId}/` to avoid Vite page reloads.
  * Call `installStagedApp(appId)` after the build to move them to final locations.
  */
-export async function scaffoldApp(appId: string, plan: ArchitecturePlan, requestCategory?: string): Promise<string[]> {
+export async function scaffoldApp(appId: string, plan: ArchitecturePlan, requestCategory?: string, requestDescription?: string): Promise<string[]> {
   const root = getProjectRoot();
   const stagingDir = path.join(root, `.builder/staging/${appId}`);
   const appDir = path.join(stagingDir, 'app');
@@ -377,7 +430,7 @@ export async function scaffoldApp(appId: string, plan: ArchitecturePlan, request
   createdFiles.push(appTsxPath);
 
   // 3. Main app component — generate a functional component based on the description
-  const mainComponent = generateMainComponent(appId, appName, plan);
+  const mainComponent = generateMainComponent(appId, appName, plan, requestDescription);
 
   const mainPath = path.join(appDir, `${appName}App.tsx`);
   fs.writeFileSync(mainPath, mainComponent);

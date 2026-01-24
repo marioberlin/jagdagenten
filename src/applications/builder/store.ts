@@ -5,6 +5,7 @@
  */
 
 import { create } from 'zustand';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 
 export type BuilderTab = 'new' | 'active' | 'edit' | 'history';
 
@@ -17,6 +18,19 @@ export interface BuildRecord {
   createdAt: string;
   updatedAt: string;
   error?: string;
+  plan?: {
+    appName: string;
+    description: string;
+    architecture: {
+      components: { name: string; type: string; icon?: string }[];
+      executor?: { skills: { id: string; name: string; description: string }[] };
+      stores?: { name: string; fields: string[] }[];
+      newComponents?: { name: string; category: string; description: string }[];
+    };
+    prd: {
+      userStories: { id: string; title: string; description: string; acceptanceCriteria: string[] }[];
+    };
+  };
 }
 
 export interface ContextFile {
@@ -43,7 +57,7 @@ interface BuilderState {
   // Actions
   setTab: (tab: BuilderTab) => void;
   submitBuild: (description: string, options?: BuildOptions) => Promise<void>;
-  approveBuild: (buildId: string) => Promise<void>;
+  approveBuild: (buildId: string, userStories?: { id: string; title: string; description: string; acceptanceCriteria: string[] }[]) => Promise<void>;
   resumeBuild: (buildId: string) => Promise<void>;
   cancelBuild: (buildId: string) => Promise<void>;
   installBuild: (buildId: string) => Promise<void>;
@@ -51,7 +65,7 @@ interface BuilderState {
   loadHistory: () => Promise<void>;
   loadContext: (appId: string) => Promise<void>;
   loadAppDocs: (appId: string) => Promise<void>;
-  deleteBuild: (buildId: string) => Promise<void>;
+  removeBuild: (buildId: string) => Promise<void>;
   editApp: (appId: string) => void;
 }
 
@@ -102,10 +116,14 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
     }
   },
 
-  approveBuild: async (buildId) => {
+  approveBuild: async (buildId, userStories) => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/builds/${buildId}/approve`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/builds/${buildId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userStories ? { userStories } : {}),
+      });
       const record = await res.json();
       set((state) => ({
         builds: state.builds.map(b => b.id === buildId ? { ...b, ...record } : b),
@@ -197,15 +215,23 @@ export const useBuilderStore = create<BuilderState>((set, _get) => ({
     }
   },
 
-  deleteBuild: async (buildId) => {
+  removeBuild: async (buildId) => {
     try {
+      // Find the appId before removing so we can clean up frontend state
+      const build = _get().builds.find(b => b.id === buildId);
       await fetch(`${API_BASE}/builds/${buildId}`, { method: 'DELETE' });
+
+      // Remove from Dock and Go→Apps menu
+      if (build?.appId) {
+        useAppStoreStore.getState().uninstallApp(build.appId);
+      }
+
       set((state) => ({
         builds: state.builds.filter(b => b.id !== buildId),
         activeBuildId: state.activeBuildId === buildId ? null : state.activeBuildId,
       }));
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Delete failed' });
+      set({ error: err instanceof Error ? err.message : 'Remove failed' });
     }
   },
 

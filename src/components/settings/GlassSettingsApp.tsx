@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useThemeStore } from '@/stores/themeStore';
 import { useAgentConfig, FileSearchConfig } from '@/context/AgentConfigContext';
 
@@ -57,30 +56,13 @@ const tabs = [
 // ============================================
 
 export const GlassSettingsApp: React.FC<GlassSettingsAppProps> = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    // Extract tab from URL
-    const currentTab = location.pathname.split('/').pop() || 'visual';
-    const initialTab = tabs.find(t => t.id === currentTab) ? currentTab : 'visual';
-
-    const [activeTab, setActiveTab] = useState(initialTab);
+    const [activeTab, setActiveTab] = useState('visual');
     const [visualSubTab, setVisualSubTab] = useState<'themes' | 'backgrounds' | 'glass' | 'customization'>('themes');
     const [backgroundFilter, setBackgroundFilter] = useState<'all' | 'element' | 'image' | 'video' | 'ai'>('all');
     const [knowledgeSubTab, setKnowledgeSubTab] = useState<'stores' | 'inline'>('stores');
 
-    // Sync state with URL when it changes
-    useEffect(() => {
-        const tab = location.pathname.split('/').pop();
-        if (tab && tabs.find(t => t.id === tab)) {
-            setActiveTab(tab);
-        }
-    }, [location.pathname]);
-
-    // Update URL when state changes
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);
-        navigate(`/os/settings/${tabId}`);
     };
 
     // Global Theme State

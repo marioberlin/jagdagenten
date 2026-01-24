@@ -55,10 +55,20 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { ...record, description: record.request?.description || record.appId };
   })
 
-  .post('/builds/:id/approve', ({ params }) => {
+  .post('/builds/:id/approve', ({ params, body }) => {
     const record = orchestrator.getStatus(params.id);
     if (!record) return { error: 'Build not found' };
     if (record.phase !== 'awaiting-review') return { error: 'Build is not awaiting review' };
+
+    // Apply updated stories if provided
+    const { userStories } = (body || {}) as { userStories?: { id: string; title: string; description: string; acceptanceCriteria: string[] }[] };
+    if (userStories && record.plan) {
+      record.plan.prd.userStories = userStories.map((s, i) => ({
+        ...s,
+        priority: userStories.length - i,
+        passes: false,
+      }));
+    }
 
     // Resume build in background
     orchestrator.resumeBuild(params.id).catch((err) => {
@@ -80,7 +90,7 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
   })
 
   .delete('/builds/:id', async ({ params }) => {
-    await orchestrator.deleteBuild(params.id);
+    await orchestrator.removeBuild(params.id);
     return { success: true };
   })
 

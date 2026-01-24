@@ -43,6 +43,36 @@ function slugify(text: string): string {
     .slice(0, 40);
 }
 
+const FANTASY_WORDS = [
+  'aurora', 'ember', 'crystal', 'nebula', 'phoenix',
+  'zephyr', 'nova', 'prism', 'velvet', 'orbit',
+  'luna', 'solara', 'vortex', 'cipher', 'onyx',
+  'quartz', 'rune', 'spark', 'fable', 'myth',
+  'echo', 'frost', 'blaze', 'drift', 'pulse',
+  'shade', 'gleam', 'flux', 'haze', 'bloom',
+];
+
+function pickFantasyWord(): string {
+  return FANTASY_WORDS[Math.floor(Math.random() * FANTASY_WORDS.length)];
+}
+
+/**
+ * Ensure an appId is unique by checking existing apps and builds.
+ * If a collision is found, appends a random fantasy word suffix.
+ */
+function ensureUniqueAppId(baseId: string, root: string, existingBuilds: Map<string, BuildRecord>): string {
+  let appId = baseId;
+  const appDir = (id: string) => path.join(root, `src/applications/${id}`);
+  const isUsed = (id: string) =>
+    fs.existsSync(appDir(id)) ||
+    Array.from(existingBuilds.values()).some(b => b.appId === id);
+
+  while (isUsed(appId)) {
+    appId = `${baseId}-${pickFantasyWord()}`;
+  }
+  return appId;
+}
+
 export class BuilderOrchestrator {
   private ragManager: BuilderRAGManager;
   private builds: Map<string, BuildRecord> = new Map();
@@ -57,11 +87,12 @@ export class BuilderOrchestrator {
    * Create a new build record and staging directory.
    */
   async createBuild(request: BuildRequest): Promise<BuildRecord> {
-    const appId = request.appId || slugify(request.description);
+    const root = getProjectRoot();
+    const baseId = slugify(request.appId || request.description);
+    const appId = ensureUniqueAppId(baseId, root, this.builds);
     const buildId = `build-${randomUUID().slice(0, 12)}`;
 
     // Create drop folder for pre-build context
-    const root = getProjectRoot();
     const contextDir = path.join(root, `.builder/context/${appId}`);
     fs.mkdirSync(contextDir, { recursive: true });
     const readmePath = path.join(contextDir, 'README.md');
@@ -194,7 +225,7 @@ export class BuilderOrchestrator {
       // Phase: Scaffold
       this.updatePhase(buildId, 'scaffolding');
       buildSpan.addEvent('phase.scaffolding.start');
-      await scaffoldApp(record.appId, architecture, record.request.category);
+      await scaffoldApp(record.appId, architecture, record.request.category, record.request.description);
       buildSpan.addEvent('phase.scaffolding.end');
 
       // Phase: Implement (Ralph loop or container execution)
@@ -340,10 +371,36 @@ export class BuilderOrchestrator {
   }
 
   /**
-   * Delete a build from memory and DB.
+   * Remove a build and all its artifacts (app files, staging, context, RAG, DB).
    */
-  async deleteBuild(buildId: string): Promise<void> {
+  async removeBuild(buildId: string): Promise<void> {
+    const record = this.builds.get(buildId) || await builderDb.getBuild(buildId);
+    const appId = record?.appId;
+    const root = getProjectRoot();
+
+    // Remove from memory
     this.builds.delete(buildId);
+
+    // Remove installed app files
+    if (appId) {
+      const appDir = path.join(root, `src/applications/${appId}`);
+      if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
+
+      // Remove staging files
+      const stagingDir = path.join(root, `.builder/staging/${appId}`);
+      if (fs.existsSync(stagingDir)) fs.rmSync(stagingDir, { recursive: true, force: true });
+
+      // Remove context files
+      const contextDir = path.join(root, `.builder/context/${appId}`);
+      if (fs.existsSync(contextDir)) fs.rmSync(contextDir, { recursive: true, force: true });
+
+      // Remove RAG corpus
+      try {
+        await this.ragManager.deleteCorpus(`builder-${appId}`);
+      } catch {}
+    }
+
+    // Remove from DB
     try {
       await builderDb.deleteBuild(buildId);
     } catch (err) {
@@ -363,7 +420,7 @@ export class BuilderOrchestrator {
 
     // Phase: Scaffold
     this.updatePhase(buildId, 'scaffolding');
-    await scaffoldApp(record.appId, architecture, record.request.category);
+    await scaffoldApp(record.appId, architecture, record.request.category, record.request.description);
 
     // Phase: Implement
     this.updatePhase(buildId, 'implementing');
@@ -450,7 +507,7 @@ export class BuilderOrchestrator {
       try {
         if (currentIdx <= phaseOrder.indexOf('scaffolding')) {
           this.updatePhase(buildId, 'scaffolding');
-          await scaffoldApp(record!.appId, architecture, record!.request.category);
+          await scaffoldApp(record!.appId, architecture, record!.request.category, record!.request.description);
         }
 
         if (currentIdx <= phaseOrder.indexOf('implementing')) {

@@ -8,7 +8,7 @@ import { Check, X, Clock, Loader2, Pencil, Play, Trash2 } from 'lucide-react';
 import { useBuilderStore } from '../store';
 
 export function BuildHistory() {
-  const { builds, editApp, resumeBuild, deleteBuild } = useBuilderStore();
+  const { builds, editApp, resumeBuild, removeBuild } = useBuilderStore();
 
   if (builds.length === 0) {
     return (
@@ -63,11 +63,12 @@ export function BuildHistory() {
               </button>
             )}
             <button
-              onClick={() => deleteBuild(build.id)}
+              onClick={() => removeBuild(build.id)}
               className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-md text-xs text-red-400 hover:bg-red-500/10"
-              title="Delete this build"
+              title="Remove this build and its files"
             >
               <Trash2 size={12} />
+              Remove
             </button>
           </div>
         ))}

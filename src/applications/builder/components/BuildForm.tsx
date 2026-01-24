@@ -10,6 +10,7 @@ import { useBuilderStore } from '../store';
 
 export function BuildForm() {
   const { submitBuild, isLoading } = useBuilderStore();
+  const [appName, setAppName] = useState('');
   const [description, setDescription] = useState('');
   const [hasAgent, setHasAgent] = useState(false);
   const [hasResources, setHasResources] = useState(false);
@@ -21,6 +22,7 @@ export function BuildForm() {
   const handleSubmit = () => {
     if (!description.trim()) return;
     submitBuild(description, {
+      appId: appName.trim() || undefined,
       hasAgent,
       hasResources,
       hasCustomComponents,
@@ -36,6 +38,17 @@ export function BuildForm() {
         <Hammer size={16} className="text-accent" />
         New Build
       </h2>
+
+      {/* App Name */}
+      <div>
+        <label className="text-xs text-secondary mb-1 block">Name your Application</label>
+        <input
+          value={appName}
+          onChange={(e) => setAppName(e.target.value)}
+          placeholder="Autogenerate"
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:border-accent/50"
+        />
+      </div>
 
       {/* Description */}
       <div>
