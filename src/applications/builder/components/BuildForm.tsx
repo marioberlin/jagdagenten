@@ -5,25 +5,29 @@
  */
 
 import { useState } from 'react';
-import { Hammer, Bot, Database, Layers, Search } from 'lucide-react';
+import { Hammer, Bot, Database, Layers, Search, Eye, Zap } from 'lucide-react';
 import { useBuilderStore } from '../store';
 
 export function BuildForm() {
   const { submitBuild, isLoading } = useBuilderStore();
+  const [appName, setAppName] = useState('');
   const [description, setDescription] = useState('');
   const [hasAgent, setHasAgent] = useState(false);
   const [hasResources, setHasResources] = useState(false);
   const [hasCustomComponents, setHasCustomComponents] = useState(false);
   const [researchMode, setResearchMode] = useState<'standard' | 'deep'>('standard');
+  const [buildMode, setBuildMode] = useState<'automatic' | 'review'>('automatic');
   const [category, setCategory] = useState('productivity');
 
   const handleSubmit = () => {
     if (!description.trim()) return;
     submitBuild(description, {
+      appId: appName.trim() || undefined,
       hasAgent,
       hasResources,
       hasCustomComponents,
       researchMode,
+      buildMode,
       category,
     });
   };
@@ -34,6 +38,17 @@ export function BuildForm() {
         <Hammer size={16} className="text-accent" />
         New Build
       </h2>
+
+      {/* App Name */}
+      <div>
+        <label className="text-xs text-secondary mb-1 block">Name your Application</label>
+        <input
+          value={appName}
+          onChange={(e) => setAppName(e.target.value)}
+          placeholder="Autogenerate"
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:border-accent/50"
+        />
+      </div>
 
       {/* Description */}
       <div>
@@ -97,6 +112,35 @@ export function BuildForm() {
           checked={researchMode === 'deep'}
           onChange={(v) => setResearchMode(v ? 'deep' : 'standard')}
         />
+      </div>
+
+      {/* Build Mode */}
+      <div>
+        <label className="text-xs text-secondary mb-1 block">Build Mode</label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setBuildMode('automatic')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+              buildMode === 'automatic'
+                ? 'border-accent/30 bg-accent/10 text-accent'
+                : 'border-white/10 bg-white/5 text-secondary hover:text-primary'
+            }`}
+          >
+            <Zap size={14} />
+            Fully Automatic
+          </button>
+          <button
+            onClick={() => setBuildMode('review')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+              buildMode === 'review'
+                ? 'border-accent/30 bg-accent/10 text-accent'
+                : 'border-white/10 bg-white/5 text-secondary hover:text-primary'
+            }`}
+          >
+            <Eye size={14} />
+            Review Plan
+          </button>
+        </div>
       </div>
 
       {/* Submit */}

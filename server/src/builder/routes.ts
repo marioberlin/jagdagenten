@@ -33,6 +33,7 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
       windowMode: t.Optional(t.String()),
       executionMode: t.Optional(t.String()),
       researchMode: t.Optional(t.String()),
+      buildMode: t.Optional(t.String()),
     }),
   })
 
@@ -54,8 +55,42 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
     return { ...record, description: record.request?.description || record.appId };
   })
 
+  .post('/builds/:id/approve', ({ params, body }) => {
+    const record = orchestrator.getStatus(params.id);
+    if (!record) return { error: 'Build not found' };
+    if (record.phase !== 'awaiting-review') return { error: 'Build is not awaiting review' };
+
+    // Apply updated stories if provided
+    const { userStories } = (body || {}) as { userStories?: { id: string; title: string; description: string; acceptanceCriteria: string[] }[] };
+    if (userStories && record.plan) {
+      record.plan.prd.userStories = userStories.map((s, i) => ({
+        ...s,
+        priority: userStories.length - i,
+        passes: false,
+      }));
+    }
+
+    // Resume build in background
+    orchestrator.resumeBuild(params.id).catch((err) => {
+      console.error(`[Builder] Build ${params.id} resume failed:`, err);
+    });
+
+    return { ...record, phase: 'scaffolding' };
+  })
+
   .post('/builds/:id/cancel', async ({ params }) => {
     await orchestrator.cancelBuild(params.id);
+    return { success: true };
+  })
+
+  .post('/builds/:id/resume', async ({ params }) => {
+    const record = await orchestrator.resumeInterruptedBuild(params.id);
+    if (!record) return { error: 'Build not found or not resumable' };
+    return { ...record, phase: record.phase };
+  })
+
+  .delete('/builds/:id', async ({ params }) => {
+    await orchestrator.removeBuild(params.id);
     return { success: true };
   })
 
@@ -124,6 +159,39 @@ export const builderRoutes = new Elysia({ prefix: '/api/builder' })
       });
 
     return { files };
+  })
+
+  // === Build Artifacts (generated docs) ===
+
+  .get('/builds/:id/docs', ({ params }) => {
+    // Find the build to get appId
+    const record = orchestrator.getStatus(params.id);
+    const appId = record?.appId || params.id;
+    const docsDir = `.builder/staging/${appId}/app/docs`;
+    if (!fs.existsSync(docsDir)) return { docs: [] };
+
+    const docs = fs.readdirSync(docsDir)
+      .filter((f: string) => f.endsWith('.md'))
+      .map((f: string) => {
+        const content = fs.readFileSync(path.join(docsDir, f), 'utf8');
+        return { name: f, content };
+      });
+
+    return { docs };
+  })
+
+  .get('/apps/:id/docs', ({ params }) => {
+    const docsDir = `.builder/staging/${params.id}/app/docs`;
+    if (!fs.existsSync(docsDir)) return { docs: [] };
+
+    const docs = fs.readdirSync(docsDir)
+      .filter((f: string) => f.endsWith('.md'))
+      .map((f: string) => {
+        const content = fs.readFileSync(path.join(docsDir, f), 'utf8');
+        return { name: f, content };
+      });
+
+    return { docs };
   })
 
   // === Edit Mode ===

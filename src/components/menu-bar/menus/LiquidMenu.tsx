@@ -5,7 +5,6 @@
  * Contains system-level actions that apply regardless of current app.
  */
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Info,
     Settings,
@@ -17,9 +16,10 @@ import {
 } from 'lucide-react';
 import type { MenuItemDef } from '@/context/MenuBarContext';
 import { useDialogs } from '@/context/DialogContext';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 
 export function useLiquidMenuItems(): MenuItemDef[] {
-    const navigate = useNavigate();
+    const openApp = useAppStoreStore((s) => s.openApp);
     const { openDialog } = useDialogs();
 
     return useMemo<MenuItemDef[]>(() => [
@@ -37,7 +37,7 @@ export function useLiquidMenuItems(): MenuItemDef[] {
             label: 'System Settings...',
             icon: Settings,
             shortcut: '⌘,',
-            action: () => navigate('/os/settings'),
+            action: () => openApp('_system/settings'),
         },
         {
             id: 'updates',
@@ -96,5 +96,5 @@ export function useLiquidMenuItems(): MenuItemDef[] {
                 console.log('Quit');
             },
         },
-    ], [navigate, openDialog]);
+    ], [openApp, openDialog]);
 }

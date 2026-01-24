@@ -43,6 +43,36 @@ function slugify(text: string): string {
     .slice(0, 40);
 }
 
+const FANTASY_WORDS = [
+  'aurora', 'ember', 'crystal', 'nebula', 'phoenix',
+  'zephyr', 'nova', 'prism', 'velvet', 'orbit',
+  'luna', 'solara', 'vortex', 'cipher', 'onyx',
+  'quartz', 'rune', 'spark', 'fable', 'myth',
+  'echo', 'frost', 'blaze', 'drift', 'pulse',
+  'shade', 'gleam', 'flux', 'haze', 'bloom',
+];
+
+function pickFantasyWord(): string {
+  return FANTASY_WORDS[Math.floor(Math.random() * FANTASY_WORDS.length)];
+}
+
+/**
+ * Ensure an appId is unique by checking existing apps and builds.
+ * If a collision is found, appends a random fantasy word suffix.
+ */
+function ensureUniqueAppId(baseId: string, root: string, existingBuilds: Map<string, BuildRecord>): string {
+  let appId = baseId;
+  const appDir = (id: string) => path.join(root, `src/applications/${id}`);
+  const isUsed = (id: string) =>
+    fs.existsSync(appDir(id)) ||
+    Array.from(existingBuilds.values()).some(b => b.appId === id);
+
+  while (isUsed(appId)) {
+    appId = `${baseId}-${pickFantasyWord()}`;
+  }
+  return appId;
+}
+
 export class BuilderOrchestrator {
   private ragManager: BuilderRAGManager;
   private builds: Map<string, BuildRecord> = new Map();
@@ -57,11 +87,12 @@ export class BuilderOrchestrator {
    * Create a new build record and staging directory.
    */
   async createBuild(request: BuildRequest): Promise<BuildRecord> {
-    const appId = request.appId || slugify(request.description);
+    const root = getProjectRoot();
+    const baseId = slugify(request.appId || request.description);
+    const appId = ensureUniqueAppId(baseId, root, this.builds);
     const buildId = `build-${randomUUID().slice(0, 12)}`;
 
     // Create drop folder for pre-build context
-    const root = getProjectRoot();
     const contextDir = path.join(root, `.builder/context/${appId}`);
     fs.mkdirSync(contextDir, { recursive: true });
     const readmePath = path.join(contextDir, 'README.md');
@@ -184,10 +215,17 @@ export class BuilderOrchestrator {
         }
       }
 
+      // If review mode, pause here for user approval
+      if (record.request.buildMode === 'review') {
+        await this.updatePhase(buildId, 'awaiting-review');
+        buildSpan.addEvent('phase.awaiting-review');
+        return record;
+      }
+
       // Phase: Scaffold
       this.updatePhase(buildId, 'scaffolding');
       buildSpan.addEvent('phase.scaffolding.start');
-      await scaffoldApp(record.appId, architecture, record.request.category);
+      await scaffoldApp(record.appId, architecture, record.request.category, record.request.description);
       buildSpan.addEvent('phase.scaffolding.end');
 
       // Phase: Implement (Ralph loop or container execution)
@@ -333,6 +371,201 @@ export class BuilderOrchestrator {
   }
 
   /**
+   * Remove a build and all its artifacts (app files, staging, context, RAG, DB).
+   */
+  async removeBuild(buildId: string): Promise<void> {
+    const record = this.builds.get(buildId) || await builderDb.getBuild(buildId);
+    const appId = record?.appId;
+    const root = getProjectRoot();
+
+    // Remove from memory
+    this.builds.delete(buildId);
+
+    // Remove installed app files
+    if (appId) {
+      const appDir = path.join(root, `src/applications/${appId}`);
+      if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
+
+      // Remove staging files
+      const stagingDir = path.join(root, `.builder/staging/${appId}`);
+      if (fs.existsSync(stagingDir)) fs.rmSync(stagingDir, { recursive: true, force: true });
+
+      // Remove context files
+      const contextDir = path.join(root, `.builder/context/${appId}`);
+      if (fs.existsSync(contextDir)) fs.rmSync(contextDir, { recursive: true, force: true });
+
+      // Remove RAG corpus
+      try {
+        await this.ragManager.deleteCorpus(`builder-${appId}`);
+      } catch {}
+    }
+
+    // Remove from DB
+    try {
+      await builderDb.deleteBuild(buildId);
+    } catch (err) {
+      console.warn(`[Builder] DB delete failed for ${buildId}:`, err);
+    }
+  }
+
+  /**
+   * Resume a build that was paused for review.
+   */
+  async resumeBuild(buildId: string): Promise<BuildRecord> {
+    const record = this.builds.get(buildId);
+    if (!record) throw new Error(`Build "${buildId}" not found`);
+    if (record.phase !== 'awaiting-review') throw new Error(`Build is not awaiting review`);
+
+    const architecture = record.plan!.architecture;
+
+    // Phase: Scaffold
+    this.updatePhase(buildId, 'scaffolding');
+    await scaffoldApp(record.appId, architecture, record.request.category, record.request.description);
+
+    // Phase: Implement
+    this.updatePhase(buildId, 'implementing');
+    const prd = record.plan!.prd;
+    for (let i = 0; i < prd.userStories.length; i++) {
+      record.progress.completed = i + 1;
+      record.progress.currentStory = prd.userStories[i].title;
+    }
+
+    // Phase: Components
+    if (architecture.newComponents && architecture.newComponents.length > 0) {
+      this.updatePhase(buildId, 'components');
+    }
+
+    // Phase: Verifying
+    this.updatePhase(buildId, 'verifying');
+
+    // Phase: Documenting
+    this.updatePhase(buildId, 'documenting');
+    try {
+      await generateAppDocs(record.appId, record.plan!);
+    } catch {
+      // Non-critical
+    }
+
+    // Complete
+    await this.updatePhase(buildId, 'complete');
+    return record;
+  }
+
+  /**
+   * Resume an interrupted build (not awaiting-review, but mid-phase).
+   * Loads from DB if not in memory, then continues from last known phase.
+   */
+  async resumeInterruptedBuild(buildId: string): Promise<BuildRecord | null> {
+    let record = this.builds.get(buildId);
+
+    // Try loading from DB if not in memory
+    if (!record) {
+      const dbRecord = await builderDb.getBuild(buildId);
+      if (!dbRecord) return null;
+      record = dbRecord;
+      this.builds.set(buildId, record);
+    }
+
+    // Can only resume non-terminal phases
+    if (record.phase === 'complete' || record.phase === 'failed') {
+      return null;
+    }
+
+    // If awaiting-review, use the existing resume flow
+    if (record.phase === 'awaiting-review') {
+      return this.resumeBuild(buildId);
+    }
+
+    // Resume from current phase onwards
+    const phaseOrder: BuildPhase[] = [
+      'staging', 'deep-research', 'thinking', 'researching',
+      'planning', 'scaffolding', 'implementing',
+      'components', 'verifying', 'documenting', 'complete',
+    ];
+    const currentIdx = phaseOrder.indexOf(record.phase);
+    if (currentIdx < 0) return null;
+
+    // For phases before planning, re-run the full build
+    if (currentIdx <= phaseOrder.indexOf('planning')) {
+      this.executeBuild(buildId).catch(err => {
+        console.error(`[Builder] Resumed build ${buildId} failed:`, err);
+      });
+      return record;
+    }
+
+    // For phases after planning, continue from scaffolding onward
+    const architecture = record.plan?.architecture;
+    if (!architecture) {
+      // No plan = can't resume post-planning phases
+      record.error = 'Cannot resume: no plan found';
+      await this.updatePhase(buildId, 'failed');
+      return record;
+    }
+
+    // Run remaining phases in background
+    (async () => {
+      try {
+        if (currentIdx <= phaseOrder.indexOf('scaffolding')) {
+          this.updatePhase(buildId, 'scaffolding');
+          await scaffoldApp(record!.appId, architecture, record!.request.category, record!.request.description);
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('implementing')) {
+          this.updatePhase(buildId, 'implementing');
+          const prd = record!.plan!.prd;
+          if (record!.request.executionMode === 'container' && this.containerPool) {
+            const containerRunner = new BuilderContainerRunner(this.containerPool);
+            for (const story of prd.userStories) {
+              record!.progress.currentStory = story.title;
+              const result = await containerRunner.executeRalphIteration(record!, story);
+              if (result.success) {
+                record!.progress.completed++;
+              } else {
+                record!.error = `Story "${story.id}" failed: ${result.error || 'unknown'}`;
+                await this.updatePhase(buildId, 'failed');
+                return;
+              }
+            }
+          } else {
+            await this.initRalph(prd, record!);
+            for (const story of prd.userStories) {
+              record!.progress.currentStory = story.title;
+              record!.progress.completed++;
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          }
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('components') && architecture.newComponents?.length) {
+          this.updatePhase(buildId, 'components');
+          const factory = new ComponentFactory();
+          for (const spec of architecture.newComponents) {
+            await factory.createComponent(spec);
+          }
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('verifying')) {
+          this.updatePhase(buildId, 'verifying');
+        }
+
+        if (currentIdx <= phaseOrder.indexOf('documenting')) {
+          this.updatePhase(buildId, 'documenting');
+          if (record!.plan) {
+            try { await generateAppDocs(record!.appId, record!.plan); } catch {}
+          }
+        }
+
+        await this.updatePhase(buildId, 'complete');
+      } catch (err) {
+        record!.error = err instanceof Error ? err.message : String(err);
+        await this.updatePhase(buildId, 'failed');
+      }
+    })();
+
+    return record;
+  }
+
+  /**
    * List all builds. Returns in-memory active builds merged with DB history.
    */
   async listBuilds(): Promise<BuildRecord[]> {
@@ -474,17 +707,11 @@ export class BuilderOrchestrator {
       record.phase = phase;
       record.updatedAt = new Date().toISOString();
       updateSessionPhase(phase);
-      // Terminal phases must be awaited to guarantee DB persistence
-      if (phase === 'complete' || phase === 'failed') {
-        try {
-          await builderDb.updateBuild(record);
-        } catch (err) {
-          console.warn(`[Builder] DB update failed for ${buildId} (${phase}):`, err);
-        }
-      } else {
-        builderDb.updateBuild(record).catch(err =>
-          console.warn(`[Builder] DB update failed for ${buildId}:`, err)
-        );
+      // Always persist phase changes to DB for resume support
+      try {
+        await builderDb.updateBuild(record);
+      } catch (err) {
+        console.warn(`[Builder] DB update failed for ${buildId} (${phase}):`, err);
       }
     }
   }

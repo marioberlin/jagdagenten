@@ -1,15 +1,15 @@
 {
-  "projectName": "a simple to do list",
-  "branchName": "builder/a-simple-to-do-list",
+  "projectName": "a simple counter app",
+  "branchName": "builder/a-simple-counter-app",
   "userStories": [
     {
       "id": "US-001",
       "title": "Create app manifest and entry component",
       "priority": 10,
       "passes": false,
-      "description": "Create the app scaffold for a-simple-to-do-list so it loads in LiquidOS",
+      "description": "Create the app scaffold for a-simple-counter-app so it loads in LiquidOS",
       "acceptanceCriteria": [
-        "manifest.json exists at src/applications/a-simple-to-do-list/manifest.json",
+        "manifest.json exists at src/applications/a-simple-counter-app/manifest.json",
         "App.tsx renders without errors",
         "App appears in Dock when dock.enabled is true",
         "Typecheck passes"
@@ -17,12 +17,12 @@
     },
     {
       "id": "US-002",
-      "title": "Create useasimpletodolistStore Zustand store",
+      "title": "Create useasimplecounterappStore Zustand store",
       "priority": 9,
       "passes": false,
-      "description": "Create Zustand store useasimpletodolistStore with fields: data, loading, error",
+      "description": "Create Zustand store useasimplecounterappStore with fields: data, loading, error",
       "acceptanceCriteria": [
-        "useasimpletodolistStore.ts exists in src/applications/a-simple-to-do-list/",
+        "useasimplecounterappStore.ts exists in src/applications/a-simple-counter-app/",
         "Store exports a use* hook",
         "Store has fields: data, loading, error",
         "Typecheck passes"

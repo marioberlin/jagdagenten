@@ -14,6 +14,7 @@ export interface BuildRequest {
   windowMode?: 'floating' | 'panel' | 'fullscreen';
   executionMode?: 'sdk' | 'container';
   researchMode?: 'standard' | 'deep';
+  buildMode?: 'automatic' | 'review';
 }
 
 export interface BuildPlan {
@@ -102,6 +103,7 @@ export type BuildPhase =
   | 'thinking'
   | 'researching'
   | 'planning'
+  | 'awaiting-review'
   | 'scaffolding'
   | 'implementing'
   | 'components'
