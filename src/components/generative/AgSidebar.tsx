@@ -71,14 +71,14 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
     // Initialize services (Factory Pattern)
     const geminiService = useMemo(() => {
         // Updated to prefer Server Proxy for all modes (Demo & Production) to avoid exposing VITE keys
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
         return new GeminiProxyService(client, baseUrl);
     }, [client]);
 
     const claudeService = useMemo(() => {
         try {
             // Always use proxy service to avoid exposing API keys
-            const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
             return new ClaudeProxyService(client, baseUrl);
         } catch (e) {
             console.error("Failed to init ClaudeProxyService:", e);

@@ -3,7 +3,7 @@ export class DashboardAgentService {
     private baseUrl: string;
     private onDataReceived?: (data: any) => void;
 
-    constructor(baseUrl: string = 'http://localhost:3000', onDataReceived?: (data: any) => void) {
+    constructor(baseUrl: string = '', onDataReceived?: (data: any) => void) {
         this.baseUrl = baseUrl;
         this.onDataReceived = onDataReceived;
     }

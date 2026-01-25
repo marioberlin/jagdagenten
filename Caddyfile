@@ -1,4 +1,4 @@
-# Caddyfile for LiquidCrypto
+# Caddyfile for LiquidCrypto - Blue-Green Deployment
 # IP-only mode (no domain/SSL yet)
 
 :80 {
@@ -6,19 +6,47 @@
     root * /srv
     file_server
     
-    # API reverse proxy to backend
+    # API reverse proxy - routes to healthy backend
+    # Both blue and green run on port 3000 internally (each container has its own network namespace)
     handle /api/* {
-        reverse_proxy backend:3000
+        reverse_proxy backend-blue:3000 backend-green:3000 {
+            lb_policy first
+            health_uri /health
+            health_interval 10s
+            health_timeout 5s
+        }
     }
     
     # WebSocket upgrade support
     handle /ws/* {
-        reverse_proxy backend:3000
+        reverse_proxy backend-blue:3000 backend-green:3000 {
+            lb_policy first
+            health_uri /health
+        }
     }
     
     # A2A agent endpoints
     handle /agents/* {
-        reverse_proxy backend:3000
+        reverse_proxy backend-blue:3000 backend-green:3000 {
+            lb_policy first
+            health_uri /health
+        }
+    }
+    
+    # Health check endpoints
+    handle /health* {
+        reverse_proxy backend-blue:3000 backend-green:3000 {
+            lb_policy first
+            health_uri /health
+        }
+    }
+    
+    # .well-known endpoints (for A2A discovery)
+    handle /.well-known/* {
+        reverse_proxy backend-blue:3000 backend-green:3000 {
+            lb_policy first
+            health_uri /health
+        }
     }
     
     # SPA fallback - serve index.html for all other routes
@@ -33,21 +61,3 @@
     }
     header @static Cache-Control "public, max-age=31536000, immutable"
 }
-
-# When you have a domain, replace the above with:
-# liquidcrypto.yourdomain.com {
-#     # Same config - Caddy auto-provisions HTTPS
-#     root * /srv
-#     file_server
-#     handle /api/* {
-#         reverse_proxy backend:3000
-#     }
-#     handle /ws/* {
-#         reverse_proxy backend:3000
-#     }
-#     handle /agents/* {
-#         reverse_proxy backend:3000
-#     }
-#     try_files {path} /index.html
-#     encode gzip
-# }

@@ -77,7 +77,7 @@ function createDefaultSession(): SecureSession {
 // ============================================================================
 
 export function useSecureNLWeb(options: UseSecureNLWebOptions): UseSecureNLWebReturn {
-    const { baseUrl = 'http://localhost:3000', knowledgeBase = [], fileSearchStores = [], initialSession, onSynthesize } = options;
+    const { baseUrl = '', knowledgeBase = [], fileSearchStores = [], initialSession, onSynthesize } = options;
 
     // State
     const [stage, setStage] = useState<PipelineStage>('idle');

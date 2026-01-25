@@ -1322,7 +1322,7 @@ const AgentConfigPanel: React.FC<AgentConfigPanelProps> = ({
         } as any);
         try {
             // Use proxy service - no API key exposed to browser
-            return new GeminiProxyService(targetClient, import.meta.env.VITE_API_URL || 'http://localhost:3000');
+            return new GeminiProxyService(targetClient, import.meta.env.VITE_API_URL || '');
         } catch (e) {
             console.error("Failed to init GeminiProxyService:", e);
             return null;
@@ -3110,7 +3110,7 @@ const CredentialsPanel: React.FC<CredentialsPanelProps> = ({
     const handleAuth = () => {
         // Real OAuth Flow
         // Use backend endpoint to initiate flow
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
         const authUrl = `${apiBaseUrl}/api/v1/auth/google?type=${formData.type}`;
         window.open(authUrl, '_blank', 'width=500,height=600');
 

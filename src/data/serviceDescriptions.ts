@@ -37,7 +37,7 @@ export const SERVICE_DESCRIPTIONS: Record<string, ServiceDescription> = {
         description: 'AI Agent Execution Container',
         purpose: 'A sandboxed Docker container that provides isolated environments for executing AI agent code safely.',
         port: 8081,
-        healthEndpoint: 'http://localhost:3000/health/runtime',
+        healthEndpoint: '/health/runtime',
         required: false, // Optional - agents can run in demo mode without it
         features: [
             { name: 'Command Execution', description: 'Runs commands with timeout protection (default 5 min)' },
@@ -62,7 +62,7 @@ export const SERVICE_DESCRIPTIONS: Record<string, ServiceDescription> = {
         description: 'Primary Data Store',
         purpose: 'PostgreSQL 16 database for persistent storage of agents, tasks, user data, and system state.',
         port: 5432,
-        healthEndpoint: 'http://localhost:3000/health/postgres',
+        healthEndpoint: '/health/postgres',
         required: true, // Required for persistence
         features: [
             { name: 'Agent Metadata', description: 'Stores agent configurations and capabilities' },
@@ -78,7 +78,7 @@ export const SERVICE_DESCRIPTIONS: Record<string, ServiceDescription> = {
         description: 'In-Memory Data Grid',
         purpose: 'Redis 7 for high-speed caching, real-time pub/sub messaging, and session management.',
         port: 6379,
-        healthEndpoint: 'http://localhost:3000/health/redis',
+        healthEndpoint: '/health/redis',
         required: false, // Optional - caching improves performance but not critical
         features: [
             { name: 'Session Cache', description: 'Fast session lookups and auth tokens' },
@@ -94,7 +94,7 @@ export const SERVICE_DESCRIPTIONS: Record<string, ServiceDescription> = {
         description: 'Elysia API Server',
         purpose: 'High-performance TypeScript backend powered by Elysia and Bun runtime.',
         port: 3000,
-        healthEndpoint: 'http://localhost:3000/health',
+        healthEndpoint: '/health',
         required: true, // Required for API functionality
         features: [
             { name: 'REST API', description: 'Full CRUD for agents, tasks, and system config' },

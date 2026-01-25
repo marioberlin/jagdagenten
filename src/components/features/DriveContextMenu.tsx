@@ -175,11 +175,11 @@ export const DriveContextMenu: React.FC<DriveContextMenuProps> = ({
         } else {
             // knowledge or rag — upload to FileSearch store
             const storeName = `${target.type}_${target.id}`;
-            fetch(`http://localhost:3000/api/file-search/stores`, {
+            fetch(`/api/file-search/stores`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: storeName, displayName: `${target.name} Knowledge` }),
-            }).catch(() => {});
+            }).catch(() => { });
 
             // For Google Drive files, store the reference
             const ragKey = `liquid_rag_${target.type}_${target.id}`;
@@ -199,7 +199,7 @@ export const DriveContextMenu: React.FC<DriveContextMenuProps> = ({
 
     const pickerTitle = pickerMode === 'context' ? 'Add to Context'
         : pickerMode === 'knowledge' ? 'Add to Knowledge'
-        : 'Add to RAG';
+            : 'Add to RAG';
 
     return (
         <>
@@ -216,11 +216,10 @@ export const DriveContextMenu: React.FC<DriveContextMenuProps> = ({
                     <React.Fragment key={item.id}>
                         <button
                             onClick={() => handleAction(item.id)}
-                            className={`w-full flex items-center gap-3 px-3 py-1.5 text-left text-sm transition-colors ${
-                                item.danger
+                            className={`w-full flex items-center gap-3 px-3 py-1.5 text-left text-sm transition-colors ${item.danger
                                     ? 'text-red-400 hover:bg-red-500/20'
                                     : 'text-white/90 hover:bg-white/10'
-                            }`}
+                                }`}
                         >
                             <span className={`w-4 flex-shrink-0 ${item.danger ? 'text-red-400' : 'text-white/50'}`}>
                                 {item.icon}

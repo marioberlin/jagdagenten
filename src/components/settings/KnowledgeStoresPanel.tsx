@@ -36,7 +36,7 @@ interface AutoIndexResult {
     errors: string[];
 }
 
-const API_BASE = 'http://localhost:3000/api/file-search';
+const API_BASE = '/api/file-search';
 
 export const KnowledgeStoresPanel: React.FC = () => {
     const [stores, setStores] = useState<FileSearchStore[]>([]);

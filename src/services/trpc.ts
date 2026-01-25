@@ -17,7 +17,7 @@ const getBaseUrl = () => {
         return '/api/trpc';
     }
     // Server-side or build - use full URL
-    return process.env.API_URL || 'http://localhost:3000/api/trpc';
+    return process.env.API_URL || '/api/trpc';
 };
 
 // ============================================================================

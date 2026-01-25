@@ -25,13 +25,13 @@ export interface UseServiceHealthOptions {
 }
 
 const HEALTH_ENDPOINTS: Record<string, string> = {
-    'liquid-runtime': 'http://localhost:3000/health/runtime',
-    'backend': 'http://localhost:3000/health',
-    'postgres': 'http://localhost:3000/health/postgres',
-    'redis': 'http://localhost:3000/health/redis',
+    'liquid-runtime': '/health/runtime',
+    'backend': '/health',
+    'postgres': '/health/postgres',
+    'redis': '/health/redis',
 };
 
-const RECOVERY_ENDPOINT = 'http://localhost:3000/api/trpc/health.recover';
+const RECOVERY_ENDPOINT = '/api/trpc/health.recover';
 
 async function checkHealth(url: string): Promise<{ healthy: boolean; responseTime: number; details?: Record<string, unknown>; error?: string }> {
     const startTime = performance.now();

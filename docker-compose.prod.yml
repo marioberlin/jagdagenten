@@ -1,11 +1,14 @@
-# Docker Compose for LiquidCrypto Production
+# Docker Compose for LiquidCrypto Production - Blue-Green Deployment
 # Run: docker compose -f docker-compose.prod.yml up -d
 
 services:
-  backend:
-    image: ghcr.io/marioberlin/liquidcrypto-backend:latest
-    container_name: liquidcrypto-backend
+  # Blue backend (primary)
+  backend-blue:
+    image: ghcr.io/marioberlin/liquidcrypto-backend:${BLUE_VERSION:-latest}
+    container_name: liquidcrypto-backend-blue
     env_file: .env.production
+    environment:
+      - PORT=3000
     depends_on:
       postgres:
         condition: service_healthy
@@ -15,10 +18,33 @@ services:
     networks:
       - liquid-network
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost:3000/api/health" ]
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 30s
+
+  # Green backend (secondary)
+  backend-green:
+    image: ghcr.io/marioberlin/liquidcrypto-backend:${GREEN_VERSION:-latest}
+    container_name: liquidcrypto-backend-green
+    env_file: .env.production
+    environment:
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - liquid-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   postgres:
     image: postgres:16-alpine
@@ -61,11 +87,13 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./active-backend:/etc/caddy/active-backend:ro
       - caddy_data:/data
       - caddy_config:/config
       - ./dist:/srv:ro
     depends_on:
-      - backend
+      - backend-blue
+      - backend-green
     restart: unless-stopped
     networks:
       - liquid-network

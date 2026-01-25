@@ -49,7 +49,7 @@ export const AIWallpaperGenerator: React.FC<AIWallpaperGeneratorProps> = ({ onSe
             executeAction: async () => ({})
         } as any);
 
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
         console.log("Initializing Gemini Proxy Service", { baseUrl, usingMockClient: !client });
         setGeminiService(new GeminiProxyService(targetClient, baseUrl));
 

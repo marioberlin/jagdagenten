@@ -83,7 +83,7 @@ export const GlassFilesApp: React.FC<GlassFilesAppProps> = ({
 
             // 1. Ensure access to Master Template (Backend shares it with user)
             try {
-                const shareResponse = await fetch('http://localhost:3000/api/v1/sheets/share-template', {
+                const shareResponse = await fetch('/api/v1/sheets/share-template', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: userEmail })

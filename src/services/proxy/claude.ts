@@ -22,7 +22,7 @@ export class ClaudeProxyService implements ILiquidLLMService {
     private baseUrl: string;
     private _fileSearchConfig: FileSearchConfig = { enabled: false, stores: [] };
 
-    constructor(client: LiquidClient, baseUrl: string = "http://localhost:3000") {
+    constructor(client: LiquidClient, baseUrl: string = "") {
         this.client = client;
         this.baseUrl = baseUrl;
     }

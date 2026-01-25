@@ -236,7 +236,7 @@ export default function DynamicDashboardDemo() {
                 </div>
 
                 {/* Sidebar */}
-                <AgSidebar initialService={useMemo(() => new DashboardAgentService('http://localhost:3000', (data) => {
+                <AgSidebar initialService={useMemo(() => new DashboardAgentService('', (data) => {
                     if (Array.isArray(data)) {
                         setWidgets(data);
                     }
