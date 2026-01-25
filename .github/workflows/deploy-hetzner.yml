@@ -65,6 +65,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build Frontend
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_PLACES_API_KEY: ${{ secrets.VITE_GOOGLE_PLACES_API_KEY }}
+          VITE_GOOGLE_MASTER_TEMPLATE_ID: ${{ secrets.VITE_GOOGLE_MASTER_TEMPLATE_ID }}
         run: |
           bun install
           bun run build
