@@ -1,7 +1,7 @@
 # Caddyfile for LiquidCrypto - Blue-Green Deployment
-# IP-only mode (no domain/SSL yet)
+# Automatic HTTPS enabled for liquid-os.app
 
-:80 {
+liquid-os.app, www.liquid-os.app {
     # Serve frontend static files
     root * /srv
     file_server
