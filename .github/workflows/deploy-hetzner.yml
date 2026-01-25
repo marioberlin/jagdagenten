@@ -64,13 +64,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build Workspace Packages
-        run: |
-          bun install
-          cd packages/a2a-sdk && bun run build
-
       - name: Build Frontend
         run: |
+          bun install
           bun run build
 
       - name: Upload Frontend Artifacts

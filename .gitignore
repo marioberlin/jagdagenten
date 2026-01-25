@@ -89,6 +89,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+!packages/a2a-sdk/dist/
 
 # Gatsby files
 .cache/
