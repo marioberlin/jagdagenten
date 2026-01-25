@@ -4,7 +4,7 @@ import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import {
   Compass, Download, RefreshCw, Search, Upload,
   Briefcase, MessageSquare, TrendingUp, Cloud,
-  Plane, Code, Wrench, Gamepad2, Monitor
+  Plane, Code, Wrench, Gamepad2, Monitor, Bot
 } from 'lucide-react';
 import type { AppCategory } from '@/system/app-store/types';
 
@@ -18,6 +18,7 @@ const CATEGORY_ICONS: Record<AppCategory, ElementType> = {
   utilities: Wrench,
   entertainment: Gamepad2,
   system: Monitor,
+  agent: Bot,
 };
 
 const CATEGORY_LABELS: Record<AppCategory, string> = {
@@ -30,6 +31,7 @@ const CATEGORY_LABELS: Record<AppCategory, string> = {
   utilities: 'Utilities',
   entertainment: 'Entertainment',
   system: 'System',
+  agent: 'Agents',
 };
 
 export function AppStoreSidebar() {
@@ -121,11 +123,10 @@ function SidebarItem({ icon: Icon, label, active, onClick, badge }: SidebarItemP
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-        active
+      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${active
           ? 'bg-blue-500/20 text-blue-400'
           : 'text-label-glass-secondary hover:bg-glass-surface-hover hover:text-label-glass-primary'
-      }`}
+        }`}
     >
       <Icon size={15} className="flex-shrink-0" />
       <span className="flex-1 text-left truncate">{label}</span>
