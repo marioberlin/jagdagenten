@@ -147,6 +147,11 @@ export default defineConfig({
     build: {
         rollupOptions: {
             output: {
+                // TEMPORARY: Disabled manualChunks due to production build failure
+                // The custom chunking was causing "Cannot read properties of undefined (reading 'exports')"
+                // error due to circular dependencies between vendor-react and vendor-state chunks.
+                // TODO: Re-enable with proper dependency ordering once root cause is identified.
+                /*
                 manualChunks: (id) => {
                     // Vendor chunks - large dependencies that rarely change
                     if (id.includes('node_modules')) {
@@ -195,6 +200,7 @@ export default defineConfig({
                         if (simple) return `app-${simple[1]}`;
                     }
                 }
+                */
             }
         },
         // Increase chunk size warning limit

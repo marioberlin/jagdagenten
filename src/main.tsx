@@ -9,11 +9,19 @@ import { LiquidFilter } from './components/Effects/LiquidFilter'
 // Sync hydrate theme BEFORE React mounts to prevent flash
 // @see docs/IMPLEMENTATION_PLAN.md - Item 2.3 Theme Hydration Race Fix
 import { syncHydrateTheme } from './stores/utils/syncHydrate'
-syncHydrateTheme()
+try {
+    syncHydrateTheme()
+} catch (e) {
+    console.error('[main.tsx] Theme hydration failed:', e)
+}
 
 // Initialize App Store - discover and register local applications
 import { initializeAppStore } from './system/app-store/appDiscovery'
-initializeAppStore()
+try {
+    initializeAppStore()
+} catch (e) {
+    console.error('[main.tsx] App store initialization failed:', e)
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
