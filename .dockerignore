@@ -1,0 +1,25 @@
+# Docker build ignore patterns
+node_modules
+server/node_modules
+packages/*/node_modules
+.git
+.github
+.storybook
+coverage
+test-results
+tests
+*.log
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+dist
+server/dist
+.tmp
+.healing
+.healing-test
+archive
+docs
+iOS
+bot
