@@ -11,7 +11,8 @@ export type AppCategory =
   | 'developer'
   | 'utilities'
   | 'entertainment'
-  | 'system';
+  | 'system'
+  | 'agent';
 
 // ============================================================
 // App Capabilities (Permission Model)
