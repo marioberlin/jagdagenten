@@ -105,7 +105,7 @@ jobs:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
           key: ${{ secrets.HETZNER_SSH_KEY }}
-          source: "docker-compose.prod.yml,Caddyfile,scripts/blue-green-deploy.sh"
+          source: "docker-compose.prod.yml,Caddyfile,scripts/blue-green-deploy.sh,scripts/run-migrations.sh,server/sql/*"
           target: "/app/liquidcrypto/"
           overwrite: true
 
@@ -162,6 +162,25 @@ jobs:
             ls -la /app/liquidcrypto/dist/ | head -5
             echo ""
             echo "=== Deployment Complete ==="
+
+      - name: Run Database Migrations
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /app/liquidcrypto
+            chmod +x scripts/run-migrations.sh
+            
+            echo "=== Running Database Migrations ==="
+            ./scripts/run-migrations.sh
+            
+            echo ""
+            echo "=== Migration Status ==="
+            docker exec liquidcrypto-postgres psql -U liquidcrypto -c \
+              "SELECT version, applied_at, execution_time_ms FROM schema_migrations ORDER BY version" \
+              2>/dev/null || echo "No migrations table yet"
 
   rollback:
     name: Rollback to Previous Version
