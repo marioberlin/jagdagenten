@@ -94,8 +94,9 @@ export class VideoRenderClient {
   private progressCallbacks: Map<string, (progress: RenderProgress) => void> = new Map();
 
   constructor(baseUrl?: string) {
-    // Default to local video runtime or production URL
-    this.baseUrl = baseUrl || import.meta.env.VITE_VIDEO_RENDER_URL || 'http://localhost:8082';
+    // Default to /video in production (proxied through Caddy) or localhost for dev
+    const defaultUrl = import.meta.env.PROD ? '/video' : 'http://localhost:8082';
+    this.baseUrl = baseUrl || import.meta.env.VITE_VIDEO_RENDER_URL || defaultUrl;
   }
 
   // ==========================================================================

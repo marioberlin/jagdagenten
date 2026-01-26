@@ -48,7 +48,16 @@ liquid-os.app, www.liquid-os.app {
             health_uri /health
         }
     }
-    
+
+    # Video render service
+    handle /video/* {
+        reverse_proxy video-runtime:8082 {
+            health_uri /health
+            health_interval 10s
+            health_timeout 5s
+        }
+    }
+
     # SPA fallback - serve index.html for all other routes
     try_files {path} /index.html
     
