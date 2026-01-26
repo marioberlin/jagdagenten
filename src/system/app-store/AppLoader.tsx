@@ -4,9 +4,12 @@
  * Dynamically discovers and loads app components from the applications/ directory
  * using Vite's import.meta.glob for build-time discovery and React.lazy for
  * code-split loading.
+ *
+ * Also supports Quick Apps - single-file apps that are compiled in the browser.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useQuickAppStore } from '../quick-apps/quickAppStore';
 
 // ============================================================================
 // Build-Time App Discovery via Vite Glob Import
@@ -103,13 +106,57 @@ export function getAppComponent(appId: string): React.LazyExoticComponent<React.
 
 /**
  * React hook to get an app component by ID.
- * Memoized to avoid unnecessary re-renders.
+ * Supports both local apps (from applications/) and Quick Apps (compiled in browser).
  */
-export function useAppComponent(appId: string | null): React.LazyExoticComponent<React.ComponentType<any>> | null {
+export function useAppComponent(appId: string | null): React.ComponentType<any> | null {
+  const { isQuickApp, getComponent: getQuickAppComponent } = useQuickAppStore();
+  const [quickAppComponent, setQuickAppComponent] = useState<React.ComponentType | null>(null);
+  const [, setIsLoadingQuickApp] = useState(false);
+
+  // Check if this is a Quick App
+  const isQuick = appId ? isQuickApp(appId) : false;
+
+  // Load Quick App component if needed
+  useEffect(() => {
+    if (!appId || !isQuick) {
+      setQuickAppComponent(null);
+      return;
+    }
+
+    let mounted = true;
+    setIsLoadingQuickApp(true);
+
+    getQuickAppComponent(appId)
+      .then((component) => {
+        if (mounted) {
+          setQuickAppComponent(() => component);
+          setIsLoadingQuickApp(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load Quick App:', err);
+        if (mounted) {
+          setIsLoadingQuickApp(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [appId, isQuick, getQuickAppComponent]);
+
+  // Return memoized component
   return useMemo(() => {
     if (!appId) return null;
+
+    // Quick App: return the loaded component
+    if (isQuick) {
+      return quickAppComponent;
+    }
+
+    // Regular app: use lazy loading
     return getAppComponent(appId);
-  }, [appId]);
+  }, [appId, isQuick, quickAppComponent]);
 }
 
 /**

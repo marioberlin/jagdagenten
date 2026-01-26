@@ -80,7 +80,7 @@ class AppErrorBoundary extends React.Component<
 
 interface AppContentProps {
   app: InstalledApp;
-  AppComponent: React.LazyExoticComponent<React.ComponentType<any>>;
+  AppComponent: React.ComponentType<any>;
 }
 
 /** Fullscreen panel overlay (replaces SparklesApp / IBirdApp direct rendering) */

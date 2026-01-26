@@ -15,6 +15,7 @@ import { InstalledAppsView } from './components/InstalledAppsView';
 import { AppCategoryView } from './components/AppCategoryView';
 import { AppSearchResults } from './components/AppSearchResults';
 import { AppPublishView } from './components/AppPublishView';
+import { QuickAppInstallerView } from './components/QuickAppInstallerView';
 import { AppStoreDialogs } from './components/AppStoreDialogs';
 import { ChevronLeft } from 'lucide-react';
 
@@ -82,6 +83,8 @@ function AppStoreContent() {
       return <InstalledAppsView showUpdatesOnly />;
     case 'publish':
       return <AppPublishView />;
+    case 'quick-app':
+      return <QuickAppInstallerView />;
     default:
       return <AppStoreHome />;
   }
@@ -96,6 +99,7 @@ function getViewTitle(view: string): string {
     case 'search': return 'Search Results';
     case 'updates': return 'Updates';
     case 'publish': return 'Publish App';
+    case 'quick-app': return 'Quick Apps';
     default: return 'App Store';
   }
 }

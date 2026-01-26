@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 
-export type AppStoreView = 'home' | 'category' | 'detail' | 'search' | 'installed' | 'updates' | 'publish';
+export type AppStoreView = 'home' | 'category' | 'detail' | 'search' | 'installed' | 'updates' | 'publish' | 'quick-app';
 
 interface AppStoreUIState {
   /** Current view in the App Store */
@@ -87,7 +87,7 @@ export const useAppStoreUIStore = create<AppStoreUIStore>()((set, get) => ({
 
   goBack: () => {
     const { currentView } = get();
-    if (currentView === 'detail' || currentView === 'category') {
+    if (currentView === 'detail' || currentView === 'category' || currentView === 'quick-app') {
       set({ currentView: 'home', selectedAppId: null, selectedCategory: null });
     } else if (currentView === 'search') {
       set({ currentView: 'home', searchQuery: '' });

@@ -2,7 +2,7 @@ import type { ElementType, ReactNode } from 'react';
 import { useAppStoreUIStore } from '../store';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import {
-  Compass, Download, RefreshCw, Search, Upload,
+  Compass, Download, RefreshCw, Search, Upload, Zap,
   Briefcase, MessageSquare, TrendingUp, Cloud,
   Plane, Code, Wrench, Gamepad2, Monitor, Bot
 } from 'lucide-react';
@@ -81,6 +81,12 @@ export function AppStoreSidebar() {
             label="Publish"
             active={currentView === 'publish'}
             onClick={() => navigateTo('publish')}
+          />
+          <SidebarItem
+            icon={Zap}
+            label="Quick Apps"
+            active={currentView === 'quick-app'}
+            onClick={() => navigateTo('quick-app')}
           />
         </SidebarSection>
 
