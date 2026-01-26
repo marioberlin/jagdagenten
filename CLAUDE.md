@@ -96,7 +96,7 @@ Errors are learning opportunities:
 # Build container images (first time only)
 cd server/container && ./build.sh && cd ../..
 
-# Start PostgreSQL, Redis, and Container Runtime
+# Start PostgreSQL, Redis, NATS, and Container Runtime
 docker-compose up -d
 
 # Install dependencies
@@ -110,6 +110,7 @@ bun run dev
 ```bash
 DATABASE_URL=postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto
 REDIS_URL=redis://localhost:6379
+NATS_URL=nats://localhost:4222
 PORT=3000
 ```
 
@@ -118,6 +119,7 @@ PORT=3000
 |---------|------|---------|
 | PostgreSQL | 5432 | Database |
 | Redis | 6379 | Cache & pub/sub |
+| NATS | 4222 | A2A messaging & work queues |
 | liquid-runtime | 8081 | AI agent containers |
 | Backend | 3000 | Elysia API |
 | Frontend | 5173/5174 | Vite dev server |
@@ -125,6 +127,8 @@ PORT=3000
 For detailed setup, see [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md).
 
 For system documentation and implementation details, see [`docs/SYSTEM_DOCUMENTATION.md`](./docs/SYSTEM_DOCUMENTATION.md).
+
+For NATS messaging documentation, see [`docs/infrastructure/nats.md`](./docs/infrastructure/nats.md).
 
 ---
 

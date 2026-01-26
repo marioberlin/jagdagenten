@@ -23,7 +23,7 @@ services:
     networks:
       - liquid-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U liquidcrypto -d liquidcrypto"]
+      test: [ "CMD-SHELL", "pg_isready -U liquidcrypto -d liquidcrypto" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -40,7 +40,7 @@ services:
     networks:
       - liquid-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -65,7 +65,7 @@ services:
       LIQUID_MAX_MEMORY_MB: 512
       LIQUID_LOG_LEVEL: info
     ports:
-      - "8081:8080"  # Expose runtime API
+      - "8081:8080" # Expose runtime API
     networks:
       - liquid-network
     deploy:
@@ -77,10 +77,30 @@ services:
           cpus: '0.5'
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-sf", "http://localhost:8080/health" ]
       interval: 5s
       timeout: 3s
       start_period: 10s
+      retries: 3
+
+  # NATS: High-performance messaging for A2A agents and real-time events
+  # Enables pub/sub with wildcards, work queues, and back-pressure support
+  nats:
+    image: nats:2.10-alpine
+    container_name: liquidcrypto-nats
+    command: [ "--js", "--sd", "/data", "-m", "8222" ]
+    restart: unless-stopped
+    ports:
+      - "4222:4222" # Client connections
+      - "8222:8222" # HTTP monitoring UI
+    volumes:
+      - nats_data:/data
+    networks:
+      - liquid-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz" ]
+      interval: 5s
+      timeout: 3s
       retries: 3
 
 networks:
@@ -91,6 +111,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  nats_data:
     driver: local
   liquid_sandboxes:
     driver: local

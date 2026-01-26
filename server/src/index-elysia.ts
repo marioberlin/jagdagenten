@@ -14,6 +14,7 @@ import { createA2APlugin } from './a2a/index.js';
 import { coworkRoutes, sandboxRoutes, initCoworkEventForwarding } from './cowork/index.js';
 import { systemFilesRoutes } from './system/index.js';
 import consoleRoutes from './routes/console.js';
+import { initNats, closeNats, getNatsHealth, isNatsConnected } from './nats/index.js';
 
 // CORS plugin
 const corsPlugin = cors({
@@ -75,6 +76,10 @@ const securityAuditPlugin = new Elysia({ name: 'security-audit' })
 // Redis Sentinel plugin
 const sentinelPlugin = new Elysia({ name: 'sentinel' })
     .get('/api/v1/redis/sentinel', async () => await getSentinelStatus());
+
+// NATS health plugin
+const natsHealthPlugin = new Elysia({ name: 'nats-health' })
+    .get('/api/v1/nats/health', async () => await getNatsHealth());
 
 // Chat request validation schema
 const chatSchema = t.Object({
@@ -293,25 +298,51 @@ const app = new Elysia({ prefix: '' })
     .use(coworkRoutes)
     .use(sandboxRoutes)
     .use(systemFilesRoutes)
-    .use(consoleRoutes);
+    .use(consoleRoutes)
+    .use(natsHealthPlugin);
 
 // Start server
 const PORT = Number(process.env.PORT) || 3000;
 
-app.listen(PORT, () => {
-    console.log(`\n╔═══════════════════════════════════════════════════════╗`);
-    console.log(`║  LiquidCrypto Server (Elysia)                       ║`);
-    console.log(`║  ─────────────────────────────────────────────────    ║`);
-    console.log(`║  Runtime: Bun + Elysia                              ║`);
-    console.log(`║  Port: ${PORT}                                               ║`);
-    console.log(`║  URL: http://localhost:${PORT}                          ║`);
-    console.log(`╚═══════════════════════════════════════════════════════╝`);
+// Initialize services and start server
+async function startServer() {
+    // Initialize NATS (non-blocking, server works without it)
+    const natsConnected = await initNats();
+    if (!natsConnected) {
+        console.warn('[Server] NATS not available - running in degraded mode');
+    }
 
-    // Start WebSocket server on port 3001
-    wsManager.startWebSocketServer(3001);
+    app.listen(PORT, () => {
+        console.log(`\n╔═══════════════════════════════════════════════════════╗`);
+        console.log(`║  LiquidCrypto Server (Elysia)                         ║`);
+        console.log(`║  ─────────────────────────────────────────────────    ║`);
+        console.log(`║  Runtime: Bun + Elysia                                ║`);
+        console.log(`║  Port: ${PORT}                                         ║`);
+        console.log(`║  URL: http://localhost:${PORT}                          ║`);
+        console.log(`║  NATS: ${natsConnected ? 'Connected' : 'Not available'}                              ║`);
+        console.log(`╚═══════════════════════════════════════════════════════╝`);
 
-    // Initialize Cowork event forwarding
-    initCoworkEventForwarding();
-});
+        // Start WebSocket server on port 3001
+        wsManager.startWebSocketServer(3001);
+
+        // Initialize Cowork event forwarding
+        initCoworkEventForwarding();
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+        console.log('[Server] SIGTERM received, shutting down...');
+        await closeNats();
+        process.exit(0);
+    });
+
+    process.on('SIGINT', async () => {
+        console.log('[Server] SIGINT received, shutting down...');
+        await closeNats();
+        process.exit(0);
+    });
+}
+
+startServer();
 
 export default app;

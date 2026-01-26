@@ -69,6 +69,7 @@ flowchart TB
 | **Backend** | Bun + Elysia | API server with health-based routing |
 | **Database** | PostgreSQL 16 | Persistent data storage |
 | **Cache** | Redis 7 | Session cache, pub/sub |
+| **Messaging** | NATS 2.10 | A2A agents, work queues, real-time events |
 | **Reverse Proxy** | Caddy 2 | SSL termination, load balancing, static file serving |
 | **CI/CD** | GitHub Actions | Automated build and deploy |
 | **Container Registry** | GHCR | Docker image storage |
@@ -85,6 +86,7 @@ services:
   backend-green    # Secondary backend (for zero-downtime deploys)
   postgres         # PostgreSQL 16-alpine
   redis            # Redis 7-alpine
+  nats             # NATS 2.10-alpine (JetStream messaging)
   caddy            # Caddy 2-alpine (SSL + reverse proxy)
 ```
 

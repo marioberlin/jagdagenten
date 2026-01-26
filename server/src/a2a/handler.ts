@@ -23,6 +23,7 @@ import type {
     AgentCard,
 } from './types.js';
 import { JSON_RPC_ERRORS, TERMINAL_STATES } from './types.js';
+import { publishSystemEvent, isNatsConnected } from '../nats/index.js';
 
 // ============================================================================
 // Task Store
@@ -149,6 +150,16 @@ function updateTaskState(taskId: string, state: TaskState, message?: A2AMessage)
     if (message) {
         task.history = task.history || [];
         task.history.push(message);
+    }
+
+    // Publish state change via NATS (non-blocking)
+    if (isNatsConnected()) {
+        publishSystemEvent('task_state_changed', {
+            taskId,
+            state,
+            contextId: task.contextId,
+            timestamp: task.status.timestamp,
+        });
     }
 
     return task;
