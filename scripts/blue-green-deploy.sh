@@ -52,23 +52,37 @@ get_inactive_backend() {
 wait_for_health() {
     local backend=$1
     local port=$2
-    local max_attempts=30
+    local max_attempts=45
     local attempt=1
-    
+
     log "Waiting for backend-${backend} to be healthy..."
-    
+
+    # Give container time to initialize
+    log "Waiting 10s for container startup..."
+    sleep 10
+
     while [[ $attempt -le $max_attempts ]]; do
+        # Check if container is running first
+        if ! docker ps --filter "name=liquidcrypto-backend-${backend}" --filter "status=running" | grep -q "liquidcrypto-backend-${backend}"; then
+            warn "Container not running, checking logs..."
+            docker logs --tail 30 "liquidcrypto-backend-${backend}" 2>&1 || true
+            error "backend-${backend} container stopped unexpectedly"
+        fi
+
         # Use curl (installed in Dockerfile) instead of wget
         if docker exec "liquidcrypto-backend-${backend}" curl -sf "http://localhost:${port}/health" >/dev/null 2>&1; then
             success "backend-${backend} is healthy!"
             return 0
         fi
-        
+
         echo -n "."
         sleep 2
         ((attempt++))
     done
-    
+
+    # Show logs before failing
+    warn "Health check failed. Last 50 lines of container logs:"
+    docker logs --tail 50 "liquidcrypto-backend-${backend}" 2>&1 || true
     error "backend-${backend} failed to become healthy after ${max_attempts} attempts"
 }
 
