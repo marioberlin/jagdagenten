@@ -30,6 +30,9 @@ import { fileSearchRoutes } from './routes/fileSearch.js';
 import { appRoutes } from './registry/app-routes.js';
 import { registerResourceRoutes, MemoryDecayService } from './resources/index.js';
 import { builderRoutes } from './builder/routes.js';
+import { marketplaceRoutes } from './routes/marketplace.js';
+import { publicMarketplacePlugin } from './routes/public-marketplace.js';
+import { refreshRecommendations } from './marketplace/recommendations.js';
 import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
@@ -278,6 +281,27 @@ async function startServer() {
             componentLoggers.http.info('[MemoryDecay] Background job scheduled (hourly)');
         } catch (err) {
             componentLoggers.http.warn({ error: (err as Error).message }, '[MemoryDecay] Failed to start');
+        }
+
+        // Start Skill Recommendations daily refresh (3am UTC)
+        try {
+            const now = new Date();
+            const next3am = new Date(now);
+            next3am.setUTCHours(3, 0, 0, 0);
+            if (next3am <= now) {
+                next3am.setDate(next3am.getDate() + 1);
+            }
+            const msUntilFirst = next3am.getTime() - now.getTime();
+
+            // Schedule first run, then every 24 hours
+            setTimeout(() => {
+                refreshRecommendations();
+                setInterval(refreshRecommendations, 24 * 60 * 60 * 1000);
+            }, msUntilFirst);
+
+            componentLoggers.http.info({ nextRun: next3am.toISOString() }, '[Recommendations] Daily refresh scheduled (3am UTC)');
+        } catch (err) {
+            componentLoggers.http.warn({ error: (err as Error).message }, '[Recommendations] Failed to schedule');
         }
     }
 
@@ -663,6 +687,12 @@ async function startServer() {
 
         // App Store Registry API
         .use(appRoutes)
+
+        // Skill Marketplace API
+        .use(marketplaceRoutes)
+
+        // Public Skill Registry (no auth required)
+        .use(publicMarketplacePlugin)
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)

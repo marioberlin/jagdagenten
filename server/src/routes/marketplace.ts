@@ -6,19 +6,24 @@
 
 import { Elysia, t } from 'elysia';
 import { SkillMarketplaceService } from '../marketplace/skill-marketplace';
+import { getGeminiSkillSearch } from '../marketplace/gemini-skill-search';
+import { getRecommendations, getPopularSkills, getTrendingSkills } from '../marketplace/recommendations';
+import { getRemoteRegistryService } from '../marketplace/remote-registry';
 import { componentLoggers } from '../logger';
 
 const logger = componentLoggers.http;
 
-// Create service instance
+// Create service instances
 const marketplace = new SkillMarketplaceService();
+const geminiSearch = getGeminiSkillSearch();
+const remoteRegistry = getRemoteRegistryService();
 
 // ============================================================================
 // Routes
 // ============================================================================
 
 export const marketplaceRoutes = new Elysia({ prefix: '/api/v1/marketplace' })
-    // Search skills
+    // Search skills (with optional semantic mode)
     .get('/skills', async ({ query }) => {
         const {
             q,
@@ -27,22 +32,102 @@ export const marketplaceRoutes = new Elysia({ prefix: '/api/v1/marketplace' })
             sortBy = 'recent',
             limit = 20,
             offset = 0,
+            mode = 'text',  // 'text' or 'semantic'
         } = query as any;
 
+        const parsedLimit = parseInt(limit);
+        const parsedOffset = parseInt(offset);
+
+        // Semantic search via Gemini
+        if (mode === 'semantic' && q && geminiSearch.isAvailable()) {
+            // Get all skills first (for semantic ranking)
+            const allSkills = await marketplace.search({
+                limit: 100,
+                offset: 0,
+            });
+
+            const semanticResults = await geminiSearch.search(
+                q,
+                allSkills.skills.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    description: s.description,
+                    tags: s.tags || [],
+                    category: s.category,
+                    author: s.author?.username || 'unknown',
+                    version: s.version || '1.0.0',
+                })),
+                parsedLimit
+            );
+
+            return {
+                skills: semanticResults.map(r =>
+                    allSkills.skills.find(s => s.id === r.skillId)
+                ).filter(Boolean),
+                total: semanticResults.length,
+                limit: parsedLimit,
+                offset: parsedOffset,
+                mode: 'semantic',
+            };
+        }
+
+        // Standard text search
         const result = await marketplace.search({
             query: q,
             category,
             tags: tags?.split(','),
             sortBy,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+            limit: parsedLimit,
+            offset: parsedOffset,
         });
 
         return {
             skills: result.skills,
             total: result.total,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+            limit: parsedLimit,
+            offset: parsedOffset,
+            mode: 'text',
+        };
+    })
+
+    // Get skill recommendations ("users also installed")
+    .get('/skills/:id/recommendations', async ({ params, query }) => {
+        const limit = parseInt((query as any).limit || '5');
+        const recommendations = await getRecommendations(params.id, limit);
+        return { recommendations };
+    }, {
+        params: t.Object({
+            id: t.String(),
+        }),
+    })
+
+    // Get popular skills
+    .get('/skills/popular', async ({ query }) => {
+        const limit = parseInt((query as any).limit || '10');
+        const skills = await getPopularSkills(limit);
+        return { skills };
+    })
+
+    // Get trending skills (last 7 days)
+    .get('/skills/trending', async ({ query }) => {
+        const limit = parseInt((query as any).limit || '10');
+        const skills = await getTrendingSkills(limit);
+        return { skills };
+    })
+
+    // Browse remote registries
+    .get('/remote', async ({ query }) => {
+        const q = (query as any).q;
+        const limit = parseInt((query as any).limit || '20');
+
+        if (q) {
+            const skills = await remoteRegistry.searchAllRegistries(q, limit);
+            return { skills, registries: remoteRegistry.getRegistries() };
+        }
+
+        return {
+            skills: [],
+            registries: remoteRegistry.getRegistries(),
         };
     })
 
