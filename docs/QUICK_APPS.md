@@ -441,13 +441,22 @@ capabilities:
 
 ```
 src/system/quick-apps/
-├── parser.ts          # Parses APP.md → structured data
-├── compiler.ts        # TypeScript → JavaScript (esbuild-wasm)
-├── quickAppStore.ts   # Installation & state management
-└── types.ts           # Type definitions
+├── parser.ts              # Parses APP.md → structured data
+├── compiler.ts            # TypeScript → JavaScript (esbuild-wasm)
+├── quickAppStore.ts       # Installation & state management
+├── exporter.ts            # Export Quick App to full app structure
+├── QuickAppDevIndicator.tsx # Dev mode UI indicator
+├── types.ts               # Type definitions
+└── index.ts               # Module exports
 
 src/applications/_system/app-store/components/
-└── QuickAppInstallerView.tsx  # Installation UI
+├── QuickAppInstallerView.tsx  # Installation & management UI
+├── QuickAppCard.tsx           # Card component for Quick Apps
+└── AppStoreHome.tsx           # Quick Apps gallery section
+
+packages/
+├── quick-apps-cli/        # CLI tool for development
+└── vscode-quick-apps/     # VS Code extension
 ```
 
 ### Data Flow
@@ -753,15 +762,138 @@ When your Quick App outgrows the format:
 
 ---
 
+## Developer Tools
+
+### Quick Apps CLI
+
+Install and use the CLI for Quick App development:
+
+```bash
+# Install globally
+bun install -g @liquidcrypto/quick-apps-cli
+
+# Create a new Quick App
+quick-app new "My Timer App" --template with-store
+
+# Start development server with hot reload
+quick-app dev --file my-timer.app.md
+
+# Build and validate
+quick-app build --file my-timer.app.md
+
+# Preview in browser
+quick-app preview --file my-timer.app.md
+
+# Export to full app structure
+quick-app export --file my-timer.app.md --output ./my-full-app
+```
+
+Templates available:
+- `basic` - Simple counter app
+- `with-store` - App with persistent storage
+- `with-settings` - App with settings panel
+
+### VS Code Extension
+
+Install "LiquidOS Quick Apps" from the VS Code Marketplace for:
+
+- **Syntax highlighting** for `.app.md` files
+- **Embedded language support** for TSX, CSS, YAML
+- **Snippets** for Quick App development:
+  - `quickapp` - Complete app template
+  - `frontmatter` - YAML frontmatter
+  - `appblock` - Main component block
+  - `storeblock` - Zustand store
+  - `glassbutton` - Liquid Glass button
+- **Commands**:
+  - "Quick Apps: New Quick App" - Create from template
+  - "Quick Apps: Preview" - Preview current file
+
+### Hot Reload Development
+
+Connect to a CLI dev server for live reloading:
+
+```tsx
+import { connectToDevServer, hotReloadQuickApp } from '@/system/quick-apps';
+
+// Connect to dev server
+const disconnect = connectToDevServer('http://localhost:5050', () => {
+  console.log('App updated!');
+});
+
+// Cleanup when done
+disconnect();
+```
+
+The `QuickAppDevIndicator` component shows connection status:
+
+```tsx
+import { QuickAppDevIndicator, useQuickAppDevMode } from '@/system/quick-apps';
+
+function MyApp() {
+  const devUrl = useQuickAppDevMode();
+
+  return (
+    <>
+      {devUrl && <QuickAppDevIndicator appId="my-app" devServerUrl={devUrl} />}
+      {/* App content */}
+    </>
+  );
+}
+```
+
+---
+
+## Sharing & Export
+
+### Share Quick App
+
+From the "My Apps" tab in Quick Apps:
+
+1. Click the **Share** button on any installed Quick App
+2. Options:
+   - **Copy APP.md** - Copy markdown to clipboard
+   - **Download** - Save as `.app.md` file
+   - **Original URL** - Copy source URL (if installed from URL)
+
+### Remix Quick App
+
+1. Click the **Edit/Remix** button
+2. The app's markdown loads into the installer
+3. Modify and preview changes
+4. Install as a new version
+
+### Export to Full App
+
+Convert a Quick App to a full application structure:
+
+1. Click the **Export** button (Package icon)
+2. Downloads a ZIP containing:
+   - `manifest.json` - Full app manifest
+   - `src/App.tsx` - Main component
+   - `src/index.ts` - Entry point
+   - `package.json` - Dependencies
+   - `tsconfig.json` - TypeScript config
+   - `README.md` - Documentation
+
+Or use the CLI:
+```bash
+quick-app export --file my-app.app.md --output ./exported-app
+```
+
+---
+
 ## Future Roadmap
 
-- [ ] Quick App Gallery in App Store
-- [ ] One-click sharing/remix
+- [x] Quick App Gallery in App Store
+- [x] One-click sharing/remix
+- [x] Hot reload during development
+- [x] Export to Full App
+- [x] Quick App CLI
+- [x] VS Code extension with syntax highlighting
 - [ ] Version management
-- [ ] Hot reload during development
-- [ ] Export to Full App
-- [ ] Quick App CLI (`liquid quick-app create`)
-- [ ] VS Code extension with syntax highlighting
+- [ ] Quick App marketplace/registry
+- [ ] AI-assisted Quick App creation
 
 ---
 
@@ -780,8 +912,16 @@ src/system/quick-apps/samples/
 
 To add features to the Quick Apps system:
 
-1. Parser: `src/system/quick-apps/parser.ts`
-2. Compiler: `src/system/quick-apps/compiler.ts`
-3. Runtime hooks: `src/system/quick-apps/compiler.ts` (RUNTIME_SHIMS)
-4. Types: `src/system/quick-apps/types.ts`
-5. UI: `src/applications/_system/app-store/components/QuickAppInstallerView.tsx`
+| Area | File(s) |
+|------|---------|
+| Parser | `src/system/quick-apps/parser.ts` |
+| Compiler | `src/system/quick-apps/compiler.ts` |
+| Runtime hooks | `src/system/quick-apps/compiler.ts` (RUNTIME_SHIMS) |
+| Types | `src/system/quick-apps/types.ts` |
+| Store | `src/system/quick-apps/quickAppStore.ts` |
+| Exporter | `src/system/quick-apps/exporter.ts` |
+| Dev Mode | `src/system/quick-apps/QuickAppDevIndicator.tsx` |
+| Installer UI | `src/applications/_system/app-store/components/QuickAppInstallerView.tsx` |
+| Gallery Card | `src/applications/_system/app-store/components/QuickAppCard.tsx` |
+| CLI | `packages/quick-apps-cli/` |
+| VS Code Extension | `packages/vscode-quick-apps/` |
