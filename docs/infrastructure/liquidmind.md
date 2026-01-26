@@ -351,6 +351,21 @@ score = (importance * 0.3) + (task_fit * 0.4) + (recency * 0.15) + (frequency * 
 - `recency`: Normalized time since last access
 - `frequency`: Normalized usage count
 
+### Compaction
+
+When conversation context exceeds token limits, the **Smart Compaction Service** preserves valuable memories:
+
+1. **ImportanceClassifier** scores each turn (0-100 via LLM)
+2. **MemoryDecontextualizer** resolves pronouns for self-contained memories
+3. High-importance memories saved to `DailyMemoryLog` with categories
+4. Older turns summarized or truncated based on `strategy`
+
+**Pipeline stages:** `analyzing` → `extracting` → `summarizing` → `persisting` → `complete`
+
+**Chat command:** `/compact` (also: `/compact status`, `/compact force`)
+
+See full documentation: [`docs/infrastructure/smart-compaction.md`](./smart-compaction.md)
+
 ---
 
 ## Sharing & Permissions

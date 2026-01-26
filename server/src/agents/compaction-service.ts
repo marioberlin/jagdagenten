@@ -8,10 +8,37 @@
  * - Pre-compaction memory flush (save important context)
  * - /compact chat command support
  * - Configurable compaction strategies
+ * - NLWEB-inspired smart memory extraction with parallel pre-processing
  */
 
 import type { AIResource, ResourceStore, OwnerType } from '../resources/types.js';
 import type { DailyMemoryLogService, MemoryEntry } from '../resources/daily-memory-log.js';
+import { ImportanceClassifier, type ImportanceResult } from './importance-classifier.js';
+import { MemoryDecontextualizer } from './memory-decontextualizer.js';
+import { TopicClusterer, type TopicCluster } from './topic-clusterer.js';
+
+// ============================================================================
+// Pipeline Stage Types (NLWEB-inspired)
+// ============================================================================
+
+export type CompactionStage =
+    | 'idle'
+    | 'analyzing'      // Scoring turn importance
+    | 'clustering'     // Grouping by topic
+    | 'extracting'     // Decontextualizing memories
+    | 'summarizing'    // Generating summary
+    | 'persisting'     // Storing to memory log
+    | 'complete';
+
+const STAGE_MESSAGES: Record<CompactionStage, string> = {
+    idle: '',
+    analyzing: 'Reviewing conversation insights...',
+    clustering: 'Grouping related topics...',
+    extracting: 'Finding key learnings...',
+    summarizing: 'Creating memory snapshot...',
+    persisting: 'Saving to long-term memory...',
+    complete: 'Memory refreshed! ✨'
+};
 
 // ============================================================================
 // Types
@@ -32,6 +59,9 @@ export interface CompactionConfig {
 
     /** Auto-flush memories before compaction */
     autoFlushMemories: boolean;
+
+    /** Enable topic clustering for smarter summarization */
+    enableTopicClustering: boolean;
 
     /** System prompt for memory extraction */
     memoryFlushPrompt: string;
@@ -58,6 +88,7 @@ export const DEFAULT_COMPACTION_CONFIG: CompactionConfig = {
     strategy: 'hybrid',
     keepLastMessages: 10,
     autoFlushMemories: true,
+    enableTopicClustering: true, // Use TopicClusterer for smarter summaries
     memoryFlushPrompt: `Before this conversation is compacted, extract any important information that should be remembered for future sessions.
 
 For each piece of information, categorize it as:
@@ -80,19 +111,51 @@ export class CompactionService {
     private memoryLog: DailyMemoryLogService | null;
     private ownerType: OwnerType;
     private ownerId: string;
+    private onStageChange?: (stage: CompactionStage, message: string) => void;
+    private importanceClassifier: ImportanceClassifier;
+    private decontextualizer: MemoryDecontextualizer;
+    private topicClusterer: TopicClusterer;
+    private currentStage: CompactionStage = 'idle';
 
     constructor(
         ownerType: OwnerType,
         ownerId: string,
         config?: Partial<CompactionConfig>,
         resourceStore?: ResourceStore,
-        memoryLog?: DailyMemoryLogService
+        memoryLog?: DailyMemoryLogService,
+        onStageChange?: (stage: CompactionStage, message: string) => void
     ) {
         this.ownerType = ownerType;
         this.ownerId = ownerId;
         this.config = { ...DEFAULT_COMPACTION_CONFIG, ...config };
         this.resourceStore = resourceStore ?? null;
         this.memoryLog = memoryLog ?? null;
+        this.onStageChange = onStageChange;
+        this.importanceClassifier = new ImportanceClassifier();
+        this.decontextualizer = new MemoryDecontextualizer();
+        this.topicClusterer = new TopicClusterer({ generateSummaries: true });
+    }
+
+    /**
+     * Set the stage change callback (NLWEB-style pipeline tracking)
+     */
+    setStageCallback(callback: (stage: CompactionStage, message: string) => void): void {
+        this.onStageChange = callback;
+    }
+
+    /**
+     * Get current pipeline stage
+     */
+    getStage(): CompactionStage {
+        return this.currentStage;
+    }
+
+    /**
+     * Update pipeline stage (triggers callback)
+     */
+    private setStage(stage: CompactionStage): void {
+        this.currentStage = stage;
+        this.onStageChange?.(stage, STAGE_MESSAGES[stage]);
     }
 
     // ============================================================================
@@ -148,12 +211,13 @@ export class CompactionService {
         const originalTokens = this.estimateTokens(conversation);
         let memoriesFlushed = 0;
 
-        // Step 1: Flush memories if enabled
+        // Step 1: Flush memories if enabled (stages are set inside flushMemories)
         if ((options?.flushMemories ?? this.config.autoFlushMemories) && this.memoryLog) {
             memoriesFlushed = await this.flushMemories(conversation);
         }
 
         // Step 2: Apply compaction strategy
+        this.setStage('summarizing');
         let compactedConversation: ConversationTurn[];
         let summary: string | undefined;
 
@@ -191,6 +255,8 @@ export class CompactionService {
         if (this.resourceStore) {
             await this.recordCompactionEvent(originalTokens, compactedTokens, removedTurns, summary);
         }
+
+        this.setStage('complete');
 
         return {
             compactedConversation,
@@ -265,13 +331,38 @@ export class CompactionService {
     }
 
     /**
-     * Hybrid: summarize important parts, truncate the rest
+     * Hybrid: summarize by topic, then truncate
+     * Uses TopicClusterer for smarter topic-aware summarization
      */
     private async compactHybrid(
         conversation: ConversationTurn[],
         summarizer: (text: string) => Promise<string>
     ): Promise<{ conversation: ConversationTurn[]; summary: string }> {
-        // Same as summarize for now, but could add importance scoring
+        const keepCount = this.config.keepLastMessages;
+        const systemMessages = conversation.filter(t => t.role === 'system');
+        const nonSystemMessages = conversation.filter(t => t.role !== 'system');
+
+        const toSummarize = nonSystemMessages.slice(0, -keepCount);
+        const toKeep = nonSystemMessages.slice(-keepCount);
+
+        // Use topic clustering if enabled and there's enough content
+        if (this.config.enableTopicClustering && toSummarize.length >= 6) {
+            this.setStage('clustering');
+            const summary = await this.topicClusterer.getTopicAwareSummary(toSummarize);
+
+            const summaryTurn: ConversationTurn = {
+                role: 'system',
+                content: `[Topic-Aware Summary of ${toSummarize.length} previous messages]\n\n${summary}`,
+                timestamp: new Date(),
+            };
+
+            return {
+                conversation: [...systemMessages, summaryTurn, ...toKeep],
+                summary,
+            };
+        }
+
+        // Fallback to standard summarization
         return this.compactWithSummary(conversation, summarizer);
     }
 
@@ -280,32 +371,95 @@ export class CompactionService {
     // ============================================================================
 
     /**
-     * Extract and store memories before compaction
+     * Extract and store memories before compaction (NLWEB-inspired smart extraction)
+     * Uses parallel pre-processing pattern from NLWebOrchestrator
      */
     private async flushMemories(conversation: ConversationTurn[]): Promise<number> {
         if (!this.memoryLog) return 0;
 
-        // Extract key information from conversation
-        const memories = this.extractMemoriesFromConversation(conversation);
+        this.setStage('analyzing');
 
-        for (const memory of memories) {
+        // Filter to user turns only (most valuable for memory extraction)
+        const userTurns = conversation.filter(t => t.role === 'user');
+
+        if (userTurns.length === 0) return 0;
+
+        // Parallel pre-processing: Score importance for all turns at once
+        const contents = userTurns.map(t => t.content);
+        const importanceResults = await this.importanceClassifier.classifyBatch(contents);
+
+        this.setStage('extracting');
+
+        // Filter to high-importance turns
+        const highImportancePairs = importanceResults
+            .map((result, i) => ({ result, turn: userTurns[i], index: i }))
+            .filter(pair => pair.result.should_persist);
+
+        if (highImportancePairs.length === 0) {
+            this.setStage('complete');
+            return 0;
+        }
+
+        // Decontextualize each high-importance memory
+        const resolvedMemories = await Promise.all(
+            highImportancePairs.map(async ({ result, turn }) => {
+                const decontextualized = await this.decontextualizer.decontextualize(
+                    turn.content,
+                    conversation
+                );
+                return {
+                    content: decontextualized.resolved,
+                    category: result.category,
+                    importance: result.importance_score / 100, // Normalize to 0-1
+                    wasResolved: decontextualized.wasResolved,
+                };
+            })
+        );
+
+        this.setStage('persisting');
+
+        // Store all memories
+        for (const memory of resolvedMemories) {
+            // Map ImportanceClassifier category to MemoryEntry category
+            const category = this.mapToMemoryCategory(memory.category);
+
             await this.memoryLog.addMemory({
-                category: memory.category,
+                category,
                 content: memory.content,
                 source: `compaction:${this.ownerId}`,
                 importance: memory.importance,
-                tags: ['compaction', 'auto-extracted'],
+                tags: [
+                    'compaction',
+                    'smart-extracted',
+                    memory.wasResolved ? 'decontextualized' : 'original'
+                ],
             });
         }
 
-        return memories.length;
+        this.setStage('complete');
+        return resolvedMemories.length;
     }
 
     /**
-     * Simple memory extraction (without AI)
-     * In production, this would use an LLM
+     * Map ImportanceClassifier category to MemoryEntry category
      */
-    private extractMemoriesFromConversation(conversation: ConversationTurn[]): Array<{
+    private mapToMemoryCategory(category: string): MemoryEntry['category'] {
+        const mapping: Record<string, MemoryEntry['category']> = {
+            'observation': 'observation',
+            'learning': 'learning',
+            'preference': 'preference',
+            'fact': 'fact',
+            'correction': 'correction',
+            'none': 'observation', // Fallback
+        };
+        return mapping[category] ?? 'observation';
+    }
+
+    /**
+     * Legacy memory extraction (fallback without AI)
+     * @deprecated Use flushMemories with smart extraction instead
+     */
+    private extractMemoriesFromConversationLegacy(conversation: ConversationTurn[]): Array<{
         category: MemoryEntry['category'];
         content: string;
         importance: number;
@@ -560,9 +714,10 @@ export function createCompactionService(
     ownerId: string,
     config?: Partial<CompactionConfig>,
     resourceStore?: ResourceStore,
-    memoryLog?: DailyMemoryLogService
+    memoryLog?: DailyMemoryLogService,
+    onStageChange?: (stage: CompactionStage, message: string) => void
 ): CompactionService {
-    return new CompactionService(ownerType, ownerId, config, resourceStore, memoryLog);
+    return new CompactionService(ownerType, ownerId, config, resourceStore, memoryLog, onStageChange);
 }
 
 export default CompactionService;

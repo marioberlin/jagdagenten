@@ -226,6 +226,7 @@ Every app and agent has a `soul.md` file that defines personality, goals, voice,
 | Skill Marketplace | `docs/infrastructure/marketplace.md` |
 | Canvas | `docs/infrastructure/canvas.md` |
 | Soul.md | `docs/infrastructure/soul.md` |
+| Smart Compaction | `docs/infrastructure/smart-compaction.md` |
 
 ---
 
