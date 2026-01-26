@@ -171,10 +171,6 @@ export const GlassIdentityLinking: React.FC = () => {
         return identity?.linkedPlatforms.find(p => p.platform === platformId);
     };
 
-    const isLinked = (platformId: string): boolean => {
-        return !!getLinkedPlatform(platformId);
-    };
-
     if (loading) {
         return (
             <div className="glass-identity-linking loading">

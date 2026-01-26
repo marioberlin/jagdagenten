@@ -95,6 +95,7 @@
     "discord.js": "^14.25.1",
     "dompurify": "^3.3.1",
     "emoji-picker-react": "^4.16.1",
+    "esbuild-wasm": "^0.27.2",
     "grammy": "^1.39.3",
     "html2canvas": "^1.4.1",
     "imap": "^0.8.19",
