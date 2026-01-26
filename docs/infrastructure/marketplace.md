@@ -116,5 +116,109 @@ POST /api/v1/marketplace/skills/123/install
 | File | Purpose |
 |------|---------|
 | `server/src/marketplace/skill-marketplace.ts` | Marketplace service |
+| `server/src/marketplace/gemini-skill-search.ts` | Semantic search via Gemini |
+| `server/src/marketplace/recommendations.ts` | Co-installation recommendations |
+| `server/src/marketplace/remote-registry.ts` | External registry discovery |
 | `server/src/routes/marketplace.ts` | REST API routes |
-| `server/sql/010_marketplace_system.sql` | Database tables |
+| `server/src/routes/public-marketplace.ts` | Public API (no auth) |
+| `server/sql/010_marketplace_system.sql` | Core database tables |
+| `server/sql/012_marketplace_enhancements.sql` | Visibility, recommendations view |
+
+---
+
+## Semantic Search (Gemini)
+
+Search skills by meaning, not just keywords.
+
+```bash
+GET /api/v1/marketplace/skills?q=summarize+documents&mode=semantic
+```
+
+Uses Gemini AI to understand intent and return semantically matching skills.
+
+| Mode | Behavior |
+|------|----------|
+| `text` (default) | Traditional keyword/tag matching |
+| `semantic` | AI-powered semantic understanding |
+
+---
+
+## Recommendations
+
+"Users who installed X also installed Y" — based on co-installation patterns.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/marketplace/skills/:id/recommendations` | Related skills |
+| GET | `/api/v1/marketplace/skills/popular` | Most installed overall |
+| GET | `/api/v1/marketplace/skills/trending` | Most installed last 7 days |
+
+### Data Refresh
+
+Recommendations are computed via a **materialized view** refreshed daily at **3am UTC**.
+
+```sql
+REFRESH MATERIALIZED VIEW CONCURRENTLY skill_coinstallations;
+```
+
+---
+
+## Public Skill Registry
+
+Share skills publicly for discovery by other LiquidOS instances.
+
+### Public Endpoints (No Auth Required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/public/skills` | List public skills |
+| GET | `/api/v1/public/skills/:id` | Get skill details |
+| GET | `/api/v1/public/skills/:id/versions` | Get version history |
+| GET | `/api/v1/public/info` | Registry metadata |
+
+### Visibility Levels
+
+| Value | Behavior |
+|-------|----------|
+| `private` (default) | Only visible to owner |
+| `public` | Listed in public registry |
+| `unlisted` | Accessible by direct link only |
+
+### Making a Skill Public
+
+```bash
+PATCH /api/v1/marketplace/skills/:id
+{ "visibility": "public" }
+```
+
+---
+
+## Remote Registries
+
+Install skills from other LiquidOS instances or public registries.
+
+### Browse Remote Skills
+
+```bash
+GET /api/v1/marketplace/remote?q=trading
+```
+
+### Default Registry
+
+```
+https://liquid-os.app/api/v1/public
+```
+
+### Adding Custom Registries
+
+```typescript
+import { getRemoteRegistryService } from './marketplace/remote-registry';
+
+getRemoteRegistryService().addRegistry({
+  url: 'https://my-instance.com/api/v1/public',
+  name: 'My Company Registry',
+  apiVersion: '1.0',
+});
+```
