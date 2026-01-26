@@ -83,6 +83,56 @@ services:
       start_period: 10s
       retries: 3
 
+  # A2A Video: Remotion-compatible Video Rendering Server
+  # FFmpeg-based video processing for AI agents
+  video-runtime:
+    build:
+      context: ./server/container
+      dockerfile: Dockerfile.video
+    container_name: liquidcrypto-video
+    restart: unless-stopped
+    volumes:
+      # Video outputs and assets
+      - video_renders:/data/renders:rw
+      - video_assets:/data/assets:rw
+      - video_temp:/data/temp:rw
+    environment:
+      VIDEO_PORT: 8082
+      VIDEO_OUTPUT_DIR: /data/renders
+      VIDEO_ASSET_DIR: /data/assets
+      VIDEO_TEMP_DIR: /data/temp
+      VIDEO_MAX_CONCURRENT_RENDERS: 4
+      VIDEO_DEFAULT_CODEC: h264
+      VIDEO_DEFAULT_CRF: 18
+      VIDEO_MAX_DURATION: 3600
+      VIDEO_LOG_LEVEL: info
+      DATABASE_URL: postgresql://liquidcrypto:liquidcrypto_dev@postgres:5432/liquidcrypto
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+    ports:
+      - "8082:8082" # Video API
+    networks:
+      - liquid-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 512M
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8082/health" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
   # NATS: High-performance messaging for A2A agents and real-time events
   # Enables pub/sub with wildcards, work queues, and back-pressure support
   nats:
@@ -115,4 +165,10 @@ volumes:
   nats_data:
     driver: local
   liquid_sandboxes:
+    driver: local
+  video_renders:
+    driver: local
+  video_assets:
+    driver: local
+  video_temp:
     driver: local

@@ -1,0 +1,89 @@
+# A2A Video Rendering Container
+#
+# Remotion-compatible video rendering server with FFmpeg.
+# Optimized for video processing workloads.
+#
+# Build:
+#   docker build -f Dockerfile.base -t liquid-container-base:latest .
+#   docker build -f Dockerfile.video -t liquidcrypto/video-runtime:latest .
+
+ARG BASE_IMAGE=liquid-container-base:latest
+FROM ${BASE_IMAGE}
+
+# Install FFmpeg with hardware acceleration support and fonts for text rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # FFmpeg and codecs
+    ffmpeg \
+    libavcodec-extra \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    # Fonts for text overlays and captions
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-noto-color-emoji \
+    fonts-dejavu \
+    fontconfig \
+    # Canvas dependencies for Lottie/image processing
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    # Puppeteer/Chromium for HTML element rendering
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Puppeteer to use system Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Verify FFmpeg installation
+RUN ffmpeg -version && ffprobe -version
+
+# Rebuild font cache
+RUN fc-cache -fv
+
+# Create directories for video rendering
+RUN mkdir -p /data/renders /data/assets /data/temp \
+    && chown -R agent:agent /data
+
+# Copy video runtime
+COPY video-runtime/ /opt/video-runtime/
+
+# Install video runtime dependencies
+WORKDIR /opt/video-runtime
+RUN bun install --frozen-lockfile --production || bun install --production
+
+# Switch back to app directory
+WORKDIR /app
+
+# Switch to non-root user
+USER agent
+
+# Video server port
+EXPOSE 8082
+
+# Environment defaults
+ENV VIDEO_PORT=8082
+ENV VIDEO_OUTPUT_DIR=/data/renders
+ENV VIDEO_ASSET_DIR=/data/assets
+ENV VIDEO_TEMP_DIR=/data/temp
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
+ENV FFPROBE_PATH=/usr/bin/ffprobe
+ENV VIDEO_MAX_CONCURRENT_RENDERS=4
+ENV VIDEO_DEFAULT_CODEC=h264
+ENV VIDEO_DEFAULT_CRF=18
+ENV VIDEO_MAX_DURATION=3600
+ENV VIDEO_LOG_LEVEL=info
+
+# Volumes for persistent storage
+VOLUME ["/data/renders", "/data/assets"]
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -sf http://localhost:8082/health || exit 1
+
+# Start video server
+ENTRYPOINT ["bun", "run", "/opt/video-runtime/server.ts"]
