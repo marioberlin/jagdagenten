@@ -1,14 +1,14 @@
 /**
  * Public Marketplace Routes
- * 
+ *
  * Public API endpoints for the skill registry.
  * No authentication required - exposes public skills for discovery.
- * 
+ *
  * Base path: /api/v1/public/skills
  */
 
 import { Elysia, t } from 'elysia';
-import { sql } from '../db';
+import { query } from '../db.js';
 
 // ============================================================================
 // Types
@@ -37,18 +37,18 @@ export const publicMarketplacePlugin = new Elysia({ prefix: '/api/v1/public' })
     // ========================================================================
     // List Public Skills
     // ========================================================================
-    .get('/skills', async ({ query }) => {
-        const limit = Math.min(query.limit ?? 50, 100);
-        const offset = query.offset ?? 0;
-        const category = query.category;
-        const search = query.q;
+    .get('/skills', async ({ query: queryParams }) => {
+        const limit = Math.min(queryParams.limit ?? 50, 100);
+        const offset = queryParams.offset ?? 0;
+        const category = queryParams.category;
+        const search = queryParams.q;
 
         try {
             let skills;
 
             if (search) {
-                skills = await sql`
-                    SELECT 
+                skills = await query(`
+                    SELECT
                         s.id, s.name, s.description, s.category, s.tags,
                         s.author_id AS author, s.current_version AS version,
                         s.stars_count AS stars, s.downloads_count AS downloads,
@@ -56,29 +56,29 @@ export const publicMarketplacePlugin = new Elysia({ prefix: '/api/v1/public' })
                     FROM marketplace_skills s
                     WHERE s.visibility = 'public'
                     AND (
-                        s.name ILIKE ${'%' + search + '%'}
-                        OR s.description ILIKE ${'%' + search + '%'}
-                        OR ${search} = ANY(s.tags)
+                        s.name ILIKE $1
+                        OR s.description ILIKE $1
+                        OR $2 = ANY(s.tags)
                     )
                     ORDER BY s.stars_count DESC, s.downloads_count DESC
-                    LIMIT ${limit} OFFSET ${offset}
-                `;
+                    LIMIT $3 OFFSET $4
+                `, ['%' + search + '%', search, limit, offset]);
             } else if (category) {
-                skills = await sql`
-                    SELECT 
+                skills = await query(`
+                    SELECT
                         s.id, s.name, s.description, s.category, s.tags,
                         s.author_id AS author, s.current_version AS version,
                         s.stars_count AS stars, s.downloads_count AS downloads,
                         s.created_at, s.updated_at
                     FROM marketplace_skills s
                     WHERE s.visibility = 'public'
-                    AND s.category = ${category}
+                    AND s.category = $1
                     ORDER BY s.stars_count DESC, s.downloads_count DESC
-                    LIMIT ${limit} OFFSET ${offset}
-                `;
+                    LIMIT $2 OFFSET $3
+                `, [category, limit, offset]);
             } else {
-                skills = await sql`
-                    SELECT 
+                skills = await query(`
+                    SELECT
                         s.id, s.name, s.description, s.category, s.tags,
                         s.author_id AS author, s.current_version AS version,
                         s.stars_count AS stars, s.downloads_count AS downloads,
@@ -86,20 +86,20 @@ export const publicMarketplacePlugin = new Elysia({ prefix: '/api/v1/public' })
                     FROM marketplace_skills s
                     WHERE s.visibility = 'public'
                     ORDER BY s.stars_count DESC, s.downloads_count DESC
-                    LIMIT ${limit} OFFSET ${offset}
-                `;
+                    LIMIT $1 OFFSET $2
+                `, [limit, offset]);
             }
 
             // Get total count
-            const countResult = await sql`
-                SELECT COUNT(*) as total 
-                FROM marketplace_skills 
+            const countResult = await query(`
+                SELECT COUNT(*) as total
+                FROM marketplace_skills
                 WHERE visibility = 'public'
-            `;
+            `);
 
             return {
-                skills: skills.map(formatSkill),
-                total: Number(countResult[0]?.total ?? 0),
+                skills: skills.rows.map(formatSkill),
+                total: Number(countResult.rows[0]?.total ?? 0),
                 limit,
                 offset,
                 registry: 'liquid-os.app',
@@ -122,25 +122,25 @@ export const publicMarketplacePlugin = new Elysia({ prefix: '/api/v1/public' })
     // ========================================================================
     .get('/skills/:id', async ({ params, set }) => {
         try {
-            const result = await sql`
-                SELECT 
+            const result = await query(`
+                SELECT
                     s.id, s.name, s.description, s.category, s.tags,
                     s.author_id AS author, s.current_version AS version,
                     s.stars_count AS stars, s.downloads_count AS downloads,
                     s.created_at, s.updated_at, s.readme
                 FROM marketplace_skills s
-                WHERE s.id = ${params.id}
+                WHERE s.id = $1
                 AND s.visibility = 'public'
-            `;
+            `, [params.id]);
 
-            if (result.length === 0) {
+            if (result.rows.length === 0) {
                 set.status = 404;
                 return { error: 'Skill not found or not public' };
             }
 
             return {
-                skill: formatSkill(result[0]),
-                readme: result[0].readme,
+                skill: formatSkill(result.rows[0]),
+                readme: result.rows[0].readme,
                 registry: 'liquid-os.app',
             };
         } catch (error) {
@@ -156,26 +156,26 @@ export const publicMarketplacePlugin = new Elysia({ prefix: '/api/v1/public' })
     .get('/skills/:id/versions', async ({ params, set }) => {
         try {
             // First verify skill is public
-            const skill = await sql`
-                SELECT id FROM marketplace_skills 
-                WHERE id = ${params.id} AND visibility = 'public'
-            `;
+            const skill = await query(`
+                SELECT id FROM marketplace_skills
+                WHERE id = $1 AND visibility = 'public'
+            `, [params.id]);
 
-            if (skill.length === 0) {
+            if (skill.rows.length === 0) {
                 set.status = 404;
                 return { error: 'Skill not found or not public' };
             }
 
-            const versions = await sql`
+            const versions = await query(`
                 SELECT version, changelog, created_at
                 FROM marketplace_skill_versions
-                WHERE skill_id = ${params.id}
+                WHERE skill_id = $1
                 ORDER BY created_at DESC
-            `;
+            `, [params.id]);
 
             return {
                 skillId: params.id,
-                versions: versions.map((v: any) => ({
+                versions: versions.rows.map((v: any) => ({
                     version: v.version,
                     changelog: v.changelog,
                     publishedAt: v.created_at,

@@ -5,7 +5,7 @@
  * based on co-installation patterns stored in a materialized view.
  */
 
-import { sql } from '../db';
+import { query } from '../db.js';
 
 // ============================================================================
 // Types
@@ -30,20 +30,20 @@ export async function getRecommendations(
     limit = 5
 ): Promise<SkillRecommendation[]> {
     try {
-        const result = await sql`
-            SELECT 
+        const result = await query(`
+            SELECT
                 s.id AS skill_id,
                 s.name,
                 s.description,
                 c.coinstall_count
             FROM skill_coinstallations c
             JOIN marketplace_skills s ON s.id = c.related_skill
-            WHERE c.base_skill = ${skillId}
+            WHERE c.base_skill = $1
             ORDER BY c.coinstall_count DESC
-            LIMIT ${limit}
-        `;
+            LIMIT $2
+        `, [skillId, limit]);
 
-        return result.map((row: any) => ({
+        return result.rows.map((row: any) => ({
             skillId: row.skill_id,
             name: row.name,
             description: row.description,
@@ -63,7 +63,7 @@ export async function getRecommendations(
 export async function refreshRecommendations(): Promise<void> {
     try {
         console.info('[Recommendations] Refreshing materialized view...');
-        await sql`REFRESH MATERIALIZED VIEW CONCURRENTLY skill_coinstallations`;
+        await query('REFRESH MATERIALIZED VIEW CONCURRENTLY skill_coinstallations');
         console.info('[Recommendations] Refresh complete');
     } catch (error) {
         console.error('[Recommendations] Refresh failed:', error);
@@ -75,8 +75,8 @@ export async function refreshRecommendations(): Promise<void> {
  */
 export async function getPopularSkills(limit = 10): Promise<SkillRecommendation[]> {
     try {
-        const result = await sql`
-            SELECT 
+        const result = await query(`
+            SELECT
                 s.id AS skill_id,
                 s.name,
                 s.description,
@@ -86,10 +86,10 @@ export async function getPopularSkills(limit = 10): Promise<SkillRecommendation[
             WHERE s.visibility = 'public' OR s.visibility IS NULL
             GROUP BY s.id, s.name, s.description
             ORDER BY install_count DESC
-            LIMIT ${limit}
-        `;
+            LIMIT $1
+        `, [limit]);
 
-        return result.map((row: any) => ({
+        return result.rows.map((row: any) => ({
             skillId: row.skill_id,
             name: row.name,
             description: row.description,
@@ -106,8 +106,8 @@ export async function getPopularSkills(limit = 10): Promise<SkillRecommendation[
  */
 export async function getTrendingSkills(limit = 10): Promise<SkillRecommendation[]> {
     try {
-        const result = await sql`
-            SELECT 
+        const result = await query(`
+            SELECT
                 s.id AS skill_id,
                 s.name,
                 s.description,
@@ -119,10 +119,10 @@ export async function getTrendingSkills(limit = 10): Promise<SkillRecommendation
             GROUP BY s.id, s.name, s.description
             HAVING COUNT(i.id) > 0
             ORDER BY install_count DESC
-            LIMIT ${limit}
-        `;
+            LIMIT $1
+        `, [limit]);
 
-        return result.map((row: any) => ({
+        return result.rows.map((row: any) => ({
             skillId: row.skill_id,
             name: row.name,
             description: row.description,
