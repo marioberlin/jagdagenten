@@ -120,6 +120,53 @@ jobs:
           strip_components: 1
           overwrite: true
 
+      - name: Update Environment Variables on VPS
+        uses: appleboy/ssh-action@v1
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          envs: GEMINI_API_KEY,ANTHROPIC_API_KEY,GOOGLE_PLACES_API_KEY,DATABASE_URL,REDIS_URL,JWT_SECRET
+          script: |
+            cd /app/liquidcrypto
+
+            # Create/update .env.production with secrets from GitHub
+            cat > .env.production << EOF
+            # Auto-generated from GitHub Secrets
+            # Last updated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+            # AI API Keys
+            GEMINI_API_KEY=${GEMINI_API_KEY}
+            ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+            # Google Services
+            GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+
+            # Database
+            DATABASE_URL=${DATABASE_URL:-postgresql://liquidcrypto:liquidcrypto_prod@postgres:5432/liquidcrypto}
+
+            # Redis
+            REDIS_URL=${REDIS_URL:-redis://redis:6379}
+
+            # Security
+            JWT_SECRET=${JWT_SECRET}
+            NODE_ENV=production
+            EOF
+
+            # Secure the file
+            chmod 600 .env.production
+
+            echo "=== Environment file updated ==="
+            echo "Keys configured:"
+            grep -E "^[A-Z_]+=" .env.production | cut -d= -f1 | sort
+
       - name: Run Blue-Green Deployment
         uses: appleboy/ssh-action@v1
         with:
@@ -129,16 +176,16 @@ jobs:
           script: |
             set -e
             cd /app/liquidcrypto
-            
+
             # Make deploy script executable
             chmod +x scripts/blue-green-deploy.sh
-            
+
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # Run blue-green deployment
             ./scripts/blue-green-deploy.sh ${{ needs.build-and-push.outputs.image_tag || 'latest' }}
-            
+
             # Verify deployment
             echo ""
             echo "=== Deployment Verification ==="
