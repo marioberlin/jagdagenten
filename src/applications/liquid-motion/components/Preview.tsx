@@ -17,7 +17,7 @@ interface PreviewProps {
 export const Preview: React.FC<PreviewProps> = ({
   composition,
   currentFrame,
-  isPlaying,
+  isPlaying: _isPlaying,
   className,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

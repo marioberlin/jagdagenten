@@ -5,7 +5,6 @@
  */
 import React from 'react';
 import { Settings } from 'lucide-react';
-import { cn } from '@/utils/cn';
 import type { Composition } from '../types';
 
 interface InspectorProps {
@@ -18,7 +17,7 @@ interface InspectorProps {
 export const Inspector: React.FC<InspectorProps> = ({
   selectedElement,
   composition,
-  onUpdateElement,
+  onUpdateElement: _onUpdateElement,
   onUpdateComposition,
 }) => {
   // Show composition settings if no element selected

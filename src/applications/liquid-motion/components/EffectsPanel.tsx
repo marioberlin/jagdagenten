@@ -4,9 +4,9 @@
  * Library of available effects with drag-and-drop support.
  */
 import React, { useState } from 'react';
-import { Search, Sparkles, ArrowRight, ArrowDown, ZoomIn, Droplet, RotateCw, Type, Zap } from 'lucide-react';
+import { Search, Sparkles, ArrowRight, ArrowDown, Droplet, Type, Zap } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import type { Effect, EffectType, EffectPreset } from '../types';
+import type { EffectPreset } from '../types';
 
 interface EffectsPanelProps {
   onApplyEffect: (effect: EffectPreset) => void;

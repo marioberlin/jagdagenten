@@ -94,7 +94,7 @@ interface TreeItemProps {
 }
 
 const TreeItem: React.FC<TreeItemProps> = ({
-  id,
+  id: _id,
   label,
   icon: Icon,
   level,

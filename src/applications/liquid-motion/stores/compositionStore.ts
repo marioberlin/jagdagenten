@@ -10,7 +10,6 @@ import type {
   TimelineTrack,
   TimelineEvent,
   CompositionElement,
-  Effect,
 } from '../types';
 
 // ============================================================================
