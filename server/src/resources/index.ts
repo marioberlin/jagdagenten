@@ -18,3 +18,4 @@ export { ContextCompiler } from './context-compiler.js';
 export { MemoryDecayService, MemoryConsolidationService, MemoryScheduler } from './memory-lifecycle.js';
 export { MarkdownSyncService } from './markdown-sync.js';
 export { KnowledgePipeline } from './knowledge-pipeline.js';
+export { DailyMemoryLogService, createDailyMemoryLogService } from './daily-memory-log.js';

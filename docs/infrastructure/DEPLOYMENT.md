@@ -564,6 +564,117 @@ git push origin main
 
 ---
 
+## LiquidOS Feature System Deployment
+
+### New Database Migrations
+
+The following migrations must be applied for the new feature systems:
+
+| Migration | Purpose |
+|-----------|---------|
+| `010_marketplace_system.sql` | Skill Marketplace tables, categories, versions, community features |
+| `011_identity_linking.sql` | Cross-platform identity profiles, platform links, gateway sessions |
+
+#### Apply Migrations to Production
+
+```bash
+# SSH to production server
+ssh root@188.245.95.100
+cd /app/liquidcrypto
+
+# Copy migrations from local machine (if not already synced)
+scp server/sql/010_marketplace_system.sql root@188.245.95.100:/app/liquidcrypto/server/sql/
+scp server/sql/011_identity_linking.sql root@188.245.95.100:/app/liquidcrypto/server/sql/
+
+# Apply migrations via docker exec
+docker exec -i liquidcrypto-postgres psql -U liquidcrypto liquidcrypto < server/sql/010_marketplace_system.sql
+docker exec -i liquidcrypto-postgres psql -U liquidcrypto liquidcrypto < server/sql/011_identity_linking.sql
+
+# Verify tables were created
+docker exec liquidcrypto-postgres psql -U liquidcrypto -c "\dt *skills*"
+docker exec liquidcrypto-postgres psql -U liquidcrypto -c "\dt *identity*"
+```
+
+#### Rollback Migrations (if needed)
+
+```bash
+# Drop marketplace tables
+docker exec -i liquidcrypto-postgres psql -U liquidcrypto -c "DROP TABLE IF EXISTS skill_comments, skill_stars, skill_versions, skills, skill_categories CASCADE;"
+
+# Drop identity tables
+docker exec -i liquidcrypto-postgres psql -U liquidcrypto -c "DROP TABLE IF EXISTS gateway_sessions, identity_platform_links, identity_profiles CASCADE;"
+```
+
+### Running Integration Tests
+
+Run the new feature integration tests locally before deploying:
+
+```bash
+# Run all integration tests
+bun test tests/integration/
+
+# Run specific test suites
+bun test tests/integration/messaging-gateway.test.ts
+bun test tests/integration/marketplace.test.ts
+
+# Run with verbose output
+bun test tests/integration/ --verbose
+```
+
+#### Test Coverage
+
+| Test File | Coverage |
+|-----------|----------|
+| `messaging-gateway.test.ts` | Session management, identity linking, message routing, reset commands |
+| `marketplace.test.ts` | Publishing, versioning, search, stars, comments, usage tracking |
+
+### Feature Configuration
+
+#### Messaging Gateway
+
+Configure adapters in `.env.production`:
+
+```bash
+# Telegram
+TELEGRAM_BOT_TOKEN=your-telegram-token
+
+# Slack
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_SIGNING_SECRET=...
+
+# Discord
+DISCORD_BOT_TOKEN=...
+DISCORD_CLIENT_ID=...
+
+# WhatsApp (Baileys)
+WHATSAPP_SESSION_DIR=/data/whatsapp-sessions
+
+# Email
+EMAIL_IMAP_HOST=imap.gmail.com
+EMAIL_SMTP_HOST=smtp.gmail.com
+EMAIL_USER=your-email
+EMAIL_PASSWORD=app-password
+```
+
+#### Skill Marketplace
+
+No additional configuration required. The marketplace uses the existing PostgreSQL database.
+
+### Health Checks for New Features
+
+```bash
+# Check messaging gateway
+curl https://liquid-os.app/api/v1/gateway/channels
+
+# Check marketplace
+curl https://liquid-os.app/api/v1/marketplace/skills?limit=5
+
+# Check canvas
+curl https://liquid-os.app/api/v1/canvas/health
+```
+
+---
+
 ## Quick Reference
 
 ### URLs

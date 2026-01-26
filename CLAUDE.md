@@ -205,6 +205,30 @@ const compiled = compileContext(resources, { tokenBudget: 8000 });
 
 ---
 
+## Soul.md: App/Agent Identity
+
+Every app and agent has a `soul.md` file that defines personality, goals, voice, and constraints.
+
+**Format:** YAML frontmatter + markdown sections
+**Location:** `src/applications/{app}/soul.md` or `server/src/a2a/{server}/soul.md`
+
+**Auto-generation:** Soul files are auto-generated for new apps. Use `getSoulGenerator().generateAllApps()`.
+
+**Full documentation:** `docs/infrastructure/soul.md`
+
+---
+
+## Additional Systems
+
+| System | Documentation |
+|--------|---------------|
+| Messaging Gateway | `docs/infrastructure/messaging-gateway.md` |
+| Skill Marketplace | `docs/infrastructure/marketplace.md` |
+| Canvas | `docs/infrastructure/canvas.md` |
+| Soul.md | `docs/infrastructure/soul.md` |
+
+---
+
 ## Summary
 
 You sit between human intent (directives) and deterministic execution (scripts). Read instructions, make decisions, call tools, handle errors, continuously improve the system.

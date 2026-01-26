@@ -91,10 +91,15 @@ Backend systems, deployment, and autonomous development.
 | Document | Description |
 |----------|-------------|
 | [**Deployment Guide**](infrastructure/DEPLOYMENT.md) | **Production deployment, CI/CD, server migration** |
+| [Messaging Gateway](infrastructure/messaging-gateway.md) | Multi-platform messaging (Telegram, Slack, Discord, etc.) |
+| [Skill Marketplace](infrastructure/marketplace.md) | Discover, publish, share AI skills |
+| [Canvas](infrastructure/canvas.md) | Rich visual output for AI agents |
+| [Soul.md System](infrastructure/soul.md) | Personality definitions for apps/agents |
 | [Healer](infrastructure/healer.md) | Self-healing error system |
 | [Orchestrator](infrastructure/orchestrator.md) | Multi-agent coordination |
 | [Containers](infrastructure/containers.md) | Runtime container architecture |
 | [LiquidMind](infrastructure/liquidmind.md) | AI resource management system |
+| [NATS](infrastructure/nats.md) | A2A messaging and work queues |
 | [System Docs](infrastructure/SYSTEM_DOCUMENTATION.md) | Full system documentation |
 
 ---

@@ -1763,4 +1763,6 @@ async function startServer() {
     }
 }
 
-startServer();
+if (import.meta.main) {
+    startServer();
+}

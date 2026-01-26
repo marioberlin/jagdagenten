@@ -1,0 +1,276 @@
+.glass-identity-linking {
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.glass-identity-linking.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+    color: var(--text-secondary, #888);
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-top-color: var(--accent, #3b82f6);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header */
+.identity-header {
+    margin-bottom: 2rem;
+}
+
+.identity-header h2 {
+    font-size: 1.75rem;
+    color: var(--text-primary, #fff);
+    margin-bottom: 0.5rem;
+}
+
+.identity-header p {
+    color: var(--text-secondary, #888);
+    line-height: 1.6;
+}
+
+/* Error */
+.identity-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    color: #ef4444;
+}
+
+.identity-error button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1.25rem;
+}
+
+/* Profile */
+.identity-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent, #3b82f6), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.profile-info h3 {
+    color: var(--text-primary, #fff);
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+
+.profile-info p {
+    color: var(--text-secondary, #888);
+    font-size: 0.9rem;
+}
+
+/* Platforms Grid */
+.platforms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.platform-card {
+    padding: 1.25rem;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.platform-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--platform-color);
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.platform-card.linked::before {
+    opacity: 1;
+}
+
+.platform-card:hover {
+    border-color: var(--platform-color);
+}
+
+.platform-card .platform-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.platform-card .platform-info h4 {
+    color: var(--text-primary, #fff);
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.platform-card .linked-as {
+    color: var(--text-secondary, #888);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-card .verified {
+    color: var(--success, #22c55e);
+    font-weight: bold;
+}
+
+.platform-card .not-linked {
+    color: var(--text-muted, #666);
+    font-size: 0.9rem;
+}
+
+.platform-actions {
+    margin-top: 1rem;
+}
+
+.platform-actions button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.link-btn {
+    background: var(--platform-color);
+    border: none;
+    color: white;
+}
+
+.link-btn:hover {
+    filter: brightness(1.1);
+}
+
+.unlink-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2));
+    color: var(--text-secondary, #888);
+}
+
+.unlink-btn:hover {
+    border-color: var(--danger, #ef4444);
+    color: var(--danger, #ef4444);
+}
+
+.cancel-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2));
+    color: var(--text-secondary, #888);
+}
+
+/* Link Instructions */
+.link-instructions {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.link-instructions p {
+    color: var(--text-secondary, #888);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.link-token {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border-radius: 6px;
+}
+
+.link-token span {
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+}
+
+.link-token code {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: var(--accent, #3b82f6);
+    flex: 1;
+}
+
+.link-token .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+}
+
+.expires {
+    color: var(--text-muted, #666) !important;
+    font-size: 0.8rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* Footer */
+.identity-footer {
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+}
+
+.identity-footer p {
+    color: var(--text-secondary, #888);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.identity-footer strong {
+    color: var(--text-primary, #fff);
+}

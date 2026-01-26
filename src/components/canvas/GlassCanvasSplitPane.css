@@ -1,0 +1,232 @@
+.glass-canvas-split-pane {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.glass-canvas-split-pane.dragging {
+    cursor: col-resize;
+    user-select: none;
+}
+
+/* Left Pane (Chat) */
+.split-left {
+    height: 100%;
+    overflow: auto;
+    transition: width 0.15s ease;
+}
+
+.glass-canvas-split-pane.dragging .split-left {
+    transition: none;
+}
+
+/* Divider */
+.split-divider {
+    width: 8px;
+    height: 100%;
+    background: var(--glass-border, rgba(255, 255, 255, 0.1));
+    cursor: col-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.split-divider:hover {
+    background: var(--accent, #3b82f6);
+}
+
+.divider-handle {
+    width: 4px;
+    height: 40px;
+    background: var(--text-muted, #666);
+    border-radius: 2px;
+}
+
+.split-divider:hover .divider-handle {
+    background: white;
+}
+
+/* Right Pane (Canvas) */
+.split-right {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary, #1a1a2e);
+    border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    overflow: hidden;
+    transition: width 0.15s ease;
+}
+
+.glass-canvas-split-pane.dragging .split-right {
+    transition: none;
+}
+
+/* Toolbar */
+.canvas-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    flex-shrink: 0;
+}
+
+.toolbar-left,
+.toolbar-right {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.canvas-toolbar button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.canvas-toolbar button:hover:not(:disabled) {
+    background: var(--glass-border, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #fff);
+}
+
+.canvas-toolbar button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.canvas-title {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Canvas Body */
+.canvas-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+}
+
+/* Empty State */
+.canvas-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-muted, #666);
+}
+
+.canvas-empty .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.canvas-empty h3 {
+    color: var(--text-secondary, #888);
+    margin-bottom: 0.5rem;
+}
+
+.canvas-empty p {
+    font-size: 0.9rem;
+}
+
+/* Content Types */
+.canvas-html {
+    color: var(--text-primary, #fff);
+}
+
+.canvas-markdown {
+    color: var(--text-primary, #fff);
+    line-height: 1.6;
+}
+
+.canvas-markdown pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.canvas-mermaid {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.canvas-code pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.canvas-code code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    color: var(--text-primary, #fff);
+}
+
+.canvas-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+    border-radius: 8px;
+}
+
+.canvas-text {
+    color: var(--text-primary, #fff);
+    white-space: pre-wrap;
+}
+
+/* Overlay Mode */
+.glass-canvas-overlay-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.glass-canvas-overlay-container .main-content {
+    width: 100%;
+    height: 100%;
+}
+
+.canvas-overlay {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: 400px;
+    max-width: 50%;
+    background: var(--bg-secondary, #1a1a2e);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+/* Hidden Mode */
+.glass-canvas-hidden {
+    width: 100%;
+    height: 100%;
+}
