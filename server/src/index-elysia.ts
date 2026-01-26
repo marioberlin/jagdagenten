@@ -13,7 +13,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { createA2APlugin } from './a2a/index.js';
 import { coworkRoutes, sandboxRoutes, initCoworkEventForwarding } from './cowork/index.js';
 import { systemFilesRoutes } from './system/index.js';
-import consoleRoutes from './routes/console.js';
+// import consoleRoutes from './routes/console.js'; // TODO: Create console routes
 import { initNats, closeNats, getNatsHealth, isNatsConnected } from './nats/index.js';
 
 // CORS plugin
@@ -298,36 +298,40 @@ const app = new Elysia({ prefix: '' })
     .use(coworkRoutes)
     .use(sandboxRoutes)
     .use(systemFilesRoutes)
-    .use(consoleRoutes)
+    // .use(consoleRoutes) // TODO: Create console routes
     .use(natsHealthPlugin);
 
 // Start server
 const PORT = Number(process.env.PORT) || 3000;
 
-// Initialize services and start server
-async function startServer() {
+// Track if services have been initialized (for both auto-start and manual start)
+let servicesInitialized = false;
+
+// Initialize services (called once, either by Bun auto-start or manual start)
+async function initializeServices() {
+    if (servicesInitialized) return;
+    servicesInitialized = true;
+
     // Initialize NATS (non-blocking, server works without it)
     const natsConnected = await initNats();
     if (!natsConnected) {
         console.warn('[Server] NATS not available - running in degraded mode');
     }
 
-    app.listen(PORT, () => {
-        console.log(`\n╔═══════════════════════════════════════════════════════╗`);
-        console.log(`║  LiquidCrypto Server (Elysia)                         ║`);
-        console.log(`║  ─────────────────────────────────────────────────    ║`);
-        console.log(`║  Runtime: Bun + Elysia                                ║`);
-        console.log(`║  Port: ${PORT}                                         ║`);
-        console.log(`║  URL: http://localhost:${PORT}                          ║`);
-        console.log(`║  NATS: ${natsConnected ? 'Connected' : 'Not available'}                              ║`);
-        console.log(`╚═══════════════════════════════════════════════════════╝`);
+    console.log(`\n╔═══════════════════════════════════════════════════════╗`);
+    console.log(`║  LiquidCrypto Server (Elysia)                         ║`);
+    console.log(`║  ─────────────────────────────────────────────────    ║`);
+    console.log(`║  Runtime: Bun + Elysia                                ║`);
+    console.log(`║  Port: ${PORT}                                         ║`);
+    console.log(`║  URL: http://localhost:${PORT}                          ║`);
+    console.log(`║  NATS: ${natsConnected ? 'Connected' : 'Not available'}                              ║`);
+    console.log(`╚═══════════════════════════════════════════════════════╝`);
 
-        // Start WebSocket server on port 3001
-        wsManager.startWebSocketServer(3001);
+    // Start WebSocket server on port 3001
+    wsManager.startWebSocketServer(3001);
 
-        // Initialize Cowork event forwarding
-        initCoworkEventForwarding();
-    });
+    // Initialize Cowork event forwarding
+    initCoworkEventForwarding();
 
     // Graceful shutdown
     process.on('SIGTERM', async () => {
@@ -343,6 +347,9 @@ async function startServer() {
     });
 }
 
-startServer();
+// Initialize services when module loads (Bun auto-starts the HTTP server via export default)
+initializeServices();
 
+// Export the app for Bun's auto-serve feature
+// Note: Bun automatically starts the server on the PORT when it sees `export default` of an Elysia app
 export default app;

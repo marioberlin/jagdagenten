@@ -9,10 +9,13 @@ services:
     env_file: .env.production
     environment:
       - PORT=3000
+      - NATS_URL=nats://nats:4222
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      nats:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -31,10 +34,13 @@ services:
     env_file: .env.production
     environment:
       - PORT=3000
+      - NATS_URL=nats://nats:4222
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      nats:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -45,6 +51,22 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  # NATS: High-performance messaging for A2A agents and real-time events
+  nats:
+    image: nats:2.10-alpine
+    container_name: liquidcrypto-nats
+    command: [ "--js", "--sd", "/data", "-m", "8222" ]
+    restart: unless-stopped
+    volumes:
+      - nats_data:/data
+    networks:
+      - liquid-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
   postgres:
     image: postgres:16-alpine
@@ -105,5 +127,6 @@ networks:
 volumes:
   pgdata:
   redisdata:
+  nats_data:
   caddy_data:
   caddy_config:
