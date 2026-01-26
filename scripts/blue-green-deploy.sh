@@ -14,6 +14,7 @@ set -e
 DEPLOY_DIR="/app/liquidcrypto"
 IMAGE_TAG="${1:-latest}"
 BACKEND_IMAGE="ghcr.io/marioberlin/liquidcrypto-backend:${IMAGE_TAG}"
+VIDEO_IMAGE="ghcr.io/marioberlin/liquidcrypto-video:${IMAGE_TAG}"
 ACTIVE_BACKEND_FILE="${DEPLOY_DIR}/active-backend"
 COMPOSE_FILE="${DEPLOY_DIR}/docker-compose.prod.yml"
 
@@ -93,8 +94,9 @@ main() {
     log "========================================="
     log "LiquidCrypto Blue-Green Deployment"
     log "========================================="
-    log "Image: ${BACKEND_IMAGE}"
-    
+    log "Backend Image: ${BACKEND_IMAGE}"
+    log "Video Image: ${VIDEO_IMAGE}"
+
     # Determine active and target backends
     ACTIVE=$(get_active_backend)
     TARGET=$(get_inactive_backend)
@@ -105,9 +107,12 @@ main() {
     log "Current active: ${ACTIVE}"
     log "Deploy target:  ${TARGET} (port ${TARGET_PORT})"
     
-    # Pull the new image
-    log "Pulling new image..."
+    # Pull the new images
+    log "Pulling backend image..."
     docker pull "$BACKEND_IMAGE"
+
+    log "Pulling video image..."
+    docker pull "$VIDEO_IMAGE" || warn "Video image not found, skipping..."
     
     # Update the target backend with the new image
     log "Updating backend-${TARGET} with new image..."
@@ -119,12 +124,17 @@ main() {
         export BLUE_VERSION="${IMAGE_TAG}"
         export GREEN_VERSION="${IMAGE_TAG}"
     fi
+    export VIDEO_VERSION="${IMAGE_TAG}"
     
     # Stop and recreate the target backend
     log "Recreating backend-${TARGET}..."
     docker compose -f "$COMPOSE_FILE" stop "backend-${TARGET}" 2>/dev/null || true
     docker compose -f "$COMPOSE_FILE" rm -f "backend-${TARGET}" 2>/dev/null || true
     docker compose -f "$COMPOSE_FILE" up -d "backend-${TARGET}"
+
+    # Start/update video-runtime service
+    log "Starting video-runtime service..."
+    docker compose -f "$COMPOSE_FILE" up -d video-runtime 2>/dev/null || warn "Video runtime not available"
     
     # Wait for health
     wait_for_health "$TARGET" "$TARGET_PORT"
