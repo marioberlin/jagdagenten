@@ -58,7 +58,8 @@ wait_for_health() {
     log "Waiting for backend-${backend} to be healthy..."
     
     while [[ $attempt -le $max_attempts ]]; do
-        if docker exec "liquidcrypto-backend-${backend}" wget -q --spider "http://localhost:${port}/health" 2>/dev/null; then
+        # Use curl (installed in Dockerfile) instead of wget
+        if docker exec "liquidcrypto-backend-${backend}" curl -sf "http://localhost:${port}/health" >/dev/null 2>&1; then
             success "backend-${backend} is healthy!"
             return 0
         fi
@@ -83,13 +84,10 @@ main() {
     # Determine active and target backends
     ACTIVE=$(get_active_backend)
     TARGET=$(get_inactive_backend)
-    
-    if [[ "$ACTIVE" == "blue" ]]; then
-        TARGET_PORT=3001
-    else
-        TARGET_PORT=3000
-    fi
-    
+
+    # Both backends use port 3000 inside their containers
+    TARGET_PORT=3000
+
     log "Current active: ${ACTIVE}"
     log "Deploy target:  ${TARGET} (port ${TARGET_PORT})"
     

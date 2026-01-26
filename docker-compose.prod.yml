@@ -21,7 +21,7 @@ services:
     networks:
       - liquid-network
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000/health" ]
+      test: [ "CMD", "curl", "-sf", "http://localhost:3000/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -46,7 +46,7 @@ services:
     networks:
       - liquid-network
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000/health" ]
+      test: [ "CMD", "curl", "-sf", "http://localhost:3000/health" ]
       interval: 10s
       timeout: 5s
       retries: 3

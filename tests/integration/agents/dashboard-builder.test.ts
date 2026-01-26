@@ -29,6 +29,12 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 describe('Dashboard Builder Agent', () => {
+    // Only run if GEMINI_API_KEY is present
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn('Skipping Dashboard Builder tests: GEMINI_API_KEY not found');
+        return;
+    }
+
     const contextId = randomUUID();
 
     it('should create a widget based on natural language', async () => {
