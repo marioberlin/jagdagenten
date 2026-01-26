@@ -1,0 +1,216 @@
+{
+  "Quick App Template": {
+    "prefix": "quickapp",
+    "description": "Create a new Quick App template",
+    "body": [
+      "---",
+      "name: ${1:My App}",
+      "icon: ${2:Zap}",
+      "category: ${3|utilities,productivity,communication,finance,developer,entertainment,system|}",
+      "tags: [${4:tag1, tag2}]",
+      "window: ${5|floating,panel,fullscreen|}",
+      "size: [${6:400}, ${7:300}]",
+      "---",
+      "",
+      "# ${1:My App}",
+      "",
+      "${8:A brief description of your app.}",
+      "",
+      "## UI",
+      "",
+      "```tsx App",
+      "import { ${2:Zap} } from 'lucide-react';",
+      "",
+      "export default function App() {",
+      "  const [count, setCount] = useState(0);",
+      "",
+      "  return (",
+      "    <div className=\"h-full flex flex-col items-center justify-center p-6 gap-4\">",
+      "      <${2:Zap} size={32} className=\"text-blue-400\" />",
+      "      <h1 className=\"text-xl font-bold text-white\">${1:My App}</h1>",
+      "      <p className=\"text-sm text-white/60\">{count}</p>",
+      "      <button",
+      "        onClick={() => setCount(c => c + 1)}",
+      "        className=\"px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white\"",
+      "      >",
+      "        ${9:Click me}",
+      "      </button>",
+      "    </div>",
+      "  );",
+      "}",
+      "```",
+      ""
+    ]
+  },
+  "Frontmatter": {
+    "prefix": "frontmatter",
+    "description": "Quick App frontmatter",
+    "body": [
+      "---",
+      "name: ${1:My App}",
+      "icon: ${2:Zap}",
+      "category: ${3:utilities}",
+      "tags: [${4}]",
+      "window: ${5:floating}",
+      "size: [${6:400}, ${7:300}]",
+      "---"
+    ]
+  },
+  "TSX App Block": {
+    "prefix": "appblock",
+    "description": "Quick App main component block",
+    "body": [
+      "```tsx App",
+      "import { ${1:Zap} } from 'lucide-react';",
+      "",
+      "export default function App() {",
+      "  $0",
+      "  return (",
+      "    <div className=\"h-full p-4\">",
+      "      ",
+      "    </div>",
+      "  );",
+      "}",
+      "```"
+    ]
+  },
+  "TSX Helpers Block": {
+    "prefix": "helpersblock",
+    "description": "Quick App helpers block",
+    "body": [
+      "```tsx helpers",
+      "export function ${1:helperName}(${2:params}) {",
+      "  $0",
+      "}",
+      "```"
+    ]
+  },
+  "TSX Store Block": {
+    "prefix": "storeblock",
+    "description": "Quick App Zustand store block",
+    "body": [
+      "```tsx store",
+      "interface ${1:AppStore} {",
+      "  ${2:count}: number;",
+      "  ${3:increment}: () => void;",
+      "}",
+      "",
+      "export const useStore = create<${1:AppStore}>((set) => ({",
+      "  ${2:count}: 0,",
+      "  ${3:increment}: () => set((state) => ({ ${2:count}: state.${2:count} + 1 })),",
+      "}));",
+      "```"
+    ]
+  },
+  "TSX Settings Block": {
+    "prefix": "settingsblock",
+    "description": "Quick App settings component block",
+    "body": [
+      "```tsx settings",
+      "interface SettingsPanelProps {",
+      "  onClose: () => void;",
+      "}",
+      "",
+      "function SettingsPanel({ onClose }: SettingsPanelProps) {",
+      "  return (",
+      "    <div className=\"h-full p-4\">",
+      "      <div className=\"flex items-center justify-between mb-4\">",
+      "        <h2 className=\"font-bold text-white\">Settings</h2>",
+      "        <button onClick={onClose} className=\"text-white/50 hover:text-white\">",
+      "          ✕",
+      "        </button>",
+      "      </div>",
+      "      $0",
+      "    </div>",
+      "  );",
+      "}",
+      "```"
+    ]
+  },
+  "CSS Block": {
+    "prefix": "cssblock",
+    "description": "Quick App CSS block",
+    "body": [
+      "```css",
+      "${1:/* Custom styles */}",
+      ".${2:class-name} {",
+      "  $0",
+      "}",
+      "```"
+    ]
+  },
+  "useStorage Hook": {
+    "prefix": "usestorage",
+    "description": "Quick App useStorage hook",
+    "body": [
+      "const [${1:value}, ${2:setValue}] = useStorage('${3:key}', ${4:defaultValue});"
+    ]
+  },
+  "useNotification Hook": {
+    "prefix": "usenotification",
+    "description": "Quick App useNotification hook",
+    "body": [
+      "const { notify } = useNotification();",
+      "",
+      "// Usage: notify('${1:Your message here}');"
+    ]
+  },
+  "Glass Button": {
+    "prefix": "glassbutton",
+    "description": "Liquid Glass button style",
+    "body": [
+      "<button",
+      "  onClick={${1:handleClick}}",
+      "  className=\"px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-lg text-white transition-colors\"",
+      ">",
+      "  ${2:Button}",
+      "</button>"
+    ]
+  },
+  "Glass Card": {
+    "prefix": "glasscard",
+    "description": "Liquid Glass card style",
+    "body": [
+      "<div className=\"bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4\">",
+      "  $0",
+      "</div>"
+    ]
+  },
+  "Glass Input": {
+    "prefix": "glassinput",
+    "description": "Liquid Glass input style",
+    "body": [
+      "<input",
+      "  type=\"${1:text}\"",
+      "  value={${2:value}}",
+      "  onChange={(e) => ${3:setValue}(e.target.value)}",
+      "  placeholder=\"${4:Placeholder...}\"",
+      "  className=\"w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50\"",
+      "/>"
+    ]
+  },
+  "Shortcuts Table": {
+    "prefix": "shortcuts",
+    "description": "Quick App keyboard shortcuts table",
+    "body": [
+      "## Shortcuts",
+      "",
+      "| Key | Action |",
+      "|-----|--------|",
+      "| `${1:Space}` | ${2:Toggle} |",
+      "| `${3:R}` | ${4:Reset} |"
+    ]
+  },
+  "Commands Table": {
+    "prefix": "commands",
+    "description": "Quick App commands table",
+    "body": [
+      "## Commands",
+      "",
+      "| Command | Description |",
+      "|---------|-------------|",
+      "| ${1:Start App} | ${2:Begin the main action} |",
+      "| ${3:Reset} | ${4:Reset to initial state} |"
+    ]
+  }
+}

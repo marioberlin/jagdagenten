@@ -23,7 +23,18 @@ export { parseQuickApp, validateParsedApp, QuickAppParseError } from './parser';
 export { initializeCompiler, compileQuickApp, createQuickAppComponent } from './compiler';
 
 // Store
-export { useQuickAppStore, initializeQuickApps } from './quickAppStore';
+export {
+  useQuickAppStore,
+  initializeQuickApps,
+  connectToDevServer,
+  hotReloadQuickApp,
+} from './quickAppStore';
+
+// Exporter
+export { exportQuickAppToFull, exportToZip } from './exporter';
+
+// Dev Mode
+export { QuickAppDevIndicator, useQuickAppDevMode } from './QuickAppDevIndicator';
 
 // Components
 export { QuickAppInstaller } from './QuickAppInstaller';

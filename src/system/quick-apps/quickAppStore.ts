@@ -268,3 +268,86 @@ export async function initializeQuickApps(): Promise<void> {
   const store = useQuickAppStore.getState();
   await store.reloadAll();
 }
+
+// ============================================================
+// Hot Reload Support
+// ============================================================
+
+/**
+ * Event source for Quick App hot reload.
+ * Connects to a development server and listens for changes.
+ */
+let devServerConnection: EventSource | null = null;
+let devServerCallbacks: Map<string, () => void> = new Map();
+
+/**
+ * Connect to a Quick App development server for hot reload.
+ */
+export function connectToDevServer(url: string, onReload: () => void): () => void {
+  if (devServerConnection) {
+    devServerConnection.close();
+  }
+
+  devServerConnection = new EventSource(`${url}/__quick-app-hmr`);
+  const callbackId = Math.random().toString(36).slice(2);
+  devServerCallbacks.set(callbackId, onReload);
+
+  devServerConnection.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'reload') {
+        console.log('[Quick App HMR] Reloading...', data.file);
+        devServerCallbacks.forEach((cb) => cb());
+      }
+    } catch (err) {
+      console.error('[Quick App HMR] Parse error:', err);
+    }
+  };
+
+  devServerConnection.onerror = () => {
+    console.warn('[Quick App HMR] Connection lost, reconnecting...');
+    setTimeout(() => {
+      if (devServerCallbacks.has(callbackId)) {
+        connectToDevServer(url, onReload);
+      }
+    }, 2000);
+  };
+
+  // Return cleanup function
+  return () => {
+    devServerCallbacks.delete(callbackId);
+    if (devServerCallbacks.size === 0 && devServerConnection) {
+      devServerConnection.close();
+      devServerConnection = null;
+    }
+  };
+}
+
+/**
+ * Hot reload a specific Quick App by re-parsing and recompiling.
+ */
+export async function hotReloadQuickApp(appId: string, newMarkdown: string): Promise<void> {
+  const store = useQuickAppStore.getState();
+  const existing = store.installations[appId];
+
+  if (!existing) {
+    console.warn('[Quick App HMR] App not found:', appId);
+    return;
+  }
+
+  try {
+    // Re-install with the new markdown
+    await store.installFromMarkdown(
+      newMarkdown,
+      existing.source,
+      existing.sourceLocation
+    );
+
+    // Clear the component cache so it gets recreated
+    store.componentCache.delete(appId);
+
+    console.log('[Quick App HMR] Hot reloaded:', appId);
+  } catch (err) {
+    console.error('[Quick App HMR] Reload failed:', err);
+  }
+}

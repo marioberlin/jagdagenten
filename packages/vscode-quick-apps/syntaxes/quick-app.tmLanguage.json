@@ -1,0 +1,139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Quick App",
+  "scopeName": "source.quick-app",
+  "patterns": [
+    { "include": "#frontmatter" },
+    { "include": "#fenced-code-block" },
+    { "include": "#heading" },
+    { "include": "#markdown" }
+  ],
+  "repository": {
+    "frontmatter": {
+      "name": "meta.embedded.block.yaml",
+      "begin": "\\A(-{3})\\s*$",
+      "end": "^(-{3})\\s*$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.yaml" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.yaml" }
+      },
+      "patterns": [
+        {
+          "name": "entity.name.tag.yaml",
+          "match": "^(name|icon|category|tags|window|size|dock|badge|version|author|license|ai|capabilities|resizable):"
+        },
+        {
+          "name": "string.unquoted.yaml",
+          "match": ":\\s*(.+)$"
+        },
+        {
+          "name": "constant.numeric.yaml",
+          "match": "\\b\\d+\\b"
+        },
+        {
+          "name": "constant.language.boolean.yaml",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "punctuation.definition.sequence.yaml",
+          "match": "[\\[\\],]"
+        }
+      ]
+    },
+    "fenced-code-block": {
+      "patterns": [
+        {
+          "name": "markup.fenced_code.block.tsx.quick-app",
+          "begin": "^(```)(tsx)\\s+(App|helpers|store|settings)\\s*$",
+          "end": "^(```)\\s*$",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.markdown" },
+            "2": { "name": "entity.name.function.tsx" },
+            "3": { "name": "entity.name.tag.quick-app" }
+          },
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.markdown" }
+          },
+          "contentName": "meta.embedded.block.tsx",
+          "patterns": [
+            { "include": "source.tsx" }
+          ]
+        },
+        {
+          "name": "markup.fenced_code.block.css.quick-app",
+          "begin": "^(```)(css)\\s*$",
+          "end": "^(```)\\s*$",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.markdown" },
+            "2": { "name": "entity.name.function.css" }
+          },
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.markdown" }
+          },
+          "contentName": "meta.embedded.block.css",
+          "patterns": [
+            { "include": "source.css" }
+          ]
+        },
+        {
+          "name": "markup.fenced_code.block.markdown",
+          "begin": "^(```)(\\w*)\\s*$",
+          "end": "^(```)\\s*$",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.markdown" },
+            "2": { "name": "fenced_code.block.language" }
+          },
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.markdown" }
+          }
+        }
+      ]
+    },
+    "heading": {
+      "patterns": [
+        {
+          "name": "markup.heading.1.markdown",
+          "match": "^#\\s+.+$"
+        },
+        {
+          "name": "markup.heading.2.markdown",
+          "match": "^##\\s+.+$"
+        },
+        {
+          "name": "markup.heading.3.markdown",
+          "match": "^###\\s+.+$"
+        }
+      ]
+    },
+    "markdown": {
+      "patterns": [
+        {
+          "name": "markup.bold.markdown",
+          "match": "\\*\\*[^*]+\\*\\*"
+        },
+        {
+          "name": "markup.italic.markdown",
+          "match": "\\*[^*]+\\*"
+        },
+        {
+          "name": "markup.inline.raw.string.markdown",
+          "match": "`[^`]+`"
+        },
+        {
+          "name": "markup.list.unnumbered.markdown",
+          "match": "^\\s*[-*]\\s+"
+        },
+        {
+          "name": "markup.list.numbered.markdown",
+          "match": "^\\s*\\d+\\.\\s+"
+        },
+        {
+          "name": "string.other.link.title.markdown",
+          "match": "\\[[^\\]]+\\]\\([^)]+\\)"
+        }
+      ]
+    }
+  }
+}

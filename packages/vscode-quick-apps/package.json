@@ -1,0 +1,80 @@
+{
+  "name": "liquidcrypto-quick-apps",
+  "displayName": "LiquidOS Quick Apps",
+  "description": "Syntax highlighting and snippets for LiquidOS Quick Apps (.app.md files)",
+  "version": "0.1.0",
+  "publisher": "liquidcrypto",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "liquidos",
+    "quick-apps",
+    "markdown",
+    "react",
+    "typescript"
+  ],
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liquidcrypto/liquidcrypto"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:quick-app"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "quick-app",
+        "aliases": ["Quick App", "quick-app"],
+        "extensions": [".app.md"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "quick-app",
+        "scopeName": "source.quick-app",
+        "path": "./syntaxes/quick-app.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml",
+          "meta.embedded.block.tsx": "typescriptreact",
+          "meta.embedded.block.css": "css"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "quick-app",
+        "path": "./snippets/quick-app.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "quickApps.newApp",
+        "title": "Quick Apps: New Quick App"
+      },
+      {
+        "command": "quickApps.preview",
+        "title": "Quick Apps: Preview"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vsce": "^2.15.0"
+  }
+}
