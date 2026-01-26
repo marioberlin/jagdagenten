@@ -86,10 +86,11 @@ Unified persistent intelligence layer for all apps and agents.
 
 ## Infrastructure
 
-Backend systems and autonomous development.
+Backend systems, deployment, and autonomous development.
 
 | Document | Description |
 |----------|-------------|
+| [**Deployment Guide**](infrastructure/DEPLOYMENT.md) | **Production deployment, CI/CD, server migration** |
 | [Healer](infrastructure/healer.md) | Self-healing error system |
 | [Orchestrator](infrastructure/orchestrator.md) | Multi-agent coordination |
 | [Containers](infrastructure/containers.md) | Runtime container architecture |

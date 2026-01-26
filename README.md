@@ -99,7 +99,16 @@ import { GlassForm, GlassFormField, GlassFormItem, GlassFormLabel, GlassFormCont
 
 ## 📚 Documentation
 
-Detailed documentation for all components and features can be found in the `/docs` directory or by running the showcase application:
+Detailed documentation for all components and features can be found in the `/docs` directory:
+
+| Guide | Description |
+|-------|-------------|
+| [**Production Deployment**](docs/infrastructure/DEPLOYMENT.md) | CI/CD, blue-green deployment, server migration |
+| [Design Tokens](docs/design/tokens.md) | CSS variables and theming |
+| [Architecture](docs/ARCHITECTURE.md) | System design principles |
+| [LiquidMind](docs/infrastructure/liquidmind.md) | AI resource management |
+
+Run the showcase application:
 
 ```bash
 ./start.sh

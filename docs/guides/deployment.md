@@ -2,6 +2,9 @@
 
 A comprehensive guide to deploying LiquidContainer on various cloud providers and infrastructure platforms.
 
+> [!NOTE]
+> **Looking for production server deployment?** See [Production Deployment Guide](../infrastructure/DEPLOYMENT.md) for CI/CD, blue-green deployment, and server migration.
+
 ---
 
 ## Table of Contents
