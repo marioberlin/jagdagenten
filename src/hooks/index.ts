@@ -46,12 +46,6 @@ export * from './useConsoleSecurity';
 export * from './useConsoleTasks';
 
 // ============================================
-// Commerce Hooks
-// ============================================
-export * from './useInventoryWebSocket';
-export * from './useCurrency.js';
-
-// ============================================
 // Deprecated - Will be removed in v2.0
 // Use useTheme() or useGlass() instead
 // ============================================

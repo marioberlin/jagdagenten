@@ -17,6 +17,7 @@ import {
 import type { MenuItemDef } from '@/context/MenuBarContext';
 import { useDialogs } from '@/context/DialogContext';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
+import { useAuthStore } from '@/stores/authStore';
 
 export function useLiquidMenuItems(): MenuItemDef[] {
     const openApp = useAppStoreStore((s) => s.openApp);
