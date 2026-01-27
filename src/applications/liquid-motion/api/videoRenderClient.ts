@@ -111,7 +111,10 @@ export class VideoRenderClient {
       id: ++this.requestId,
     };
 
-    const response = await fetch(`${this.baseUrl}/rpc`, {
+    // Server exposes JSON-RPC at /video endpoint
+    // In prod: /video/video -> stripped to /video on server
+    // In dev: http://localhost:8082/video
+    const response = await fetch(`${this.baseUrl}/video`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
