@@ -1,0 +1,38 @@
+{
+  "id": "merchant-console",
+  "name": "Merchant Console",
+  "version": "1.0.0",
+  "description": "UCP store management dashboard - view orders, manage products, and track analytics",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "productivity",
+  "keywords": ["merchant", "commerce", "ucp", "dashboard", "orders", "analytics"],
+  "icon": "Store",
+
+  "entry": "./App.tsx",
+
+  "window": {
+    "mode": "floating",
+    "title": "Merchant Console",
+    "defaultSize": { "width": 1200, "height": 800 },
+    "resizable": true
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 9
+    },
+    "aiContext": {
+      "systemPrompt": "You are a merchant analytics assistant helping store owners understand their sales, orders, and customer behavior.",
+      "agentId": "merchant-console"
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "a2a:connect",
+    "storage:local",
+    "notification:toast"
+  ]
+}
