@@ -7,7 +7,7 @@
     "scripts": {
         "start": "bun run src/index.ts",
         "dev": "bun run --watch src/index.ts",
-        "build": "bun build src/index.ts --outfile dist/index.js --target node"
+        "build": "bun build src/index.ts --outfile dist/index.js --target node --external canvas --external puppeteer --external sharp --external ssh2"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.71.2",
@@ -38,7 +38,9 @@
         "sharp": "^0.33.5"
     },
     "optionalDependencies": {
-        "canvas": "^2.11.2"
+        "canvas": "^2.11.2",
+        "puppeteer": "^23.0.0",
+        "redis": "^4.7.0"
     },
     "devDependencies": {
         "@types/bun": "^1.1.0",
