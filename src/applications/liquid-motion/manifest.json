@@ -1,0 +1,62 @@
+{
+  "id": "liquid-motion",
+  "name": "Liquid Motion",
+  "version": "1.0.0",
+  "description": "AI-powered video editor with Remotion-compatible rendering",
+  "longDescription": "Create stunning animated videos from natural language descriptions or JSON compositions. Features timeline editing, real-time preview, effects library, and professional video export with support for charts, captions, and 3D scenes.",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "entertainment",
+  "keywords": ["video", "animation", "remotion", "editing", "motion", "render"],
+  "icon": "Film",
+
+  "entry": "./App.tsx",
+
+  "window": {
+    "mode": "floating",
+    "title": "Liquid Motion",
+    "defaultSize": { "width": 1400, "height": 900 },
+    "minSize": { "width": 1000, "height": 700 },
+    "resizable": true
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 5
+    },
+    "menuBar": {
+      "hookPath": "./hooks/useMenuBar.ts"
+    },
+    "a2a": {
+      "enabled": true,
+      "executors": ["video-render"],
+      "skills": ["render_video", "preview_frame", "parse_intent", "apply_effect"]
+    },
+    "canvas": {
+      "enabled": true,
+      "supportedTypes": ["video", "image", "composition"]
+    },
+    "aiContext": {
+      "systemPrompt": "You are Liquid Motion, an AI video creation assistant. Help users create animations and videos using natural language descriptions. Parse creative intent and translate it to compositions."
+    },
+    "commandPalette": {
+      "commands": [
+        { "id": "motion-new", "label": "New Composition", "category": "Motion" },
+        { "id": "motion-render", "label": "Render Video", "category": "Motion" },
+        { "id": "motion-preview", "label": "Preview Frame", "category": "Motion" },
+        { "id": "motion-effects", "label": "Effects Library", "category": "Motion" }
+      ]
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "network:websocket",
+    "storage:local",
+    "ai:llm",
+    "notification:toast",
+    "file:read",
+    "file:write"
+  ]
+}

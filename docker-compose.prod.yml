@@ -101,6 +101,31 @@ services:
       timeout: 5s
       retries: 5
 
+  # Video rendering service
+  video-runtime:
+    image: ghcr.io/marioberlin/liquidcrypto-video:${VIDEO_VERSION:-latest}
+    container_name: liquidcrypto-video
+    environment:
+      - VIDEO_PORT=8082
+      - VIDEO_OUTPUT_DIR=/data/renders
+      - VIDEO_ASSET_DIR=/data/assets
+      - VIDEO_TEMP_DIR=/data/temp
+      - VIDEO_MAX_CONCURRENT_RENDERS=4
+      - VIDEO_DEFAULT_CODEC=h264
+      - VIDEO_DEFAULT_CRF=18
+    volumes:
+      - video_renders:/data/renders
+      - video_assets:/data/assets
+    restart: unless-stopped
+    networks:
+      - liquid-network
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8082/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   caddy:
     image: caddy:2-alpine
     container_name: liquidcrypto-caddy
@@ -116,6 +141,7 @@ services:
     depends_on:
       - backend-blue
       - backend-green
+      - video-runtime
     restart: unless-stopped
     networks:
       - liquid-network
@@ -130,3 +156,5 @@ volumes:
   nats_data:
   caddy_data:
   caddy_config:
+  video_renders:
+  video_assets:

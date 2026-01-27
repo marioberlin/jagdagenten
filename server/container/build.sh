@@ -7,6 +7,7 @@
 #   ./build.sh base      # Build only base image
 #   ./build.sh runtime   # Build only runtime image
 #   ./build.sh claude-cli # Build Claude CLI image (for Builder)
+#   ./build.sh video     # Build video runtime image (A2A Video Server)
 #   ./build.sh push      # Build and push to registry
 #
 
@@ -110,7 +111,41 @@ build_claude_cli() {
     log "Claude CLI image built successfully"
 }
 
+build_video() {
+    VIDEO_IMAGE="liquidcrypto/video-runtime"
+    log "Building video runtime image: ${VIDEO_IMAGE}:${VERSION}"
+
+    # Ensure base image exists
+    if ! docker image inspect "${BASE_IMAGE}:${VERSION}" &> /dev/null; then
+        warn "Base image not found, building first..."
+        build_base
+    fi
+
+    # Copy video module from server/src/a2a/video to video-runtime/video
+    log "Copying video module..."
+    rm -rf video-runtime/video
+    mkdir -p video-runtime/video
+    cp -r ../src/a2a/video/* video-runtime/video/
+
+    # Also copy the executors that video depends on
+    mkdir -p video-runtime/executors
+    cp ../src/a2a/executors/video-render-pipeline.ts video-runtime/executors/
+    cp ../src/a2a/executors/video-render-service.ts video-runtime/executors/
+    cp ../src/a2a/executors/composition-renderer.ts video-runtime/executors/
+
+    docker build \
+        -f Dockerfile.video \
+        -t "${VIDEO_IMAGE}:${VERSION}" \
+        -t "${VIDEO_IMAGE}:latest" \
+        --build-arg BASE_IMAGE="${BASE_IMAGE}:${VERSION}" \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        .
+
+    log "Video runtime image built successfully"
+}
+
 push_images() {
+    VIDEO_IMAGE="liquidcrypto/video-runtime"
     log "Pushing images to registry: ${REGISTRY}"
 
     # Tag for registry
@@ -120,6 +155,8 @@ push_images() {
     docker tag "${RUNTIME_IMAGE}:latest" "${REGISTRY}/${RUNTIME_IMAGE}:latest"
     docker tag "${CLAUDE_CLI_IMAGE}:${VERSION}" "${REGISTRY}/${CLAUDE_CLI_IMAGE}:${VERSION}"
     docker tag "${CLAUDE_CLI_IMAGE}:latest" "${REGISTRY}/${CLAUDE_CLI_IMAGE}:latest"
+    docker tag "${VIDEO_IMAGE}:${VERSION}" "${REGISTRY}/${VIDEO_IMAGE}:${VERSION}"
+    docker tag "${VIDEO_IMAGE}:latest" "${REGISTRY}/${VIDEO_IMAGE}:latest"
 
     # Push
     docker push "${REGISTRY}/${BASE_IMAGE}:${VERSION}"
@@ -128,6 +165,8 @@ push_images() {
     docker push "${REGISTRY}/${RUNTIME_IMAGE}:latest"
     docker push "${REGISTRY}/${CLAUDE_CLI_IMAGE}:${VERSION}"
     docker push "${REGISTRY}/${CLAUDE_CLI_IMAGE}:latest"
+    docker push "${REGISTRY}/${VIDEO_IMAGE}:${VERSION}"
+    docker push "${REGISTRY}/${VIDEO_IMAGE}:latest"
 
     log "Images pushed successfully"
 }
@@ -143,19 +182,24 @@ case "${1:-all}" in
     claude-cli)
         build_claude_cli
         ;;
+    video)
+        build_video
+        ;;
     push)
         build_base
         build_runtime
         build_claude_cli
+        build_video
         push_images
         ;;
     all)
         build_base
         build_runtime
         build_claude_cli
+        build_video
         ;;
     *)
-        echo "Usage: $0 {base|runtime|claude-cli|push|all}"
+        echo "Usage: $0 {base|runtime|claude-cli|video|push|all}"
         exit 1
         ;;
 esac

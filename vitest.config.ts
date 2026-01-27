@@ -19,6 +19,16 @@ export default defineConfig({
       'tests/integration/**/*.test.{ts,tsx}',
       'src/**/__tests__/*.test.{ts,tsx}'
     ],
+    // Server dependencies need to be inlined for Vitest to resolve them
+    // since they're in the server workspace, not the root node_modules
+    deps: {
+      inline: [/server\//, 'pino', 'pino-pretty']
+    },
+    server: {
+      deps: {
+        inline: [/server\//, 'pino', 'pino-pretty']
+      }
+    },
     // projects: [{
     //   extends: true,
     //   plugins: [
@@ -43,7 +53,18 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
+      '@': resolve(__dirname, './src'),
+      // Resolve pino from root node_modules for tests that import server code
+      'pino': resolve(__dirname, './node_modules/pino'),
+      'pino-pretty': resolve(__dirname, './node_modules/pino-pretty')
     }
+  },
+  // Pre-bundle pino for Vite to avoid resolution issues
+  optimizeDeps: {
+    include: ['pino', 'pino-pretty']
+  },
+  // SSR external to prevent bundling issues with native modules
+  ssr: {
+    external: ['pino', 'pino-pretty']
   }
 });

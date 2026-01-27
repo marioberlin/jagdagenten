@@ -1,0 +1,152 @@
+{
+  "protocolVersions": ["1.0"],
+  "name": "Liquid Motion Renderer",
+  "description": "AI-powered video rendering with Remotion-compatible compositions. Generate professional videos from natural language or JSON compositions.",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "LiquidCrypto",
+    "url": "https://liquidcrypto.ai"
+  },
+  "documentationUrl": "https://docs.liquidcrypto.ai/liquid-motion",
+  "iconUrl": "https://liquidcrypto.ai/icons/liquid-motion.svg",
+  "supportedInterfaces": [
+    {
+      "url": "/a2a",
+      "protocolBinding": "JSONRPC"
+    }
+  ],
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": true,
+    "extendedAgentCard": false,
+    "extensions": [
+      {
+        "uri": "https://a2a-extensions.org/a2ui",
+        "description": "A2UI rendering for rich video editing interfaces",
+        "required": false
+      }
+    ]
+  },
+  "defaultInputModes": ["text", "data", "file"],
+  "defaultOutputModes": ["text", "file", "data", "a2ui"],
+  "skills": [
+    {
+      "id": "render_video",
+      "name": "Render Video",
+      "description": "Generate video from JSON composition or natural language intent",
+      "tags": ["render", "video", "export", "mp4", "webm", "gif"],
+      "examples": [
+        "Render a 10-second intro with spinning logo",
+        "Create an MP4 video at 1080p with h264 codec",
+        "Generate a video from my-composition",
+        "Export to WebM at 4K resolution"
+      ],
+      "inputModes": ["text", "data"],
+      "outputModes": ["file", "data"]
+    },
+    {
+      "id": "preview_frame",
+      "name": "Preview Frame",
+      "description": "Generate a single frame for preview",
+      "tags": ["preview", "frame", "thumbnail", "still", "screenshot"],
+      "examples": [
+        "Preview frame 30",
+        "Show thumbnail at 2 seconds",
+        "Capture frame 0 as PNG",
+        "Get screenshot of composition at frame 60"
+      ],
+      "inputModes": ["text", "data"],
+      "outputModes": ["file"]
+    },
+    {
+      "id": "parse_intent",
+      "name": "Parse Intent",
+      "description": "Convert natural language to animation timeline",
+      "tags": ["parse", "intent", "natural language", "ai", "timeline"],
+      "examples": [
+        "Create an animation with text sliding in from the left",
+        "Make a chart that grows from 0 to show revenue data",
+        "Design a logo reveal with particle effects"
+      ],
+      "inputModes": ["text"],
+      "outputModes": ["data"]
+    },
+    {
+      "id": "apply_effect",
+      "name": "Apply Effect",
+      "description": "Apply visual effect or transition to composition",
+      "tags": ["effect", "filter", "transition", "animation", "motion"],
+      "examples": [
+        "Add fade in effect",
+        "Apply blur transition between scenes",
+        "Add spring bounce to the logo"
+      ],
+      "inputModes": ["text", "data"],
+      "outputModes": ["data"]
+    },
+    {
+      "id": "create_composition",
+      "name": "Create Composition",
+      "description": "Create a new video composition from parameters or description",
+      "tags": ["composition", "create", "new", "timeline", "scene"],
+      "examples": [
+        "Create a 10-second composition at 1080p",
+        "New composition named intro with 30fps",
+        "Make a 4K composition 5 seconds long"
+      ],
+      "inputModes": ["text", "data"],
+      "outputModes": ["data"]
+    },
+    {
+      "id": "render_status",
+      "name": "Render Status",
+      "description": "Check the status of an active render job",
+      "tags": ["status", "progress", "check", "monitor"],
+      "examples": [
+        "Check render status",
+        "How is my render going?",
+        "Show render progress"
+      ],
+      "inputModes": ["text"],
+      "outputModes": ["text", "data"]
+    }
+  ],
+  "extensions": {
+    "a2ui": {
+      "version": "1.0",
+      "supportedComponents": [
+        "Row",
+        "Column",
+        "Card",
+        "Text",
+        "Button",
+        "Slider",
+        "Divider",
+        "Video",
+        "Image"
+      ]
+    },
+    "liquidMotion": {
+      "version": "1.0.0",
+      "supportedCodecs": ["h264", "h265", "vp8", "vp9", "prores"],
+      "supportedFormats": ["mp4", "webm", "gif", "mov", "png-sequence"],
+      "maxResolution": {
+        "width": 3840,
+        "height": 2160
+      },
+      "maxDuration": 600,
+      "maxConcurrentRenders": 5,
+      "features": {
+        "audio": true,
+        "transitions": true,
+        "threeD": true,
+        "lottie": true,
+        "captions": true,
+        "tailwind": true,
+        "charts": true,
+        "springPhysics": true
+      }
+    }
+  }
+}

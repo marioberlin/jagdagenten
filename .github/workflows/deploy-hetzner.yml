@@ -14,6 +14,8 @@ on:
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-backend
+  VIDEO_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-video
+  BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/liquid-container-base
 
 jobs:
   build-and-push:
@@ -61,6 +63,45 @@ jobs:
           file: server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Docker meta for Base Image
+        id: meta-base
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BASE_IMAGE }}
+          tags: |
+            type=raw,value=latest
+
+      - name: Build and Push Base Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server/container
+          file: ./server/container/Dockerfile.base
+          push: true
+          tags: ${{ steps.meta-base.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Docker meta for Video Image
+        id: meta-video
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.VIDEO_IMAGE }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and Push Video Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server/container
+          file: ./server/container/Dockerfile.video
+          push: true
+          tags: ${{ steps.meta-video.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -40,3 +40,47 @@ export { BuilderExecutor, getBuilderAgentCard } from './builder.js';
 
 // Router Executor (multi-executor routing)
 export { RouterExecutor } from './router.js';
+
+// Video Render Executor
+export { VideoRenderExecutor, getVideoRenderAgentCard } from './video-render.js';
+
+// Video Render Pipeline
+export {
+  VideoRenderPipeline,
+  getVideoRenderPipeline,
+  createVideoRenderPipeline,
+  type RenderOptions,
+  type RenderResult,
+  type A2AArtifact,
+  type PipelineConfig,
+} from './video-render-pipeline.js';
+
+// Video Render Service
+export {
+  VideoRenderService,
+  getVideoRenderService,
+  createVideoRenderService,
+  type VideoRenderServiceConfig,
+  type CreateCompositionParams,
+  type RenderJobParams,
+} from './video-render-service.js';
+
+// Composition Renderer
+export {
+  CompositionRenderer,
+  getCompositionRenderer,
+  compositionToDefinition,
+  type CompositionDefinition,
+  type CompositionElement,
+  type TextElement,
+  type ImageElement,
+  type ShapeElement,
+  type GradientElement,
+  type ProgressElement,
+  type ChartElement,
+  type LottieElement,
+  type TextEffect,
+  type ImageEffect,
+  type ShapeType,
+  type ChartType,
+} from './composition-renderer.js';
