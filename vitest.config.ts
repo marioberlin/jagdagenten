@@ -53,7 +53,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
+      '@': resolve(__dirname, './src'),
+      // Resolve pino from server's node_modules for tests that import server code
+      'pino': resolve(__dirname, './server/node_modules/pino'),
+      'pino-pretty': resolve(__dirname, './server/node_modules/pino-pretty')
     }
+  },
+  // Pre-bundle pino for Vite
+  optimizeDeps: {
+    include: ['pino', 'pino-pretty']
   }
 });
