@@ -421,18 +421,7 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         }
     };
 
-    // Handle A2UI action
-    taskState: v1.TaskState.FAILED
-}
-                    : msg
-            ));
-        } finally {
-    setIsLoading(false);
-}
-    }
-}, [client, extractTaskContent]);
-
-// Retry connection
+    // Retry connection
 const retryConnection = () => {
     setError(null);
     setClient(null);
