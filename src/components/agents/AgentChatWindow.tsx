@@ -421,8 +421,72 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         }
     };
 
+    // Handle A2UI action
+    const handleA2UIAction = useCallback(async (actionId: string, data?: unknown) => {
+        console.log('[AgentChatWindow] A2UI Action:', actionId, data);
+
+        // If action has an input text, send it as a user message
+        const actionData = data as { input?: { text?: string } } | undefined;
+        if (actionData?.input?.text) {
+            const userMessage: ChatMessage = {
+                id: `user-${Date.now()}`,
+                role: 'user',
+                content: actionData.input.text,
+                timestamp: new Date(),
+            };
+
+            setMessages(prev => [...prev, userMessage]);
+            setIsLoading(true);
+            setError(null);
+
+            // Add placeholder for agent response
+            const agentMessageId = `agent-${Date.now()}`;
+            setMessages(prev => [...prev, {
+                id: agentMessageId,
+                role: 'agent' as const,
+                content: '',
+                timestamp: new Date(),
+                taskState: v1.TaskState.WORKING,
+            }]);
+
+            try {
+                if (!client) throw new Error("Client not connected");
+
+                // Send the action text as a message
+                const task = await client.sendText(actionData.input.text);
+                const { content, a2uiMessages } = extractTaskContent(task);
+
+                setMessages(prev => prev.map(msg =>
+                    msg.id === agentMessageId
+                        ? {
+                            ...msg,
+                            content: content || 'Task completed.',
+                            a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined,
+                            taskState: task.status.state
+                        }
+                        : msg
+                ));
+
+            } catch (err) {
+                console.error('[AgentChatWindow] Action error:', err);
+                setMessages(prev => prev.map(msg =>
+                    msg.id === agentMessageId
+                        ? {
+                            ...msg,
+                            content: '',
+                            error: err instanceof Error ? err.message : 'Action failed',
+                            taskState: v1.TaskState.FAILED
+                        }
+                        : msg
+                ));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    }, [client, extractTaskContent]);
+
     // Retry connection
-const retryConnection = () => {
+    const retryConnection = () => {
     setError(null);
     setClient(null);
     // Re-trigger effect by updating key state
