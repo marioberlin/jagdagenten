@@ -30,13 +30,11 @@ if (!process.env.GEMINI_API_KEY) {
     }
 }
 
-describe('AI Researcher Agent', () => {
-    // Only run if GEMINI_API_KEY is present
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.warn('Skipping AI Researcher tests: GEMINI_API_KEY not found');
-        return;
-    }
+// Only run if GEMINI_API_KEY is present
+const hasApiKey = !!process.env.GEMINI_API_KEY;
+const describeIfApiKey = hasApiKey ? describe : describe.skip;
+
+describeIfApiKey('AI Researcher Agent', () => {
 
     const contextId = randomUUID();
 

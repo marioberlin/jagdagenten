@@ -17,6 +17,7 @@ import { skillsRoutes } from './routes/skills.js';
 import { containerRoutes } from './routes/container.js';
 import { ensureContainersReady, getContainerStatus, shutdownContainers, startHealthMonitor, stopHealthMonitor } from './container/lifecycle.js';
 import { authRoutes } from './routes/auth.js';
+import { emailAuthRoutes } from './routes/email-auth.js';
 import { createArtifactRoutes } from './artifacts/index.js';
 import { createAgentsRoutes } from './routes/agents.js';
 import { adminRoutes } from './routes/admin.js';
@@ -370,6 +371,7 @@ async function startServer() {
         .use(pluginRoutes)
         .use(skillsRoutes)
         .use(authRoutes)
+        .use(emailAuthRoutes)
         .use(createArtifactRoutes())
         .use(createAgentsRoutes())
         // Global Middleware: Security & CORS

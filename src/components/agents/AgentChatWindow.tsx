@@ -404,7 +404,20 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
             onFocus={onFocus}
             className={className}
         >
-            <div className="flex flex-col h-full -m-4">
+            {/* Agent-Specific Background (WR-Demo) */}
+            {agent.id === 'remote-wr-demo' && (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <img
+                        src="/images/backgrounds/sticklikov-retro.png"
+                        alt=""
+                        className="w-full h-full object-cover opacity-50"
+                    />
+                    {/* Gradient overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" />
+                </div>
+            )}
+
+            <div className="flex flex-col h-full -m-4 relative z-10">
                 {/* Agent Header */}
                 <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-white/5">
                     <div

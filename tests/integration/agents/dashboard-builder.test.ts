@@ -28,12 +28,11 @@ if (!process.env.GEMINI_API_KEY) {
     }
 }
 
-describe('Dashboard Builder Agent', () => {
-    // Only run if GEMINI_API_KEY is present
-    if (!process.env.GEMINI_API_KEY) {
-        console.warn('Skipping Dashboard Builder tests: GEMINI_API_KEY not found');
-        return;
-    }
+// Only run if GEMINI_API_KEY is present
+const hasApiKey = !!process.env.GEMINI_API_KEY;
+const describeIfApiKey = hasApiKey ? describe : describe.skip;
+
+describeIfApiKey('Dashboard Builder Agent', () => {
 
     const contextId = randomUUID();
 

@@ -93,6 +93,9 @@ export default defineConfig({
             "a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
         },
     },
+    optimizeDeps: {
+        exclude: ['@liquidcrypto/a2a-sdk', 'a2a-sdk', 'esbuild-wasm'],
+    },
     server: {
         host: true,
         port: 5173,
@@ -141,6 +144,17 @@ export default defineConfig({
                     'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0N2IxODUzOC0yNGI2LTRmOTQtOTU3My1kYTA4MmVkMGYyOWUiLCJhZ2VudF9pZCI6IjE4MDZkY2IzLTkzZWYtNGI1Zi04Nzk2LWE2NDY0ZTI4OTA2NiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjY3OTA2NzJ9.ZTgv0CL2JrS0NOZztDZQgB2a8I7NW-Uud5MihIk_PoQ'
                 },
                 rewrite: (path) => path.replace(/^\/remote-oneflow\/?/, '/api/v1/a2a/1806dcb3-93ef-4b5f-8796-a6464e289066/'),
+            },
+            // Remote A2A WR-Demo agent
+            // Config source of truth: src/config/remote-agents.config.ts (id: 'remote-wr-demo')
+            '/remote-wr-demo': {
+                target: 'https://wr-demo.showheroes.com',
+                changeOrigin: true,
+                secure: true,
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZTllMjYxYy1jYWY4LTRhMGUtYjUyYS1lZjI2N2M0YjU0MjAiLCJhZ2VudF9pZCI6IjQyZDJiMzExLTk5MzItNDUzMy1hOTc2LTEyYzM2YzlkY2E1MiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjcwOTk3NDN9.sJA-g54OqBpYujtzmagPbcwzDi4_V0YOvCoG8t7fhZU'
+                },
+                rewrite: (path) => path.replace(/^\/remote-wr-demo\/?/, '/api/v1/a2a/42d2b311-9932-4533-a976-12c36c9dca52/'),
             },
         },
     },

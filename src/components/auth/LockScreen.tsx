@@ -5,14 +5,20 @@ import { Fingerprint, Mail, Loader2, AlertCircle, Shield } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useAuthStore, selectBiometricMethodAvailable, selectGoogleMethodAvailable } from '@/stores/authStore';
 import { authenticateBiometric } from '@/services/biometricService';
+import { useAutoLogin } from '@/hooks/useAutoLogin';
+import { EmailLoginForm } from './EmailLoginForm';
 
 export const LockScreen: React.FC = () => {
+  // Auto-login hook (enabled by default in dev & production)
+  useAutoLogin();
+
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shakeKey, setShakeKey] = useState(0);
 
   const hasBiometricMethod = useAuthStore(selectBiometricMethodAvailable);
-  const hasGoogleMethod = useAuthStore(selectGoogleMethodAvailable);
+  const hasGoogleMethod = useAuthStore(selectGoogleMethodAvailable) || !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const hasEmailMethod = useAuthStore((s) => s.emailEnabled);
   const biometricCredentials = useAuthStore((s) => s.biometricCredentials);
   const googleCredential = useAuthStore((s) => s.googleCredential);
   const unlock = useAuthStore((s) => s.unlock);
@@ -77,31 +83,42 @@ export const LockScreen: React.FC = () => {
         client_id: clientId,
         scope: 'email profile',
         callback: async (response) => {
-          if (response.error || !response.access_token) {
-            setError('Google sign-in failed.');
-            setShakeKey((k) => k + 1);
-            setIsAuthenticating(false);
-            return;
-          }
-
-          // Verify email matches stored credential
           try {
+            if (response.error || !response.access_token) {
+              setError('Google sign-in failed.');
+              setShakeKey((k) => k + 1);
+              setIsAuthenticating(false);
+              return;
+            }
+
             const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
               headers: { Authorization: `Bearer ${response.access_token}` },
             });
             const userInfo = await userInfoRes.json();
 
-            if (userInfo.email === googleCredential?.email) {
+            // If no credential stored (New/Unknown User), CLAIM this session
+            if (!googleCredential) {
+              // Save this user as the owner of this session
+              useAuthStore.getState().setGoogleCredential({
+                email: userInfo.email,
+                name: userInfo.name,
+                avatarUrl: userInfo.picture,
+                linkedAt: Date.now()
+              });
+              useAuthStore.getState().setGoogleEnabled(true);
+              unlock();
+            } else if (userInfo.email === googleCredential.email) {
               unlock();
             } else {
-              setError(`Account mismatch. Expected ${googleCredential?.email}.`);
+              setError(`Account mismatch. Expected ${googleCredential.email}.`);
               setShakeKey((k) => k + 1);
             }
-          } catch {
+          } catch (error) {
             setError('Failed to verify Google account.');
             setShakeKey((k) => k + 1);
+          } finally {
+            setIsAuthenticating(false);
           }
-          setIsAuthenticating(false);
         },
         error_callback: () => {
           setError('Google sign-in was cancelled.');
@@ -111,7 +128,7 @@ export const LockScreen: React.FC = () => {
       });
 
       tokenClient.requestAccessToken({ prompt: '' });
-    } catch {
+    } catch (error) {
       setError('Failed to initialize Google sign-in.');
       setIsAuthenticating(false);
     }
@@ -179,6 +196,18 @@ export const LockScreen: React.FC = () => {
               )}
               <span className="font-medium">Unlock with Google</span>
             </button>
+          )}
+
+          {/* Email/Password Form */}
+          {hasEmailMethod && (
+            <div className="pt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs text-white/30">or continue with email</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+              <EmailLoginForm />
+            </div>
           )}
         </div>
 

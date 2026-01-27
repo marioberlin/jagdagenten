@@ -2,10 +2,15 @@
 # Automatic HTTPS enabled for liquid-os.app
 
 liquid-os.app, www.liquid-os.app {
-    # Serve frontend static files
-    root * /srv
-    file_server
-    
+    # Compression
+    encode gzip
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.svg *.woff2 *.ico
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
     # API reverse proxy - routes to healthy backend
     # Both blue and green run on port 3000 internally (each container has its own network namespace)
     handle /api/* {
@@ -16,7 +21,7 @@ liquid-os.app, www.liquid-os.app {
             health_timeout 5s
         }
     }
-    
+
     # WebSocket upgrade support
     handle /ws/* {
         reverse_proxy backend-blue:3000 backend-green:3000 {
@@ -24,7 +29,7 @@ liquid-os.app, www.liquid-os.app {
             health_uri /health
         }
     }
-    
+
     # A2A agent endpoints
     handle /agents/* {
         reverse_proxy backend-blue:3000 backend-green:3000 {
@@ -32,7 +37,7 @@ liquid-os.app, www.liquid-os.app {
             health_uri /health
         }
     }
-    
+
     # Health check endpoints
     handle /health* {
         reverse_proxy backend-blue:3000 backend-green:3000 {
@@ -40,7 +45,7 @@ liquid-os.app, www.liquid-os.app {
             health_uri /health
         }
     }
-    
+
     # .well-known endpoints (for A2A discovery)
     handle /.well-known/* {
         reverse_proxy backend-blue:3000 backend-green:3000 {
@@ -48,16 +53,21 @@ liquid-os.app, www.liquid-os.app {
             health_uri /health
         }
     }
-    
-    # SPA fallback - serve index.html for all other routes
-    try_files {path} /index.html
-    
-    # Compression
-    encode gzip
-    
-    # Cache static assets
-    @static {
-        path *.js *.css *.png *.jpg *.svg *.woff2 *.ico
+
+    # Video render service - strip /video prefix before forwarding
+    handle /video/* {
+        uri strip_prefix /video
+        reverse_proxy video-runtime:8082 {
+            health_uri /health
+            health_interval 10s
+            health_timeout 5s
+        }
     }
-    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # SPA fallback - serve static files and index.html for all other routes
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
 }

@@ -48,6 +48,15 @@ export const REMOTE_AGENTS: RemoteAgentConfig[] = [
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0N2IxODUzOC0yNGI2LTRmOTQtOTU3My1kYTA4MmVkMGYyOWUiLCJhZ2VudF9pZCI6IjE4MDZkY2IzLTkzZWYtNGI1Zi04Nzk2LWE2NDY0ZTI4OTA2NiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjY3OTA2NzJ9.ZTgv0CL2JrS0NOZztDZQgB2a8I7NW-Uud5MihIk_PoQ',
         changeOrigin: true,
     },
+    {
+        id: 'remote-wr-demo',
+        name: 'WR-Demo Agent',
+        proxyPath: '/remote-wr-demo',
+        targetUrl: 'https://wr-demo.showheroes.com',
+        authType: 'bearer',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZTllMjYxYy1jYWY4LTRhMGUtYjUyYS1lZjI2N2M0YjU0MjAiLCJhZ2VudF9pZCI6IjQyZDJiMzExLTk5MzItNDUzMy1hOTc2LTEyYzM2YzlkY2E1MiIsIm1vZGUiOiJjb252ZXJzYXRpb24iLCJzY29wZSI6ImxpbWl0ZWQiLCJ0b2tlbl90eXBlIjoiYWdlbnQiLCJleHAiOjE5MjcwOTk3NDN9.sJA-g54OqBpYujtzmagPbcwzDi4_V0YOvCoG8t7fhZU',
+        changeOrigin: true,
+    },
 ];
 
 /**

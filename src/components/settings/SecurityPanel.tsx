@@ -20,8 +20,11 @@ export const SecurityPanel: React.FC = () => {
   const authEnabled = useAuthStore((s) => s.authEnabled);
   const biometricEnabled = useAuthStore((s) => s.biometricEnabled);
   const googleEnabled = useAuthStore((s) => s.googleEnabled);
+  const emailEnabled = useAuthStore((s) => s.emailEnabled);
+  const autoLoginEnabled = useAuthStore((s) => s.autoLoginEnabled);
   const biometricCredentials = useAuthStore((s) => s.biometricCredentials);
   const googleCredential = useAuthStore((s) => s.googleCredential);
+  const emailCredential = useAuthStore((s) => s.emailCredential);
   const sessionTimeoutMinutes = useAuthStore((s) => s.sessionTimeoutMinutes);
   const setupCompleted = useAuthStore((s) => s.setupCompleted);
   const hasCredentials = useAuthStore(selectHasAnyCredentials);
@@ -31,6 +34,8 @@ export const SecurityPanel: React.FC = () => {
   const setAuthEnabled = useAuthStore((s) => s.setAuthEnabled);
   const setBiometricEnabled = useAuthStore((s) => s.setBiometricEnabled);
   const setGoogleEnabled = useAuthStore((s) => s.setGoogleEnabled);
+  const setEmailEnabled = useAuthStore((s) => s.setEmailEnabled);
+  const setAutoLoginEnabled = useAuthStore((s) => s.setAutoLoginEnabled);
   const addBiometricCredential = useAuthStore((s) => s.addBiometricCredential);
   const removeBiometricCredential = useAuthStore((s) => s.removeBiometricCredential);
   const setGoogleCredential = useAuthStore((s) => s.setGoogleCredential);
@@ -343,6 +348,42 @@ export const SecurityPanel: React.FC = () => {
         {googleError && (
           <p className="mt-2 text-xs text-red-400">{googleError}</p>
         )}
+      </Section>
+
+      {/* Email/Password Section */}
+      <Section title="Email/Password" icon={Mail}>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-white/70">Use email and password to unlock</p>
+          <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
+        </div>
+
+        {emailCredential && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <User size={14} className="text-white/50" />
+              </div>
+              <div>
+                {emailCredential.name && (
+                  <p className="text-sm text-white/80">{emailCredential.name}</p>
+                )}
+                <p className="text-xs text-white/50">{emailCredential.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/70">Auto-login (Dev & Production)</p>
+              <p className="text-xs text-white/40 mt-0.5">
+                {autoLoginEnabled ? 'Automatically log in on page load' : 'Manual login required'}
+              </p>
+            </div>
+            <Toggle checked={autoLoginEnabled} onChange={setAutoLoginEnabled} disabled={!emailEnabled} />
+          </div>
+        </div>
       </Section>
 
       {/* Session Timeout */}

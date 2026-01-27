@@ -3,12 +3,11 @@ import { handleResearchCanvasRequest } from '../../../server/src/agents/research
 import { SendMessageParams } from '../../../server/src/a2a/types';
 import { randomUUID } from 'crypto';
 
-describe('Research Canvas Agent', () => {
-    // Only run if GEMINI_API_KEY is present
-    if (!process.env.GEMINI_API_KEY) {
-        console.warn('Skipping Research Canvas tests: GEMINI_API_KEY not found');
-        return;
-    }
+// Only run if GEMINI_API_KEY is present
+const hasApiKey = !!process.env.GEMINI_API_KEY;
+const describeIfApiKey = hasApiKey ? describe : describe.skip;
+
+describeIfApiKey('Research Canvas Agent', () => {
 
     const contextId = randomUUID();
 

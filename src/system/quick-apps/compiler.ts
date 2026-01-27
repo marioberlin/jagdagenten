@@ -6,7 +6,8 @@
  */
 
 import React from 'react';
-import * as esbuild from 'esbuild-wasm';
+// Dynamic import to avoid Vite resolution issues at build time
+// import * as esbuild from 'esbuild-wasm';
 import * as LucideReact from 'lucide-react';
 import type { ParsedQuickApp, CompiledQuickApp } from './types';
 import type { AppManifest, WindowConfig, AppIntegrations } from '../app-store/types';
@@ -18,6 +19,7 @@ import type { AppManifest, WindowConfig, AppIntegrations } from '../app-store/ty
 let esbuildInitialized = false;
 let initPromise: Promise<void> | null = null;
 let initError: Error | null = null;
+let esbuild: typeof import('esbuild-wasm') | null = null;
 
 export async function initializeCompiler(): Promise<void> {
   if (esbuildInitialized) return;
@@ -28,10 +30,13 @@ export async function initializeCompiler(): Promise<void> {
   const ESBUILD_VERSION = '0.27.2';
 
   initPromise = (async () => {
-    // Try unpkg CDN with version matching the installed package
-    const wasmURL = `https://unpkg.com/esbuild-wasm@${ESBUILD_VERSION}/esbuild.wasm`;
-
     try {
+      // Dynamically import esbuild-wasm to avoid Vite build-time resolution issues
+      esbuild = await import('esbuild-wasm');
+
+      // Try unpkg CDN with version matching the installed package
+      const wasmURL = `https://unpkg.com/esbuild-wasm@${ESBUILD_VERSION}/esbuild.wasm`;
+
       // Fetch the WASM file manually and compile it
       // This is more reliable than letting esbuild fetch it
       console.log('[Quick Apps] Fetching esbuild WASM from:', wasmURL);
@@ -248,6 +253,10 @@ function wrapAppCode(parsed: ParsedQuickApp): string {
 export async function compileQuickApp(parsed: ParsedQuickApp): Promise<CompiledQuickApp> {
   await initializeCompiler();
 
+  if (!esbuild) {
+    throw new Error('esbuild-wasm failed to load. Quick Apps cannot compile.');
+  }
+
   const warnings: string[] = [];
   const errors: string[] = [];
 
@@ -357,18 +366,18 @@ function generateManifest(parsed: ParsedQuickApp): AppManifest {
     },
     aiContext: frontmatter.ai
       ? {
-          systemPrompt: frontmatter.ai.prompt,
-          agentId: frontmatter.ai.agent,
-        }
+        systemPrompt: frontmatter.ai.prompt,
+        agentId: frontmatter.ai.agent,
+      }
       : undefined,
     commandPalette: commands && commands.length > 0
       ? {
-          commands: commands.map((cmd, i) => ({
-            id: `${id}-cmd-${i}`,
-            label: cmd.command,
-            category: frontmatter.name,
-          })),
-        }
+        commands: commands.map((cmd, i) => ({
+          id: `${id}-cmd-${i}`,
+          label: cmd.command,
+          category: frontmatter.name,
+        })),
+      }
       : undefined,
     shortcuts: shortcuts && shortcuts.length > 0
       ? { hookPath: '__quick_app_shortcuts__' }

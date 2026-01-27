@@ -558,6 +558,26 @@ export const CURATED_AGENTS: CuratedAgent[] = [
         authentication: 'bearer',
         color: '#10B981',
     },
+    {
+        id: 'remote-wr-demo',
+        name: 'WR-Demo Agent',
+        description: 'Remote A2A agent for workflow and reporting demonstrations. Showcases external agent connectivity with enterprise-grade security.\n\n**What I can do:**\n• Demonstrate workflow capabilities\n• Process report generation\n• Show remote agent integration\n• Validate A2A protocol compliance\n\n**Try saying:** "Show demonstration" or "Generate a report" or "What can you do?"',
+        shortDescription: 'Remote A2A workflow demonstration agent',
+        url: '/remote-wr-demo',
+        version: '1.0.0',
+        icon: Activity,
+        category: 'productivity',
+        tags: ['workflow', 'reporting', 'remote', 'external', 'a2a', 'demo'],
+        featured: false,
+        verified: true,
+        rating: 4.7,
+        reviewCount: 0,
+        addedAt: '2026-01-27',
+        provider: { name: 'ShowHeroes', url: 'https://showheroes.com', verified: true },
+        capabilities: { streaming: false, a2ui: false, pushNotifications: false, fileUpload: false },
+        authentication: 'bearer',
+        color: '#8B5CF6',
+    },
 ];
 
 
