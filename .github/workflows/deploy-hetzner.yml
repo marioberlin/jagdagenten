@@ -256,7 +256,7 @@ jobs:
             echo ""
             echo "=== Deployment Complete ==="
 
-      - name: Run Database Migrations
+      - name: Fix Database Password and Run Migrations
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HETZNER_HOST }}
@@ -272,6 +272,19 @@ jobs:
               echo "ERROR: Cannot connect to database"
               exit 1
             }
+
+            echo ""
+            echo "=== Setting PostgreSQL password to match .env.production ==="
+            # Extract the password from the DATABASE_URL in .env.production
+            DB_PASSWORD=$(grep "^DATABASE_URL" /app/liquidcrypto/.env.production | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+            if [ -n "$DB_PASSWORD" ]; then
+              echo "Setting password to match DATABASE_URL..."
+              docker exec liquidcrypto-postgres psql -U liquidcrypto -d liquidcrypto -c "ALTER USER liquidcrypto WITH PASSWORD '$DB_PASSWORD';" && \
+                echo "✅ Password updated successfully" || \
+                echo "⚠️ Failed to update password"
+            else
+              echo "⚠️ Could not extract password from DATABASE_URL"
+            fi
 
             echo ""
             echo "=== Listing Available Migrations ==="
