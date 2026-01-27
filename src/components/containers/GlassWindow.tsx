@@ -6,7 +6,8 @@ import { X, Minus, Maximize2 } from 'lucide-react';
 interface GlassWindowProps {
     /** Unique identifier for the window */
     id: string;
-    title: string;
+    title: string | React.ReactNode;
+    headerRight?: React.ReactNode;
     children: React.ReactNode;
     initialPosition?: { x: number; y: number };
     initialSize?: { width: number; height: number };
@@ -26,6 +27,7 @@ interface GlassWindowProps {
 export const GlassWindow: React.FC<GlassWindowProps> = ({
     id,
     title,
+    headerRight,
     children,
     initialPosition = { x: 100, y: 100 },
     initialSize = { width: 600, height: 400 },
@@ -35,6 +37,10 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     onFocus,
     className
 }) => {
+    // ... (rest of the component state)
+    // We only need to show the updated props usage here so I'll minimize the context replace
+
+    /* ... state hooks ... */
     const dragControls = useDragControls();
     const containerRef = useRef<HTMLDivElement>(null);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -166,13 +172,9 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
         };
     }, []);
 
-    // Window controls standard MacOS colors
-    // Close: #FF5F56 (Border #E0443E)
-    // Minimize (Restore): #FFBD2E (Border #DEA123)
-    // Zoom (Maximize): #27C93F (Border #1AAB29)
-
     return (
         <motion.div
+            // ... props
             ref={containerRef}
             data-window-id={id}
             drag={!isMaximized}
@@ -198,7 +200,7 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
             }}
             onPointerDown={onFocus}
             style={{
-                position: 'fixed', // Fixed positioning to overlay the entire viewport
+                position: 'fixed',
                 top: 0,
                 left: 0,
                 zIndex: isActive ? 50 : 10,
@@ -269,6 +271,13 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
                 >
                     {title}
                 </div>
+
+                {/* Header Right Content */}
+                {headerRight && (
+                    <div className="relative z-20 ml-auto flex items-center">
+                        {headerRight}
+                    </div>
+                )}
             </div>
 
             {/* Content Area */}

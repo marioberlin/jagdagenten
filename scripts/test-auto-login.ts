@@ -25,8 +25,8 @@ async function testAutoLogin() {
     });
 
     try {
-        console.log('📍 Navigating to http://localhost:5174/os\n');
-        await page.goto('http://localhost:5174/os', { waitUntil: 'networkidle' });
+        console.log('📍 Navigating to http://localhost:5173/os\n');
+        await page.goto('http://localhost:5173/os', { waitUntil: 'networkidle' });
 
         // Wait a bit for auto-login to potentially trigger
         console.log('⏳  Waiting 8 seconds for auto-login...\n');

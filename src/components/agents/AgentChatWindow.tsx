@@ -1,16 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Send,
-    Loader2,
-    User,
-    Sparkles,
-    AlertCircle,
-    Paperclip,
-    Mic,
-    MoreHorizontal,
-    RefreshCcw,
+    Paperclip, Mic, Send, MoreHorizontal, User, Sparkles, AlertCircle, RefreshCcw, Loader2,
+    Rocket, Zap, Star, Heart, Flame, ThumbsUp, Check, X as XIcon, ArrowRight, Lightbulb,
+    Brain, Laptop, Terminal
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { cn } from '@/utils/cn';
 import { GlassWindow } from '@/components/containers/GlassWindow';
 import { GlassA2UIRenderer } from '@/components/agentic/GlassA2UIRenderer';
@@ -65,12 +60,112 @@ interface AgentChatWindowProps {
 // Component
 // ============================================================================
 
-/**
- * AgentChatWindow
- *
- * A beautiful chat window for conversing with A2A agents.
- * Renders in a GlassWindow with full A2UI support.
- */
+// --- Smart Components ---
+
+const EMOJI_MAP: Record<string, React.ElementType> = {
+    '🚀': Rocket,
+    '⚡': Zap,
+    '⭐': Star,
+    '❤️': Heart,
+    '🔥': Flame,
+    '👍': ThumbsUp,
+    '✅': Check,
+    '❌': XIcon,
+    '💡': Lightbulb,
+    '🧠': Brain,
+    '💻': Laptop,
+    '🖥️': Terminal,
+    '📝': Paperclip,
+    '✨': Sparkles
+};
+
+// Replaces emojis with Lucide icons in text
+const SmartMessageContent: React.FC<{ content: string }> = ({ content }) => {
+    // 1. Logic to enhance formatting (ensure blank lines between paragraphs)
+    const formattedContent = content
+        .replace(/([.!?])\s*\n/g, '$1\n\n') // Ensure breaks after sentences ending with newline
+        .replace(/\n(?!\n)/g, '\n\n'); // Aggressively ensure paragraphs
+
+    return (
+        <ReactMarkdown
+            components={{
+                p: ({ children }) => {
+                    return (
+                        <p className="mb-4 last:mb-0 leading-relaxed">
+                            {React.Children.map(children, child => {
+                                if (typeof child === 'string') {
+                                    return replaceEmojisToIcons(child);
+                                }
+                                return child;
+                            })}
+                        </p>
+                    );
+                },
+                li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                        {/* Custom bullet if needed, or rely on prose */}
+                        <div className="mt-1.5 w-1 h-1 rounded-full bg-indigo-400 flex-shrink-0" />
+                        <span className="flex-1">{children}</span>
+                    </li>
+                )
+            }}
+        >
+            {formattedContent}
+        </ReactMarkdown>
+    );
+};
+
+const replaceEmojisToIcons = (text: string) => {
+    // Regex to match emojis in the map
+    const emojiRegex = new RegExp(`(${Object.keys(EMOJI_MAP).join('|').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+
+    const parts = text.split(emojiRegex);
+    return parts.map((part, index) => {
+        if (EMOJI_MAP[part]) {
+            const Icon = EMOJI_MAP[part];
+            return <Icon key={index} size={14} className="inline-block mx-0.5 -mt-0.5 text-indigo-400" />;
+        }
+        return part;
+    });
+};
+
+const SuggestedActions: React.FC<{ content: string; onAction: (action: string) => void }> = ({ content, onAction }) => {
+    // Simple heuristic to generate relevant suggestions based on content length/type
+    // In a real system, this would come from the A2A response or an LLM
+    const getSuggestions = () => {
+        const length = content.length;
+        if (content.includes('?')) {
+            return ["I'm not sure", "Give me an example", "Let's proceed"];
+        }
+        if (length < 50) {
+            return ["Tell me more", "Why?", "Interesting"];
+        }
+        if (content.includes("code") || content.includes("function")) {
+            return ["Explain this code", "Optimize it", "Any alternatives?"];
+        }
+        return ["Continue", "Elaborate", "Show examples"];
+    };
+
+    const suggestions = getSuggestions();
+
+    return (
+        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/5">
+            {suggestions.map((suggestion, idx) => (
+                <button
+                    key={idx}
+                    onClick={() => onAction(suggestion)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-xs text-white/70 hover:text-white group"
+                >
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    {suggestion}
+                    <ArrowRight size={10} className="opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                </button>
+            ))}
+        </div>
+    );
+};
+
+// --- Main Component ---
 export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     agent,
     agentCard: _agentCard, // Reserved for future AgentCard-specific features
@@ -198,8 +293,10 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     }, []);
 
     // Send message
-    const sendMessage = useCallback(async () => {
-        if (!inputValue.trim() || !client || isLoading) return;
+    const sendMessage = useCallback(async (contentOverride?: string) => {
+        const textToSend = typeof contentOverride === 'string' ? contentOverride : inputValue.trim();
+
+        if (!textToSend || !client || isLoading) return;
 
         console.log('[AgentChatWindow] Sending message...', {
             hasSendText: typeof client.sendText === 'function',
@@ -210,12 +307,16 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
         const userMessage: ChatMessage = {
             id: `user-${Date.now()}`,
             role: 'user',
-            content: inputValue.trim(),
+            content: textToSend,
             timestamp: new Date(),
         };
 
         setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
+
+        // Only clear input if we sent what was in the box
+        if (textToSend === inputValue.trim()) {
+            setInputValue('');
+        }
         setIsLoading(true);
         setError(null);
 
@@ -321,92 +422,84 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     };
 
     // Handle A2UI action
-    const handleA2UIAction = useCallback(async (actionId: string, data?: unknown) => {
-        console.log('[AgentChatWindow] A2UI Action:', actionId, data);
+    taskState: v1.TaskState.FAILED
+}
+                    : msg
+            ));
+        } finally {
+    setIsLoading(false);
+}
+    }
+}, [client, extractTaskContent]);
 
-        // If action has an input text, send it as a user message
-        const actionData = data as { input?: { text?: string } } | undefined;
-        if (actionData?.input?.text) {
-            const userMessage: ChatMessage = {
-                id: `user-${Date.now()}`,
-                role: 'user',
-                content: actionData.input.text,
-                timestamp: new Date(),
-            };
+// Retry connection
+const retryConnection = () => {
+    setError(null);
+    setClient(null);
+    // Re-trigger effect by updating key state
+    setMessages([]);
+};
 
-            setMessages(prev => [...prev, userMessage]);
-            setIsLoading(true);
-            setError(null);
-
-            // Add placeholder for agent response
-            const agentMessageId = `agent-${Date.now()}`;
-            setMessages(prev => [...prev, {
-                id: agentMessageId,
-                role: 'agent' as const,
-                content: '',
-                timestamp: new Date(),
-                taskState: v1.TaskState.WORKING,
-            }]);
-
-            try {
-                if (!client) throw new Error("Client not connected");
-
-                // Send the action text as a message
-                const task = await client.sendText(actionData.input.text);
-                const { content, a2uiMessages } = extractTaskContent(task);
-
-                setMessages(prev => prev.map(msg =>
-                    msg.id === agentMessageId
-                        ? {
-                            ...msg,
-                            content: content || 'Task completed.',
-                            a2ui: a2uiMessages.length > 0 ? a2uiMessages : undefined,
-                            taskState: task.status.state
-                        }
-                        : msg
-                ));
-
-            } catch (err) {
-                console.error('[AgentChatWindow] Action error:', err);
-                setMessages(prev => prev.map(msg =>
-                    msg.id === agentMessageId
-                        ? {
-                            ...msg,
-                            content: '',
-                            error: err instanceof Error ? err.message : 'Action failed',
-                            taskState: v1.TaskState.FAILED
-                        }
-                        : msg
-                ));
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    }, [client, extractTaskContent]);
-
-    // Retry connection
-    const retryConnection = () => {
-        setError(null);
-        setClient(null);
-        // Re-trigger effect by updating key state
-        setMessages([]);
-    };
-
-    return (
-        <GlassWindow
-            id={`agent-chat-${agent.id}`}
-            title={agent.name}
-            initialPosition={position}
-            initialSize={{ width: 750, height: 700 }}
-            onClose={onClose}
-            onMinimize={onMinimize}
-            isActive={isActive}
-            onFocus={onFocus}
-            className={className}
+const headerTitle = (
+    <div className="flex items-center gap-2 pointer-events-auto">
+        <div
+            className="w-6 h-6 rounded-md flex items-center justify-center text-sm"
+            style={{ backgroundColor: `${agent.color}20` }}
         >
-            {/* Agent-Specific Background (WR-Demo) */}
-            {agent.id === 'remote-wr-demo' && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {React.createElement(agent.icon as React.ElementType, { size: 14, className: "text-white" })}
+        </div>
+        <div className="flex flex-col items-start leading-none gap-0.5">
+            <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-xs text-white/90">{agent.name}</span>
+                {agent.verified && (
+                    <span className="px-1 py-px text-[8px] rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                        Verified
+                    </span>
+                )}
+            </div>
+            {/* Connection Status tiny */}
+            <span className={cn(
+                'flex items-center gap-1 text-[9px]',
+                isConnected ? 'text-green-400/80' : 'text-red-400/80'
+            )}>
+                <span className={cn(
+                    'w-1 h-1 rounded-full',
+                    isConnected ? 'bg-green-400' : 'bg-red-400'
+                )} />
+                {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
+        </div>
+    </div>
+);
+
+const headerRight = (
+    <button className="p-1.5 rounded-lg hover:bg-white/10 transition-colors pointer-events-auto">
+        <MoreHorizontal size={16} className="text-white/50" />
+    </button>
+);
+
+return (
+    <GlassWindow
+        id={`agent-chat-${agent.id}`}
+        title={headerTitle}
+        headerRight={headerRight}
+        initialPosition={position}
+        initialSize={{ width: 750, height: 700 }}
+        onClose={onClose}
+        onMinimize={onMinimize}
+        isActive={isActive}
+        onFocus={onFocus}
+        className={className}
+    >
+        {/* Agent-Specific Background (WR-Demo) */}
+        {agent.id === 'remote-wr-demo' && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <motion.div
+                    initial={{ scale: 1.1, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className="w-full h-full"
+                >
                     <img
                         src="/images/backgrounds/sticklikov-retro.png"
                         alt=""
@@ -414,176 +507,155 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                     />
                     {/* Gradient overlay for readability */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" />
-                </div>
-            )}
-
-            <div className="flex flex-col h-full -m-4 relative z-10">
-                {/* Agent Header */}
-                <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-white/5">
-                    <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                        style={{ backgroundColor: `${agent.color}20` }}
-                    >
-                        {React.createElement(agent.icon as React.ElementType, { size: 24, className: "text-white" })}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                            <span className="font-medium text-white truncate">{agent.name}</span>
-                            {agent.verified && (
-                                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-500/20 text-blue-400">
-                                    Verified
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                            <span className={cn(
-                                'flex items-center gap-1',
-                                isConnected ? 'text-green-400' : 'text-red-400'
-                            )}>
-                                <span className={cn(
-                                    'w-1.5 h-1.5 rounded-full',
-                                    isConnected ? 'bg-green-400' : 'bg-red-400'
-                                )} />
-                                {isConnected ? 'Connected' : 'Disconnected'}
-                            </span>
-                            {agent.capabilities.streaming && (
-                                <span className="text-white/40">Streaming</span>
-                            )}
-                        </div>
-                    </div>
-                    <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                        <MoreHorizontal size={18} className="text-white/50" />
-                    </button>
-                </div>
-
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                    {/* Error Banner */}
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20"
-                            >
-                                <AlertCircle size={18} className="text-red-400 flex-shrink-0" />
-                                <span className="flex-1 text-sm text-red-400">{error}</span>
-                                <button
-                                    onClick={retryConnection}
-                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs transition-colors"
-                                >
-                                    <RefreshCcw size={12} />
-                                    <span>Retry</span>
-                                </button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Messages */}
-                    {messages.map((message) => (
-                        <MessageBubble
-                            key={message.id}
-                            message={message}
-                            agentIcon={agent.icon}
-                            agentColor={agent.color}
-                            onA2UIAction={handleA2UIAction}
-                        />
-                    ))}
-
-                    {/* Loading indicator */}
-                    <AnimatePresence>
-                        {isLoading && messages[messages.length - 1]?.content === '' && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex items-center gap-2 text-white/40 text-sm"
-                            >
-                                <Loader2 size={14} className="animate-spin" />
-                                <span>{agent.name} is thinking...</span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input Area */}
-                <div className="p-4 border-t border-white/10 bg-white/5">
-                    <div className="flex items-center gap-2">
-                        <button
-                            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/40 hover:text-white"
-                            title="Attach file"
-                        >
-                            <Paperclip size={18} />
-                        </button>
-                        <div className="flex-1 relative">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={handleKeyPress}
-                                placeholder={isConnected ? `Message ${agent.name}...` : 'Connecting...'}
-                                disabled={!isConnected || isLoading}
-                                className={cn(
-                                    'w-full px-4 py-3 rounded-xl',
-                                    'bg-white/5 border border-white/10',
-                                    'text-white placeholder:text-white/30',
-                                    'focus:outline-none focus:border-white/20 focus:bg-white/10',
-                                    'transition-all',
-                                    (!isConnected || isLoading) && 'opacity-50 cursor-not-allowed'
-                                )}
-                            />
-                        </div>
-                        <button
-                            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/40 hover:text-white"
-                            title="Voice input"
-                        >
-                            <Mic size={18} />
-                        </button>
-                        <motion.button
-                            onClick={sendMessage}
-                            disabled={!inputValue.trim() || !isConnected || isLoading}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className={cn(
-                                'p-3 rounded-xl transition-all',
-                                inputValue.trim() && isConnected && !isLoading
-                                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
-                                    : 'bg-white/5 text-white/30 cursor-not-allowed'
-                            )}
-                        >
-                            {isLoading ? (
-                                <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                                <Send size={18} />
-                            )}
-                        </motion.button>
-                    </div>
-
-                    {/* Capabilities hint */}
-                    {isConnected && (
-                        <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-white/30">
-                            {agent.capabilities.streaming && (
-                                <span className="flex items-center gap-1">
-                                    <Sparkles size={10} />
-                                    Streaming
-                                </span>
-                            )}
-                            {agent.capabilities.a2ui && (
-                                <span className="flex items-center gap-1">
-                                    <Sparkles size={10} />
-                                    Rich UI
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
+                </motion.div>
             </div>
-        </GlassWindow>
-    );
+        )}
+
+        <motion.div
+            initial={{ rotateY: 90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            transition={{
+                type: "spring",
+                damping: 20,
+                stiffness: 100,
+                delay: 0.1
+            }}
+            className="flex flex-col h-full -m-4 relative z-10 perspective-1000"
+            style={{ transformStyle: 'preserve-3d', transformOrigin: 'center center' }}
+        >
+            {/* Messages Area - Header removed (moved to window title) */}
+            <div className="flex-1 overflow-y-auto px-8 py-4 space-y-4 custom-scrollbar mt-4">
+                {/* Error Banner */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20"
+                        >
+                            <AlertCircle size={18} className="text-red-400 flex-shrink-0" />
+                            <span className="flex-1 text-sm text-red-400">{error}</span>
+                            <button
+                                onClick={retryConnection}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs transition-colors"
+                            >
+                                <RefreshCcw size={12} />
+                                <span>Retry</span>
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Messages */}
+                {messages.map((message) => (
+                    <MessageBubble
+                        key={message.id}
+                        message={message}
+                        agentIcon={agent.icon}
+                        agentColor={agent.color}
+                        onA2UIAction={handleA2UIAction}
+                        isRetroStyle={agent.id === 'remote-wr-demo'}
+                    />
+                ))}
+
+                {/* Loading indicator */}
+                <AnimatePresence>
+                    {isLoading && messages[messages.length - 1]?.content === '' && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center gap-2 text-white/40 text-sm"
+                        >
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>{agent.name} is thinking...</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className={cn(
+                "px-6 pb-6 pt-4", // Removed border-t, increased padding
+                agent.id === 'remote-wr-demo' ? "bg-black/60 backdrop-blur-md" : "bg-white/5"
+            )}>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="p-3 rounded-xl hover:bg-white/10 transition-colors text-white/40 hover:text-white"
+                        title="Attach file"
+                    >
+                        <Paperclip size={20} />
+                    </button>
+                    <div className="flex-1 relative">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            placeholder={isConnected ? `Message ${agent.name}...` : 'Connecting...'}
+                            disabled={!isConnected || isLoading}
+                            className={cn(
+                                'w-full px-5 py-4 rounded-2xl transition-all', // Increased padding and rounding
+                                'text-white placeholder:text-white/30',
+                                'focus:outline-none focus:border-white/20',
+                                agent.id === 'remote-wr-demo'
+                                    ? 'bg-black/50 border border-white/20 focus:bg-black/70'
+                                    : 'bg-white/5 border border-white/10 focus:bg-white/10',
+                                (!isConnected || isLoading) && 'opacity-50 cursor-not-allowed'
+                            )}
+                        />
+                    </div>
+                    <button
+                        className="p-3 rounded-xl hover:bg-white/10 transition-colors text-white/40 hover:text-white"
+                        title="Voice input"
+                    >
+                        <Mic size={20} />
+                    </button>
+                    <motion.button
+                        onClick={sendMessage}
+                        disabled={!inputValue.trim() || !isConnected || isLoading}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={cn(
+                            'p-4 rounded-xl transition-all', // Larger button
+                            inputValue.trim() && isConnected && !isLoading
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
+                                : 'bg-white/5 text-white/30 cursor-not-allowed'
+                        )}
+                    >
+                        {isLoading ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : (
+                            <Send size={20} />
+                        )}
+                    </motion.button>
+                </div>
+
+                {/* Capabilities hint */}
+                {isConnected && (
+                    <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-white/30">
+                        {agent.capabilities.streaming && (
+                            <span className="flex items-center gap-1">
+                                <Sparkles size={10} />
+                                Streaming
+                            </span>
+                        )}
+                        {agent.capabilities.a2ui && (
+                            <span className="flex items-center gap-1">
+                                <Sparkles size={10} />
+                                Rich UI
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    </GlassWindow>
+);
 };
 
 // ============================================================================
@@ -592,10 +664,11 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
 
 const MessageBubble: React.FC<{
     message: ChatMessage;
-    agentIcon: React.ElementType; // Changed from string
+    agentIcon: React.ElementType;
     agentColor?: string;
     onA2UIAction: (actionId: string, data?: unknown) => void;
-}> = ({ message, agentIcon: AgentIcon, agentColor, onA2UIAction }) => {
+    isRetroStyle?: boolean;
+}> = ({ message, agentIcon: AgentIcon, agentColor, onA2UIAction, isRetroStyle }) => {
     const isUser = message.role === 'user';
     const isError = message.taskState === 'failed' || !!message.error;
 
@@ -630,13 +703,34 @@ const MessageBubble: React.FC<{
                 {/* Text Content */}
                 {message.content && (
                     <div className={cn(
-                        'px-4 py-3 rounded-2xl',
+                        'px-5 py-4 rounded-2xl backdrop-blur-sm',
                         isUser
                             ? 'bg-indigo-500/20 text-white rounded-tr-md'
-                            : 'bg-white/5 border border-white/10 text-white/80 rounded-tl-md',
+                            : cn(
+                                'text-white/90 rounded-tl-md border relative group',
+                                isRetroStyle
+                                    ? 'bg-black/60 border-white/20 shadow-lg'
+                                    : 'bg-white/5 border-white/10 text-white/80'
+                            ),
                         isError && 'border-red-500/30 bg-red-500/10'
                     )}>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <div className={cn(
+                            "text-sm prose prose-invert max-w-none",
+                            "prose-p:leading-relaxed prose-p:mb-4 last:prose-p:mb-0",
+                            "prose-headings:font-semibold prose-headings:text-white prose-headings:mb-2 prose-headings:mt-4",
+                            "prose-pre:bg-black/30 prose-pre:rounded-lg prose-pre:p-3 prose-pre:border prose-pre:border-white/10",
+                            "prose-code:text-indigo-300 prose-code:bg-white/5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded",
+                            "prose-ul:my-2 prose-li:my-1"
+                        )}>
+                            <SmartMessageContent content={message.content} />
+                        </div>
+
+                        {!isUser && !message.error && (
+                            <SuggestedActions
+                                content={message.content}
+                                onAction={(action) => onA2UIAction('suggested_reply', action)}
+                            />
+                        )}
                     </div>
                 )}
 

@@ -13,6 +13,7 @@
 
 @import "tailwindcss";
 @plugin "@tailwindcss/container-queries";
+@plugin "@tailwindcss/typography";
 
 /**
  * Design Tokens Theme
