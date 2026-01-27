@@ -278,7 +278,7 @@ export async function initializeQuickApps(): Promise<void> {
  * Connects to a development server and listens for changes.
  */
 let devServerConnection: EventSource | null = null;
-let devServerCallbacks: Map<string, () => void> = new Map();
+const devServerCallbacks: Map<string, () => void> = new Map();
 
 /**
  * Connect to a Quick App development server for hot reload.
