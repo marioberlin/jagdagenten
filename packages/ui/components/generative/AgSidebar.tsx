@@ -21,9 +21,10 @@ const GEMINI_MODELS = {
 
 type GeminiModelId = keyof typeof GEMINI_MODELS;
 
-apiKey ?: string;
-claudeApiKey ?: string;
-initialService ?: any;
+interface AgSidebarProps {
+  apiKey?: string;
+  claudeApiKey?: string;
+  initialService?: any;
 }
 
 export const AgSidebar: React.FC<AgSidebarProps> = ({
