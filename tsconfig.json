@@ -41,7 +41,12 @@
         "node_modules",
         "packages",
         "server",
-        "dist"
+        "dist",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/__tests__/**",
+        "src/applications/merchant-console/**",
+        "src/applications/shopping-assistant/**"
     ],
     "references": [
         {
