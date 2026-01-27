@@ -87,7 +87,7 @@ export function useIBirdShortcuts() {
             openCompose('new');
             break;
 
-          case 'r':
+          case 'r': {
             e.preventDefault();
             // Reply to selected message
             const selectedMessage = useIBirdStore.getState().selectedMessage;
@@ -99,8 +99,9 @@ export function useIBirdShortcuts() {
               });
             }
             break;
+          }
 
-          case 'f':
+          case 'f': {
             e.preventDefault();
             // Forward selected message
             const msgToForward = useIBirdStore.getState().selectedMessage;
@@ -111,6 +112,7 @@ export function useIBirdShortcuts() {
               });
             }
             break;
+          }
 
           case 'Delete':
           case 'Backspace':

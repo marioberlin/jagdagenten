@@ -166,6 +166,7 @@ src/
 │   ├── _system/         # System apps (app-store, settings)
 │   ├── ibird/           # Email/Calendar app
 │   ├── aurora-weather/  # Weather app
+│   ├── ucp-discovery/   # UCP merchant discovery app
 │   └── .../             # Other installed apps
 ├── components/           # UI Component Library (161+ components)
 │   ├── primitives/      # Base components (Button, Input, Container)
@@ -355,9 +356,18 @@ server/
 │   ├── types.ts         # TypeScript definitions
 │   ├── plugins/
 │   │   └── rate-limit.ts    # Rate limiting plugin
-│   └── services/
-│       ├── claude.ts    # Claude AI service
-│       └── gemini.ts    # Gemini AI service
+│   ├── services/
+│   │   ├── claude.ts    # Claude AI service
+│   │   ├── gemini.ts    # Gemini AI service
+│   │   └── ucp-discovery/   # UCP merchant discovery
+│   │       ├── index.ts         # Main exports
+│   │       ├── store.ts         # Unified storage interface
+│   │       ├── pg-storage.ts    # PostgreSQL implementation
+│   │       ├── crawler.ts       # Crawl orchestration
+│   │       ├── scoring.ts       # Merchant scoring
+│   │       └── notifications.ts # Tier change alerts
+│   └── routes/
+│       └── ucp-discovery-api.ts # REST + WebSocket API
 ├── redis/
 │   └── sentinel.conf    # Sentinel configuration
 └── docs/
@@ -384,6 +394,9 @@ server/
 | `/api/v1/smart/summarize`| POST | AI content summarization |
 | `/api/v1/smart/patterns` | POST | AI pattern detection |
 | `/graphql` | POST | GraphQL endpoint |
+| `/api/ucp-discovery/merchants` | GET | UCP merchant registry |
+| `/api/ucp-discovery/crawl/full` | POST | Run full UCP crawl |
+| `/api/ucp-discovery/crawl/progress` | WS | Crawler progress stream |
 
 ### Smart Enhancement Service
 The backend provides a specialized service for enhancing UI content with AI:

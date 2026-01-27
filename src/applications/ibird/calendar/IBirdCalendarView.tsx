@@ -64,7 +64,7 @@ function CalendarHeader() {
     switch (ui.calendarViewMode) {
       case 'day':
         return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-      case 'week':
+      case 'week': {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         const weekEnd = new Date(weekStart);
@@ -73,6 +73,7 @@ function CalendarHeader() {
           return `${weekStart.toLocaleDateString('en-US', { month: 'long' })} ${weekStart.getDate()} - ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
         }
         return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
       case 'month':
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       case 'year':

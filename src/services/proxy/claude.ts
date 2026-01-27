@@ -94,7 +94,7 @@ export class ClaudeProxyService implements ILiquidLLMService {
             const decoder = new TextDecoder();
             let buffer = '';
 
-            while (true) {
+            for (;;) {
                 const { value, done } = await reader.read();
                 if (done) break;
 
