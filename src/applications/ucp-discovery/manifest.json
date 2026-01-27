@@ -1,0 +1,38 @@
+{
+  "id": "ucp-discovery",
+  "name": "UCP Discovery",
+  "version": "1.0.0",
+  "description": "Merchant registry crawler - discover, validate, and monitor UCP-enabled merchants across the web",
+  "author": "LiquidCrypto",
+  "license": "MIT",
+  "category": "developer",
+  "keywords": ["ucp", "discovery", "crawler", "merchant", "registry", "a2a", "validation"],
+  "icon": "Globe",
+
+  "entry": "./App.tsx",
+
+  "window": {
+    "mode": "floating",
+    "title": "UCP Discovery",
+    "defaultSize": { "width": 1200, "height": 800 },
+    "resizable": true
+  },
+
+  "integrations": {
+    "dock": {
+      "enabled": true,
+      "position": 10
+    },
+    "aiContext": {
+      "systemPrompt": "You are a UCP merchant discovery assistant helping users understand the merchant registry, crawl status, and validation results for UCP-enabled e-commerce sites.",
+      "agentId": "ucp-discovery"
+    }
+  },
+
+  "capabilities": [
+    "network:http",
+    "a2a:connect",
+    "storage:local",
+    "notification:toast"
+  ]
+}

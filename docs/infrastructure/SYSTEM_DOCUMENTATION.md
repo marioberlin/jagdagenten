@@ -21,7 +21,8 @@ This document contains detailed system documentation extracted from AGENTS.md.
 10. [Phase 9: Cowork Mode](#phase-9-cowork-mode-deep-work-system)
 11. [Phase 10: Generative Media](#phase-10-generative-media-pipeline)
 12. [Phase 11: App Store](#phase-11-app-store--application-lifecycle)
-13. [Architecture Summary](#architecture-summary)
+13. [Phase 12: UCP Discovery](#phase-12-ucp-merchant-discovery)
+14. [Architecture Summary](#architecture-summary)
 13. [Environment Variables](#environment-variables)
 14. [Test Coverage](#test-coverage)
 
@@ -44,6 +45,7 @@ This document contains detailed system documentation extracted from AGENTS.md.
 | **Phase 9** | ✅ Complete | Cowork Mode, Task Orchestration, Sandbox System, Agent Manager, Permissions |
 | **Phase 10** | ✅ Complete | Generative Media, Video Backgrounds, Gemini Image, Veo Video, Job Queue |
 | **Phase 11** | ✅ Complete | App Store, App Lifecycle, Manifest-Driven Apps, Bundle Storage, PostgreSQL Registry |
+| **Phase 12** | ✅ Complete | UCP Discovery, Merchant Registry, Crawler, Health Monitoring, WebSocket Progress |
 
 ---
 
@@ -718,6 +720,100 @@ if (id.includes('/src/applications/')) {
 | `permissions.test.ts` | 24 | Grants, revocation, risk classification |
 
 **Full documentation:** See [docs/app-store/README.md](../app-store/README.md)
+
+---
+
+## Phase 12: UCP Merchant Discovery
+
+### 12.1 Overview
+
+UCP Merchant Discovery is a comprehensive service for discovering, crawling, validating, and monitoring merchants that implement the Universal Commerce Protocol (UCP).
+
+**Key Features:**
+- Multi-source seed providers (awesome-ucp, ucptools, ucp-checker)
+- Concurrent crawling with per-domain rate limiting
+- PostgreSQL persistence with JSONB profiles
+- Real-time WebSocket progress streaming
+- Health tier system (A/B/C) with adaptive scheduling
+- A2A capability detection
+
+### 12.2 Architecture
+
+**Directory:** `server/src/services/ucp-discovery/`
+
+| File | Purpose |
+|------|---------|
+| `index.ts` | Main exports |
+| `types.ts` | TypeScript interfaces |
+| `store.ts` | Unified PostgreSQL storage interface |
+| `pg-storage.ts` | PostgreSQL implementation |
+| `crawler.ts` | Crawl orchestration |
+| `fetchers.ts` | HTTP fetching with timeouts |
+| `validators.ts` | Schema validation |
+| `scoring.ts` | Merchant scoring (0-100) |
+| `seed-providers.ts` | Multi-source seed fetching |
+| `notifications.ts` | Tier change notifications |
+
+### 12.3 Database Schema
+
+8 PostgreSQL tables:
+
+```sql
+-- Core tables
+ucp_merchants          -- Merchant registry (domain, score, health_tier, has_a2a)
+ucp_merchant_sources   -- Discovery source tracking
+ucp_profiles           -- UCP profile snapshots (JSONB)
+ucp_agent_cards        -- A2A Agent Card snapshots (JSONB)
+ucp_validation_results -- Schema validation results
+ucp_crawl_state        -- Per-merchant crawl state
+ucp_fetch_history      -- Latency tracking
+ucp_crawler_runs       -- Crawl run history
+```
+
+### 12.4 API Endpoints
+
+**File:** `server/src/routes/ucp-discovery-api.ts`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/merchants` | GET | List merchants with filtering |
+| `/merchants/:id` | GET | Get merchant details |
+| `/merchants` | POST | Add domain manually |
+| `/merchants/:domain` | DELETE | Remove merchant |
+| `/crawl/full` | POST | Run full crawl |
+| `/crawl/incremental` | POST | Run incremental crawl |
+| `/crawl/status` | GET | Get crawler status |
+| `/crawl/config` | PATCH | Update crawler config |
+| `/crawl/progress` | WS | WebSocket progress stream |
+| `/scheduler/start` | POST | Start background scheduler |
+| `/scheduler/stop` | POST | Stop scheduler |
+| `/stats` | GET | Registry statistics |
+| `/health` | GET | Health summary |
+| `/notifications` | GET | Recent notifications |
+| `/export` | GET | Export registry |
+| `/import` | POST | Import registry |
+
+### 12.5 Health Tier System
+
+| Tier | Score Range | Check Interval | Description |
+|------|-------------|----------------|-------------|
+| A | 70-100 | 6-24 hours | Healthy |
+| B | 40-69 | 2-7 days | Degraded |
+| C | 0-39 | 7-30 days | Failing |
+
+### 12.6 Frontend UI
+
+**File:** `src/applications/ucp-discovery/UCPDiscoveryApp.tsx`
+
+Features:
+- Filterable merchant table
+- Real-time WebSocket progress display
+- Crawl controls (full/incremental)
+- Scheduler toggle
+- Stats dashboard
+- Export/Import UI
+
+**Full documentation:** See [docs/infrastructure/ucp-discovery.md](./ucp-discovery.md)
 
 ---
 

@@ -100,6 +100,7 @@ Backend systems, deployment, and autonomous development.
 | [Containers](infrastructure/containers.md) | Runtime container architecture |
 | [LiquidMind](infrastructure/liquidmind.md) | AI resource management system |
 | [NATS](infrastructure/nats.md) | A2A messaging and work queues |
+| [UCP Discovery](infrastructure/ucp-discovery.md) | UCP merchant discovery and registry |
 | [System Docs](infrastructure/SYSTEM_DOCUMENTATION.md) | Full system documentation |
 
 ---
