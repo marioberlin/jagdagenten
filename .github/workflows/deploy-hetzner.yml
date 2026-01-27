@@ -208,6 +208,11 @@ jobs:
             echo "Keys configured:"
             grep -E "^[A-Z_]+=" .env.production | cut -d= -f1 | sort
 
+            # Debug: Show DATABASE_URL host (not password) to verify configuration
+            echo ""
+            echo "=== Database Configuration ==="
+            grep "^DATABASE_URL" .env.production | sed 's/:.*@/:***@/' || echo "DATABASE_URL not set"
+
       - name: Run Blue-Green Deployment
         uses: appleboy/ssh-action@v1
         with:
@@ -260,13 +265,25 @@ jobs:
           script: |
             cd /app/liquidcrypto
             chmod +x scripts/run-migrations.sh
-            
+
+            echo "=== Checking Database Connection ==="
+            # Test database connection from within container network
+            docker exec liquidcrypto-postgres psql -U liquidcrypto -d liquidcrypto -c "SELECT 1" || {
+              echo "ERROR: Cannot connect to database"
+              exit 1
+            }
+
+            echo ""
+            echo "=== Listing Available Migrations ==="
+            ls -la /app/liquidcrypto/server/sql/*.sql 2>/dev/null | head -20 || echo "No SQL files found in /app/liquidcrypto/server/sql/"
+
+            echo ""
             echo "=== Running Database Migrations ==="
             ./scripts/run-migrations.sh
-            
+
             echo ""
             echo "=== Migration Status ==="
-            docker exec liquidcrypto-postgres psql -U liquidcrypto -c \
+            docker exec liquidcrypto-postgres psql -U liquidcrypto -d liquidcrypto -c \
               "SELECT version, applied_at, execution_time_ms FROM schema_migrations ORDER BY version" \
               2>/dev/null || echo "No migrations table yet"
 
