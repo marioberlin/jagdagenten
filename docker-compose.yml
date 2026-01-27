@@ -64,6 +64,7 @@ services:
       LIQUID_MAX_EXECUTION_TIME: 300000
       LIQUID_MAX_MEMORY_MB: 512
       LIQUID_LOG_LEVEL: info
+      VITE_REQUIRE_AUTH: "true"
     ports:
       - "8081:8080" # Expose runtime API
     networks:

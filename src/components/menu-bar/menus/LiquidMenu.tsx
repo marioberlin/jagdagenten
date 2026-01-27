@@ -78,22 +78,21 @@ export function useLiquidMenuItems(): MenuItemDef[] {
         { id: 'sep-3', label: '', dividerAfter: true },
         {
             id: 'sign-out',
-            label: 'Sign Out',
+            label: 'Lock Screen',
             icon: LogOut,
             action: () => {
-                // TODO: Sign out logic
-                console.log('Sign out');
+                useAuthStore.getState().lock();
             },
         },
         {
             id: 'quit',
-            label: 'Quit LiquidOS',
+            label: 'Log Out...',
             icon: Power,
             shortcut: '⌘Q',
             danger: true,
             action: () => {
-                // In a web app, this could close the tab or redirect
-                console.log('Quit');
+                useAuthStore.getState().lock();
+                // Optional: Clear session or redirect if needed
             },
         },
     ], [openApp, openDialog]);
