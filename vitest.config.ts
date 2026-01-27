@@ -19,6 +19,16 @@ export default defineConfig({
       'tests/integration/**/*.test.{ts,tsx}',
       'src/**/__tests__/*.test.{ts,tsx}'
     ],
+    // Server dependencies need to be inlined for Vitest to resolve them
+    // since they're in the server workspace, not the root node_modules
+    deps: {
+      inline: [/server\//, 'pino', 'pino-pretty']
+    },
+    server: {
+      deps: {
+        inline: [/server\//, 'pino', 'pino-pretty']
+      }
+    },
     // projects: [{
     //   extends: true,
     //   plugins: [
