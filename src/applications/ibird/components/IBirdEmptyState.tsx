@@ -97,13 +97,14 @@ export function IBirdEmptyState({ type, searchQuery }: IBirdEmptyStateProps) {
       case 'create-type':
         openAppointmentTypeEditor();
         break;
-      case 'copy-link':
+      case 'copy-link': {
         // Copy booking link functionality
         const settings = useIBirdStore.getState().settings;
         if (settings.appointmentsBookingPageUsername) {
           navigator.clipboard.writeText(`${window.location.origin}/book/${settings.appointmentsBookingPageUsername}`);
         }
         break;
+      }
     }
   };
 
