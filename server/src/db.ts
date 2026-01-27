@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { componentLoggers } from './logger';
 
 export const pool = new Pool({
@@ -11,10 +11,10 @@ pool.on('error', (err) => {
     componentLoggers.db?.error({ error: err }, 'Unexpected error on idle client');
 });
 
-export async function query(text: string, params?: any[]) {
+export async function query<T extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
     const start = Date.now();
     try {
-        const res = await pool.query(text, params);
+        const res = await pool.query<T>(text, params);
         const duration = Date.now() - start;
         // componentLoggers.db?.debug({ text, duration, rows: res.rowCount }, 'Executed query');
         return res;

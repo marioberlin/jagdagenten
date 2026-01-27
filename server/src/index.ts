@@ -52,6 +52,10 @@ import { getVideoGenAgentCard, handleVideoGenRequest } from './agents/media-vide
 import { getAuroraWeatherAgentCard, handleAuroraWeatherRequest } from './agents/aurora-weather.js';
 import { getProjectAssistantCard, handleProjectAssistantRequest, handleProjectAssistantChat } from './agents/project-assistant.js';
 import { getMarketDataAgentCard, handleMarketDataRequest, getTradeExecutorAgentCard, handleTradeExecutorRequest, getStrategyAgentCard, handleStrategyRequest, getRiskAgentCard, handleRiskRequest, getOrchestratorAgentCard, handleOrchestratorRequest, getNotificationAgentCard, handleNotificationRequest, getSymbolManagerAgentCard, handleSymbolManagerRequest, getWebhookGatewayAgentCard, handleWebhookGatewayRequest, getMaintenanceAgentCard, handleMaintenanceRequest, createTradingRestApi } from './agents/trading/index.js';
+import { ucpDiscovery, getUCPAgentCard } from './routes/ucp-discovery.js';
+import { ucpApiRoutes } from './routes/ucp-api.js';
+import { ucpDiscoveryApi } from './routes/ucp-discovery-api.js';
+import { CommerceExecutor } from './a2a/executors/commerce.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import { createPostgresStoresFromEnv, type PostgresTaskStore } from './a2a/index.js';
@@ -693,6 +697,15 @@ async function startServer() {
 
         // Public Skill Registry (no auth required)
         .use(publicMarketplacePlugin)
+
+        // UCP Discovery Routes (/.well-known/ucp, extended agent-card)
+        .use(ucpDiscovery)
+
+        // UCP REST API Routes
+        .use(ucpApiRoutes)
+
+        // UCP Merchant Discovery Crawler API
+        .use(ucpDiscoveryApi)
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)
@@ -1731,6 +1744,91 @@ async function startServer() {
                         return { error: 'Failed to process request' };
                     }
                 });
+        })
+
+        // Cymbal Outfitters Commerce (UCP Demo Store)
+        .group('/agents/commerce', app => {
+            const commerceExecutor = new CommerceExecutor();
+
+            const handleRpc = async ({ body, set }: any) => {
+                const method = (body as any).method;
+                const params = (body as any).params;
+                const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+                if (method === 'GetAgentCard') {
+                    return { jsonrpc: '2.0', id: (body as any).id, result: getUCPAgentCard(baseUrl) };
+                }
+
+                if (method === 'SendMessage') {
+                    const taskId = randomUUID();
+                    const contextId = params?.contextId || params?.message?.contextId || randomUUID();
+
+                    // Track task in store
+                    if (taskStore) {
+                        try {
+                            await taskStore.set({
+                                id: taskId,
+                                agentId: 'cymbal-outfitters',
+                                contextId,
+                                status: { state: 'submitted', timestamp: new Date().toISOString() },
+                                history: params.message ? [params.message] : [],
+                                artifacts: []
+                            });
+                        } catch (e) {
+                            console.error('[Commerce] TaskStore Error:', e);
+                        }
+                    }
+
+                    // Update to working
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = { state: 'working', timestamp: new Date().toISOString() };
+                            await taskStore.set(task);
+                        }
+                    }
+
+                    // Execute commerce request
+                    const result = await commerceExecutor.execute(
+                        params.message,
+                        {
+                            contextId,
+                            taskId,
+                            metadata: params.metadata || {},
+                            acceptedOutputModes: params.acceptedOutputModes || params.configuration?.acceptedOutputModes || ['text/plain', 'application/json'],
+                        }
+                    );
+
+                    // Update task with result
+                    if (taskStore) {
+                        const task = await taskStore.get(taskId);
+                        if (task) {
+                            task.status = {
+                                state: result.status?.state || 'completed',
+                                message: result.status?.message,
+                                timestamp: new Date().toISOString()
+                            };
+                            if (result.artifacts) {
+                                task.artifacts = result.artifacts;
+                            }
+                            await taskStore.set(task);
+                        }
+                    }
+
+                    set.headers['Content-Type'] = 'application/json';
+                    set.headers['A2A-Protocol-Version'] = '1.0';
+                    return { jsonrpc: '2.0', id: (body as any).id, result };
+                }
+
+                set.status = 400;
+                return { jsonrpc: '2.0', id: (body as any).id, error: { code: -32601, message: 'Method not found' } };
+            };
+
+            return app
+                .get('/.well-known/agent-card.json', () => getUCPAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .get('/', () => getUCPAgentCard(process.env.BASE_URL || `http://localhost:${PORT}`))
+                .post('/a2a', handleRpc)
+                .post('/', handleRpc);
         })
 
         // A2A Protocol Plugin (with PostgreSQL persistence if DATABASE_URL is set)
