@@ -3,7 +3,7 @@ import { ILiquidLLMService, FileSearchConfig, ChatOptions } from "../types";
 
 export class GeminiProxyService implements ILiquidLLMService {
     private client: LiquidClient;
-    private modelName: string = "gemini-2.0-flash";
+    private modelName: string = "gemini-3-flash-preview";
     private baseUrl: string;
     private _fileSearchConfig: FileSearchConfig = { enabled: false, stores: [] };
 

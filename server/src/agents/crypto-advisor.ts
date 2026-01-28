@@ -218,7 +218,7 @@ ${klines ? `Recent BTC price action (last 24h): High $${Math.max(...klines.map(k
 Provide actionable insights in 2-3 sentences. Be concise and specific.`;
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -303,7 +303,7 @@ async function generateTradingSignal(asset: CryptoAsset, klines: KlineData[]): P
 Provide a brief 1-2 sentence enhanced analysis. Be specific about price levels.`;
 
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1299,7 +1299,7 @@ If the user seems interested in specific features, mention that you can:
 - Check prices ("price of ETH")`;
 
                     const response = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
                         {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },

@@ -307,7 +307,7 @@ Return ONLY valid JSON, no markdown formatting.`,
       context: [
         {
           id: 'smart-config',
-          content: 'Model: gemini-3.5-flash. Temperature: 0.2. Max tokens: 4096. TopK: 40. TopP: 0.95.',
+          content: 'Model: gemini-3-flash-preview. Temperature: 0.2. Max tokens: 4096. TopK: 40. TopP: 0.95.',
           addedAt: now,
           metadata: { source: 'EnhancementConfig' },
         },
@@ -405,7 +405,7 @@ Format with headers and bullet points.`,
           content: `LLMServiceRouter: Routes requests by capability.
 - Image generation → always routed to Gemini (gemini-3-pro-image-preview)
 - Text generation → routes to current provider (Gemini or Claude)
-- Gemini models: gemini-2.0-flash (streaming + tool calls)
+- Gemini models: gemini-3-flash-preview (streaming + tool calls)
 - Claude models: sonnet-4.5, opus-4.5, haiku-3.5 (client proxy)`,
           addedAt: now,
           metadata: { source: 'src/services/LLMServiceRouter.ts' },
@@ -416,7 +416,7 @@ Format with headers and bullet points.`,
           id: 'llm-providers',
           content: `LLM Integration Points:
 - Server unified: callAI() with parallel Gemini/Claude (server/src/ai/index.ts)
-- Gemini server: gemini-2.0-flash with streaming + tool calls
+- Gemini server: gemini-3-flash-preview with streaming + tool calls
 - Claude server: currently mocked (SDK commented out)
 - Client Gemini proxy: /api/chat
 - Client Claude proxy: models sonnet-4.5, opus-4.5, haiku-3.5
@@ -524,7 +524,7 @@ Guidelines:
       context: [
         {
           id: 'cowork-config',
-          content: 'Model: gemini-2.0-flash. Task types: file_organization, document_creation, data_processing, research_synthesis, code_generation, content_editing, batch_processing, mixed.',
+          content: 'Model: gemini-3-flash-preview. Task types: file_organization, document_creation, data_processing, research_synthesis, code_generation, content_editing, batch_processing, mixed.',
           addedAt: now,
           metadata: { source: 'GEMINI_MODEL constant + TaskType' },
         },

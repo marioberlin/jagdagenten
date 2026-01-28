@@ -22,7 +22,7 @@ import { join } from 'path';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const OUTPUT_DIR = join(process.cwd(), 'public', 'products');
-const MODEL = 'gemini-2.0-flash-exp'; // Use available model
+const MODEL = 'gemini-3-flash-preview'; // Use available model
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const IMAGES_PER_PRODUCT = 3;
 const RATE_LIMIT_DELAY_MS = 2000; // Delay between API calls to avoid rate limiting

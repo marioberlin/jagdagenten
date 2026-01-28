@@ -32,9 +32,8 @@ export async function callGeminiAPI(messages: AIMessage[]): Promise<string> {
         };
     }
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     const result = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' + apiKey,
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -42,23 +41,8 @@ export async function callGeminiAPI(messages: AIMessage[]): Promise<string> {
         }
     );
 
-    if (!result.ok) {
-        const errorText = await result.text();
-        throw new Error(`Gemini API error (${result.status}): ${errorText}`);
-    }
-
     const data = await result.json() as {
-        candidates?: Array<{ content?: { parts?: Array<{ text: string }> } }>;
-        error?: { message: string; code: number };
+        candidates?: Array<{ content?: { parts?: Array<{ text: string }> } }>
     };
-
-    if (data.error) {
-        throw new Error(`Gemini API error: ${data.error.message}`);
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-        throw new Error('Gemini API returned no content');
-    }
-    return text;
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
 }

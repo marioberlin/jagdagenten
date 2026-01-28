@@ -13,9 +13,8 @@ type Provider = 'gemini' | 'claude';
 
 // Gemini models
 const GEMINI_MODELS = {
-    'gemini-2.0-flash': 'Gemini 2.0 Flash',
-    'gemini-1.5-flash': 'Gemini 1.5 Flash',
-    'gemini-1.5-pro': 'Gemini 1.5 Pro',
+    'gemini-3-flash-preview': 'Gemini 3 Flash',
+    'gemini-3-pro-preview': 'Gemini 3 Pro',
 } as const;
 
 type GeminiModelId = keyof typeof GEMINI_MODELS;
@@ -41,7 +40,7 @@ export const AgSidebar: React.FC<AgSidebarProps> = ({
         // Default to Claude if Claude key is available, otherwise Gemini
         return claudeApiKey ? 'claude' : 'gemini';
     });
-    const [geminiModel, setGeminiModel] = useState<GeminiModelId>("gemini-2.0-flash");
+    const [geminiModel, setGeminiModel] = useState<GeminiModelId>("gemini-3-flash-preview");
     const [claudeModel, setClaudeModel] = useState<ClaudeModelId>("claude-opus-4-5-20251101");
 
     // Agent Config Integration
