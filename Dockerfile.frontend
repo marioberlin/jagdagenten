@@ -12,22 +12,26 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 
 # Copy package files first for cache efficiency
-# Include all workspace package.json files to satisfy bun's workspace resolution
 COPY package.json bun.lock ./
-COPY packages/a2a-sdk/package.json packages/a2a-sdk/
-COPY packages/ui/package.json packages/ui/
-COPY server/package.json server/
 
-# Remove server from workspaces - we don't need server deps for frontend build
-# This prevents failures from server-specific native dependencies
+# Copy workspace packages
+COPY packages/ packages/
+
+# Create minimal server package.json (just enough to satisfy workspace resolution)
+RUN mkdir -p server && echo '{"name":"server","private":true}' > server/package.json
+
+# Remove server from workspaces (we don't need server deps for frontend build)
 RUN sed -i 's/"server",\?//g' package.json && \
   sed -i 's/,\s*]/]/g' package.json
 
-# Install dependencies (frontend only)
-RUN bun install || true
+# Install dependencies
+RUN bun install
 
-# Copy source files
-COPY . .
+# Copy source files (after install to leverage cache)
+COPY src/ src/
+COPY public/ public/
+COPY index.html vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.config.js ./
+COPY .storybook/ .storybook/ 2>/dev/null || true
 
 # Build arguments for Vite environment variables
 ARG VITE_GOOGLE_CLIENT_ID
