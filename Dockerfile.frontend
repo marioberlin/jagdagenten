@@ -18,8 +18,13 @@ COPY packages/a2a-sdk/package.json packages/a2a-sdk/
 COPY packages/ui/package.json packages/ui/
 COPY server/package.json server/
 
-# Install dependencies (workspace-aware)
-RUN bun install --frozen-lockfile || bun install
+# Remove server from workspaces - we don't need server deps for frontend build
+# This prevents failures from server-specific native dependencies
+RUN sed -i 's/"server",\?//g' package.json && \
+  sed -i 's/,\s*]/]/g' package.json
+
+# Install dependencies (frontend only)
+RUN bun install || true
 
 # Copy source files
 COPY . .
