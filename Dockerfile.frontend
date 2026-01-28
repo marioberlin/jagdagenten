@@ -21,8 +21,10 @@ COPY packages/ packages/
 RUN mkdir -p server && echo '{"name":"server","private":true}' > server/package.json
 
 # Remove server from workspaces (we don't need server deps for frontend build)
-RUN sed -i 's/"server",\?//g' package.json && \
-  sed -i 's/,\s*]/]/g' package.json
+# Use jq for proper JSON manipulation
+RUN apk add --no-cache jq && \
+  jq '.workspaces = [.workspaces[] | select(. != "server")]' package.json > tmp.json && \
+  mv tmp.json package.json
 
 # Install dependencies (ignore failures for packages not needed for frontend)
 RUN bun install || true
