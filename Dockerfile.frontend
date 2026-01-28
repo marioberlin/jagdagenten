@@ -30,8 +30,7 @@ RUN bun install
 # Copy source files (after install to leverage cache)
 COPY src/ src/
 COPY public/ public/
-COPY index.html vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.config.js ./
-COPY .storybook/ .storybook/ 2>/dev/null || true
+COPY index.html vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js ./
 
 # Build arguments for Vite environment variables
 ARG VITE_GOOGLE_CLIENT_ID
