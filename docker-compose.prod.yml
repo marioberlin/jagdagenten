@@ -126,18 +126,21 @@ services:
       retries: 3
       start_period: 30s
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: liquidcrypto-caddy
+  # Frontend: Caddy + static files as immutable Docker image
+  # This replaces the old caddy service that mounted ./dist as a volume
+  frontend:
+    image: ghcr.io/marioberlin/liquidcrypto-frontend:${FRONTEND_VERSION:-latest}
+    container_name: liquidcrypto-frontend
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      # Caddyfile is baked into image, but can be overridden if needed
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./active-backend:/etc/caddy/active-backend:ro
       - caddy_data:/data
       - caddy_config:/config
-      - ./dist:/srv:ro
+      # Note: ./dist volume removed - frontend is now IN the image
     depends_on:
       - backend-blue
       - backend-green
@@ -145,6 +148,12 @@ services:
     restart: unless-stopped
     networks:
       - liquid-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 networks:
   liquid-network:

@@ -14,6 +14,7 @@ set -e
 DEPLOY_DIR="/app/liquidcrypto"
 IMAGE_TAG="${1:-latest}"
 BACKEND_IMAGE="ghcr.io/marioberlin/liquidcrypto-backend:${IMAGE_TAG}"
+FRONTEND_IMAGE="ghcr.io/marioberlin/liquidcrypto-frontend:${IMAGE_TAG}"
 VIDEO_IMAGE="ghcr.io/marioberlin/liquidcrypto-video:${IMAGE_TAG}"
 ACTIVE_BACKEND_FILE="${DEPLOY_DIR}/active-backend"
 COMPOSE_FILE="${DEPLOY_DIR}/docker-compose.prod.yml"
@@ -94,8 +95,9 @@ main() {
     log "========================================="
     log "LiquidCrypto Blue-Green Deployment"
     log "========================================="
-    log "Backend Image: ${BACKEND_IMAGE}"
-    log "Video Image: ${VIDEO_IMAGE}"
+    log "Backend Image:  ${BACKEND_IMAGE}"
+    log "Frontend Image: ${FRONTEND_IMAGE}"
+    log "Video Image:    ${VIDEO_IMAGE}"
 
     # Determine active and target backends
     ACTIVE=$(get_active_backend)
@@ -111,6 +113,9 @@ main() {
     log "Pulling backend image..."
     docker pull "$BACKEND_IMAGE"
 
+    log "Pulling frontend image..."
+    docker pull "$FRONTEND_IMAGE"
+
     log "Pulling video image..."
     docker pull "$VIDEO_IMAGE" || warn "Video image not found, skipping..."
     
@@ -125,6 +130,7 @@ main() {
         export GREEN_VERSION="${IMAGE_TAG}"
     fi
     export VIDEO_VERSION="${IMAGE_TAG}"
+    export FRONTEND_VERSION="${IMAGE_TAG}"
     
     # Stop and recreate the target backend
     log "Recreating backend-${TARGET}..."
@@ -145,11 +151,11 @@ main() {
     
     # Reload Caddy to pick up config changes
     log "Reloading Caddy configuration..."
-    if docker exec liquidcrypto-caddy caddy reload --config /etc/caddy/Caddyfile 2>&1; then
+    if docker exec liquidcrypto-frontend caddy reload --config /etc/caddy/Caddyfile 2>&1; then
         success "Caddy config reloaded"
     else
         warn "Caddy reload failed, restarting Caddy container..."
-        docker compose -f "$COMPOSE_FILE" restart caddy
+        docker compose -f "$COMPOSE_FILE" restart frontend
         sleep 3
         success "Caddy restarted"
     fi
@@ -176,8 +182,8 @@ rollback() {
     log "Rolling back from ${ACTIVE} to ${ROLLBACK_TO}..."
     
     echo "$ROLLBACK_TO" > "$ACTIVE_BACKEND_FILE"
-    docker exec liquidcrypto-caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || \
-        docker compose -f "$COMPOSE_FILE" restart caddy
+    docker exec liquidcrypto-frontend caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || \
+        docker compose -f "$COMPOSE_FILE" restart frontend
     
     success "Rolled back to backend-${ROLLBACK_TO}"
 }

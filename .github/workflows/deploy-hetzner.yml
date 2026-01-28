@@ -14,6 +14,7 @@ on:
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-frontend
   VIDEO_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-video
   BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/liquid-container-base
 
@@ -105,23 +106,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build Frontend
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-          VITE_GOOGLE_PLACES_API_KEY: ${{ secrets.VITE_GOOGLE_PLACES_API_KEY }}
-          VITE_GOOGLE_MASTER_TEMPLATE_ID: ${{ secrets.VITE_GOOGLE_MASTER_TEMPLATE_ID }}
-        run: |
-          bun install
-          bun run build
-
-      - name: Upload Frontend Artifacts
-        uses: actions/upload-artifact@v4
+      # Frontend Docker image build (immutable deployment)
+      - name: Docker meta for Frontend Image
+        id: meta-frontend
+        uses: docker/metadata-action@v5
         with:
-          name: frontend-dist
-          path: dist/
-          retention-days: 7
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}
+            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+            VITE_GOOGLE_PLACES_API_KEY=${{ secrets.VITE_GOOGLE_PLACES_API_KEY }}
+            VITE_GOOGLE_MASTER_TEMPLATE_ID=${{ secrets.VITE_GOOGLE_MASTER_TEMPLATE_ID }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     name: Blue-Green Deploy to Hetzner VPS
@@ -134,11 +143,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Frontend Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: dist/
+      # Note: Frontend is now in Docker image, no artifact download needed
 
       - name: Sync Config Files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -150,16 +155,7 @@ jobs:
           target: "/app/liquidcrypto/"
           overwrite: true
 
-      - name: Sync Frontend to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: root
-          key: ${{ secrets.HETZNER_SSH_KEY }}
-          source: "dist/*"
-          target: "/app/liquidcrypto/dist/"
-          strip_components: 1
-          overwrite: true
+      # Note: Frontend SCP removed - now deployed via Docker image
 
       - name: Update Environment Variables on VPS
         uses: appleboy/ssh-action@v1

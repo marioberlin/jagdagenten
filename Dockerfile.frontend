@@ -1,0 +1,58 @@
+# =============================================================================
+# LiquidCrypto Frontend Docker Image
+# Multi-stage build: Bun builds → Caddy serves
+#
+# Build: docker build -f Dockerfile.frontend -t liquidcrypto-frontend .
+# Run:   docker run -p 80:80 -p 443:443 liquidcrypto-frontend
+# =============================================================================
+
+# Stage 1: Build with Bun
+FROM oven/bun:1 AS builder
+
+WORKDIR /app
+
+# Copy package files first for cache efficiency
+COPY package.json bun.lock ./
+COPY packages/a2a-sdk/package.json packages/a2a-sdk/
+COPY packages/ui/package.json packages/ui/
+
+# Install dependencies (ignore lockfile issues for workspace)
+RUN bun install --frozen-lockfile || bun install
+
+# Copy source files
+COPY . .
+
+# Build arguments for Vite environment variables
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_GOOGLE_API_KEY
+ARG VITE_GOOGLE_MAPS_API_KEY
+ARG VITE_GOOGLE_PLACES_API_KEY
+ARG VITE_GOOGLE_MASTER_TEMPLATE_ID
+ARG VITE_REQUIRE_AUTH=true
+
+# Set environment variables for build
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+ENV VITE_GOOGLE_API_KEY=${VITE_GOOGLE_API_KEY}
+ENV VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
+ENV VITE_GOOGLE_PLACES_API_KEY=${VITE_GOOGLE_PLACES_API_KEY}
+ENV VITE_GOOGLE_MASTER_TEMPLATE_ID=${VITE_GOOGLE_MASTER_TEMPLATE_ID}
+ENV VITE_REQUIRE_AUTH=${VITE_REQUIRE_AUTH}
+
+# Build the frontend
+RUN bun run build
+
+# Stage 2: Serve with Caddy
+FROM caddy:2-alpine
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist /srv
+
+# Copy Caddyfile (will be overwritten by volume in prod if needed)
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q --spider http://localhost/health || exit 1
