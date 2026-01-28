@@ -16,7 +16,7 @@ import { useLiquidAssistant } from '@/hooks/useLiquidAssistant';
  */
 export const AgentCommandCenter: React.FC = () => {
     const { runtimeMode, llmProvider } = useAgentConfig();
-    const { services, isAnyUnhealthy, isRequiredUnhealthy } = useServiceHealth();
+    const { services, isRequiredUnhealthy } = useServiceHealth();
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [showChat, setShowChat] = useState(false);
