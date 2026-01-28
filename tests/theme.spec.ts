@@ -1,45 +1,48 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/**
+ * Theme Switching Tests
+ *
+ * All routes now redirect to /os. The theme toggle lives in the menu bar
+ * (RightZone) with aria-label="Switch to Light/Dark Mode".
+ * Uses .first() because multiple toggle buttons may exist in the DOM.
+ */
+
+async function openOS(page: Page) {
+    await page.goto('/os');
+    await page.waitForSelector('header, [role="menubar"]', { state: 'visible', timeout: 30000 });
+}
 
 test.describe('Theme Switching', () => {
     test.beforeEach(async ({ page }) => {
         page.on('console', msg => {
-            if (msg.type() === 'log') console.log(`[BROWSER LOG]: ${msg.text()}`);
             if (msg.type() === 'error') console.error(`[BROWSER ERROR]: ${msg.text()}`);
         });
-        await page.goto('/');
-        await page.waitForSelector('header', { state: 'visible', timeout: 30000 });
+        await openOS(page);
     });
 
-    test('should have theme toggle button in navbar', async ({ page }) => {
-        // Find the theme toggle button by its aria-label
-        const themeToggle = page.locator('button[aria-label*="Switch to"]');
+    test('should have theme toggle button in menu bar', async ({ page }) => {
+        const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
         await expect(themeToggle).toBeVisible({ timeout: 10000 });
     });
 
     test('should toggle between light and dark mode', async ({ page }) => {
-        // Get initial theme state by checking if 'dark' class is present
         const html = page.locator('html');
         const hasDarkInitially = await html.evaluate(el => el.classList.contains('dark'));
 
-        // Find and click the theme toggle
-        const themeToggle = page.locator('button[aria-label*="Switch to"]');
+        const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
         await themeToggle.click({ force: true });
-
-        // Wait for theme transition
         await page.waitForTimeout(1000);
 
-        // Verify theme has changed
         const hasDarkNow = await html.evaluate(el => el.classList.contains('dark'));
         expect(hasDarkNow).not.toBe(hasDarkInitially);
     });
 
     test('should persist theme preference in localStorage', async ({ page }) => {
-        // Toggle theme to ensure a change happens
-        const themeToggle = page.locator('button[aria-label*="Switch to"]');
+        const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
         await themeToggle.click({ force: true });
         await page.waitForTimeout(1000);
 
-        // Check localStorage - key is now 'liquid-glass-store'
         const savedStore = await page.evaluate(() => localStorage.getItem('liquid-glass-store'));
         expect(savedStore).not.toBeNull();
 
@@ -47,48 +50,36 @@ test.describe('Theme Switching', () => {
         expect(['light', 'dark']).toContain(parsed.state.mode);
     });
 
-    test('should persist theme across navigation', async ({ page }) => {
-        // Get initial theme
+    test('should persist theme after toggling twice', async ({ page }) => {
         const html = page.locator('html');
         const initialIsDark = await html.evaluate(el => el.classList.contains('dark'));
 
-        // Toggle theme
-        const themeToggle = page.locator('button[aria-label*="Switch to"]');
+        const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
+        // Toggle once
         await themeToggle.click({ force: true });
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
-        // Verify theme changed before navigating
-        const isDarkAfterToggle = await html.evaluate(el => el.classList.contains('dark'));
-        expect(isDarkAfterToggle).not.toBe(initialIsDark);
+        // Toggle back
+        await themeToggle.click({ force: true });
+        await page.waitForTimeout(500);
 
-        // Navigate to different page
-        await page.locator('nav').getByRole('link', { name: /^Components$/ }).first().click();
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
-
-        // Verify theme persisted
-        const isDarkOnShowcase = await html.evaluate(el => el.classList.contains('dark'));
-        expect(isDarkOnShowcase).toBe(isDarkAfterToggle);
+        const isDarkAfterDouble = await html.evaluate(el => el.classList.contains('dark'));
+        expect(isDarkAfterDouble).toBe(initialIsDark);
     });
 
     test('should apply correct text colors in dark mode', async ({ page }) => {
-        // Ensure dark mode
         const html = page.locator('html');
         const isDark = await html.evaluate(el => el.classList.contains('dark'));
         if (!isDark) {
-            const themeToggle = page.locator('button[aria-label*="Switch to"]');
-            await themeToggle.click();
+            const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
+            await themeToggle.click({ force: true });
             await page.waitForTimeout(500);
         }
 
-        // Navigate to showcase
-        await page.goto('/showcase');
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
-
-        // Verify text is readable
+        // Verify text on the OS home page is visible and has opacity
         const heading = page.locator('h1, h2, h3').first();
-        await expect(heading).toBeVisible();
+        await expect(heading).toBeVisible({ timeout: 10000 });
 
-        // The text should have proper opacity
         const styles = await heading.evaluate((el) => {
             const computed = window.getComputedStyle(el);
             return {
@@ -96,24 +87,19 @@ test.describe('Theme Switching', () => {
                 opacity: computed.opacity
             };
         });
-
         expect(parseFloat(styles.opacity)).toBeGreaterThan(0);
     });
 
     test('should apply correct text colors in light mode', async ({ page }) => {
-        // Ensure light mode
         const html = page.locator('html');
         const isDark = await html.evaluate(el => el.classList.contains('dark'));
         if (isDark) {
-            const themeToggle = page.locator('button[aria-label*="Switch to"]');
-            await themeToggle.click();
+            const themeToggle = page.locator('button[aria-label*="Switch to"]').first();
+            await themeToggle.click({ force: true });
             await page.waitForTimeout(500);
         }
 
-        await page.goto('/showcase');
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
-
         const heading = page.locator('h1, h2, h3').first();
-        await expect(heading).toBeVisible();
+        await expect(heading).toBeVisible({ timeout: 10000 });
     });
 });

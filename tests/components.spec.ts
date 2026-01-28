@@ -1,18 +1,38 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/**
+ * Component Interaction Tests
+ *
+ * The showcase is now an app (_system/showcase) opened from the dock.
+ * Components are accessed by navigating to their category in the sidebar.
+ */
+
+async function openShowcase(page: Page) {
+    await page.goto('/os');
+    await page.waitForSelector('header, [role="menubar"]', { state: 'visible', timeout: 30000 });
+
+    // Open Showcase via dock (label = "Component Library")
+    const dockTooltip = page.locator('.fixed.bottom-8').locator('text="Component Library"').first();
+    await dockTooltip.locator('..').click({ force: true });
+    await page.waitForTimeout(1500);
+
+    // Wait for the showcase sidebar to render
+    await expect(page.locator('text="All Components"').first()).toBeVisible({ timeout: 15000 });
+}
+
+async function clickCategory(page: Page, label: string) {
+    const btn = page.locator('button').filter({ hasText: label }).first();
+    await btn.click();
+    await page.waitForTimeout(500);
+}
 
 test.describe('Glass Form Components', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/showcase');
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
-
-        // Navigate to Forms section
-        const navButton = page.locator('button', { hasText: 'Forms & Inputs' });
-        await navButton.click();
-        await page.waitForTimeout(500);
+        await openShowcase(page);
+        await clickCategory(page, 'Forms & Inputs');
     });
 
     test('GlassInput should be focusable and accept input', async ({ page }) => {
-        // Find a regular input (not OTP which has maxlength=1)
         const input = page.locator('input[type="text"]:not([maxlength="1"])').first();
         await expect(input).toBeVisible({ timeout: 10000 });
 
@@ -50,11 +70,9 @@ test.describe('Glass Form Components', () => {
     });
 
     test('GlassStepper should show increment/decrement controls', async ({ page }) => {
-        // Navigate to the section with number input/stepper
         const stepperContainer = page.locator('[role="spinbutton"]').first();
 
-        if (await stepperContainer.isVisible()) {
-            // Number input with stepper functionality
+        if (await stepperContainer.isVisible({ timeout: 5000 }).catch(() => false)) {
             await expect(stepperContainer).toBeVisible();
         }
     });
@@ -62,14 +80,16 @@ test.describe('Glass Form Components', () => {
 
 test.describe('Glass Interactive Components', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/showcase');
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
+        await openShowcase(page);
     });
 
     test('GlassButton should be clickable and show hover state', async ({ page }) => {
+        // Buttons category should show buttons
+        await clickCategory(page, 'Buttons & Actions');
+
         const button = page.locator('button:has-text("Primary")').first();
 
-        if (await button.isVisible()) {
+        if (await button.isVisible({ timeout: 5000 }).catch(() => false)) {
             await button.hover();
             await page.waitForTimeout(200);
 
@@ -79,15 +99,12 @@ test.describe('Glass Interactive Components', () => {
     });
 
     test('GlassSelect should open dropdown on click', async ({ page }) => {
-        // Navigate to Forms section
-        const navButton = page.locator('button', { hasText: 'Forms & Inputs' });
-        await navButton.click();
-        await page.waitForTimeout(500);
+        await clickCategory(page, 'Forms & Inputs');
 
         // Find a select trigger
         const select = page.locator('[class*="cursor-pointer"]:has-text("Select")').first();
 
-        if (await select.isVisible()) {
+        if (await select.isVisible({ timeout: 5000 }).catch(() => false)) {
             await select.click();
             await page.waitForTimeout(300);
 
@@ -99,15 +116,12 @@ test.describe('Glass Interactive Components', () => {
     });
 
     test('GlassSlider should respond to drag interactions', async ({ page }) => {
-        // Navigate to Forms section
-        const navButton = page.locator('button', { hasText: 'Forms & Inputs' });
-        await navButton.click();
-        await page.waitForTimeout(500);
+        await clickCategory(page, 'Forms & Inputs');
 
         // Look for slider track
         const slider = page.locator('[class*="touch-none"][class*="select-none"]').first();
 
-        if (await slider.isVisible()) {
+        if (await slider.isVisible({ timeout: 5000 }).catch(() => false)) {
             await expect(slider).toBeVisible();
         }
     });
@@ -115,19 +129,14 @@ test.describe('Glass Interactive Components', () => {
 
 test.describe('Glass Overlay Components', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/showcase');
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
-
-        // Navigate to Overlays section
-        const navButton = page.locator('button', { hasText: 'Overlays & Popovers' });
-        await navButton.click();
-        await page.waitForTimeout(500);
+        await openShowcase(page);
+        await clickCategory(page, 'Overlays & Popovers');
     });
 
     test('GlassModal should open and close properly', async ({ page }) => {
         const openModalButton = page.getByRole('button', { name: 'Open Modal' });
 
-        if (await openModalButton.isVisible()) {
+        if (await openModalButton.isVisible({ timeout: 5000 }).catch(() => false)) {
             await openModalButton.click();
             await page.waitForTimeout(300);
 
@@ -140,7 +149,7 @@ test.describe('Glass Overlay Components', () => {
     test('GlassTour should paginate through steps', async ({ page }) => {
         const startTourButton = page.getByRole('button', { name: 'Start Tour' });
 
-        if (await startTourButton.isVisible()) {
+        if (await startTourButton.isVisible({ timeout: 5000 }).catch(() => false)) {
             await startTourButton.click();
             await page.waitForTimeout(300);
 
@@ -150,7 +159,7 @@ test.describe('Glass Overlay Components', () => {
 
             // Click next
             const nextButton = page.getByRole('button', { name: 'Next' });
-            if (await nextButton.isVisible()) {
+            if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
                 await nextButton.click();
                 await page.waitForTimeout(200);
             }
@@ -160,13 +169,13 @@ test.describe('Glass Overlay Components', () => {
     test('GlassTooltip should appear on hover', async ({ page }) => {
         const tooltipTrigger = page.locator('[data-tooltip], [aria-describedby]').first();
 
-        if (await tooltipTrigger.isVisible()) {
+        if (await tooltipTrigger.isVisible({ timeout: 5000 }).catch(() => false)) {
             await tooltipTrigger.hover();
             await page.waitForTimeout(500);
 
             // Tooltip content should appear
             const tooltip = page.locator('[role="tooltip"]');
-            if (await tooltip.isVisible()) {
+            if (await tooltip.isVisible({ timeout: 2000 }).catch(() => false)) {
                 await expect(tooltip).toBeVisible();
             }
         }
