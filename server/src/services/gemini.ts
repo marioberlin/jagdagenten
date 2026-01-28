@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const handleGeminiChat = async (req: Request, res: Response) => {
-    const { prompt, model = 'gemini-2.0-flash', context, tools } = req.body;
+    const { prompt, model = 'gemini-2.5-flash', context, tools } = req.body;
 
     if (!process.env.GEMINI_API_KEY) {
         throw new Error('Server missing GEMINI_API_KEY');

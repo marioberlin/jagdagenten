@@ -80,7 +80,7 @@ export const aiRouter = router({
                 providers: {
                     gemini: {
                         available: !!process.env.GEMINI_API_KEY,
-                        model: 'gemini-2.0-flash',
+                        model: 'gemini-2.5-flash',
                     },
                     claude: {
                         available: !!process.env.ANTHROPIC_API_KEY,

@@ -143,9 +143,16 @@ main() {
     log "Switching traffic to backend-${TARGET}..."
     echo "$TARGET" > "$ACTIVE_BACKEND_FILE"
     
-    # Reload Caddy to pick up the change
-    docker exec liquidcrypto-caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || \
+    # Reload Caddy to pick up config changes
+    log "Reloading Caddy configuration..."
+    if docker exec liquidcrypto-caddy caddy reload --config /etc/caddy/Caddyfile 2>&1; then
+        success "Caddy config reloaded"
+    else
+        warn "Caddy reload failed, restarting Caddy container..."
         docker compose -f "$COMPOSE_FILE" restart caddy
+        sleep 3
+        success "Caddy restarted"
+    fi
     
     success "========================================="
     success "Deployment Complete!"

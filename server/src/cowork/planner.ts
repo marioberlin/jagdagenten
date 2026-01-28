@@ -11,7 +11,7 @@ import type { TaskPlan, PlanStep, TaskType, TaskContext } from './types';
 const logger = componentLoggers.http;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 interface PlanRequest {
     sessionId: string;

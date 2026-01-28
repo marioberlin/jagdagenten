@@ -223,7 +223,7 @@ export async function handleAIResearcherRequest(params: SendMessageParams): Prom
     // 1. Setup Model
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         tools: [{ functionDeclarations: tools }]
     });
 
@@ -296,7 +296,7 @@ Facts: ${context.facts.length} items`
                         context.isSearching = true;
                         if (context.results.length > 0) {
                             // Real Fact Extraction using another LLM call
-                            const extractionModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+                            const extractionModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
                             const prompt = `
                                 Extract 3-5 key facts from the following search results about "${context.query}".
                                 Format your response as a JSON array of objects with "fact" (string) and "confidence" ("high", "medium", or "low").

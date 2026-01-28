@@ -31,7 +31,7 @@ export async function searchWeb(query: string, limit: number = 5): Promise<WebSe
         const cleanHtml = html.substring(0, 50000); // Plenty for first page
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }); // Use faster/cheaper model for extraction
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); // Use faster/cheaper model for extraction
         const prompt = `
             Extract the search results from the following DuckDuckGo HTML.
             Return a JSON array of up to ${limit} objects with "title", "url", and "snippet".

@@ -21,7 +21,7 @@ export interface GeminiCliConfig {
     workDir: string;
     /** Enable sandbox mode (Docker-in-Docker) */
     sandbox: boolean;
-    /** Model to use (default: gemini-2.0-flash) */
+    /** Model to use (default: gemini-2.5-flash) */
     model: string;
     /** Maximum number of turns */
     maxTurns: number;
@@ -68,7 +68,7 @@ export const DEFAULT_GEMINI_CLI_CONFIG: GeminiCliConfig = {
     executablePath: 'gemini',
     workDir: process.cwd(),
     sandbox: false,
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     maxTurns: 50,
     streaming: true,
     env: {},
