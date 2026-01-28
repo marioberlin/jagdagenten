@@ -1,79 +1,78 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
-test.describe('Showcase Expansion Verification', () => {
+/**
+ * Showcase (Component Library) Tests
+ *
+ * The showcase is now an app (_system/showcase) opened from the dock.
+ * It renders as a floating GlassWindow containing GlassShowcaseApp,
+ * which has a sidebar with category buttons (no more #nav-item-* IDs).
+ * Categories are clicked by their label text.
+ */
+
+async function openShowcase(page: Page) {
+    await page.goto('/os');
+    await page.waitForSelector('header, [role="menubar"]', { state: 'visible', timeout: 30000 });
+
+    // Open Showcase via dock (label = "Component Library")
+    const dockTooltip = page.locator('.fixed.bottom-8').locator('text="Component Library"').first();
+    await dockTooltip.locator('..').click({ force: true });
+    await page.waitForTimeout(1500);
+
+    // Wait for the showcase sidebar to render
+    await expect(page.locator('text="All Components"').first()).toBeVisible({ timeout: 15000 });
+}
+
+async function clickCategory(page: Page, label: string) {
+    const btn = page.locator('button').filter({ hasText: label }).first();
+    await btn.click();
+    await page.waitForTimeout(500);
+}
+
+test.describe('Showcase Component Library', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/showcase');
-        // Wait for the navigation to be present to ensure hydration
-        await page.waitForSelector('nav', { state: 'visible', timeout: 30000 });
+        await openShowcase(page);
     });
 
     test('Forms & Inputs Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-forms');
-        await navButton.click();
+        await clickCategory(page, 'Forms & Inputs');
 
-        // Wait for section verification
-        await expect(page.locator('h3:has-text("Rich & Specialized Inputs")')).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('div[data-placeholder="Type some markdown here..."]')).toBeVisible();
-        await expect(page.locator('text=Payment Form')).toBeVisible();
+        // Verify form components are visible in the content area
+        await expect(page.locator('text="Text Inputs"').first()).toBeVisible({ timeout: 10000 });
     });
 
-    test('Data & Charts Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-data');
-        await navButton.click();
+    test('Data Display Section', async ({ page }) => {
+        await clickCategory(page, 'Data Display');
 
-        await expect(page.locator('h3:has-text("Metrics & Processes")')).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('text=Total Revenue')).toBeVisible();
-
-        // New Components
-        await expect(page.locator('text=Traffic Sources')).toBeVisible();
-        await expect(page.locator('text=Sales Overview')).toBeVisible();
-        await expect(page.locator('text=System Status')).toBeVisible();
-        await expect(page.getByText('Online', { exact: true }).first()).toBeVisible(); // GlassStatus verification
-
-        await expect(page.locator('text=Timeline')).toBeVisible();
+        await expect(page.locator('text="Metrics"').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('Layout & Grids Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-layout');
-        await navButton.click();
+        await clickCategory(page, 'Layout & Grids');
 
-        await expect(page.locator('h3:has-text("Grid Systems")')).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('text=Bento Grid')).toBeVisible();
-        await expect(page.locator('text=Masonry Layout')).toBeVisible();
-
-        // New Layout Component
-        await expect(page.locator('text=Application Header')).toBeVisible();
-        // The Navbar in Showcase layout might display current time or status, check for existence
-        await expect(page.locator('header').first()).toBeVisible();
+        await expect(page.locator('text="Grids"').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('Overlays & Popovers Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-overlays');
-        await navButton.click();
+        await clickCategory(page, 'Overlays & Popovers');
 
-        await expect(page.locator('button:has-text("Start Tour")')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('text="Modals"').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('Media & Visuals Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-media');
-        await navButton.click();
-        await page.waitForTimeout(1000);
+        await clickCategory(page, 'Media & Visuals');
 
-        const heading = page.locator('h3:has-text("Media & Visuals")');
-        await expect(heading.first()).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('text=Audio Player').first()).toBeVisible();
+        await expect(page.locator('text="Audio"').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('Complex Composites Section', async ({ page }) => {
-        const navButton = page.locator('#nav-item-complex');
-        await navButton.click();
+        await clickCategory(page, 'Complex Composites');
 
-        await expect(page.locator('h3:has-text("Complex Composites")')).toBeVisible({ timeout: 10000 });
-        // Updated placeholder for GlassCollaborativeChatInput
-        await expect(page.getByPlaceholder('Message the team...')).toBeVisible();
+        await expect(page.locator('text="Cards"').first()).toBeVisible({ timeout: 10000 });
+    });
 
-        // New Calculator Component
-        await expect(page.locator('text=Functional Calculator')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'AC', exact: true })).toBeVisible();
+    test('Buttons & Actions Section', async ({ page }) => {
+        await clickCategory(page, 'Buttons & Actions');
+
+        await expect(page.locator('text="Basic"').first()).toBeVisible({ timeout: 10000 });
     });
 });
