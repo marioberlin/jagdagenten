@@ -4,16 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SpatialCanvas } from '@/components/layout/SpatialCanvas';
 import { EmptyDesktop } from '@/components/layout/EmptyDesktop';
 import { GlassDock } from '@/components/navigation/GlassDock';
-import { GlassWindow } from '@/components/containers/GlassWindow';
+import { GlassWindow, type WindowMenuItem } from '@/components/containers/GlassWindow';
 import { PortalFrame } from '@/components/layout/PortalFrame';
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
-import { Command } from 'lucide-react';
+import { Command, Copy } from 'lucide-react';
 
 import { AuthGate } from '@/components/auth/AuthGate';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { useAppComponent } from '@/system/app-store/AppLoader';
 import { resolveIconComponent } from '@/system/app-store/iconResolver';
 import type { InstalledApp } from '@/system/app-store/types';
+import { useAgentChatStore, selectFocusedAgent, type AgentConnectionStatus } from '@/stores/agentChatStore';
 
 /**
  * LiquidOSLayout
@@ -188,6 +189,117 @@ interface DynamicAppPanelProps {
 
 function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onClose }: DynamicAppPanelProps) {
     const AppComponent = useAppComponent(appId);
+    const focusedAgent = useAgentChatStore(selectFocusedAgent);
+    const focusedAgentId = useAgentChatStore(state => state.focusedAgentId);
+
+    // Use local state + subscription for reliable status updates
+    const [agentStatus, setAgentStatus] = useState<AgentConnectionStatus | null>(null);
+
+    useEffect(() => {
+        if (appId !== 'agent-chat' || !focusedAgentId) {
+            setAgentStatus(null);
+            return;
+        }
+
+        // Get initial status
+        const initialStatus = useAgentChatStore.getState().connectionStatus[focusedAgentId] ?? null;
+        setAgentStatus(initialStatus);
+
+        // Subscribe to store changes
+        const unsubscribe = useAgentChatStore.subscribe((state) => {
+            const newStatus = state.connectionStatus[focusedAgentId] ?? null;
+            setAgentStatus(newStatus);
+        });
+
+        return unsubscribe;
+    }, [appId, focusedAgentId]);
+
+    // Dynamic title: use agent name for agent-chat app
+    const windowTitle = useMemo(() => {
+        if (appId === 'agent-chat' && focusedAgent) {
+            return focusedAgent.name;
+        }
+        return manifest.window?.title ?? manifest.name;
+    }, [appId, focusedAgent, manifest]);
+
+    // Check if agent is verified (for badge in title)
+    const isVerifiedAgent = appId === 'agent-chat' && focusedAgent?.verified;
+
+    // Build title icon for agent chat
+    const titleIcon = useMemo(() => {
+        if (appId === 'agent-chat' && focusedAgent) {
+            const AgentIcon = focusedAgent.icon;
+            return (
+                <span
+                    className="w-5 h-5 rounded flex items-center justify-center"
+                    style={{ backgroundColor: `${focusedAgent.color}30` }}
+                >
+                    <AgentIcon size={12} className="text-white" />
+                </span>
+            );
+        }
+        return undefined;
+    }, [appId, focusedAgent]);
+
+    // Build status indicator for agent chat (no memo - needs to update on every status change)
+    let statusIndicator: React.ReactNode = undefined;
+    if (appId === 'agent-chat' && agentStatus) {
+        const statusConfig: Record<string, { color: string; label: string }> = {
+            connecting: { color: 'text-yellow-400', label: 'Connecting...' },
+            connected: { color: 'text-green-400', label: 'Connected' },
+            disconnected: { color: 'text-red-400', label: 'Disconnected' },
+            working: { color: 'text-yellow-400', label: 'Working...' },
+            error: { color: 'text-red-400', label: 'Error' },
+        };
+
+        const config = statusConfig[agentStatus] ?? statusConfig.disconnected;
+
+        statusIndicator = (
+            <span className={`flex items-center gap-1.5 text-xs ${config.color}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${config.color.replace('text-', 'bg-')} animate-pulse`} />
+                {config.label}
+            </span>
+        );
+    }
+
+    // Build menu items for agent chat
+    const titleMenu: WindowMenuItem[] | undefined = useMemo(() => {
+        if (appId !== 'agent-chat' || !focusedAgentId) return undefined;
+
+        return [
+            {
+                id: 'copy-markdown',
+                label: 'Copy as Markdown',
+                icon: <Copy size={14} />,
+                onClick: () => {
+                    const messages = useAgentChatStore.getState().agentMessages[focusedAgentId] ?? [];
+                    const agentName = focusedAgent?.name ?? 'Agent';
+
+                    if (messages.length === 0) {
+                        return;
+                    }
+
+                    // Convert messages to markdown
+                    const markdown = messages
+                        .map((msg) => {
+                            const role = msg.role === 'user' ? 'You' : agentName;
+                            const time = new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            const content = msg.error ? `*Error: ${msg.error}*` : msg.content;
+                            return `**${role}** *(${time})*\n\n${content}`;
+                        })
+                        .join('\n\n---\n\n');
+
+                    const header = `# Conversation with ${agentName}\n\n`;
+                    const fullMarkdown = header + markdown;
+
+                    navigator.clipboard.writeText(fullMarkdown).catch(console.error);
+                },
+            },
+        ];
+    }, [appId, focusedAgentId, focusedAgent]);
 
     if (!AppComponent) {
         return (
@@ -201,7 +313,15 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
             >
                 <GlassWindow
                     id={`${appId}-window`}
-                    title={manifest.name}
+                    title={windowTitle}
+                    titleBadge={isVerifiedAgent ? (
+                        <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                            Verified
+                        </span>
+                    ) : undefined}
+                    titleIcon={titleIcon}
+                    titleStatus={statusIndicator}
+                    titleMenu={titleMenu}
                     initialPosition={{ x: 30, y: 60 }}
                     initialSize={{ width: window.innerWidth - 60, height: window.innerHeight - 154 }}
                     isActive={true}
@@ -248,7 +368,15 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
         >
             <GlassWindow
                 id={`${appId}-window`}
-                title={manifest.window?.title ?? manifest.name}
+                title={windowTitle}
+                titleBadge={isVerifiedAgent ? (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                        Verified
+                    </span>
+                ) : undefined}
+                titleIcon={titleIcon}
+                titleStatus={statusIndicator}
+                titleMenu={titleMenu}
                 initialPosition={{
                     x: EDGE_MARGIN,
                     y: MENU_BAR_HEIGHT + EDGE_MARGIN

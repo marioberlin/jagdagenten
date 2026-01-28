@@ -1,8 +1,11 @@
 /**
  * Auto-Login Hook
- * 
+ *
  * Automatically logs in with default credentials when auto-login is enabled
  * Works in both dev and production environments
+ *
+ * In development mode (localhost), it can bypass backend authentication
+ * and directly unlock the system for faster testing.
  */
 
 import { useEffect, useRef } from 'react';
@@ -11,6 +14,10 @@ import { useAuthStore } from '../stores/authStore';
 const DEFAULT_EMAIL = 'mario.tiedemann@showheroes.com';
 const DEFAULT_PASSWORD = 'Heroes0071!';
 
+// Enable dev bypass when running on localhost
+const DEV_BYPASS_ENABLED = typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export function useAutoLogin() {
     const {
         autoLoginEnabled,
@@ -18,6 +25,7 @@ export function useAutoLogin() {
         isUnlocked,
         _hydrated,
         loginWithEmail,
+        unlock,
     } = useAuthStore();
 
     // Track if we've already attempted auto-login
@@ -31,7 +39,8 @@ export function useAutoLogin() {
             emailEnabled,
             isUnlocked,
             attempted: attemptedRef.current,
-            loggingIn: loggingInRef.current
+            loggingIn: loggingInRef.current,
+            devBypass: DEV_BYPASS_ENABLED
         });
 
         // Only run after store is hydrated
@@ -46,7 +55,7 @@ export function useAutoLogin() {
             return;
         }
 
-        // Don't auto-login if already unlocked    
+        // Don't auto-login if already unlocked
         if (isUnlocked) {
             console.log('[AutoLogin] Skipping auto-login: Already unlocked.');
             return;
@@ -61,9 +70,17 @@ export function useAutoLogin() {
         attemptedRef.current = true;
         loggingInRef.current = true;
 
+        // Dev bypass: directly unlock without backend call
+        if (DEV_BYPASS_ENABLED) {
+            console.log('[AutoLogin] 🚀 Dev bypass: Unlocking directly without backend...');
+            unlock();
+            loggingInRef.current = false;
+            return;
+        }
+
         console.log('[AutoLogin] Attempting auto-login...');
 
-        // Attempt login
+        // Attempt login via backend
         loginWithEmail(DEFAULT_EMAIL, DEFAULT_PASSWORD)
             .then((success) => {
                 if (success) {
@@ -78,5 +95,5 @@ export function useAutoLogin() {
             .finally(() => {
                 loggingInRef.current = false;
             });
-    }, [autoLoginEnabled, emailEnabled, isUnlocked, _hydrated, loginWithEmail]);
+    }, [autoLoginEnabled, emailEnabled, isUnlocked, _hydrated, loginWithEmail, unlock]);
 }

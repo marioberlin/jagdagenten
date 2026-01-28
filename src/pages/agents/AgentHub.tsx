@@ -27,14 +27,10 @@ import {
     type AgentCategory
 } from '@/services/agents/registry';
 import type { AgentCard as A2AAgentCard } from '@/a2a/types';
-import { AgentChatWindow } from '@/components/agents/AgentChatWindow';
+import { useAgentChatStore } from '@/stores/agentChatStore';
+import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 
 type ViewMode = 'grid' | 'list';
-
-interface OpenChat {
-    agent: CuratedAgent;
-    position: { x: number; y: number };
-}
 
 /**
  * AgentHub
@@ -48,8 +44,11 @@ export const AgentHub: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<AgentCategory | 'all'>('all');
     const [showProbe, setShowProbe] = useState(false);
     const [selectedAgent, setSelectedAgent] = useState<CuratedAgent | null>(null);
-    const [openChats, setOpenChats] = useState<OpenChat[]>([]);
-    const [activeChat, setActiveChat] = useState<string | null>(null);
+
+    // Use app store to open agent chat as a desktop app
+    const openAgentChat = useAgentChatStore(state => state.openAgentChat);
+    const isAgentChatOpen = useAgentChatStore(state => state.isAgentChatOpen);
+    const openApp = useAppStoreStore(state => state.openApp);
 
     // Get agents based on filters
     const filteredAgents = useMemo(() => {
@@ -66,18 +65,6 @@ export const AgentHub: React.FC = () => {
         return agents;
     }, [searchQuery, selectedCategory]);
 
-    // Calculate center position for new chat window
-    const getCenteredPosition = (index: number) => {
-        // Default to a reasonable center if window is not available (SSR)
-        if (typeof window === 'undefined') return { x: 400, y: 100 };
-
-        const width = 500; // Chat window width
-        const x = (window.innerWidth / 2) - (width / 2) + (index * 20);
-        const y = 80 + (index * 20); // Top-biased center
-
-        return { x: Math.max(0, x), y: Math.max(0, y) };
-    };
-
     const featuredAgents = useMemo(() => getFeaturedAgents(), []);
 
     const handleAgentDiscovered = (url: string, card: A2AAgentCard) => {
@@ -90,39 +77,22 @@ export const AgentHub: React.FC = () => {
     };
 
     const handleConnect = (agent: CuratedAgent) => {
-        // Check if chat already open
-        if (openChats.some(chat => chat.agent.id === agent.id)) {
-            setActiveChat(agent.id);
+        // Check if chat already open - just focus it
+        if (isAgentChatOpen(agent.id)) {
+            openApp('agent-chat');
             return;
         }
 
-        const position = getCenteredPosition(openChats.length);
-
-        setOpenChats(prev => [...prev, { agent, position }]);
-        setActiveChat(agent.id);
+        // Store agent data and open the chat app as a desktop window
+        openAgentChat(agent);
+        openApp('agent-chat');
         setSelectedAgent(null); // Close modal
     };
-
-    const handleCloseChat = (agentId: string) => {
-        setOpenChats(prev => prev.filter(chat => chat.agent.id !== agentId));
-        if (activeChat === agentId) {
-            setActiveChat(null);
-        }
-    };
-
-    const handleFocusChat = (agentId: string) => {
-        setActiveChat(agentId);
-    };
-
-    const isChatOpen = openChats.length > 0;
 
     return (
         <div className="w-full h-full relative">
             {/* Main Content Layer */}
-            <div className={cn(
-                "w-full h-full overflow-y-auto overflow-x-hidden transition-all duration-500",
-                isChatOpen ? "opacity-30 blur-sm pointer-events-none scale-[0.98]" : "opacity-100 scale-100"
-            )}>
+            <div className="w-full h-full overflow-y-auto overflow-x-hidden">
                 {/* Hero Section */}
                 <motion.section
                     initial={{ opacity: 0, y: 20 }}
@@ -407,35 +377,6 @@ export const AgentHub: React.FC = () => {
                     />
                 )}
             </AnimatePresence>
-
-            {/* Backdrop for open chats - only visible if connected */}
-            <AnimatePresence>
-                {isChatOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => {
-                            // Optional: Click backdrop to minimize all? 
-                            // For now let's just leave it neutral
-                        }}
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm z-30 pointer-events-none"
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Open Chat Windows */}
-            {openChats.map(chat => (
-                <AgentChatWindow
-                    key={chat.agent.id}
-                    agent={chat.agent}
-                    position={chat.position}
-                    isActive={activeChat === chat.agent.id}
-                    onClose={() => handleCloseChat(chat.agent.id)}
-                    onFocus={() => handleFocusChat(chat.agent.id)}
-                    className="z-40" // Ensure on top of backdrop
-                />
-            ))}
         </div>
     );
 };

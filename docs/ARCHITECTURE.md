@@ -988,6 +988,62 @@ The AgentChatWindow provides:
 - **A2UI Rendering**: Rich UI responses using GlassA2UIRenderer
 - **Error Handling**: Retry mechanism with error display
 - **Focus Management**: Multiple concurrent chat windows
+- **Per-Agent Theming**: Custom colors, backgrounds, and styling via UX configs
+- **Quick Actions**: Configurable action buttons above input
+- **Contextual Suggestions**: AI-powered response suggestions
+
+### Agent UX Configuration System
+
+Each agent can have a custom UX configuration that controls theme, input, and behavior.
+
+**Configuration Files:**
+```
+src/applications/agent-chat/
+├── ux/
+│   ├── schema.ts         # TypeScript types
+│   ├── parser.ts         # YAML frontmatter parser
+│   └── loader.ts         # Config loading & useAgentUXConfig hook
+├── agentUX_default.md    # Default configuration
+└── agentUX_{agent-id}.md # Per-agent configs (24 files)
+```
+
+**Config Structure:**
+```yaml
+---
+version: "1.0"
+displayName: "My Agent"
+
+theme:
+  accentColor: "#6366F1"
+  secondaryColor: "#8B5CF6"
+  messageStyle: glass      # glass | solid | minimal | retro
+  backgroundImage: "agent-id"
+
+input:
+  placeholder: "Ask me..."
+  voiceEnabled: true
+  fileUpload: true
+
+contextualUI:
+  suggestionsEnabled: true
+  suggestionStrategy: semantic  # semantic | heuristic | agent-defined | none
+
+quickActions:
+  - label: "Help"
+    value: "I need help"
+    icon: "HelpCircle"
+---
+```
+
+**Usage in Components:**
+```typescript
+import { useAgentUXConfig } from '@/applications/agent-chat/ux';
+
+const { config, isLoading } = useAgentUXConfig(agentId);
+const accentColor = config?.theme?.accentColor || '#6366F1';
+```
+
+> See [Agent UX System Documentation](infrastructure/agent-ux-system.md) for complete reference.
 
 ### LiquidOS Integration
 
@@ -1014,19 +1070,30 @@ The Agent Hub is fully integrated into the LiquidOS spatial desktop:
 ```
 src/
 ├── components/agents/
-│   ├── index.ts              # Barrel exports
-│   ├── AgentCard.tsx         # 3D card with hover effects
-│   ├── AgentCard.stories.tsx # Storybook stories
-│   ├── AgentProbe.tsx        # URL discovery
+│   ├── index.ts                  # Barrel exports
+│   ├── AgentCard.tsx             # 3D card with hover effects
+│   ├── AgentCard.stories.tsx     # Storybook stories
+│   ├── AgentProbe.tsx            # URL discovery
 │   ├── AgentProbe.stories.tsx
-│   ├── AgentChatWindow.tsx   # Chat interface
+│   ├── AgentChatWindow.tsx       # Chat interface with UX config support
+│   ├── AgentUXConfigEditor.tsx   # Visual UX config editor
+│   ├── contextualUIGenerator.ts  # AI-powered suggestion generation
 │   └── AgentHub.stories.tsx
 │
+├── applications/agent-chat/
+│   ├── ux/
+│   │   ├── index.ts              # Public exports
+│   │   ├── schema.ts             # TypeScript types & defaults
+│   │   ├── parser.ts             # YAML frontmatter parser
+│   │   └── loader.ts             # Config loading & React hook
+│   ├── agentUX_default.md        # Default UX configuration
+│   └── agentUX_{agent-id}.md     # Per-agent configs (24 agents)
+│
 ├── pages/agents/
-│   └── AgentHub.tsx          # Main hub page
+│   └── AgentHub.tsx              # Main hub page
 │
 └── services/agents/
-    └── registry.ts           # Agent registry & helpers
+    └── registry.ts               # Agent registry & helpers
 ```
 
 ---

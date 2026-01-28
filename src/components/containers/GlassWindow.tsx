@@ -1,12 +1,28 @@
 import React, { useRef, useState } from 'react';
-import { motion, useDragControls } from 'framer-motion';
+import { motion, useDragControls, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { X, Minus, Maximize2, MoreVertical } from 'lucide-react';
+
+export interface WindowMenuItem {
+    id: string;
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+}
 
 interface GlassWindowProps {
     /** Unique identifier for the window */
     id: string;
     title: string | React.ReactNode;
+    /** Optional icon to show before the title */
+    titleIcon?: React.ReactNode;
+    /** Optional badge to show next to the title (e.g., "Verified") */
+    titleBadge?: React.ReactNode;
+    /** Optional status element to show on the right side of the title bar */
+    titleStatus?: React.ReactNode;
+    /** Optional dropdown menu items for the three-dots menu */
+    titleMenu?: WindowMenuItem[];
+    /** Optional custom header right content (alternative to titleMenu) */
     headerRight?: React.ReactNode;
     children: React.ReactNode;
     initialPosition?: { x: number; y: number };
@@ -27,6 +43,10 @@ interface GlassWindowProps {
 export const GlassWindow: React.FC<GlassWindowProps> = ({
     id,
     title,
+    titleIcon,
+    titleBadge,
+    titleStatus,
+    titleMenu,
     headerRight,
     children,
     initialPosition = { x: 100, y: 100 },
@@ -37,13 +57,11 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
     onFocus,
     className
 }) => {
-    // ... (rest of the component state)
-    // We only need to show the updated props usage here so I'll minimize the context replace
-
-    /* ... state hooks ... */
     const dragControls = useDragControls();
     const containerRef = useRef<HTMLDivElement>(null);
     const [isMaximized, setIsMaximized] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     // Window State
     const [position, setPosition] = useState(initialPosition);
@@ -77,16 +95,14 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
             previousState.current = { position, size };
 
             // Maximize with constraints (Menu Bar: 30px top, 5px margin sides)
-            // User requested: "Reaching from the bottom of the glass menu bar... to the bottom of the canvas"
-            // "Full width ... 5px padding on left and right"
-            setPosition({ x: 5, y: 30 }); // 30px Menu Bar, start immediately below
+            setPosition({ x: 5, y: 30 });
             setSize({
-                width: window.innerWidth - 10, // 5px margin left/right
-                height: window.innerHeight - 30 // Full height minus menu bar (no bottom padding mentioned/implied 'bottom of canvas')
+                width: window.innerWidth - 10,
+                height: window.innerHeight - 30
             });
             setIsMaximized(true);
         } else {
-            // Restore or Re-Maximize if state mismatch (Standard behavior)
+            // Restore or Re-Maximize if state mismatch
             if (!isMaximized) {
                 previousState.current = { position, size };
                 setPosition({ x: 5, y: 30 });
@@ -172,13 +188,26 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
         };
     }, []);
 
+    // Close menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        if (isMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [isMenuOpen]);
+
     return (
         <motion.div
-            // ... props
             ref={containerRef}
             data-window-id={id}
             drag={!isMaximized}
-            dragListener={false} // Only drag from header
+            dragListener={false}
             dragControls={dragControls}
             dragMomentum={false}
             onDragEnd={handleDragEnd}
@@ -227,7 +256,6 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
             <div
                 className="relative h-10 flex-shrink-0 flex items-center justify-between px-4 select-none cursor-default border-b border-white/10 bg-white/5"
                 onPointerDown={(e) => {
-                    // Double click logic could go here
                     dragControls.start(e);
                 }}
             >
@@ -267,17 +295,66 @@ export const GlassWindow: React.FC<GlassWindowProps> = ({
                 </div>
 
                 <div
-                    className="absolute inset-0 flex items-center justify-center font-medium text-sm text-white/70 pointer-events-none"
+                    className="absolute inset-0 flex items-center justify-center gap-2 font-medium text-sm text-white/70 pointer-events-none"
                 >
-                    {title}
+                    {titleIcon}
+                    <span>{title}</span>
+                    {titleBadge}
                 </div>
 
-                {/* Header Right Content */}
-                {headerRight && (
-                    <div className="relative z-20 ml-auto flex items-center">
-                        {headerRight}
-                    </div>
-                )}
+                {/* Right side: status + menu OR headerRight */}
+                <div className="flex items-center gap-2 z-20 pr-1">
+                    {titleStatus}
+
+                    {/* Three dots menu */}
+                    {titleMenu && titleMenu.length > 0 && (
+                        <div ref={menuRef} className="relative">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsMenuOpen(!isMenuOpen);
+                                }}
+                                className="p-1 rounded hover:bg-white/10 transition-colors"
+                            >
+                                <MoreVertical size={14} className="text-white/50 hover:text-white/80" />
+                            </button>
+
+                            <AnimatePresence>
+                                {isMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute right-0 top-full mt-1 min-w-[180px] py-1 rounded-lg bg-black/80 backdrop-blur-xl border border-white/10 shadow-xl z-50"
+                                    >
+                                        {titleMenu.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    item.onClick();
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="w-full px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white flex items-center gap-2 transition-colors"
+                                            >
+                                                {item.icon}
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
+
+                    {/* Header Right Content (alternative to titleMenu) */}
+                    {headerRight && (
+                        <div className="relative flex items-center">
+                            {headerRight}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Content Area */}

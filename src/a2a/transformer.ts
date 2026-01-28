@@ -127,6 +127,7 @@ function resolvePath(obj: Record<string, unknown>, path: string): unknown {
 /**
  * Maps A2UI component types to Glass UINode types
  * v1.0: Added MultipleChoice, DateTimeInput, Video, AudioPlayer, Modal
+ * v1.1: Added Select, Textarea, NumberInput
  */
 const A2UI_TO_GLASS_TYPE: Record<string, UINodeType> = {
     Text: 'text',
@@ -144,6 +145,10 @@ const A2UI_TO_GLASS_TYPE: Record<string, UINodeType> = {
     Video: 'video',
     AudioPlayer: 'audio',
     Modal: 'modal',
+    // v1.1 component mappings
+    Select: 'select',
+    Textarea: 'textarea',
+    NumberInput: 'numberinput',
 };
 
 /**
@@ -224,6 +229,16 @@ export function transformComponent(
 
         case 'Modal':
             return transformModal(component.id, props, surfaceState, dataModel, onAction);
+
+        // v1.1 new components
+        case 'Select':
+            return transformSelect(component.id, props, dataModel, templateContext);
+
+        case 'Textarea':
+            return transformTextarea(component.id, props, dataModel, templateContext);
+
+        case 'NumberInput':
+            return transformNumberInput(component.id, props, dataModel, templateContext);
 
         default:
             console.warn(`[A2UI Transformer] Unknown component type: ${typeName}`);
@@ -707,6 +722,83 @@ function transformModal(
             className: 'bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl',
         },
         children,
+    };
+}
+
+// ============================================================================
+// v1.1 Component Transforms
+// ============================================================================
+
+function transformSelect(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext);
+    const placeholder = resolveBinding(props.placeholder as DataBinding<string>, dataModel, templateContext);
+    const options = props.options as Array<{ value: string; label: DataBinding<string> }> || [];
+    const selected = resolveBinding(props.selected as DataBinding<string>, dataModel, templateContext);
+
+    return {
+        type: 'select',
+        id,
+        props: {
+            label,
+            placeholder,
+            value: selected,
+            options: options.map(opt => ({
+                value: opt.value,
+                label: resolveBinding(opt.label, dataModel, templateContext) || opt.value,
+            })),
+        },
+    };
+}
+
+function transformTextarea(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext);
+    const placeholder = resolveBinding(props.placeholder as DataBinding<string>, dataModel, templateContext);
+    const value = resolveBinding(props.value as DataBinding<string>, dataModel, templateContext);
+    const rows = props.rows as number || 3;
+
+    return {
+        type: 'textarea',
+        id,
+        props: {
+            label,
+            placeholder,
+            value,
+            rows,
+            className: 'w-full',
+        },
+    };
+}
+
+function transformNumberInput(
+    id: string,
+    props: Record<string, unknown>,
+    dataModel: Record<string, unknown>,
+    templateContext?: Record<string, unknown>
+): UINode {
+    const label = resolveBinding(props.label as DataBinding<string>, dataModel, templateContext);
+    const value = resolveBinding(props.value as DataBinding<number>, dataModel, templateContext);
+
+    return {
+        type: 'numberinput',
+        id,
+        props: {
+            label,
+            value: value || 0,
+            min: props.min as number,
+            max: props.max as number,
+            step: props.step as number || 1,
+            className: 'w-full',
+        },
     };
 }
 

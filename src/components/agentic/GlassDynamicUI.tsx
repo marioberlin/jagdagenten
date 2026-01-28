@@ -6,6 +6,10 @@ import { GlassBadge } from '../data-display/GlassBadge';
 import { GlassCard } from '../data-display/GlassCard';
 import { GlassSlider } from '../forms/GlassSlider';
 import { GlassSwitch } from '../forms/GlassSwitch';
+import { GlassCheckbox } from '../forms/GlassCheckbox';
+import { GlassSelect } from '../forms/GlassSelect';
+import { GlassTextarea } from '../forms/GlassTextarea';
+import { GlassNumberInput } from '../forms/GlassNumberInput';
 import { GlassRadioGroup, GlassRadioGroupItem } from '../forms/GlassRadioGroup';
 import { GlassDatePicker } from '../forms/GlassDatePicker';
 import { GlassVideo } from '../media/GlassVideo';
@@ -15,7 +19,8 @@ import { cn } from '@/utils/cn';
 
 // Schema types for dynamic UI generation
 // v1.0: Added radiogroup, datepicker, video, audio, modal
-type UINodeType = 'container' | 'stack' | 'grid' | 'text' | 'button' | 'input' | 'badge' | 'card' | 'divider' | 'slider' | 'toggle' | 'checkbox' | 'radiogroup' | 'datepicker' | 'video' | 'audio' | 'modal';
+// v1.1: Added checkbox, select, textarea, numberinput
+type UINodeType = 'container' | 'stack' | 'grid' | 'text' | 'button' | 'input' | 'badge' | 'card' | 'divider' | 'slider' | 'toggle' | 'checkbox' | 'radiogroup' | 'datepicker' | 'video' | 'audio' | 'modal' | 'select' | 'textarea' | 'numberinput';
 
 interface UINode {
     type: UINodeType;
@@ -149,7 +154,10 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                             key={key}
                             variant={nodeProps.variant as 'primary' | 'secondary' | 'ghost'}
                             size={nodeProps.size as 'sm' | 'md' | 'lg'}
-                            onClick={() => id && handleAction(id, nodeProps.data)}
+                            onClick={() => handleAction(
+                                (nodeProps.actionId as string) || id || 'click',
+                                nodeProps.data
+                            )}
                             className={motionClass}
                             style={style}
                         >
@@ -302,6 +310,60 @@ export const GlassDynamicUI = React.forwardRef<HTMLDivElement, GlassDynamicUIPro
                         </GlassModal>
                     );
                 }
+
+                // v1.1 new components
+                case 'checkbox':
+                    return (
+                        <div key={key} className={cn("flex items-center gap-2", nodeProps.className as string)} style={style}>
+                            <GlassCheckbox
+                                checked={nodeProps.checked as boolean}
+                                onCheckedChange={(checked) => id && handleAction(id, checked)}
+                            />
+                            {(nodeProps.label as string) && <span className="text-sm text-primary">{nodeProps.label as string}</span>}
+                        </div>
+                    );
+
+                case 'select': {
+                    const options = (nodeProps.options as Array<{ value: string; label: string }>) || [];
+                    return (
+                        <div key={key} className={cn("w-full", nodeProps.className as string)} style={style}>
+                            {(nodeProps.label as string) && <label className="text-sm text-secondary mb-2 block">{nodeProps.label as string}</label>}
+                            <GlassSelect
+                                options={options}
+                                placeholder={nodeProps.placeholder as string || 'Select...'}
+                                value={nodeProps.value as string}
+                                onValueChange={(val) => id && handleAction(id, val)}
+                            />
+                        </div>
+                    );
+                }
+
+                case 'textarea':
+                    return (
+                        <div key={key} className={cn("w-full", nodeProps.className as string)} style={style}>
+                            {(nodeProps.label as string) && <label className="text-sm text-secondary mb-2 block">{nodeProps.label as string}</label>}
+                            <GlassTextarea
+                                placeholder={nodeProps.placeholder as string}
+                                defaultValue={nodeProps.value as string}
+                                rows={(nodeProps.rows as number) || 3}
+                                onChange={(e) => id && handleAction(id, e.target.value)}
+                            />
+                        </div>
+                    );
+
+                case 'numberinput':
+                    return (
+                        <div key={key} className={cn("w-full", nodeProps.className as string)} style={style}>
+                            {(nodeProps.label as string) && <label className="text-sm text-secondary mb-2 block">{nodeProps.label as string}</label>}
+                            <GlassNumberInput
+                                defaultValue={(nodeProps.value as number) || 0}
+                                min={nodeProps.min as number}
+                                max={nodeProps.max as number}
+                                step={(nodeProps.step as number) || 1}
+                                onChange={(val) => id && handleAction(id, val)}
+                            />
+                        </div>
+                    );
 
                 default:
                     console.warn(`Unknown node type: ${type}`);

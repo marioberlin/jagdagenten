@@ -13,6 +13,7 @@ import { getSentinelStatus } from './sentinel.js';
 import { createA2APlugin } from './a2a/index.js';
 import { coworkRoutes, sandboxRoutes, initCoworkEventForwarding } from './cowork/index.js';
 import { systemFilesRoutes } from './system/index.js';
+import { agentSessionRoutes } from './routes/agent-sessions.js';
 // import consoleRoutes from './routes/console.js'; // TODO: Create console routes
 import { initNats, closeNats, getNatsHealth, isNatsConnected } from './nats/index.js';
 
@@ -298,6 +299,7 @@ const app = new Elysia({ prefix: '' })
     .use(coworkRoutes)
     .use(sandboxRoutes)
     .use(systemFilesRoutes)
+    .use(agentSessionRoutes)
     // .use(consoleRoutes) // TODO: Create console routes
     .use(natsHealthPlugin);
 

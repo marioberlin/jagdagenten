@@ -22,9 +22,11 @@ This document contains detailed system documentation extracted from AGENTS.md.
 11. [Phase 10: Generative Media](#phase-10-generative-media-pipeline)
 12. [Phase 11: App Store](#phase-11-app-store--application-lifecycle)
 13. [Phase 12: UCP Discovery](#phase-12-ucp-merchant-discovery)
-14. [Architecture Summary](#architecture-summary)
-13. [Environment Variables](#environment-variables)
-14. [Test Coverage](#test-coverage)
+14. [Phase 13: Agent UX Configuration](#phase-13-agent-ux-configuration-system)
+15. [Phase 14: Agent Session Management](#phase-14-agent-session-management)
+16. [Architecture Summary](#architecture-summary)
+17. [Environment Variables](#environment-variables)
+18. [Test Coverage](#test-coverage)
 
 ---
 
@@ -46,6 +48,8 @@ This document contains detailed system documentation extracted from AGENTS.md.
 | **Phase 10** | ✅ Complete | Generative Media, Video Backgrounds, Gemini Image, Veo Video, Job Queue |
 | **Phase 11** | ✅ Complete | App Store, App Lifecycle, Manifest-Driven Apps, Bundle Storage, PostgreSQL Registry |
 | **Phase 12** | ✅ Complete | UCP Discovery, Merchant Registry, Crawler, Health Monitoring, WebSocket Progress |
+| **Phase 13** | ✅ Complete | Agent UX Configuration, Per-Agent Theming, Quick Actions, Contextual Suggestions, Visual Editor |
+| **Phase 14** | ✅ Complete | Session Management, Auto-Save, Memory Extraction, Decontextualizer, Session History Panel |
 
 ---
 
@@ -814,6 +818,266 @@ Features:
 - Export/Import UI
 
 **Full documentation:** See [docs/infrastructure/ucp-discovery.md](./ucp-discovery.md)
+
+---
+
+## Phase 13: Agent UX Configuration System
+
+### 13.1 Overview
+
+Per-agent UX customization system that allows each agent to have its own theme, input options, quick actions, and contextual suggestion strategy.
+
+**Features:**
+- YAML frontmatter configuration in markdown files
+- Per-agent theming (colors, message style, backgrounds)
+- Configurable input options (placeholder, voice, file upload)
+- Quick actions bar with dynamic icons
+- Multiple contextual suggestion strategies
+- Visual UX configuration editor
+
+### 13.2 Configuration Schema
+
+**Directory:** `src/applications/agent-chat/`
+
+**File Pattern:** `agentUX_{agent-id}.md`
+
+```yaml
+---
+version: "1.0"
+displayName: "Agent Name"
+
+theme:
+  accentColor: "#6366f1"       # Primary color
+  secondaryColor: "#818cf8"    # Secondary/highlight color
+  messageStyle: glass | bubble | minimal
+  avatarStyle: circle | rounded | square
+  glassEffects: true | false
+  backgroundImage: "agent-id"  # Maps to public/backgrounds/
+
+formatting:
+  markdown: true | false
+  emojiToIcons: true | false
+  codeHighlighting: true | false
+  codeTheme: dark | light
+  mathRendering: true | false
+
+input:
+  placeholder: "Message text..."
+  voiceEnabled: true | false
+  fileUpload: true | false
+  allowedFileTypes: ["image/*", "application/pdf"]
+  maxFileSize: 10  # MB
+  multiline: true | false
+
+contextualUI:
+  suggestionsEnabled: true | false
+  suggestionStrategy: semantic | heuristic | agent-defined | none
+  maxSuggestions: 4
+  suggestionLayout: horizontal | vertical | grid
+
+quickActions:
+  - label: "Action Name"
+    value: "Message to send"
+    icon: "LucideIconName"
+    description: "Tooltip text"
+---
+```
+
+### 13.3 Core Files
+
+| File | Purpose |
+|------|---------|
+| `src/applications/agent-chat/ux/schema.ts` | Zod validation schemas |
+| `src/applications/agent-chat/ux/parser.ts` | YAML frontmatter parser |
+| `src/applications/agent-chat/ux/loader.ts` | `import.meta.glob` static loader |
+| `src/applications/agent-chat/ux/index.ts` | React hook `useAgentUXConfig()` |
+| `src/components/agents/AgentUXConfigEditor.tsx` | Visual configuration editor |
+| `src/components/agents/AgentChatWindow.tsx` | Chat window with UX integration |
+
+### 13.4 Suggestion Strategies
+
+| Strategy | Description | Use Case |
+|----------|-------------|----------|
+| `semantic` | AI-powered contextual analysis | General agents |
+| `heuristic` | Fast pattern-based suggestions | Simple Q&A agents |
+| `agent-defined` | Server-provided suggestions | Specialized workflows |
+| `none` | Disable suggestions | Minimal UIs |
+
+### 13.5 Agent Configurations
+
+24 agents configured with unique themes and quick actions:
+
+| Agent ID | Display Name | Accent Color | Strategy |
+|----------|--------------|--------------|----------|
+| `wr-demo` | WR Demo | #6366f1 | semantic |
+| `crypto-advisor` | Crypto Advisor | #F7931A | semantic |
+| `restaurant-finder` | Restaurant Finder | #EF4444 | heuristic |
+| `market-data` | Market Data | #10B981 | heuristic |
+| `trade-executor` | Trade Executor | #F59E0B | heuristic |
+| `strategy` | Strategy Agent | #8B5CF6 | semantic |
+| `risk` | Risk Manager | #DC2626 | heuristic |
+| `orchestrator` | Orchestrator | #0EA5E9 | semantic |
+| `notification` | Notification Agent | #F97316 | heuristic |
+| `symbol-manager` | Symbol Manager | #14B8A6 | heuristic |
+| `webhook-gateway` | Webhook Gateway | #6366F1 | heuristic |
+| `maintenance` | Maintenance Agent | #78716C | heuristic |
+| `rizzcharts` | RizzCharts | #EC4899 | semantic |
+| `documind` | DocuMind | #3B82F6 | semantic |
+| `nanobanana` | NanoBanana | #FACC15 | semantic |
+| `travel-planner` | Travel Planner | #0EA5E9 | semantic |
+| `dashboard-builder` | Dashboard Builder | #8B5CF6 | semantic |
+| `ai-researcher` | AI Researcher | #6366F1 | semantic |
+| `research-canvas` | Research Canvas | #10B981 | semantic |
+| `qa-agent` | QA Agent | #22C55E | heuristic |
+| `state-machine` | State Machine | #7C3AED | semantic |
+| `copilot-form` | Copilot Form | #EF4444 | semantic |
+| `remote-password` | Password Manager | #DC2626 | heuristic |
+| `remote-oneflow` | OneFlow | #10B981 | semantic |
+
+### 13.6 Visual Editor
+
+**File:** `src/components/agents/AgentUXConfigEditor.tsx`
+
+Collapsible section-based editor with:
+- **Theme Section:** Color pickers, message style, avatar style toggles
+- **Input Options:** Placeholder, voice, file upload settings
+- **Contextual UI:** Strategy dropdown, layout selector
+- **Quick Actions:** Add/edit/remove actions with icon selection
+
+### 13.7 Background Generation
+
+**File:** `scripts/generate-agent-backgrounds.ts`
+
+NanoBanana API integration for generating unique agent backgrounds:
+- 24 agent-specific prompts
+- Style presets matching agent themes
+- Automatic file naming and storage
+
+**Full documentation:** See [docs/infrastructure/agent-ux-system.md](./agent-ux-system.md)
+
+---
+
+## Phase 14: Agent Session Management
+
+### 14.1 Overview
+
+Persistent session management for agent chats with automatic memory extraction using the Decontextualizer. Sessions are stored in PostgreSQL and synchronized across devices.
+
+**Features:**
+- Session persistence with auto-save
+- Cross-device synchronization via PostgreSQL
+- Automatic memory extraction using Decontextualizer
+- Session history panel with search
+- Session menu with CRUD operations
+- Last 50 sessions retained per agent
+
+### 14.2 Architecture
+
+**Frontend Components:**
+
+| File | Purpose |
+|------|---------|
+| `src/stores/agentSessionStore.ts` | Zustand store for session state |
+| `src/components/agents/SessionListPanel.tsx` | Slide-out session history panel |
+| `src/components/agents/SessionMenu.tsx` | Dropdown menu for session actions |
+| `src/components/agents/AgentChatWindow.tsx` | Chat window with session integration |
+
+**Backend Routes:**
+
+| File | Purpose |
+|------|---------|
+| `server/src/routes/agent-sessions.ts` | REST API for session persistence |
+| `server/src/agents/memory-decontextualizer.ts` | Memory extraction service |
+
+### 14.3 Database Schema
+
+```sql
+CREATE TABLE agent_chat_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id VARCHAR(255) NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    preview TEXT DEFAULT '',
+    message_count INTEGER DEFAULT 0,
+    messages JSONB DEFAULT '[]'::jsonb,
+    memories JSONB DEFAULT '[]'::jsonb,
+    is_archived BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_active_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_agent_sessions_agent_id ON agent_chat_sessions (agent_id);
+CREATE INDEX idx_agent_sessions_last_active ON agent_chat_sessions (last_active_at DESC);
+```
+
+### 14.4 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/agent-sessions/:agentId` | GET | List sessions for agent |
+| `/api/agent-sessions/:agentId` | POST | Create new session |
+| `/api/agent-sessions/:agentId/:sessionId` | PATCH | Update session metadata |
+| `/api/agent-sessions/:agentId/:sessionId` | DELETE | Delete session |
+| `/api/agent-sessions/:agentId/:sessionId/messages` | GET | Get session messages |
+| `/api/agent-sessions/:agentId/:sessionId/messages` | PUT | Save session messages |
+| `/api/agent-sessions/:agentId/:sessionId/memories` | GET | Get extracted memories |
+| `/api/agent-sessions/:agentId/:sessionId/memories` | POST | Add memory manually |
+| `/api/agent-sessions/:agentId/:sessionId/extract-memory` | POST | Extract memory with decontextualizer |
+| `/api/agent-sessions/:agentId/:sessionId/extract-memories-batch` | POST | Batch memory extraction |
+
+### 14.5 Memory Decontextualizer
+
+The `MemoryDecontextualizer` resolves pronouns and references to create self-contained memory statements.
+
+**Transformations:**
+- "I really like how you did that" → "User likes the modular auth pattern in authStore.ts"
+- "That's the approach I prefer" → "User prefers the TypeScript-first development approach"
+
+**Importance Scoring:**
+Memories are scored 0-100 based on keyword heuristics:
+- High importance: "prefer", "always", "never", "important", "remember", "must"
+- Low importance: "maybe", "perhaps", "sometimes", "might", "could"
+
+### 14.6 Session Menu Actions
+
+| Action | Description |
+|--------|-------------|
+| Session History | Open slide-out panel with recent sessions |
+| New Session | Create a fresh session |
+| Rename Session | Edit session title |
+| Export Session | Download as JSON |
+| Copy Conversation | Copy all messages to clipboard |
+| View Memories | Show extracted memories |
+| Clear Messages | Reset current session |
+| Archive Session | Move to archived state |
+| Delete Session | Permanently remove |
+
+### 14.7 Auto-Save & Memory Extraction
+
+Sessions auto-save with a 1-second debounce after message changes. Memory extraction runs automatically for:
+- Agent messages longer than 20 characters
+- User messages longer than 30 characters
+
+```typescript
+// Auto-save effect
+useEffect(() => {
+    if (activeSession && messages.length > 1) {
+        const timeout = setTimeout(() => {
+            saveMessages(agent.id, activeSession.id, storedMessages);
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }
+}, [messages, activeSession]);
+
+// Memory extraction effect
+useEffect(() => {
+    const agentMessages = messages.filter(
+        m => m.role === 'agent' && m.content.length > 20 && !extractedMessageIds.current.has(m.id)
+    );
+    agentMessages.forEach(msg => extractMemory(agent.id, activeSession.id, msg.content, msg.id));
+}, [messages, activeSession]);
+```
+
+**Full documentation:** See [docs/infrastructure/agent-sessions.md](./agent-sessions.md)
 
 ---
 

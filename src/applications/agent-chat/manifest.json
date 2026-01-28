@@ -1,0 +1,26 @@
+{
+  "id": "agent-chat",
+  "name": "Agent Chat",
+  "version": "1.0.0",
+  "description": "Chat with A2A agents",
+  "author": "LiquidOS",
+  "category": "communication",
+  "keywords": ["agent", "chat", "a2a", "conversation"],
+  "icon": "MessageCircle",
+  "entry": "./App.tsx",
+  "window": {
+    "mode": "floating",
+    "title": "Agent Chat",
+    "defaultSize": { "width": 750, "height": 700 },
+    "resizable": true
+  },
+  "integrations": {
+    "dock": {
+      "enabled": false
+    },
+    "commandPalette": {
+      "commands": []
+    }
+  },
+  "capabilities": ["network:http", "a2a:connect"]
+}
