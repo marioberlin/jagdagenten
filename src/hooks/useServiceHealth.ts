@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { SERVICE_DESCRIPTIONS } from '@/data/serviceDescriptions';
 
 export interface ServiceHealthStatus {
     id: string;
@@ -80,6 +81,7 @@ async function attemptRecovery(serviceId: string): Promise<boolean> {
 export function useServiceHealth(options: UseServiceHealthOptions = {}): {
     services: Record<string, ServiceHealthStatus>;
     isAnyUnhealthy: boolean;
+    isRequiredUnhealthy: boolean;
     unhealthyServices: string[];
     refresh: () => void;
     recoverService: (serviceId: string) => Promise<boolean>;
@@ -186,9 +188,16 @@ export function useServiceHealth(options: UseServiceHealthOptions = {}): {
         .filter(s => s.status === 'unhealthy')
         .map(s => s.id);
 
+    // Check if any REQUIRED service is unhealthy (for overall system status)
+    const isRequiredUnhealthy = unhealthyServices.some(id => {
+        const desc = SERVICE_DESCRIPTIONS[id];
+        return desc?.required === true;
+    });
+
     return {
         services,
         isAnyUnhealthy: unhealthyServices.length > 0,
+        isRequiredUnhealthy,
         unhealthyServices,
         refresh: checkAllServices,
         recoverService: recoverServiceById,

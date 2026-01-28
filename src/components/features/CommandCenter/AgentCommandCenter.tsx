@@ -16,7 +16,7 @@ import { useLiquidAssistant } from '@/hooks/useLiquidAssistant';
  */
 export const AgentCommandCenter: React.FC = () => {
     const { runtimeMode, llmProvider } = useAgentConfig();
-    const { services, isAnyUnhealthy } = useServiceHealth();
+    const { services, isAnyUnhealthy, isRequiredUnhealthy } = useServiceHealth();
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [showChat, setShowChat] = useState(false);
@@ -27,7 +27,7 @@ export const AgentCommandCenter: React.FC = () => {
 
     // Determine overall system status based on health checks
     const getSystemStatus = () => {
-        if (isAnyUnhealthy) return { value: 'Degraded', color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
+        if (isRequiredUnhealthy) return { value: 'Degraded', color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
         return { value: 'Operational', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
     };
 
@@ -100,8 +100,8 @@ export const AgentCommandCenter: React.FC = () => {
                         serviceId="system"
                         isHovered={hoveredCard === 'System Status'}
                         onHover={setHoveredCard}
-                        healthStatus={isAnyUnhealthy ? 'unhealthy' : 'healthy'}
-                        showWarning={isAnyUnhealthy}
+                        healthStatus={isRequiredUnhealthy ? 'unhealthy' : 'healthy'}
+                        showWarning={isRequiredUnhealthy}
                         allServices={services}
                     />
                     <StatusCard
