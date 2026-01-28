@@ -182,8 +182,8 @@ describe('Wishlist', () => {
       />
     );
 
-    const toggleButton = screen.getByRole('button');
-    await user.click(toggleButton);
+    const toggleButtons = screen.getAllByRole('button');
+    await user.click(toggleButtons[0]);
     expect(mockOnToggle).toHaveBeenCalled();
   });
 });

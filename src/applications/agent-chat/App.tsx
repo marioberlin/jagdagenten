@@ -452,8 +452,8 @@ export default function AgentChatApp() {
                     {isConnected && quickActions.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-3">
                             {quickActions.map((action, index) => {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const IconComponent = action.icon
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     ? (LucideIcons as any)[action.icon]
                                     : null;
 

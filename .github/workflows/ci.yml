@@ -36,7 +36,6 @@ jobs:
             ${{ runner.os }}-modules-
 
       - name: Install dependencies
-        if: steps.cache-modules.outputs.cache-hit != 'true'
         run: bun install
 
       - name: Run ESLint
@@ -70,7 +69,6 @@ jobs:
             ${{ runner.os }}-modules-
 
       - name: Install dependencies
-        if: steps.cache-modules-test.outputs.cache-hit != 'true'
         run: bun install
 
       - name: Run unit tests
@@ -99,7 +97,6 @@ jobs:
             ${{ runner.os }}-modules-
 
       - name: Install dependencies
-        if: steps.cache-modules-build.outputs.cache-hit != 'true'
         run: bun install
 
       - name: Build client
@@ -115,7 +112,6 @@ jobs:
             ${{ runner.os }}-server-modules-
 
       - name: Install server dependencies
-        if: steps.cache-server-modules.outputs.cache-hit != 'true'
         run: cd server && bun install
 
       - name: Build server
@@ -186,7 +182,6 @@ jobs:
             ${{ runner.os }}-modules-
 
       - name: Install dependencies
-        if: steps.cache-modules-chromatic.outputs.cache-hit != 'true'
         run: bun install
 
       - name: Build Storybook
@@ -222,7 +217,6 @@ jobs:
             ${{ runner.os }}-modules-
 
       - name: Install dependencies
-        if: steps.cache-modules-e2e.outputs.cache-hit != 'true'
         run: bun install
 
       - name: Install Playwright browsers
@@ -339,7 +333,6 @@ jobs:
             ${{ runner.os }}-server-modules-
 
       - name: Install server dependencies
-        if: steps.cache-server-deploy.outputs.cache-hit != 'true'
         run: cd server && bun install
 
       - name: Build server
