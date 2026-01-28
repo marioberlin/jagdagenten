@@ -21,10 +21,8 @@ COPY packages/ packages/
 RUN mkdir -p server && echo '{"name":"server","private":true}' > server/package.json
 
 # Remove server from workspaces (we don't need server deps for frontend build)
-# Use jq for proper JSON manipulation
-RUN apk add --no-cache jq && \
-  jq '.workspaces = [.workspaces[] | select(. != "server")]' package.json > tmp.json && \
-  mv tmp.json package.json
+# Use bun to manipulate JSON (jq not available in Debian-based image)
+RUN bun -e "const p = await Bun.file('package.json').json(); p.workspaces = p.workspaces.filter(w => w !== 'server'); await Bun.write('package.json', JSON.stringify(p, null, 2));"
 
 # Install dependencies (ignore failures for packages not needed for frontend)
 RUN bun install || true
