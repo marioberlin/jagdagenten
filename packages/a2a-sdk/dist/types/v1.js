@@ -23,6 +23,7 @@ export var TaskState;
     TaskState["INPUT_REQUIRED"] = "input-required";
     TaskState["COMPLETED"] = "completed";
     TaskState["CANCELED"] = "canceled";
+    TaskState["CANCELLED"] = "cancelled";  // British spelling alias
     TaskState["FAILED"] = "failed";
     TaskState["REJECTED"] = "rejected";
     TaskState["AUTH_REQUIRED"] = "auth-required";

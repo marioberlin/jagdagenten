@@ -18,6 +18,7 @@ export declare enum TaskState {
     INPUT_REQUIRED = "input-required",
     COMPLETED = "completed",
     CANCELED = "canceled",
+    CANCELLED = "cancelled",
     FAILED = "failed",
     REJECTED = "rejected",
     AUTH_REQUIRED = "auth-required",

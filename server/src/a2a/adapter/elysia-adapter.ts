@@ -600,6 +600,7 @@ export class ElysiaA2AAdapter {
     switch (method) {
       // v1.0 method names (PascalCase)
       case 'SendMessage':
+      case 'message/send':  // Legacy v0.x alias
         return this.handleSendMessage(params as v1.MessageSendParams);
 
       // v1.0 streaming method (SendStreamingMessage is handled via streaming endpoint)
@@ -608,8 +609,10 @@ export class ElysiaA2AAdapter {
         throw { ...JSON_RPC_ERRORS.UNSUPPORTED_OPERATION, data: 'SendStreamingMessage must be called via /a2a/stream endpoint' };
 
       case 'GetTask':
+      case 'tasks/get':  // Legacy v0.x alias
         return this.handleGetTask(params as { id: string; historyLength?: number });
       case 'CancelTask':
+      case 'tasks/cancel':  // Legacy v0.x alias
         return this.handleCancelTask(params as { id: string });
       case 'ListTasks':
         return this.handleListTasks(params as { contextId?: string; state?: v1.TaskState[] });
@@ -635,6 +638,11 @@ export class ElysiaA2AAdapter {
       case 'GetAuthenticatedExtendedCard':   // Legacy alias
         return this.handleGetExtendedAgentCard();
 
+      // Agent card (base card, not extended)
+      case 'agent/card':     // Legacy v0.x method name
+      case 'GetAgentCard':   // v1.0 method name
+        return this.handleGetAgentCard();
+
       default:
         throw { ...JSON_RPC_ERRORS.METHOD_NOT_FOUND, data: { method } };
     }
@@ -652,6 +660,11 @@ export class ElysiaA2AAdapter {
       throw { ...JSON_RPC_ERRORS.EXTENDED_CARD_NOT_CONFIGURED };
     }
     // Return extended card with authentication-specific details
+    return this.agentCard;
+  }
+
+  // Handle agent/card and GetAgentCard methods - returns base agent card
+  private handleGetAgentCard(): v1.AgentCard {
     return this.agentCard;
   }
 
