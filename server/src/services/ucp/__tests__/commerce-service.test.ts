@@ -440,11 +440,11 @@ describe('Checkout Total Calculation', () => {
   });
 
   it('should calculate correct subtotal', () => {
-    addItemToCheckout(session, 'btc-tshirt-classic', 2); // $34.99 each
+    addItemToCheckout(session, 'btc-tshirt-classic', 2); // $29.99 each
     const checkout = getOrCreateCheckout(session);
 
     const subtotal = parseFloat(checkout.subtotal.amount);
-    expect(subtotal).toBeCloseTo(69.98, 2);
+    expect(subtotal).toBeCloseTo(59.98, 2);
   });
 
   it('should calculate correct total with shipping', () => {

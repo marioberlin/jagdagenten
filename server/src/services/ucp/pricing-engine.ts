@@ -120,6 +120,7 @@ export const DISCOUNT_CODES: UCPDiscount[] = [
     description: '10% off your first order',
     type: 'percentage',
     value: 10,
+    max_discount: createMoney(50),  // Cap at $50
     usage_limit: 1,
     used_count: 0,
     valid_from: now.toISOString(),
@@ -185,6 +186,19 @@ export const DISCOUNT_CODES: UCPDiscount[] = [
     type: 'fixed',
     value: 20,
     min_order_value: createMoney(100),
+    usage_limit: undefined,
+    used_count: 0,
+    valid_from: now.toISOString(),
+    valid_until: oneYearFromNow.toISOString(),
+    is_active: true,
+  },
+  {
+    id: 'disc-crypto25',
+    code: 'CRYPTO25',
+    description: '$25 off orders over $75',
+    type: 'fixed',
+    value: 25,
+    min_order_value: createMoney(75),
     usage_limit: undefined,
     used_count: 0,
     valid_from: now.toISOString(),
@@ -299,6 +313,9 @@ export function calculateDiscountAmount(
 
     case 'fixed':
       amount = discount.value;
+      // Cap at subtotal - can't discount more than the order value
+      const subtotal = moneyToNumber(checkout.subtotal);
+      amount = Math.min(amount, subtotal);
       break;
 
     case 'free_shipping':
@@ -496,12 +513,17 @@ export function recalculateCheckout(checkout: UCPCheckout): UCPCheckout {
   for (const appliedDiscount of checkout.discounts) {
     const discount = getDiscountByCode(appliedDiscount.code);
     if (discount) {
+      // Registered discount - recalculate amount
       const calculated = calculateDiscountAmount(discount, {
         ...checkout,
         subtotal: createMoney(subtotal, currency),
       });
       updatedDiscounts.push(calculated);
       discountTotal += moneyToNumber(calculated.amount);
+    } else {
+      // Manual/unregistered discount - preserve as-is
+      updatedDiscounts.push(appliedDiscount);
+      discountTotal += moneyToNumber(appliedDiscount.amount);
     }
   }
 
@@ -510,13 +532,25 @@ export function recalculateCheckout(checkout: UCPCheckout): UCPCheckout {
 
   // Recalculate shipping if method is selected
   if (checkout.shipping) {
-    try {
-      checkout.shipping = calculateShipping(checkout.shipping.method_id, checkout);
+    // Only recalculate if we have a method_id and want to refresh the price
+    // If the shipping was manually set with a specific price, preserve it
+    if (checkout.shipping.method_id) {
+      try {
+        const recalculatedShipping = calculateShipping(checkout.shipping.method_id, checkout);
+        checkout.shipping = recalculatedShipping;
+        checkout.shipping_total = checkout.shipping.price;
+      } catch {
+        // Shipping method no longer available - keep existing shipping if it has a price
+        if (checkout.shipping.price) {
+          checkout.shipping_total = checkout.shipping.price;
+        } else {
+          checkout.shipping = undefined;
+          checkout.shipping_total = createMoney(0, currency);
+        }
+      }
+    } else if (checkout.shipping.price) {
+      // No method_id but has a price - use the manually set price
       checkout.shipping_total = checkout.shipping.price;
-    } catch {
-      // Shipping method no longer available - clear it
-      checkout.shipping = undefined;
-      checkout.shipping_total = createMoney(0, currency);
     }
   } else {
     checkout.shipping_total = createMoney(0, currency);

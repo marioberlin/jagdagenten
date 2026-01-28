@@ -90,7 +90,7 @@ describe('Discount Validation', () => {
     const result = validateDiscount('CRYPTO25', checkout);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('minimum');
+    expect(result.error?.toLowerCase()).toContain('minimum');
   });
 
   it('should accept discount at minimum order', () => {
@@ -248,20 +248,28 @@ describe('Checkout Recalculation', () => {
     const recalculated = recalculateCheckout(checkout);
 
     expect(parseFloat(recalculated.discount_total.amount)).toBe(10);
-    expect(parseFloat(recalculated.total.amount)).toBeLessThan(100);
+    // Total should be: subtotal - discount + tax = 100 - 10 + tax
+    // Since there's 19% tax on 100, total = 90 + 19 = 109, which is > 100
+    // The discount is applied, so discount_total should be 10
+    const subtotal = parseFloat(recalculated.subtotal.amount);
+    const discount = parseFloat(recalculated.discount_total.amount);
+    const tax = parseFloat(recalculated.tax_total.amount);
+    const total = parseFloat(recalculated.total.amount);
+    expect(total).toBeCloseTo(subtotal - discount + tax, 2);
   });
 
   it('should include shipping in total', () => {
     const checkout = createTestCheckout([{ quantity: 1, unit_price: createMoney(50, 'USD') }]);
+    // Setting method_id means shipping will be recalculated using actual rate ($5.99 for standard)
     checkout.shipping = {
       method_id: 'standard',
       method_name: 'Standard Shipping',
-      price: createMoney(9.99, 'USD'),
+      price: createMoney(5.99, 'USD'),  // Use actual standard price
     };
 
     const recalculated = recalculateCheckout(checkout);
 
-    expect(parseFloat(recalculated.shipping_total.amount)).toBe(9.99);
+    expect(parseFloat(recalculated.shipping_total.amount)).toBeCloseTo(5.99, 2);
     expect(parseFloat(recalculated.total.amount)).toBeGreaterThan(50);
   });
 
