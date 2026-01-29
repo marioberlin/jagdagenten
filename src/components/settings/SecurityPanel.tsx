@@ -16,6 +16,7 @@ import {
   registerBiometric,
 } from '@/services/biometricService';
 import { WakeWordTraining } from './WakeWordTraining';
+import { useWakeWordStore } from '@/stores/wakeWordStore';
 
 export const SecurityPanel: React.FC = () => {
   const authEnabled = useAuthStore((s) => s.authEnabled);
@@ -31,6 +32,7 @@ export const SecurityPanel: React.FC = () => {
   const hasCredentials = useAuthStore(selectHasAnyCredentials);
   const hasBiometricMethod = useAuthStore(selectBiometricMethodAvailable);
   const hasGoogleMethod = useAuthStore(selectGoogleMethodAvailable);
+  const hasWakeWordTrained = useWakeWordStore((s) => s.isTrained && s.enabled);
 
   const setAuthEnabled = useAuthStore((s) => s.setAuthEnabled);
   const setBiometricEnabled = useAuthStore((s) => s.setBiometricEnabled);
@@ -159,8 +161,9 @@ export const SecurityPanel: React.FC = () => {
     lock();
   }, [completeSetup, lock]);
 
-  const showSetupPrompt = authEnabled && !setupCompleted && !hasCredentials;
-  const canCompleteSetup = authEnabled && !setupCompleted && hasCredentials;
+  const hasAnyMethod = hasCredentials || hasWakeWordTrained;
+  const showSetupPrompt = authEnabled && !setupCompleted && !hasAnyMethod;
+  const canCompleteSetup = authEnabled && !setupCompleted && hasAnyMethod;
 
   return (
     <div className="space-y-6 p-4">
@@ -411,7 +414,7 @@ export const SecurityPanel: React.FC = () => {
       </Section>
 
       {/* Lock Now */}
-      {authEnabled && setupCompleted && (hasBiometricMethod || hasGoogleMethod) && (
+      {authEnabled && setupCompleted && (hasBiometricMethod || hasGoogleMethod || hasWakeWordTrained) && (
         <button
           onClick={lock}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white/80 transition-colors"
