@@ -41,6 +41,9 @@ export { BuilderExecutor, getBuilderAgentCard } from './builder.js';
 // Router Executor (multi-executor routing)
 export { RouterExecutor } from './router.js';
 
+// Voice Executor (Gemini Live API)
+export { VoiceExecutor, getVoiceAgentCard } from './voice.js';
+
 // Video Render Executor
 export { VideoRenderExecutor, getVideoRenderAgentCard } from './video-render.js';
 

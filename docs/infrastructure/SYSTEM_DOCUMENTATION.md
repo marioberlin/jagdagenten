@@ -216,6 +216,36 @@ Transforms A2UI payloads from external agents into Liquid Glass components.
 ### 5.3 A2A Client
 **File:** `src/a2a/client.ts`
 
+### 5.4 A2A Voice Integration
+**Directory:** `server/src/a2a/executors/`, `src/hooks/`
+
+Realtime voice conversations with agents using Google Gemini Live API via A2A protocol.
+
+**Backend:**
+| File | Purpose |
+|------|---------|
+| `server/src/a2a/executors/voice.ts` | VoiceExecutor for Gemini Live sessions |
+| `server/src/a2a/executors/base.ts` | BaseA2UIExecutor class |
+| `server/src/a2a/elysia-plugin.ts` | RouterExecutor registration |
+
+**Frontend:**
+| File | Purpose |
+|------|---------|
+| `src/hooks/useA2AVoice.ts` | Voice session hook (mic capture, audio playback, SSE) |
+| `src/components/agents/AgentChatWindow.tsx` | Mic button integration |
+| `src/components/agentic/GlassPrompt.tsx` | Voice input UI |
+
+**Voice States:**
+| State | Description | Visual |
+|-------|-------------|--------|
+| `idle` | No active session | Default mic icon |
+| `connecting` | Establishing connection | Blue, spinner |
+| `listening` | Mic active, receiving audio | Red, pulsing |
+| `speaking` | Playing AI response | Amber |
+| `error` | Session error | Red, error icon |
+
+**Full documentation:** [`docs/infrastructure/voice.md`](./voice.md)
+
 ---
 
 ## Phase 6: Agent Hub UI

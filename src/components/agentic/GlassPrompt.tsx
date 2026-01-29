@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { GlassContainer } from '../primitives/GlassContainer';
 import { GlassButton } from '../primitives/GlassButton';
 import { cn } from '@/utils/cn';
-import { Send, Mic, Image, Paperclip, X, Sparkles } from 'lucide-react';
+import { Send, Mic, MicOff, Image, Paperclip, X, Sparkles, Loader2 } from 'lucide-react';
+import { useA2AVoice, type VoiceState, type VoiceSessionConfig } from '@/hooks/useA2AVoice';
 
 interface GlassPromptProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSubmit'> {
     /** Callback when the prompt is submitted */
@@ -19,6 +20,12 @@ interface GlassPromptProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
     enableFiles?: boolean;
     /** Visual style of the prompt */
     variant?: 'standard' | 'minimal';
+    /** Context ID for voice sessions (required if enableVoice is true) */
+    contextId?: string;
+    /** Voice session configuration */
+    voiceConfig?: VoiceSessionConfig;
+    /** Callback when voice transcript is received */
+    onVoiceTranscript?: (text: string) => void;
 }
 
 export const GlassPrompt = React.forwardRef<HTMLDivElement, GlassPromptProps>(
@@ -31,6 +38,9 @@ export const GlassPrompt = React.forwardRef<HTMLDivElement, GlassPromptProps>(
         enableVoice = true,
         enableFiles = true,
         variant = 'standard',
+        contextId,
+        voiceConfig,
+        onVoiceTranscript,
         ...props
     }, ref) => {
         const [value, setValue] = useState('');
@@ -38,6 +48,36 @@ export const GlassPrompt = React.forwardRef<HTMLDivElement, GlassPromptProps>(
         const [isDragOver, setIsDragOver] = useState(false);
         const textareaRef = useRef<HTMLTextAreaElement>(null);
         const fileInputRef = useRef<HTMLInputElement>(null);
+
+        // Voice hook
+        const voice = useA2AVoice({
+            contextId: contextId || 'default',
+            onTranscript: onVoiceTranscript,
+        });
+
+        // Get voice button styles based on state
+        const getVoiceButtonStyles = (state: VoiceState) => {
+            switch (state) {
+                case 'listening':
+                    return 'text-red-500 bg-red-500/20 animate-pulse';
+                case 'speaking':
+                    return 'text-amber-500 bg-amber-500/20';
+                case 'connecting':
+                    return 'text-blue-500 bg-blue-500/20';
+                case 'error':
+                    return 'text-red-500';
+                default:
+                    return 'text-secondary hover:text-primary hover:bg-glass-surface-hover';
+            }
+        };
+
+        const handleVoiceToggle = async () => {
+            if (voice.isActive) {
+                await voice.stop();
+            } else {
+                await voice.start(voiceConfig);
+            }
+        };
 
         const handleSubmit = () => {
             if (!value.trim() && files.length === 0) return;
@@ -256,10 +296,22 @@ export const GlassPrompt = React.forwardRef<HTMLDivElement, GlassPromptProps>(
                     <div className="flex items-center gap-1">
                         {enableVoice && (
                             <button
-                                className="p-2 rounded-full text-secondary hover:text-primary hover:bg-glass-surface-hover transition-colors"
-                                title="Voice input"
+                                onClick={handleVoiceToggle}
+                                disabled={!contextId}
+                                className={cn(
+                                    'p-2 rounded-full transition-all duration-200',
+                                    getVoiceButtonStyles(voice.state),
+                                    !contextId && 'opacity-50 cursor-not-allowed'
+                                )}
+                                title={voice.isActive ? 'Stop voice' : 'Start voice input'}
                             >
-                                <Mic size={18} />
+                                {voice.state === 'connecting' ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : voice.isActive ? (
+                                    <MicOff size={18} />
+                                ) : (
+                                    <Mic size={18} />
+                                )}
                             </button>
                         )}
                         <GlassButton

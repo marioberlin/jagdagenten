@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Paperclip, Mic, Send, MoreHorizontal, User, Sparkles, AlertCircle, RefreshCcw, Loader2,
+    Paperclip, Mic, MicOff, Send, MoreHorizontal, User, Sparkles, AlertCircle, RefreshCcw, Loader2,
     Rocket, Zap, Star, Heart, Flame, ThumbsUp, Check, X as XIcon, ArrowRight, Lightbulb,
     Brain, Laptop, Terminal
 } from 'lucide-react';
@@ -23,6 +23,7 @@ import { useAgentUXConfig, type SuggestionStrategy } from '@/applications/agent-
 import { SessionMenu } from './SessionMenu';
 import { SessionListPanel } from './SessionListPanel';
 import { useAgentSessionStore, selectActiveSession, type AgentSession } from '@/stores/agentSessionStore';
+import { useA2AVoice, type VoiceState } from '@/hooks/useA2AVoice';
 
 // ============================================================================
 // Types
@@ -287,6 +288,31 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
     // Session store
     const activeSession = useAgentSessionStore(selectActiveSession(agent.id));
     const { createSession, setActiveSession, saveMessages, loadMessages, renameSession, archiveSession, deleteSession, extractMemory } = useAgentSessionStore();
+
+    // Voice hook
+    const voice = useA2AVoice({
+        contextId: activeSession?.id || `agent-${agent.id}`,
+        onTranscript: (text) => {
+            // Auto-insert transcript into input or send directly
+            setInputValue(prev => prev + text);
+        },
+    });
+
+    // Voice button style helper
+    const getVoiceButtonStyles = (state: VoiceState) => {
+        switch (state) {
+            case 'listening':
+                return 'bg-red-500/30 text-red-400 animate-pulse';
+            case 'speaking':
+                return 'bg-amber-500/30 text-amber-400';
+            case 'connecting':
+                return 'bg-blue-500/30 text-blue-400';
+            case 'error':
+                return 'text-red-400';
+            default:
+                return 'text-white/60 hover:text-white';
+        }
+    };
 
     // Load agent UX configuration
     const { config: uxConfig } = useAgentUXConfig(agent.id);
@@ -995,10 +1021,21 @@ export const AgentChatWindow: React.FC<AgentChatWindowProps> = ({
                             />
                         </div>
                         <button
-                            className="p-3 rounded-xl hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-                            title="Voice input"
+                            onClick={() => voice.isActive ? voice.stop() : voice.start({ agentId: agent.id })}
+                            className={cn(
+                                'p-3 rounded-xl transition-all',
+                                getVoiceButtonStyles(voice.state),
+                                'hover:bg-white/10'
+                            )}
+                            title={voice.isActive ? 'Stop voice' : 'Start voice input'}
                         >
-                            <Mic size={20} />
+                            {voice.state === 'connecting' ? (
+                                <Loader2 size={20} className="animate-spin" />
+                            ) : voice.isActive ? (
+                                <MicOff size={20} />
+                            ) : (
+                                <Mic size={20} />
+                            )}
                         </button>
                         <motion.button
                             onClick={() => sendMessage()}

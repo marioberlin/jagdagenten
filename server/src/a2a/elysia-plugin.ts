@@ -15,7 +15,7 @@ import {
   type MessageStore,
   type SessionStore,
 } from './adapter/index.js';
-import { LiquidCryptoExecutor, getLiquidCryptoAgentCard, OrchestratorExecutor, getOrchestratorAgentCard, BuilderExecutor, getBuilderAgentCard } from './executors/index.js';
+import { LiquidCryptoExecutor, getLiquidCryptoAgentCard, OrchestratorExecutor, getOrchestratorAgentCard, BuilderExecutor, getBuilderAgentCard, VoiceExecutor, getVoiceAgentCard } from './executors/index.js';
 import { RouterExecutor } from './executors/router.js';
 import {
   instrumentTaskStore,
@@ -87,6 +87,7 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
   router.register('liquidcrypto', new LiquidCryptoExecutor(), getLiquidCryptoAgentCard(baseUrl));
   router.register('orchestrator', new OrchestratorExecutor(), getOrchestratorAgentCard(baseUrl));
   router.register('builder', new BuilderExecutor(), getBuilderAgentCard(baseUrl));
+  router.register('voice', new VoiceExecutor(), getVoiceAgentCard(baseUrl));
 
   const agentCard = router.getMergedAgentCard(baseUrl);
   const adapter = new ElysiaA2AAdapter({

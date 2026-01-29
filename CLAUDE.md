@@ -227,6 +227,79 @@ Every app and agent has a `soul.md` file that defines personality, goals, voice,
 | Canvas | `docs/infrastructure/canvas.md` |
 | Soul.md | `docs/infrastructure/soul.md` |
 | Smart Compaction | `docs/infrastructure/smart-compaction.md` |
+| Voice Integration | `docs/infrastructure/voice.md` |
+
+---
+
+## A2A Protocol v1.0 Specification
+
+**IMPORTANT:** Always use A2A v1.0 draft specification with PascalCase method names. Do NOT use legacy v0.x snake_case methods.
+
+### Method Names (PascalCase)
+
+| v1.0 Method (USE THIS) | Legacy v0.x (AVOID) | Purpose |
+|------------------------|---------------------|---------|
+| `SendMessage` | `message/send` | Send a message to agent |
+| `SendStreamingMessage` | `tasks/send` | Send streaming message |
+| `GetTask` | `tasks/get` | Retrieve task by ID |
+| `CancelTask` | `tasks/cancel` | Cancel a running task |
+| `ListTasks` | N/A | List tasks by context |
+| `SubscribeToTask` | `Resubscribe` | Subscribe to task updates (SSE) |
+| `GetAgentCard` | `agent/card` | Get base agent card |
+| `GetExtendedAgentCard` | `GetAuthenticatedExtendedCard` | Get extended card (auth) |
+| `SetTaskPushNotificationConfig` | N/A | Configure push notifications |
+
+### Response Headers
+
+Always include in A2A responses:
+```
+A2A-Protocol-Version: 1.0
+Content-Type: application/json
+```
+
+### Creating A2A Servers
+
+When implementing new A2A executors:
+
+1. **Extend `BaseA2UIExecutor`** from `server/src/a2a/executors/base.ts`
+2. **Register with `RouterExecutor`** in `server/src/a2a/elysia-plugin.ts`
+3. **Export from index** in `server/src/a2a/executors/index.ts`
+4. **Create agent card function** returning `v1.AgentCard`
+
+```typescript
+// Example: New executor
+import { BaseA2UIExecutor, type AgentExecutionContext, type AgentExecutionResult } from './base.js';
+import { v1 } from '@liquidcrypto/a2a-sdk';
+
+export class MyExecutor extends BaseA2UIExecutor {
+  async execute(message: v1.Message, context: AgentExecutionContext): Promise<AgentExecutionResult> {
+    const text = this.extractText(message);
+    // ... implement logic
+    return this.createTextResponse('Response', context.contextId, context.taskId);
+  }
+}
+
+export function getMyAgentCard(baseUrl: string): v1.AgentCard {
+  return {
+    name: 'My Agent',
+    description: 'Does something useful',
+    url: `${baseUrl}/a2a`,
+    protocolVersion: '1.0',
+    capabilities: { streaming: true },
+    skills: [{ id: 'skill-1', name: 'Skill', description: 'Desc', tags: [] }],
+  };
+}
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `server/src/a2a/adapter/elysia-adapter.ts` | A2A JSON-RPC handler |
+| `server/src/a2a/executors/base.ts` | Base executor class |
+| `server/src/a2a/executors/router.ts` | Multi-executor routing |
+| `server/src/a2a/elysia-plugin.ts` | Elysia integration |
+| `@liquidcrypto/a2a-sdk` | SDK with v1 types |
 
 ---
 
