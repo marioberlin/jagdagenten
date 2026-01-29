@@ -16,6 +16,7 @@ env:
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-frontend
   VIDEO_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-video
+  RUNTIME_IMAGE: ghcr.io/${{ github.repository_owner }}/liquidcrypto-runtime
   BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/liquid-container-base
 
 jobs:
@@ -103,6 +104,25 @@ jobs:
           tags: ${{ steps.meta-video.outputs.tags }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Docker meta for Runtime Image
+        id: meta-runtime
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.RUNTIME_IMAGE }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and Push Runtime Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server/container
+          file: ./server/container/Dockerfile
+          push: true
+          tags: ${{ steps.meta-runtime.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

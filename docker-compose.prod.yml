@@ -101,6 +101,36 @@ services:
       timeout: 5s
       retries: 5
 
+  # AI Agent Runtime Container - always running for agent sandboxes
+  liquid-runtime:
+    image: ghcr.io/marioberlin/liquidcrypto-runtime:${RUNTIME_VERSION:-latest}
+    container_name: liquidcrypto-runtime
+    restart: always
+    volumes:
+      - liquid_sandboxes:/sandboxes:rw
+    environment:
+      LIQUID_RUNTIME_MODE: pool
+      LIQUID_RUNTIME_PORT: 8080
+      LIQUID_MAX_EXECUTION_TIME: 300000
+      LIQUID_MAX_MEMORY_MB: 512
+      LIQUID_LOG_LEVEL: info
+    networks:
+      - liquid-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   # Video rendering service
   video-runtime:
     image: ghcr.io/marioberlin/liquidcrypto-video:${VIDEO_VERSION:-latest}
@@ -165,5 +195,6 @@ volumes:
   nats_data:
   caddy_data:
   caddy_config:
+  liquid_sandboxes:
   video_renders:
   video_assets:
