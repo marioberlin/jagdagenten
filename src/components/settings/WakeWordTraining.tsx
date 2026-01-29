@@ -42,6 +42,8 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
     const [exampleCounts, setExampleCounts] = useState<Record<string, number> | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingType, setRecordingType] = useState<'wake' | 'noise' | null>(null);
+    const [detected, setDetected] = useState(false);
+    const detectedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Refs for synchronous recording state check (state updates are async)
     const isRecordingRef = useRef(false);
@@ -50,6 +52,9 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
     // Memoize callbacks to prevent re-renders
     const onWakeWordDetected = useCallback(() => {
         console.log('[WakeWordTraining] Wake word detected!');
+        setDetected(true);
+        if (detectedTimeoutRef.current) clearTimeout(detectedTimeoutRef.current);
+        detectedTimeoutRef.current = setTimeout(() => setDetected(false), 2000);
     }, []);
 
     const onStateChanged = useCallback((newState: WakeWordState) => {
@@ -407,14 +412,46 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                            className={`p-4 rounded-xl border transition-all duration-300 ${
+                                detected
+                                    ? 'bg-emerald-500/25 border-emerald-400/60 ring-2 ring-emerald-400/40'
+                                    : 'bg-green-500/10 border-green-500/20'
+                            }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-medium text-green-300">Model Trained!</h4>
-                                    <p className="text-sm text-green-300/60">
-                                        Test the wake word detection
-                                    </p>
+                                    <AnimatePresence mode="wait">
+                                        {detected ? (
+                                            <motion.div
+                                                key="detected"
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 4 }}
+                                            >
+                                                <h4 className="font-semibold text-emerald-300 flex items-center gap-2">
+                                                    <Check className="w-4 h-4" />
+                                                    Detected!
+                                                </h4>
+                                                <p className="text-sm text-emerald-300/70">
+                                                    Wake word recognized successfully
+                                                </p>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="idle"
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 4 }}
+                                            >
+                                                <h4 className="font-medium text-green-300">Model Trained!</h4>
+                                                <p className="text-sm text-green-300/60">
+                                                    {state === 'listening'
+                                                        ? 'Say "Hey Liquid" to test detection...'
+                                                        : 'Test the wake word detection'}
+                                                </p>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                                 <button
                                     onClick={state === 'listening' ? stopListening : startListening}
