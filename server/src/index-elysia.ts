@@ -16,6 +16,7 @@ import { systemFilesRoutes } from './system/index.js';
 import { agentSessionRoutes } from './routes/agent-sessions.js';
 // import consoleRoutes from './routes/console.js'; // TODO: Create console routes
 import { initNats, closeNats, getNatsHealth, isNatsConnected } from './nats/index.js';
+import { createRemoteA2AProxyPlugin } from './plugins/remote-a2a-proxy.js';
 
 // CORS plugin
 const corsPlugin = cors({
@@ -296,6 +297,7 @@ const app = new Elysia({ prefix: '' })
     .use(portfolioPlugin)
     .use(marketPlugin)
     .use(a2aPlugin)
+    .use(createRemoteA2AProxyPlugin())
     .use(coworkRoutes)
     .use(sandboxRoutes)
     .use(systemFilesRoutes)
