@@ -372,17 +372,21 @@ export default function AgentChatApp() {
 
     return (
         <div className="flex flex-col h-full bg-black/20">
-            {/* Agent-Specific Background (WR-Demo) */}
-            {agent.id === 'remote-wr-demo' && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <img
-                        src="/images/backgrounds/sticklikov-retro.png"
-                        alt=""
-                        className="w-full h-full object-cover opacity-50"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" />
-                </div>
-            )}
+            {/* Agent-Specific Background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <img
+                    src={agent.id === 'remote-wr-demo'
+                        ? '/images/backgrounds/sticklikov-retro.png'
+                        : `/images/backgrounds/${agent.id}.png`}
+                    alt=""
+                    className="w-full h-full object-cover opacity-40"
+                    onError={(e) => {
+                        // Hide image if not found
+                        (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" />
+            </div>
 
             {/* Chat content container - max 2/3 width on large screens, centered */}
             <div className="flex flex-col h-full relative z-10 w-full max-w-[100%] lg:max-w-[66%] xl:max-w-[60%] mx-auto">
