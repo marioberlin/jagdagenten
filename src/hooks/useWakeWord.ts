@@ -60,6 +60,10 @@ export interface UseWakeWordReturn {
     stopListening: () => Promise<void>;
     /** Record a training example */
     recordExample: (isBackgroundNoise?: boolean) => Promise<void>;
+    /** Cancel ongoing recording */
+    cancelRecording: () => void;
+    /** Check if currently recording */
+    isRecording: boolean;
     /** Train the model with collected examples */
     train: (epochs?: number) => Promise<void>;
     /** Get count of collected examples */
@@ -141,6 +145,8 @@ export function useWakeWord(options: UseWakeWordOptions): UseWakeWordReturn {
     const baseRecognizerRef = useRef<any>(null);
     const transferRecognizerRef = useRef<any>(null);
     const isListeningRef = useRef(false);
+    const isRecordingRef = useRef(false);
+    const recordingAbortRef = useRef<(() => void) | null>(null);
 
     // Update state with callback
     const updateState = useCallback((newState: WakeWordState) => {
@@ -298,6 +304,16 @@ export function useWakeWord(options: UseWakeWordOptions): UseWakeWordReturn {
         }
     }, [updateState, handleError]);
 
+    // Cancel any ongoing recording
+    const cancelRecording = useCallback(() => {
+        if (recordingAbortRef.current) {
+            console.log('[useWakeWord] Cancelling recording');
+            recordingAbortRef.current();
+            recordingAbortRef.current = null;
+        }
+        isRecordingRef.current = false;
+    }, []);
+
     // Record a training example
     const recordExample = useCallback(async (isBackgroundNoise = false) => {
         if (!transferRecognizerRef.current) {
@@ -305,32 +321,60 @@ export function useWakeWord(options: UseWakeWordOptions): UseWakeWordReturn {
             return;
         }
 
-        try {
-            // Request microphone permission first (if not already granted)
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Stop the stream immediately - we just needed to trigger permission
-                stream.getTracks().forEach(track => track.stop());
-                console.log('[useWakeWord] Microphone permission granted');
-            } catch (micErr) {
-                throw new Error('Microphone permission denied. Please allow microphone access to record examples.');
-            }
-
-            const label = isBackgroundNoise ? '_background_noise_' : wakeWord;
-            console.log(`[useWakeWord] Recording example for: ${label}`);
-
-            await transferRecognizerRef.current.collectExample(label);
-
-            // Log example count (may throw if no examples yet - that's ok)
-            try {
-                console.log('[useWakeWord] Example recorded:', transferRecognizerRef.current.countExamples());
-            } catch {
-                console.log('[useWakeWord] Example recorded (count unavailable)');
-            }
-        } catch (err) {
-            handleError(err instanceof Error ? err : new Error(String(err)));
+        // If already recording, cancel it
+        if (isRecordingRef.current) {
+            console.log('[useWakeWord] Cancelling existing recording');
+            cancelRecording();
+            return;
         }
-    }, [wakeWord, handleError]);
+
+        const label = isBackgroundNoise ? '_background_noise_' : wakeWord;
+        console.log(`[useWakeWord] Recording example for: ${label}`);
+
+        isRecordingRef.current = true;
+        let completed = false;
+
+        // Set up abort function
+        recordingAbortRef.current = () => {
+            completed = true;
+            isRecordingRef.current = false;
+        };
+
+        // Start the recording (fire-and-forget style)
+        // collectExample takes ~1.5s but its Promise may never resolve in some browsers
+        transferRecognizerRef.current.collectExample(label)
+            .then(() => {
+                if (!completed) {
+                    completed = true;
+                    console.log('[useWakeWord] Example recorded:', transferRecognizerRef.current?.countExamples());
+                }
+            })
+            .catch((err: Error) => {
+                // Ignore "Cannot stop" errors - they're benign
+                if (!err.message?.includes('Cannot stop')) {
+                    console.error('[useWakeWord] Recording error:', err);
+                }
+            })
+            .finally(() => {
+                isRecordingRef.current = false;
+                recordingAbortRef.current = null;
+            });
+
+        // Wait fixed duration for recording (TensorFlow records ~1.5s of audio)
+        // This ensures the UI always resets after this time
+        await new Promise<void>((resolve) => {
+            setTimeout(() => {
+                if (!completed) {
+                    completed = true;
+                    console.log('[useWakeWord] Recording duration complete');
+                }
+                resolve();
+            }, 1800); // 1.8 seconds - slightly longer than TF's ~1.5s
+        });
+
+        isRecordingRef.current = false;
+        recordingAbortRef.current = null;
+    }, [wakeWord, handleError, cancelRecording]);
 
     // Train the model
     const train = useCallback(async (epochs = 25) => {
@@ -339,12 +383,7 @@ export function useWakeWord(options: UseWakeWordOptions): UseWakeWordReturn {
             return;
         }
 
-        let counts: Record<string, number> | null = null;
-        try {
-            counts = transferRecognizerRef.current.countExamples();
-        } catch {
-            // countExamples throws if no examples collected
-        }
+        const counts = transferRecognizerRef.current.countExamples();
         if (!counts || Object.keys(counts).length === 0) {
             handleError(new Error('No examples recorded. Record at least 5 examples.'));
             return;
@@ -422,6 +461,8 @@ export function useWakeWord(options: UseWakeWordOptions): UseWakeWordReturn {
         startListening,
         stopListening,
         recordExample,
+        cancelRecording,
+        isRecording: isRecordingRef.current,
         train,
         getExampleCounts,
         clearExamples,

@@ -5,7 +5,7 @@
  * Speech Commands with transfer learning.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Volume2, Trash2, Play, Square, Check, Loader2, AlertCircle, Settings2 } from 'lucide-react';
 import { useWakeWord, type WakeWordState, type TrainingProgress } from '@/hooks/useWakeWord';
@@ -33,22 +33,43 @@ export interface WakeWordSettings {
 // ============================================================================
 
 export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTrainingProps) {
-    // Global store state
-    const globalEnabled = useWakeWordStore((s) => s.enabled);
-    const globalThreshold = useWakeWordStore((s) => s.threshold);
-    const setGlobalEnabled = useWakeWordStore((s) => s.setEnabled);
-    const setGlobalThreshold = useWakeWordStore((s) => s.setThreshold);
-    const setGlobalIsTrained = useWakeWordStore((s) => s.setIsTrained);
+    // Global store state - select all at once to avoid multiple subscriptions
+    const { enabled, threshold, setEnabled, setThreshold, setIsTrained: setGlobalIsTrained } = useWakeWordStore();
 
-    // Local state (synced with global)
-    const [enabled, setEnabled] = useState(initialEnabled ?? globalEnabled);
-    const [threshold, setThreshold] = useState(globalThreshold);
-    const [wakeWord] = useState('hey_liquid');
+    // Local UI state only
+    const wakeWord = 'hey_liquid';
     const [trainingProgress, setTrainingProgress] = useState<TrainingProgress | null>(null);
     const [exampleCounts, setExampleCounts] = useState<Record<string, number> | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingType, setRecordingType] = useState<'wake' | 'noise' | null>(null);
-    const [justRecorded, setJustRecorded] = useState<'wake' | 'noise' | null>(null);
+
+    // Refs for synchronous recording state check (state updates are async)
+    const isRecordingRef = useRef(false);
+    const recordingTypeRef = useRef<'wake' | 'noise' | null>(null);
+
+    // Memoize callbacks to prevent re-renders
+    const onWakeWordDetected = useCallback(() => {
+        console.log('[WakeWordTraining] Wake word detected!');
+    }, []);
+
+    const onStateChanged = useCallback((newState: WakeWordState) => {
+        console.log('[WakeWordTraining] State:', newState);
+    }, []);
+
+    const onProgress = useCallback((progress: TrainingProgress) => {
+        setTrainingProgress(progress);
+    }, []);
+
+    const onErrorOccurred = useCallback((err: Error) => {
+        console.error('[WakeWordTraining] Error:', err);
+    }, []);
+
+    // Memoize config to prevent re-creating on every render
+    const config = useMemo(() => ({
+        enabled: true, // Always enabled in training mode
+        threshold,
+        wakeWord,
+    }), [threshold, wakeWord]);
 
     // Wake word hook (dummy callback for training mode)
     const {
@@ -56,45 +77,27 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
         startListening,
         stopListening,
         recordExample,
+        cancelRecording,
         train,
         getExampleCounts,
         clearExamples,
         isTrained,
         error,
     } = useWakeWord({
-        onWakeWord: () => {
-            // This is triggered when wake word is detected during testing
-            console.log('[WakeWordTraining] Wake word detected!');
-        },
-        onStateChange: (newState) => {
-            console.log('[WakeWordTraining] State:', newState);
-        },
-        onTrainingProgress: (progress) => {
-            setTrainingProgress(progress);
-        },
-        onError: (err) => {
-            console.error('[WakeWordTraining] Error:', err);
-        },
-        config: {
-            enabled: true, // Always enabled in training mode
-            threshold,
-            wakeWord,
-        },
+        onWakeWord: onWakeWordDetected,
+        onStateChange: onStateChanged,
+        onTrainingProgress: onProgress,
+        onError: onErrorOccurred,
+        config,
     });
 
-    // Sync local enabled with global store
+    // Sync trained state with global store - only when isTrained changes
+    const prevIsTrainedRef = useRef(isTrained);
     useEffect(() => {
-        setGlobalEnabled(enabled);
-    }, [enabled, setGlobalEnabled]);
-
-    // Sync local threshold with global store
-    useEffect(() => {
-        setGlobalThreshold(threshold);
-    }, [threshold, setGlobalThreshold]);
-
-    // Sync trained state with global store
-    useEffect(() => {
-        setGlobalIsTrained(isTrained);
+        if (prevIsTrainedRef.current !== isTrained) {
+            prevIsTrainedRef.current = isTrained;
+            setGlobalIsTrained(isTrained);
+        }
     }, [isTrained, setGlobalIsTrained]);
 
     // Update example counts on mount only (counts are updated in handleRecordExample after each recording)
@@ -106,39 +109,75 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Notify parent of config changes
+    // Notify parent of config changes - memoized to prevent loops
+    const configRef = useRef({ enabled, threshold, wakeWord });
     useEffect(() => {
-        onConfigChange?.({ enabled, threshold, wakeWord });
+        if (
+            configRef.current.enabled !== enabled ||
+            configRef.current.threshold !== threshold ||
+            configRef.current.wakeWord !== wakeWord
+        ) {
+            configRef.current = { enabled, threshold, wakeWord };
+            onConfigChange?.({ enabled, threshold, wakeWord });
+        }
     }, [enabled, threshold, wakeWord, onConfigChange]);
 
     // Record example with visual feedback
     const handleRecordExample = useCallback(async (type: 'wake' | 'noise') => {
+        // If already recording this type, cancel it (use refs for synchronous check)
+        if (isRecordingRef.current && recordingTypeRef.current === type) {
+            console.log('[WakeWordTraining] Cancelling recording via click');
+            cancelRecording();
+            isRecordingRef.current = false;
+            recordingTypeRef.current = null;
+            setIsRecording(false);
+            setRecordingType(null);
+            return;
+        }
+
+        // Don't allow recording if already recording a different type
+        if (isRecordingRef.current) {
+            console.log('[WakeWordTraining] Already recording different type, ignoring');
+            return;
+        }
+
         // Don't allow recording if not ready
         if (state === 'loading' || state === 'error' || state === 'disabled') {
             console.warn('[WakeWordTraining] Cannot record - model not ready');
             return;
         }
 
+        // Set both refs (for sync check) and state (for UI)
+        isRecordingRef.current = true;
+        recordingTypeRef.current = type;
         setIsRecording(true);
         setRecordingType(type);
-        setJustRecorded(null);
+
+        // Safety timeout - always reset UI after 2.5s no matter what happens
+        const safetyTimeout = setTimeout(() => {
+            console.log('[WakeWordTraining] Safety timeout - resetting UI');
+            isRecordingRef.current = false;
+            recordingTypeRef.current = null;
+            setIsRecording(false);
+            setRecordingType(null);
+        }, 2500);
 
         try {
             await recordExample(type === 'noise');
             // Refresh counts
             const counts = getExampleCounts();
             setExampleCounts(counts);
-            // Show success feedback
-            setJustRecorded(type);
-            setTimeout(() => setJustRecorded(null), 1500);
         } catch (err) {
             console.error('[WakeWordTraining] Recording failed:', err);
             // Don't crash - just log the error
         } finally {
+            clearTimeout(safetyTimeout);
+            isRecordingRef.current = false;
+            recordingTypeRef.current = null;
             setIsRecording(false);
             setRecordingType(null);
         }
-    }, [recordExample, getExampleCounts, state]);
+    }, [recordExample, cancelRecording, getExampleCounts, state]);
 
     // Handle training
     const handleTrain = useCallback(async () => {
@@ -236,8 +275,8 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                         <h4 className="font-medium text-white mb-2">Train "Hey Liquid"</h4>
                         <p className="text-sm text-white/60">
-                            Click the button, then say "Hey Liquid" clearly. Recording lasts ~1.5 seconds.
-                            Repeat 5 times, then record 3 background noise samples.
+                            Record at least 5 examples of you saying "Hey Liquid" and 3 examples of background noise.
+                            The model will learn to recognize your voice pattern.
                         </p>
                     </div>
 
@@ -245,43 +284,29 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
                     <div className="grid grid-cols-2 gap-4">
                         {/* Wake Word Recording */}
                         <button
-                            onClick={() => handleRecordExample('wake')}
-                            disabled={isRecording || state === 'training'}
-                            className={`p-4 rounded-xl border transition-all relative overflow-hidden ${
-                                isRecording && recordingType === 'wake'
-                                    ? 'bg-red-500/20 border-red-500 ring-2 ring-red-500/50'
-                                    : justRecorded === 'wake'
-                                        ? 'bg-green-500/20 border-green-500 ring-2 ring-green-500/50'
-                                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                            }`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRecordExample('wake');
+                            }}
+                            disabled={(isRecording && recordingType !== 'wake') || state === 'training' || state === 'loading' || state === 'error'}
+                            className={`p-4 rounded-xl border transition-all ${isRecording && recordingType === 'wake'
+                                ? 'bg-red-500/20 border-red-500 ring-2 ring-red-500/50 cursor-pointer'
+                                : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                }`}
                         >
-                            {/* Progress bar during recording */}
-                            {isRecording && recordingType === 'wake' && (
-                                <motion.div
-                                    className="absolute bottom-0 left-0 h-1 bg-red-500"
-                                    initial={{ width: '100%' }}
-                                    animate={{ width: '0%' }}
-                                    transition={{ duration: 1.5, ease: 'linear' }}
-                                />
-                            )}
                             <div className="flex flex-col items-center gap-2">
                                 <motion.div
                                     animate={isRecording && recordingType === 'wake' ? { scale: [1, 1.2, 1] } : {}}
                                     transition={{ repeat: Infinity, duration: 0.5 }}
                                 >
-                                    {justRecorded === 'wake' ? (
-                                        <Check className="w-8 h-8 text-green-400" />
-                                    ) : (
-                                        <Mic className={`w-8 h-8 ${isRecording && recordingType === 'wake' ? 'text-red-400' : 'text-blue-400'}`} />
-                                    )}
+                                    <Mic className={`w-8 h-8 ${isRecording && recordingType === 'wake' ? 'text-red-400' : 'text-blue-400'}`} />
                                 </motion.div>
                                 <span className="font-medium text-white">
-                                    {isRecording && recordingType === 'wake'
-                                        ? '🎙️ Recording...'
-                                        : justRecorded === 'wake'
-                                            ? '✓ Recorded!'
-                                            : 'Say "Hey Liquid"'}
+                                    {isRecording && recordingType === 'wake' ? 'Recording...' : 'Say "Hey Liquid"'}
                                 </span>
+                                {isRecording && recordingType === 'wake' && (
+                                    <span className="text-xs text-red-300">Tap to cancel</span>
+                                )}
                                 <span className="text-sm text-white/60">
                                     {wakeExamples} / 5 examples
                                 </span>
@@ -290,43 +315,29 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
 
                         {/* Background Noise Recording */}
                         <button
-                            onClick={() => handleRecordExample('noise')}
-                            disabled={isRecording || state === 'training'}
-                            className={`p-4 rounded-xl border transition-all relative overflow-hidden ${
-                                isRecording && recordingType === 'noise'
-                                    ? 'bg-orange-500/20 border-orange-500 ring-2 ring-orange-500/50'
-                                    : justRecorded === 'noise'
-                                        ? 'bg-green-500/20 border-green-500 ring-2 ring-green-500/50'
-                                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                            }`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRecordExample('noise');
+                            }}
+                            disabled={(isRecording && recordingType !== 'noise') || state === 'training' || state === 'loading' || state === 'error'}
+                            className={`p-4 rounded-xl border transition-all ${isRecording && recordingType === 'noise'
+                                ? 'bg-orange-500/20 border-orange-500 ring-2 ring-orange-500/50 cursor-pointer'
+                                : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                }`}
                         >
-                            {/* Progress bar during recording */}
-                            {isRecording && recordingType === 'noise' && (
-                                <motion.div
-                                    className="absolute bottom-0 left-0 h-1 bg-orange-500"
-                                    initial={{ width: '100%' }}
-                                    animate={{ width: '0%' }}
-                                    transition={{ duration: 1.5, ease: 'linear' }}
-                                />
-                            )}
                             <div className="flex flex-col items-center gap-2">
                                 <motion.div
                                     animate={isRecording && recordingType === 'noise' ? { scale: [1, 1.2, 1] } : {}}
                                     transition={{ repeat: Infinity, duration: 0.5 }}
                                 >
-                                    {justRecorded === 'noise' ? (
-                                        <Check className="w-8 h-8 text-green-400" />
-                                    ) : (
-                                        <MicOff className={`w-8 h-8 ${isRecording && recordingType === 'noise' ? 'text-orange-400' : 'text-gray-400'}`} />
-                                    )}
+                                    <MicOff className={`w-8 h-8 ${isRecording && recordingType === 'noise' ? 'text-orange-400' : 'text-gray-400'}`} />
                                 </motion.div>
                                 <span className="font-medium text-white">
-                                    {isRecording && recordingType === 'noise'
-                                        ? '🎙️ Recording...'
-                                        : justRecorded === 'noise'
-                                            ? '✓ Recorded!'
-                                            : 'Background Noise'}
+                                    {isRecording && recordingType === 'noise' ? 'Recording...' : 'Background Noise'}
                                 </span>
+                                {isRecording && recordingType === 'noise' && (
+                                    <span className="text-xs text-orange-300">Tap to cancel</span>
+                                )}
                                 <span className="text-sm text-white/60">
                                     {noiseExamples} / 3 examples
                                 </span>

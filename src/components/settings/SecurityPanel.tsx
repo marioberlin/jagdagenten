@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Fingerprint, Lock, Trash2, Plus, Clock,
-  AlertTriangle, Mail, Check, X, User, Mic,
+  AlertTriangle, Mail, Check, X, User,
 } from 'lucide-react';
 import {
   useAuthStore,
@@ -405,8 +405,8 @@ export const SecurityPanel: React.FC = () => {
         </div>
       </Section>
 
-      {/* Voice Activation */}
-      <Section title="Voice Wake Word" icon={Mic}>
+      {/* Wake Word Training */}
+      <Section title="Wake Word" icon={Shield}>
         <WakeWordTraining />
       </Section>
 
