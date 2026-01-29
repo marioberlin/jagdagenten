@@ -32,7 +32,7 @@ export interface WakeWordSettings {
 // Component
 // ============================================================================
 
-export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTrainingProps) {
+export function WakeWordTraining({ onConfigChange }: WakeWordTrainingProps) {
     // Global store state - select all at once to avoid multiple subscriptions
     const { enabled, threshold, setEnabled, setThreshold, setIsTrained: setGlobalIsTrained } = useWakeWordStore();
 
@@ -293,7 +293,7 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
                                 e.stopPropagation();
                                 handleRecordExample('wake');
                             }}
-                            disabled={(isRecording && recordingType !== 'wake') || state === 'training' || state === 'loading' || state === 'error'}
+                            disabled={(isRecording && recordingType !== 'wake') || state === 'training' || state === 'error'}
                             className={`p-4 rounded-xl border transition-all ${isRecording && recordingType === 'wake'
                                 ? 'bg-red-500/20 border-red-500 ring-2 ring-red-500/50 cursor-pointer'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -324,7 +324,7 @@ export function WakeWordTraining({ onConfigChange, initialEnabled }: WakeWordTra
                                 e.stopPropagation();
                                 handleRecordExample('noise');
                             }}
-                            disabled={(isRecording && recordingType !== 'noise') || state === 'training' || state === 'loading' || state === 'error'}
+                            disabled={(isRecording && recordingType !== 'noise') || state === 'training' || state === 'error'}
                             className={`p-4 rounded-xl border transition-all ${isRecording && recordingType === 'noise'
                                 ? 'bg-orange-500/20 border-orange-500 ring-2 ring-orange-500/50 cursor-pointer'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'

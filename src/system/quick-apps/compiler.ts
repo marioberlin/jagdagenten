@@ -26,8 +26,8 @@ export async function initializeCompiler(): Promise<void> {
   if (initError) throw initError;
   if (initPromise) return initPromise;
 
-  // Match the version in package.json (0.27.2)
-  const ESBUILD_VERSION = '0.24.0'; // Use 0.24.0 which has better browser UMD support
+  // Match the version in package.json
+  const ESBUILD_VERSION = '0.27.2';
 
   initPromise = (async () => {
     try {
