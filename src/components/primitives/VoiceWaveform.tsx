@@ -47,7 +47,7 @@ export const VoiceWaveform = ({ state, className }: VoiceWaveformProps) => {
                     className={cn(
                         "w-[3px] rounded-full transition-all duration-150",
                         barColor,
-                        isActive ? "animate-waveform" : "h-2 opacity-60"
+                        isActive ? "animate-waveform" : state === 'idle' ? "animate-idle-pulse h-2" : "h-2 opacity-60"
                     )}
                     style={{
                         animationDelay: isActive ? `${i * 100}ms` : undefined,
@@ -61,8 +61,15 @@ export const VoiceWaveform = ({ state, className }: VoiceWaveformProps) => {
                     0%, 100% { height: 6px; }
                     50% { height: 18px; }
                 }
+                @keyframes idle-pulse {
+                    0%, 100% { opacity: 0.5; transform: scaleY(1); }
+                    50% { opacity: 0.8; transform: scaleY(1.2); }
+                }
                 .animate-waveform {
                     animation: waveform 0.8s ease-in-out infinite;
+                }
+                .animate-idle-pulse {
+                    animation: idle-pulse 2s ease-in-out infinite;
                 }
             `}</style>
         </div>
