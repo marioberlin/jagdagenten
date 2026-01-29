@@ -15,6 +15,7 @@ import {
   isPlatformAuthenticatorAvailable,
   registerBiometric,
 } from '@/services/biometricService';
+import { WakeWordTraining } from './WakeWordTraining';
 
 export const SecurityPanel: React.FC = () => {
   const authEnabled = useAuthStore((s) => s.authEnabled);
@@ -402,6 +403,11 @@ export const SecurityPanel: React.FC = () => {
             <option value={60}>1 hour</option>
           </select>
         </div>
+      </Section>
+
+      {/* Wake Word Training */}
+      <Section title="Wake Word" icon={Shield}>
+        <WakeWordTraining />
       </Section>
 
       {/* Lock Now */}
