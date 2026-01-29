@@ -15,6 +15,8 @@ import { useAppComponent } from '@/system/app-store/AppLoader';
 import { resolveIconComponent } from '@/system/app-store/iconResolver';
 import type { InstalledApp } from '@/system/app-store/types';
 import { useAgentChatStore, selectFocusedAgent, type AgentConnectionStatus } from '@/stores/agentChatStore';
+import { useAlexaAppStore } from '@/applications/alexa/store';
+import { Cloud, Sun, CloudSun, CloudRain, Snowflake } from 'lucide-react';
 
 /**
  * LiquidOSLayout
@@ -102,75 +104,75 @@ export const LiquidOSLayout: React.FC = () => {
 
     return (
         <AuthGate>
-        <div className="relative w-full h-full text-foreground">
-            {/* 1. Menu Bar - Top Layer, Persistent */}
-            <LiquidMenuBar />
+            <div className="relative w-full h-full text-foreground">
+                {/* 1. Menu Bar - Top Layer, Persistent */}
+                <LiquidMenuBar />
 
-            {/* 2. Content Area */}
-            <PortalFrame activeMode="os" className="pt-[30px]">
-                {/* 3. Spatial Environment - The "Desktop" */}
-                <SpatialCanvas>
-                    <AnimatePresence mode="wait">
-                        {hasAppOpen ? (
-                            <motion.div
-                                key="empty-desktop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="w-full h-full"
-                            >
-                                <EmptyDesktop />
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="home-content"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="w-full h-full overflow-y-auto custom-scrollbar pt-4 pb-32"
-                            >
-                                <Outlet />
-                            </motion.div>
+                {/* 2. Content Area */}
+                <PortalFrame activeMode="os" className="pt-[30px]">
+                    {/* 3. Spatial Environment - The "Desktop" */}
+                    <SpatialCanvas>
+                        <AnimatePresence mode="wait">
+                            {hasAppOpen ? (
+                                <motion.div
+                                    key="empty-desktop"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="w-full h-full"
+                                >
+                                    <EmptyDesktop />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="home-content"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="w-full h-full overflow-y-auto custom-scrollbar pt-4 pb-32"
+                                >
+                                    <Outlet />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </SpatialCanvas>
+
+                    {/* 4. Dynamic App Panel Layer */}
+                    <AnimatePresence>
+                        {activeApp && (
+                            <DynamicAppPanel
+                                key={activeAppId!}
+                                appId={activeAppId!}
+                                manifest={activeApp.manifest}
+                                panelVariants={panelVariants}
+                                panelTransition={panelTransition}
+                                onClose={closeApp}
+                            />
                         )}
                     </AnimatePresence>
-                </SpatialCanvas>
 
-                {/* 4. Dynamic App Panel Layer */}
-                <AnimatePresence>
-                    {activeApp && (
-                        <DynamicAppPanel
-                            key={activeAppId!}
-                            appId={activeAppId!}
-                            manifest={activeApp.manifest}
-                            panelVariants={panelVariants}
-                            panelTransition={panelTransition}
-                            onClose={closeApp}
-                        />
-                    )}
-                </AnimatePresence>
-
-                {/* 5. System Dock - Fixed Bottom */}
-                <AnimatePresence>
-                    {dockVisible && (
-                        <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
-                            <motion.div
-                                initial={{ y: 100, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: 100, opacity: 0 }}
-                                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                                className="pointer-events-none"
-                            >
-                                <div className="pointer-events-auto">
-                                    <GlassDock items={dockItems} />
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
-            </PortalFrame>
-        </div>
+                    {/* 5. System Dock - Fixed Bottom */}
+                    <AnimatePresence>
+                        {dockVisible && (
+                            <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
+                                <motion.div
+                                    initial={{ y: 100, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: 100, opacity: 0 }}
+                                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                                    className="pointer-events-none"
+                                >
+                                    <div className="pointer-events-auto">
+                                        <GlassDock items={dockItems} />
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+                </PortalFrame>
+            </div>
         </AuthGate>
     );
 };
@@ -301,6 +303,53 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
         ];
     }, [appId, focusedAgentId, focusedAgent]);
 
+    // Build headerRight for Alexa app - use primitive selectors to avoid infinite re-renders
+    const alexaTemp = useAlexaAppStore(s => s.temperature);
+    const alexaCondition = useAlexaAppStore(s => s.condition);
+    const [alexaTime, setAlexaTime] = useState(new Date());
+
+    useEffect(() => {
+        if (appId !== 'alexa') return;
+        const interval = setInterval(() => setAlexaTime(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, [appId]);
+
+    const getWeatherIcon = (condition: string | null, size: number) => {
+        switch (condition) {
+            case 'clear': return <Sun size={size} className="text-yellow-400" />;
+            case 'partly_cloudy': return <CloudSun size={size} className="text-gray-300" />;
+            case 'cloudy':
+            case 'overcast': return <Cloud size={size} className="text-gray-400" />;
+            case 'rain':
+            case 'drizzle':
+            case 'heavy_rain':
+            case 'thunderstorm': return <CloudRain size={size} className="text-blue-400" />;
+            case 'snow':
+            case 'heavy_snow':
+            case 'sleet':
+            case 'hail': return <Snowflake size={size} className="text-blue-200" />;
+            default: return <Cloud size={size} className="text-white/40" />;
+        }
+    };
+
+    const headerRight = appId === 'alexa' ? (
+        <div className="flex items-center gap-4">
+            {/* Weather */}
+            <div className="flex items-center gap-1.5 text-white/80 text-sm">
+                {getWeatherIcon(alexaCondition, 16)}
+                <span>{alexaTemp !== null ? `${Math.round(alexaTemp)}°` : '--°'}</span>
+            </div>
+            {/* Time */}
+            <span className="text-white font-medium text-sm">
+                {alexaTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            {/* Glass Avatar */}
+            <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/90 font-medium text-xs">
+                M
+            </div>
+        </div>
+    ) : undefined;
+
     if (!AppComponent) {
         return (
             <motion.div
@@ -384,6 +433,7 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
                 initialSize={{ width, height }}
                 isActive={true}
                 onClose={onClose}
+                headerRight={headerRight}
             >
                 <Suspense fallback={
                     <div className="flex items-center justify-center h-full">

@@ -27,31 +27,44 @@ export async function initializeCompiler(): Promise<void> {
   if (initPromise) return initPromise;
 
   // Match the version in package.json (0.27.2)
-  const ESBUILD_VERSION = '0.27.2';
+  const ESBUILD_VERSION = '0.24.0'; // Use 0.24.0 which has better browser UMD support
 
   initPromise = (async () => {
     try {
-      // Dynamically import esbuild-wasm to avoid Vite build-time resolution issues
-      esbuild = await import('esbuild-wasm');
+      // Load esbuild-wasm from CDN as a script to avoid Vite bundling issues
+      // The script sets globalThis.esbuild
+      const scriptUrl = `https://unpkg.com/esbuild-wasm@${ESBUILD_VERSION}/lib/browser.min.js`;
 
-      // Try unpkg CDN with version matching the installed package
+      // Check if already loaded
+      if (!(globalThis as any).esbuild) {
+        console.log('[Quick Apps] Loading esbuild from CDN:', scriptUrl);
+
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = scriptUrl;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load esbuild script from CDN'));
+          document.head.appendChild(script);
+        });
+      }
+
+      // Get esbuild from global
+      esbuild = (globalThis as any).esbuild;
+
+      if (!esbuild || typeof esbuild.initialize !== 'function') {
+        throw new Error('esbuild not available after script load');
+      }
+
+      // Initialize with WASM from CDN
       const wasmURL = `https://unpkg.com/esbuild-wasm@${ESBUILD_VERSION}/esbuild.wasm`;
 
-      // Fetch the WASM file manually and compile it
-      // This is more reliable than letting esbuild fetch it
-      console.log('[Quick Apps] Fetching esbuild WASM from:', wasmURL);
-      const wasmResponse = await fetch(wasmURL);
-      if (!wasmResponse.ok) {
-        throw new Error(`Failed to fetch WASM: ${wasmResponse.status}`);
-      }
-      const wasmBuffer = await wasmResponse.arrayBuffer();
-      const wasmModule = await WebAssembly.compile(wasmBuffer);
+      console.log('[Quick Apps] Initializing esbuild with WASM from:', wasmURL);
 
-      // Initialize with the pre-compiled module (no worker for simplicity)
       await esbuild.initialize({
-        wasmModule,
+        wasmURL,
         worker: false, // Run in main thread to avoid worker complexity
       });
+
       esbuildInitialized = true;
       console.log('[Quick Apps] esbuild initialized successfully');
     } catch (err) {
@@ -63,6 +76,8 @@ export async function initializeCompiler(): Promise<void> {
 
   return initPromise;
 }
+
+
 
 // ============================================================
 // Runtime Shims (Injected into compiled code)
@@ -442,8 +457,8 @@ export async function createQuickAppComponent(
       'React',
       'LucideReact',
       `
-      // Destructure common Lucide icons for convenience
-      const { Plus, Minus, RotateCcw, Play, Pause, Square, Settings, X, Check, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Menu, Home, User, Heart, Star, Trash, Edit, Copy, Download, Upload, Share, Mail, Phone, Calendar, Clock, MapPin, Image, File, Folder, Lock, Unlock, Eye, EyeOff, Bell, Volume2, VolumeX, Wifi, Battery, Sun, Moon, Cloud, Zap, Hash, Tag, Filter, Grid, List, MoreHorizontal, MoreVertical, RefreshCw, ExternalLink, Link, Bookmark, Flag, AlertCircle, Info, HelpCircle, CheckCircle, XCircle, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Send, MessageSquare, ThumbsUp, ThumbsDown } = LucideReact;
+      // Destructure all Lucide icons for convenience - they're all available on LucideReact
+      const { Plus, Minus, RotateCcw, Play, Pause, Square, Settings, X, Check, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Menu, Home, User, Heart, Star, Trash, Edit, Copy, Download, Upload, Share, Mail, Phone, Calendar, Clock, MapPin, Image, File, Folder, Lock, Unlock, Eye, EyeOff, Bell, Volume2, VolumeX, Wifi, Battery, Sun, Moon, Cloud, Zap, Hash, Tag, Filter, Grid, List, MoreHorizontal, MoreVertical, RefreshCw, ExternalLink, Link, Bookmark, Flag, AlertCircle, Info, HelpCircle, CheckCircle, XCircle, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Send, MessageSquare, ThumbsUp, ThumbsDown, Music, Navigation, Car, Thermometer, Smartphone, Fuel, Route, Mic, SkipBack, SkipForward, Radio, Power, Gauge, Compass, Map, Globe, Headphones, Speaker, Tv, Monitor, Camera, Video, Layers, Box, Package, ShoppingCart, CreditCard, DollarSign, TrendingUp, TrendingDown, BarChart, PieChart, Activity, Loader2, RotateCw, Trash2, Edit2, Save, FileText, FolderOpen, Archive, Inbox, Paperclip, AtSign, Terminal, Code, Database, Server, HardDrive, Cpu, Tablet, Watch, Airplay, Bluetooth, Cast, Rss, Maximize, Minimize, Maximize2, Minimize2, ZoomIn, ZoomOut, Move, Crosshair, Target, Award, Gift, Percent, Scissors, Brush, Palette, Droplet, Feather, PenTool, Aperture, Film, Music2, Music3, Music4, Volume, Volume1, VolumeOff, Voicemail, PhoneCall, PhoneForwarded, PhoneIncoming, PhoneMissed, PhoneOff, PhoneOutgoing, VideoOff, MicOff, Headset, Podcast, PlayCircle, PauseCircle, StopCircle, Rewind, FastForward, Repeat, Repeat1, Shuffle, ListMusic, ListPlus, ListMinus, ListOrdered, ListChecks, LayoutGrid, LayoutList, LayoutDashboard, SlidersHorizontal, SlidersVertical, ToggleLeft, ToggleRight, CircleDot, Circle, Disc, Disc2, Disc3, Album, Antenna, Satellite, Navigation2, MapPinned, Locate, LocateFixed, LocateOff, Signpost, Milestone } = LucideReact;
 
       ${compiled.compiledCode}
 

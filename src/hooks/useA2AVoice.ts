@@ -98,6 +98,7 @@ export function useA2AVoice(options: UseA2AVoiceOptions): UseA2AVoiceReturn {
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
     const taskIdRef = useRef<string | null>(null);
     const playbackQueueRef = useRef<Float32Array[]>([]);
     const isPlayingRef = useRef(false);
@@ -119,6 +120,10 @@ export function useA2AVoice(options: UseA2AVoiceOptions): UseA2AVoiceReturn {
         if (eventSourceRef.current) {
             eventSourceRef.current.close();
             eventSourceRef.current = null;
+        }
+        if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
         }
         taskIdRef.current = null;
         playbackQueueRef.current = [];
@@ -234,45 +239,69 @@ export function useA2AVoice(options: UseA2AVoiceOptions): UseA2AVoiceReturn {
 
             taskIdRef.current = startResult.result?.id;
 
-            // Subscribe to SSE for responses
-            eventSourceRef.current = new EventSource(`/a2a/stream?taskId=${taskIdRef.current}`);
-            eventSourceRef.current.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
+            // Subscribe to SSE stream for real-time audio/transcript updates
+            if (taskIdRef.current) {
+                const eventSource = new EventSource(`/a2a/stream?taskId=${taskIdRef.current}`);
+                eventSourceRef.current = eventSource;
 
-                    // Handle audio artifacts
-                    if (data.result?.type === 'artifact') {
-                        const artifact = data.result.artifact;
-                        if (artifact?.parts) {
-                            for (const part of artifact.parts) {
-                                if (part.data?.data?.type === 'audio') {
-                                    const audioData = base64PCMToFloat32(part.data.data.data);
-                                    playbackQueueRef.current.push(audioData);
-                                    playAudioQueue();
+                eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('[useA2AVoice] SSE event:', data.method);
+
+                        // Handle artifact updates (audio and transcripts)
+                        if (data.method === 'a2a.task.artifact.update') {
+                            const artifact = data.params?.artifact;
+                            if (artifact?.name === 'transcript-chunk') {
+                                // Handle transcript chunk
+                                for (const part of artifact.parts || []) {
+                                    if ((part as { text?: string }).text && onTranscript) {
+                                        console.log('[useA2AVoice] Transcript:', (part as { text: string }).text);
+                                        onTranscript((part as { text: string }).text);
+                                    }
                                 }
-                                // Handle transcript
-                                if (part.text && onTranscript) {
-                                    onTranscript(part.text);
+                            } else if (artifact?.name === 'audio-response') {
+                                // Handle audio response
+                                for (const part of artifact.parts || []) {
+                                    const dataPart = part as { data?: { data?: string; mimeType?: string } };
+                                    if (dataPart.data?.data) {
+                                        console.log('[useA2AVoice] Audio received');
+                                        const audioData = base64PCMToFloat32(dataPart.data.data);
+                                        playbackQueueRef.current.push(audioData);
+                                        updateState('speaking');
+                                        playAudioQueue();
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Handle status updates
-                    if (data.result?.type === 'status') {
-                        if (data.result.status?.state === 'completed') {
-                            cleanup();
-                            updateState('idle');
+                        // Handle status updates
+                        if (data.method === 'a2a.task.status.update') {
+                            const status = data.params?.status;
+                            if (status?.state === 'failed') {
+                                handleError(new Error(status.message?.parts?.[0]?.text || 'Voice session failed'));
+                            }
                         }
+                    } catch (parseError) {
+                        console.error('[useA2AVoice] SSE parse error:', parseError);
                     }
-                } catch (e) {
-                    console.error('[useA2AVoice] SSE parse error:', e);
-                }
-            };
+                };
 
-            eventSourceRef.current.onerror = () => {
-                handleError(new Error('SSE connection lost'));
-            };
+                eventSource.onerror = (err) => {
+                    console.warn('[useA2AVoice] SSE error (may reconnect):', err);
+                    // Don't immediately error - SSE will auto-reconnect
+                };
+            }
+
+            // Handle transcript from initial response
+            const responseMessage = startResult.result?.status?.message;
+            if (responseMessage?.parts) {
+                for (const part of responseMessage.parts) {
+                    if ((part as { text?: string }).text && onTranscript) {
+                        onTranscript((part as { text: string }).text);
+                    }
+                }
+            }
 
             // Send audio data on process
             processorRef.current.onaudioprocess = async (e) => {
@@ -282,36 +311,68 @@ export function useA2AVoice(options: UseA2AVoiceOptions): UseA2AVoiceReturn {
                 const base64Audio = float32ToBase64PCM(inputData);
 
                 // Send audio chunk via A2A
-                await fetch('/a2a', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'A2A-Version': '1.0',
-                    },
-                    body: JSON.stringify({
-                        jsonrpc: '2.0',
-                        id: crypto.randomUUID(),
-                        method: 'SendMessage',
-                        params: {
-                            message: {
-                                messageId: crypto.randomUUID(),
-                                role: 'user',
-                                contextId,
-                                parts: [{
-                                    data: {
-                                        data: {
-                                            mimeType: 'audio/pcm;rate=16000',
-                                            data: base64Audio,
-                                        },
-                                    },
-                                }],
-                            },
-                            metadata: {
-                                targetAgent: 'voice',
-                            },
+                try {
+                    const audioResponse = await fetch('/a2a', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'A2A-Version': '1.0',
                         },
-                    }),
-                });
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: crypto.randomUUID(),
+                            method: 'SendMessage',
+                            params: {
+                                message: {
+                                    messageId: crypto.randomUUID(),
+                                    role: 'user',
+                                    contextId,
+                                    parts: [{
+                                        data: {
+                                            data: {
+                                                mimeType: 'audio/pcm;rate=16000',
+                                                data: base64Audio,
+                                            },
+                                        },
+                                    }],
+                                },
+                                metadata: {
+                                    targetAgent: 'voice',
+                                },
+                            },
+                        }),
+                    });
+
+                    const audioResult = await audioResponse.json();
+
+                    // Handle transcript from audio response
+                    if (audioResult.result?.status?.message?.parts) {
+                        for (const part of audioResult.result.status.message.parts) {
+                            if ((part as { text?: string }).text && onTranscript) {
+                                onTranscript((part as { text: string }).text);
+                            }
+                        }
+                    }
+
+                    // Handle audio response for playback
+                    if (audioResult.result?.artifacts) {
+                        for (const artifact of audioResult.result.artifacts) {
+                            if (artifact?.parts) {
+                                for (const part of artifact.parts) {
+                                    // Handle audio data
+                                    const dataPart = part as { data?: { data?: { type?: string; data?: string } } };
+                                    if (dataPart.data?.data?.type === 'audio' && dataPart.data.data.data) {
+                                        const audioData = base64PCMToFloat32(dataPart.data.data.data);
+                                        playbackQueueRef.current.push(audioData);
+                                        playAudioQueue();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (audioError) {
+                    console.error('[useA2AVoice] Audio send error:', audioError);
+                }
             };
 
             updateState('listening');

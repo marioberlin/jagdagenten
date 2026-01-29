@@ -101,6 +101,7 @@ export function AppStoreHome() {
                 key={installation.id}
                 installation={installation}
                 onClick={() => navigateTo('detail', { appId: installation.id })}
+                onUninstall={() => useQuickAppStore.getState().uninstall(installation.id)}
               />
             ))}
           </div>

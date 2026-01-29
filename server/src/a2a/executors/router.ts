@@ -60,6 +60,15 @@ export class RouterExecutor implements AgentExecutor {
     const targetId = this.resolveTarget(message, context);
     const registered = this.executors.get(targetId);
 
+    // Debug logging
+    console.log('[RouterExecutor] Routing request:', {
+      targetId,
+      contextId: context.contextId,
+      metadataTargetAgent: context.metadata?.targetAgent,
+      messageText: message.parts?.map(p => 'text' in p ? (p as v1.TextPart).text.substring(0, 50) : '[non-text]'),
+      registeredExecutors: Array.from(this.executors.keys()),
+    });
+
     if (!registered) {
       return {
         status: 'failed' as v1.TaskState,
@@ -175,7 +184,7 @@ export class RouterExecutor implements AgentExecutor {
     if (!message.parts) return '';
 
     return message.parts
-      .filter((part: v1.Part): part is v1.TextPart => part.kind === 'text')
+      .filter((part: v1.Part): part is v1.TextPart => v1.isTextPart(part))
       .map((part: v1.TextPart) => part.text)
       .join(' ');
   }

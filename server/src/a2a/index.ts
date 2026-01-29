@@ -17,5 +17,9 @@ export * from './executors/index.js';
 // Elysia Plugin
 export { createA2APlugin, type A2APluginConfig } from './elysia-plugin.js';
 
+// Voice WebSocket
+export { createVoiceWebSocketPlugin, voiceManager } from './voice-ws.js';
+
 // gRPC Transport
 export { A2AGrpcServer, createA2AGrpcServer, type GrpcServerConfig } from './grpc/index.js';
+

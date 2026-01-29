@@ -93,6 +93,11 @@ export default defineConfig({
             "a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
         },
     },
+    // Polyfill Node.js globals for browser (needed for TensorFlow.js)
+    define: {
+        'process.env': JSON.stringify({}),
+        'process.browser': true,
+    },
     optimizeDeps: {
         exclude: ['@liquidcrypto/a2a-sdk', 'a2a-sdk', 'esbuild-wasm'],
     },
@@ -122,6 +127,17 @@ export default defineConfig({
             },
             '/agents': {
                 target: 'http://localhost:3000',
+                changeOrigin: true,
+            },
+            // A2A Protocol endpoint for voice and agent communication
+            '/a2a': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+            },
+            // Voice WebSocket for real-time audio streaming
+            '/ws': {
+                target: 'ws://localhost:3000',
+                ws: true,
                 changeOrigin: true,
             },
             // Remote A2A Password Generator agent

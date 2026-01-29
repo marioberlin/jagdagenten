@@ -1,22 +1,41 @@
 import type { QuickAppInstallation } from '@/system/quick-apps/types';
 import { resolveIconComponent } from './iconResolver';
-import { Zap } from 'lucide-react';
+import { Zap, X } from 'lucide-react';
 
 interface QuickAppCardProps {
   installation: QuickAppInstallation;
   onClick: () => void;
+  onUninstall?: () => void;
 }
 
-export function QuickAppCard({ installation, onClick }: QuickAppCardProps) {
+export function QuickAppCard({ installation, onClick, onUninstall }: QuickAppCardProps) {
   const { compiled } = installation;
   const { manifest } = compiled;
   const IconComponent = resolveIconComponent(manifest.icon);
 
+  const handleUninstall = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onUninstall?.();
+  };
+
   return (
     <button
       onClick={onClick}
-      className="flex items-start gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:from-amber-500/10 hover:to-orange-500/10 transition-all text-left group"
+      className="relative flex items-start gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:from-amber-500/10 hover:to-orange-500/10 transition-all text-left group"
     >
+      {/* Uninstall button - appears on hover */}
+      {onUninstall && (
+        <div
+          role="button"
+          onClick={handleUninstall}
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+          title="Uninstall Quick App"
+        >
+          <X size={12} className="text-red-400" />
+        </div>
+      )}
+
       {/* App Icon with Quick App badge */}
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20 flex items-center justify-center">
@@ -48,3 +67,4 @@ export function QuickAppCard({ installation, onClick }: QuickAppCardProps) {
     </button>
   );
 }
+

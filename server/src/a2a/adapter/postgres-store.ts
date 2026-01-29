@@ -569,13 +569,16 @@ export class PostgresMessageStore implements MessageStore {
     const seq = (this.sequenceCounter.get(contextKey) || 0) + 1;
     this.sequenceCounter.set(contextKey, seq);
 
+    // Generate messageId if not provided (required by database constraint)
+    const messageId = message.messageId || crypto.randomUUID();
+
     await this.pool.query(
       `INSERT INTO ${this.tableName} (
         message_id, task_id, context_id, session_id, role, parts, metadata, extensions, reference_task_ids, sequence_number
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (message_id) DO NOTHING`,
       [
-        message.messageId,
+        messageId,
         taskId || message.taskId || null,
         message.contextId || null,
         sessionId || null,

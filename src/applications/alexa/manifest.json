@@ -1,0 +1,45 @@
+{
+    "id": "alexa",
+    "name": "Alexa+",
+    "version": "1.0.0",
+    "description": "Smart home assistant with calendar, shopping lists, weather, contacts, and photos",
+    "author": "LiquidCrypto",
+    "license": "MIT",
+    "category": "utilities",
+    "keywords": [
+        "alexa",
+        "smart-home",
+        "assistant",
+        "calendar",
+        "weather",
+        "a2a"
+    ],
+    "icon": "Mic",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Alexa+",
+        "defaultSize": {
+            "width": 1280,
+            "height": 800
+        },
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 8
+        },
+        "aiContext": {
+            "systemPrompt": "You are Alexa+, a smart home assistant that helps with calendar, shopping lists, weather, and contacts.",
+            "agentId": "alexa"
+        }
+    },
+    "capabilities": [
+        "network:http",
+        "a2a:connect",
+        "storage:local",
+        "notification:toast",
+        "media:audio"
+    ]
+}

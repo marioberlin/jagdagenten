@@ -34,7 +34,7 @@ import { builderRoutes } from './builder/routes.js';
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { publicMarketplacePlugin } from './routes/public-marketplace.js';
 import { refreshRecommendations } from './marketplace/recommendations.js';
-import { getAgentCard, createA2AGrpcServer, createA2APlugin } from './a2a/index.js';
+import { getAgentCard, createA2AGrpcServer, createA2APlugin, createVoiceWebSocketPlugin } from './a2a/index.js';
 import { getRestaurantAgentCard, handleRestaurantRequest } from './agents/restaurant.js';
 import { getRizzChartsAgentCard, handleRizzChartsRequest } from './agents/rizzcharts.js';
 import { getCryptoAdvisorAgentCard, handleCryptoAdvisorRequest } from './agents/crypto-advisor.js';
@@ -1838,6 +1838,9 @@ async function startServer() {
             baseUrl: process.env.BASE_URL || `http://localhost:${PORT}`,
             enableTelemetry: process.env.OTEL_ENABLED === 'true',
         }))
+
+        // Voice WebSocket Plugin for real-time audio streaming
+        .use(createVoiceWebSocketPlugin())
 
         // 404 Handler - Elysia handles this by default but we can customize if needed
         .onError(({ code, error, set }) => {

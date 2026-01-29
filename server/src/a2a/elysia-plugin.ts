@@ -15,7 +15,7 @@ import {
   type MessageStore,
   type SessionStore,
 } from './adapter/index.js';
-import { LiquidCryptoExecutor, getLiquidCryptoAgentCard, OrchestratorExecutor, getOrchestratorAgentCard, BuilderExecutor, getBuilderAgentCard, VoiceExecutor, getVoiceAgentCard } from './executors/index.js';
+import { LiquidCryptoExecutor, getLiquidCryptoAgentCard, OrchestratorExecutor, getOrchestratorAgentCard, BuilderExecutor, getBuilderAgentCard, VoiceExecutor, getVoiceAgentCard, AlexaExecutor, getAlexaAgentCard } from './executors/index.js';
 import { RouterExecutor } from './executors/router.js';
 import {
   instrumentTaskStore,
@@ -82,12 +82,16 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
     console.log('[A2A] Telemetry instrumentation enabled');
   }
 
+  // Create executors
+  const voiceExecutor = new VoiceExecutor();
+
   // Create router with registered executors
   const router = new RouterExecutor();
   router.register('liquidcrypto', new LiquidCryptoExecutor(), getLiquidCryptoAgentCard(baseUrl));
   router.register('orchestrator', new OrchestratorExecutor(), getOrchestratorAgentCard(baseUrl));
   router.register('builder', new BuilderExecutor(), getBuilderAgentCard(baseUrl));
-  router.register('voice', new VoiceExecutor(), getVoiceAgentCard(baseUrl));
+  router.register('voice', voiceExecutor, getVoiceAgentCard(baseUrl));
+  router.register('alexa', new AlexaExecutor(), getAlexaAgentCard(baseUrl));
 
   const agentCard = router.getMergedAgentCard(baseUrl);
   const adapter = new ElysiaA2AAdapter({
@@ -100,6 +104,9 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
     messageStore,
     sessionStore,
   });
+
+  // Inject EventQueue into VoiceExecutor for SSE streaming
+  voiceExecutor.setEventQueue(adapter.getEventQueue());
 
   // Create telemetry middleware
   const telemetry = telemetryEnabled ? createA2ATelemetryMiddleware() : null;
@@ -145,7 +152,7 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
       }
     })
 
-    // Streaming endpoint (SSE)
+    // Streaming endpoint (SSE) - Subscribe to task updates
     .get('/a2a/stream', async function* ({ query, set }) {
       const taskId = query.taskId as string | undefined;
 
@@ -160,7 +167,14 @@ export function createA2APlugin(config: A2APluginConfig = {}) {
       set.headers['Connection'] = 'keep-alive';
 
       try {
-        for await (const event of adapter.handleStreamRequest({ taskId })) {
+        // Construct proper JSON-RPC request for SubscribeToTask/Resubscribe
+        const jsonRpcRequest = {
+          jsonrpc: '2.0',
+          id: taskId,
+          method: 'SubscribeToTask',
+          params: { id: taskId },
+        };
+        for await (const event of adapter.handleStreamRequest(jsonRpcRequest)) {
           // Trace stream events if event is an object
           if (telemetryEnabled && typeof event === 'object' && event !== null) {
             const evt = event as Record<string, unknown>;

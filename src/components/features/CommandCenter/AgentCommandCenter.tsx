@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAgentConfig } from '@/context/AgentConfigContext';
 import { Activity, Cpu, Shield, Zap, Search, AlertTriangle, Send, Loader2, X, Sparkles } from 'lucide-react';
@@ -7,6 +7,10 @@ import { ServiceInfoTooltip } from './ServiceInfoTooltip';
 import { useServiceHealth, type ServiceHealthStatus } from '@/hooks/useServiceHealth';
 import { SERVICE_DESCRIPTIONS } from '@/data/serviceDescriptions';
 import { useLiquidAssistant } from '@/hooks/useLiquidAssistant';
+import { useA2AVoice } from '@/hooks/useA2AVoice';
+import { VoiceWaveform } from '@/components/primitives/VoiceWaveform';
+import { useWakeWord } from '@/hooks/useWakeWord';
+import { useWakeWordStore } from '@/stores/wakeWordStore';
 
 /**
  * AgentCommandCenter
@@ -24,6 +28,70 @@ export const AgentCommandCenter: React.FC = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const { messages, isLoading, sendMessage, clearMessages } = useLiquidAssistant();
+
+    // Voice integration for hands-free input
+    // Note: contextId must be a valid UUID for database storage
+    const voice = useA2AVoice({
+        contextId: '00000000-0000-4000-8000-000000000001', // Stable UUID for dashboard voice context
+        onTranscript: (text) => {
+            setInputValue(prev => prev + text);
+        },
+        onStateChange: (state) => {
+            console.log('[Dashboard Voice] State:', state);
+        },
+    });
+
+    // Wake word detection - activates voice when "Hey Liquid" is detected
+    const wakeWordEnabled = useWakeWordStore((s) => s.enabled);
+    const wakeWordTrained = useWakeWordStore((s) => s.isTrained);
+    const wakeWordThreshold = useWakeWordStore((s) => s.threshold);
+    const setWakeWordListeningState = useWakeWordStore((s) => s.setListeningState);
+
+    // Callback when wake word detected - activate voice
+    const handleWakeWordDetected = useCallback(() => {
+        console.log('[Dashboard] Wake word detected! Activating voice...');
+        setWakeWordListeningState('detected');
+        // Small delay for visual feedback, then start voice
+        setTimeout(() => {
+            if (!voice.isActive) {
+                voice.start();
+            }
+            setWakeWordListeningState('listening');
+        }, 300);
+    }, [voice, setWakeWordListeningState]);
+
+    const { state: wakeWordState, startListening, stopListening } = useWakeWord({
+        onWakeWord: handleWakeWordDetected,
+        onStateChange: (state) => {
+            console.log('[Dashboard Wake Word] State:', state);
+            // Sync to global store
+            if (state === 'listening') setWakeWordListeningState('listening');
+            else if (state === 'loading') setWakeWordListeningState('loading');
+            else if (state === 'error') setWakeWordListeningState('error');
+            else if (state === 'ready') setWakeWordListeningState('idle');
+        },
+        config: {
+            enabled: wakeWordEnabled && wakeWordTrained,
+            threshold: wakeWordThreshold,
+        },
+    });
+
+    // Auto-start wake word listening when enabled and trained
+    useEffect(() => {
+        if (wakeWordEnabled && wakeWordTrained && wakeWordState === 'ready') {
+            console.log('[Dashboard] Starting wake word listening...');
+            startListening();
+        }
+    }, [wakeWordEnabled, wakeWordTrained, wakeWordState, startListening]);
+
+    // Stop wake word listening when voice is active
+    useEffect(() => {
+        if (voice.isActive && wakeWordState === 'listening') {
+            stopListening();
+        } else if (!voice.isActive && wakeWordEnabled && wakeWordTrained && wakeWordState === 'ready') {
+            startListening();
+        }
+    }, [voice.isActive, wakeWordEnabled, wakeWordTrained, wakeWordState, startListening, stopListening]);
 
     // Determine overall system status based on health checks
     const getSystemStatus = () => {
@@ -247,6 +315,27 @@ export const AgentCommandCenter: React.FC = () => {
                                         <Send className="w-5 h-5 text-cyan-400" />
                                     </motion.button>
                                 )}
+                                {/* Voice button with waveform icons */}
+                                <button
+                                    type="button"
+                                    onClick={() => voice.isActive ? voice.stop() : voice.start()}
+                                    disabled={isLoading}
+                                    className={cn(
+                                        "p-1.5 rounded-lg transition-all flex items-center justify-center",
+                                        voice.state === 'listening' && "bg-cyan-500/20 animate-pulse",
+                                        voice.state === 'speaking' && "bg-amber-500/20",
+                                        voice.state === 'connecting' && "bg-blue-500/20",
+                                        voice.state === 'error' && "bg-red-500/20",
+                                        voice.state === 'idle' && "bg-white/5 hover:bg-white/10 opacity-60 hover:opacity-100"
+                                    )}
+                                    aria-label={voice.isActive ? "Stop voice" : "Start voice"}
+                                >
+                                    {voice.state === 'connecting' ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                                    ) : (
+                                        <VoiceWaveform state={voice.state} />
+                                    )}
+                                </button>
                                 <div className="flex gap-2 ml-2">
                                     <kbd className="px-2 py-1 rounded bg-black/40 border border-white/10 text-xs text-white/60 font-mono">⌘</kbd>
                                     <kbd className="px-2 py-1 rounded bg-black/40 border border-white/10 text-xs text-white/60 font-mono">K</kbd>

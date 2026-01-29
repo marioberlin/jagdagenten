@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Fingerprint, Lock, Trash2, Plus, Clock,
-  AlertTriangle, Mail, Check, X, User,
+  AlertTriangle, Mail, Check, X, User, Mic,
 } from 'lucide-react';
 import {
   useAuthStore,
@@ -15,6 +15,7 @@ import {
   isPlatformAuthenticatorAvailable,
   registerBiometric,
 } from '@/services/biometricService';
+import { WakeWordTraining } from './WakeWordTraining';
 
 export const SecurityPanel: React.FC = () => {
   const authEnabled = useAuthStore((s) => s.authEnabled);
@@ -402,6 +403,11 @@ export const SecurityPanel: React.FC = () => {
             <option value={60}>1 hour</option>
           </select>
         </div>
+      </Section>
+
+      {/* Voice Activation */}
+      <Section title="Voice Wake Word" icon={Mic}>
+        <WakeWordTraining />
       </Section>
 
       {/* Lock Now */}

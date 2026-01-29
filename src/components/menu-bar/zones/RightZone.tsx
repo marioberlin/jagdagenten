@@ -14,6 +14,7 @@ import { cn } from '@/utils/cn';
 import { useMenuBar } from '@/context/MenuBarContext';
 import { useTheme } from '@/hooks/useTheme';
 import { ControlCenterPanel } from './ControlCenterPanel';
+import { WakeWordIndicator } from './WakeWordIndicator';
 
 export const RightZone: React.FC = () => {
     const { state } = useMenuBar();
@@ -74,6 +75,9 @@ export const RightZone: React.FC = () => {
                     </button>
                 );
             })}
+
+            {/* Wake Word Status */}
+            <WakeWordIndicator />
 
             {/* Agent Status (always visible) */}
             <AgentStatusIcon />
