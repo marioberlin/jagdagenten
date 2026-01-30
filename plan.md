@@ -48,9 +48,9 @@ This phase transforms the LiquidCrypto fork into a clean Jagd-Agenten codebase.
 **Vite config:**
 - Update `vite.config.ts` library output names
  
-### 0.2 — Strip Domain-Specific Code
+### 0.2 — Strip Domain-Specific Code ✅ DONE
  
-**Applications to DELETE (13 apps):**
+**Applications DELETED (13 apps) — COMPLETE:**
  
 ```
 src/applications/rush-hour-trading/     # Crypto trading
@@ -85,7 +85,7 @@ src/applications/cowork/                # Collaborative workspace
 src/applications/sheets/                # Smart spreadsheets
 ```
  
-**Agents to DELETE (15 agents):**
+**Agents DELETED (15 agents) — COMPLETE:**
  
 ```
 server/src/agents/crypto-advisor.ts
@@ -119,7 +119,7 @@ server/src/agents/copilot-form.ts
 server/src/agents/project-assistant.ts
 ```
  
-**A2A Executors to DELETE:**
+**A2A Executors DELETED — COMPLETE:**
  
 ```
 server/src/a2a/executors/liquidcrypto.ts
@@ -128,7 +128,7 @@ server/src/a2a/executors/commerce.ts
 server/src/a2a/executors/alexa.ts
 ```
  
-**Routes to DELETE:**
+**Routes DELETED — COMPLETE:**
  
 ```
 server/src/routes/ucp-discovery.ts
@@ -143,8 +143,8 @@ server/src/routes/ibird/
 - Update `server/src/index.ts` — remove all deleted route/agent imports
 - Update `server/src/a2a/elysia-plugin.ts` — remove deleted executor registrations
 - Update `src/services/agents/registry.ts` — remove deleted agent entries
-- Run `bun install` to verify no broken imports
-- Run `bun run build` to verify clean compile
+- Run `bun install` to verify no broken imports ✅
+- Run `bun run build` to verify clean compile ✅
  
 ### 0.3 — New Home Experience
  
@@ -184,7 +184,7 @@ The new home is the **Daily Cockpit** (see Phase 1.2). It shows:
  
 **File:** `server/src/schemas/*.ts` ✅ DONE
  
-### 0.7 — New Dependencies
+### 0.7 — New Dependencies ✅ DONE
  
 | Package | Purpose |
 |---------|---------|
@@ -278,7 +278,7 @@ Phase 0: Rename + Strip + Scaffold
 ├── 0.4 Database migration ✅
 ├── 0.5 Shared types package ✅
 ├── 0.6 JSON Schemas ✅
-├── 0.7 New dependencies
+├── 0.7 New dependencies ✅
 ├── 0.8 i18n setup ✅
 └── 0.9 Verify clean build
 
