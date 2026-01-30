@@ -1,0 +1,19 @@
+{
+  "title": "Pack",
+  "event": "Event",
+  "create_event": "Create Event",
+  "drueckjagd": "Driven Hunt",
+  "ansitz_group": "Group Sit",
+  "work_day": "Work Day",
+  "dog_training": "Dog Training",
+  "role_stand": "Stand (Shooter)",
+  "role_treiber": "Beater",
+  "role_hundefuehrer": "Dog Handler",
+  "role_jagdleiter": "Hunt Master",
+  "role_guest": "Guest",
+  "check_in": "Check In",
+  "check_out": "Check Out",
+  "safety_dashboard": "Safety Dashboard",
+  "emergency": "Emergency",
+  "inactive_warning": "Inactivity Warning"
+}

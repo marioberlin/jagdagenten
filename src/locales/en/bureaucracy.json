@@ -1,0 +1,16 @@
+{
+  "title": "Bureaucracy",
+  "document_vault": "Document Vault",
+  "export_pack": "Export Pack",
+  "guest_permit": "Guest Permit",
+  "jagdschein": "Hunting License",
+  "wbk": "Weapons Permit",
+  "insurance": "Insurance",
+  "streckenliste": "Harvest List",
+  "abschussmeldung": "Kill Report",
+  "deadline": "Deadline",
+  "expires": "Expires",
+  "generate_pdf": "Generate PDF",
+  "portal_helper": "Portal Helper",
+  "missing_fields": "Missing Fields"
+}

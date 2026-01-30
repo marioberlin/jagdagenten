@@ -1,0 +1,16 @@
+{
+  "title": "Quartermaster",
+  "inventory": "Inventory",
+  "weapons": "Weapons",
+  "optics": "Optics",
+  "ammo": "Ammo",
+  "clothing": "Clothing",
+  "accessories": "Accessories",
+  "checklist": "Checklist",
+  "maintenance": "Maintenance",
+  "maintenance_due": "Maintenance Due",
+  "ammo_low": "Ammo Low",
+  "caliber": "Caliber",
+  "rounds_remaining": "Rounds Remaining",
+  "pre_hunt_checklist": "Pre-Hunt Checklist"
+}

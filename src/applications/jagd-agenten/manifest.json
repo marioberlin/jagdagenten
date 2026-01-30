@@ -1,0 +1,17 @@
+{
+  "id": "jagd-agenten",
+  "name": "Jagd-Agenten",
+  "description": "AI-powered hunting companion for the DACH region",
+  "icon": "crosshair",
+  "category": "productivity",
+  "version": "1.0.0",
+  "author": "Jagd-Agenten",
+  "dock": { "enabled": true, "order": 1 },
+  "window": {
+    "defaultWidth": 1200,
+    "defaultHeight": 800,
+    "minWidth": 375,
+    "minHeight": 600,
+    "resizable": true
+  }
+}

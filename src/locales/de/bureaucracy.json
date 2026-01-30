@@ -1,0 +1,16 @@
+{
+  "title": "Buerokratie",
+  "document_vault": "Dokumententresor",
+  "export_pack": "Export-Paket",
+  "guest_permit": "Begehungsschein",
+  "jagdschein": "Jagdschein",
+  "wbk": "Waffenbesitzkarte",
+  "insurance": "Versicherung",
+  "streckenliste": "Streckenliste",
+  "abschussmeldung": "Abschussmeldung",
+  "deadline": "Frist",
+  "expires": "Laeuft ab",
+  "generate_pdf": "PDF erstellen",
+  "portal_helper": "Portal-Assistent",
+  "missing_fields": "Fehlende Felder"
+}

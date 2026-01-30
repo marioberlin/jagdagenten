@@ -1,0 +1,19 @@
+{
+  "title": "Journal",
+  "harvest": "Erlegung",
+  "sighting": "Beobachtung",
+  "session_recap": "Sitzungszusammenfassung",
+  "story_card": "Story-Karte",
+  "wildbret": "Wildbret",
+  "wildbret_pass": "Wildursprungsschein",
+  "qr_label": "QR-Etikett",
+  "handover": "Uebergabe",
+  "processing": "Verarbeitung",
+  "cooling": "Kuehlung",
+  "species": "Wildart",
+  "count": "Anzahl",
+  "confidence": "Sicherheit",
+  "notes": "Notizen",
+  "photos": "Fotos",
+  "add_photo": "Foto hinzufuegen"
+}

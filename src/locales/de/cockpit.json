@@ -1,0 +1,19 @@
+{
+  "title": "Tages-Cockpit",
+  "huntability": "Jagdbarkeit",
+  "best_windows": "Beste Zeitfenster",
+  "wind_scent": "Wind & Witterung",
+  "start_hunt": "Jagd starten",
+  "end_hunt": "Jagd beenden",
+  "quick_log": "Schnell-Eintrag",
+  "conditions": "Bedingungen",
+  "sunrise": "Sonnenaufgang",
+  "sunset": "Sonnenuntergang",
+  "civil_dawn": "Buergerliche Morgendaemmerung",
+  "civil_dusk": "Buergerliche Abenddaemmerung",
+  "moon_phase": "Mondphase",
+  "temperature": "Temperatur",
+  "wind_speed": "Windgeschwindigkeit",
+  "wind_direction": "Windrichtung",
+  "do_next": "Naechster Schritt"
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Daily Cockpit",
+  "huntability": "Huntability",
+  "best_windows": "Best Windows",
+  "wind_scent": "Wind & Scent",
+  "start_hunt": "Start Hunt",
+  "end_hunt": "End Hunt",
+  "quick_log": "Quick Log",
+  "conditions": "Conditions",
+  "sunrise": "Sunrise",
+  "sunset": "Sunset",
+  "civil_dawn": "Civil Dawn",
+  "civil_dusk": "Civil Dusk",
+  "moon_phase": "Moon Phase",
+  "temperature": "Temperature",
+  "wind_speed": "Wind Speed",
+  "wind_direction": "Wind Direction",
+  "do_next": "Do Next"
+}

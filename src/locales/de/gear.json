@@ -1,0 +1,16 @@
+{
+  "title": "Quartiermeister",
+  "inventory": "Ausruestung",
+  "weapons": "Waffen",
+  "optics": "Optik",
+  "ammo": "Munition",
+  "clothing": "Bekleidung",
+  "accessories": "Zubehoer",
+  "checklist": "Checkliste",
+  "maintenance": "Wartung",
+  "maintenance_due": "Wartung faellig",
+  "ammo_low": "Munition niedrig",
+  "caliber": "Kaliber",
+  "rounds_remaining": "Schuss uebrig",
+  "pre_hunt_checklist": "Vor-Jagd-Checkliste"
+}
