@@ -174,10 +174,7 @@ import { GlassSplitButton } from '@/components/compound/GlassSplitButton';
 // === CONTAINERS (1) ===
 import { GlassWindow } from '@/components/containers/GlassWindow';
 
-// === TRADING (6) ===
-import { GlassMarketTicker } from '@/applications/rush-hour-trading/components/GlassMarketTicker';
-import { GlassOrderEntry } from '@/applications/rush-hour-trading/components/GlassOrderEntry';
-import { GlassPositionsList } from '@/applications/rush-hour-trading/components/GlassPositionsList';
+// === TRADING (Removed - domain-specific) ===
 
 // ============================================
 // Types & Interfaces
@@ -1972,7 +1969,7 @@ rounded-full = 9999px`,
                 <GlassChip>Default</GlassChip>
                 <GlassChip variant="primary">Primary</GlassChip>
                 <GlassChip variant="success">Success</GlassChip>
-                <GlassChip onRemove={() => {}}>Removable</GlassChip>
+                <GlassChip onRemove={() => { }}>Removable</GlassChip>
             </div>
         ),
         code: `<GlassChip variant="primary">Label</GlassChip>
@@ -2090,7 +2087,7 @@ rounded-full = 9999px`,
         tags: ['color', 'picker', 'design'],
         isNew: true,
         component: (
-            <GlassColorPicker color="#3b82f6" onChange={() => {}} />
+            <GlassColorPicker color="#3b82f6" onChange={() => { }} />
         ),
         code: `<GlassColorPicker value={color} onChange={setColor} />`,
     },
@@ -2772,7 +2769,7 @@ rounded-full = 9999px`,
         component: (
             <div className="h-48 w-64 overflow-auto">
                 <GlassInfiniteScroll
-                    onLoadMore={async () => {}}
+                    onLoadMore={async () => { }}
                     hasMore={false}
                 >
                     {Array.from({ length: 5 }, (_, i) => (
@@ -2952,10 +2949,12 @@ rounded-full = 9999px`,
             <GlassNavigationMenu
                 items={[
                     { label: 'Home', href: '#' },
-                    { label: 'Products', href: '#', children: [
-                        { title: 'Product 1', href: '#', description: 'First product' },
-                        { title: 'Product 2', href: '#', description: 'Second product' },
-                    ]},
+                    {
+                        label: 'Products', href: '#', children: [
+                            { title: 'Product 1', href: '#', description: 'First product' },
+                            { title: 'Product 2', href: '#', description: 'Second product' },
+                        ]
+                    },
                     { label: 'About', href: '#' },
                 ]}
             />
@@ -2990,7 +2989,7 @@ rounded-full = 9999px`,
         tags: ['fab', 'floating', 'action', 'button'],
         component: (
             <div className="relative h-24 w-full">
-                <GlassFloatingAction icon={<Plus />} onClick={() => {}} />
+                <GlassFloatingAction icon={<Plus />} onClick={() => { }} />
             </div>
         ),
         code: `<GlassFloatingAction icon={Plus} onClick={handleClick} />`,
@@ -3088,7 +3087,7 @@ rounded-full = 9999px`,
             <GlassSortableList
                 items={[{ id: '1', content: 'Item 1' }, { id: '2', content: 'Item 2' }, { id: '3', content: 'Item 3' }]}
                 keyField="id"
-                onReorder={() => {}}
+                onReorder={() => { }}
                 renderItem={(item) => (
                     <GlassSortableItem id={item.id}>
                         <div className="p-2 text-white/80 bg-white/5 rounded-lg mb-2 flex items-center gap-2">
@@ -3405,7 +3404,7 @@ toast("Action completed", "success");`,
         tags: ['command', 'palette', 'keyboard', 'spotlight'],
         isNew: true,
         component: (
-            <GlassButton onClick={() => {}}>
+            <GlassButton onClick={() => { }}>
                 Open Command Palette (⌘K)
             </GlassButton>
         ),
@@ -3423,7 +3422,7 @@ toast("Action completed", "success");`,
         subcategory: 'Guides',
         tags: ['tour', 'guide', 'onboarding', 'walkthrough'],
         component: (
-            <GlassButton onClick={() => {}}>Start Tour</GlassButton>
+            <GlassButton onClick={() => { }}>Start Tour</GlassButton>
         ),
         code: `<GlassTour
     steps={tourSteps}
@@ -3546,10 +3545,12 @@ toast("Action completed", "success");`,
             <div className="w-64">
                 <GlassFileTree
                     data={[
-                        { id: '1', name: 'src', type: 'folder', children: [
-                            { id: '2', name: 'index.ts', type: 'file' },
-                            { id: '3', name: 'App.tsx', type: 'file' },
-                        ]},
+                        {
+                            id: '1', name: 'src', type: 'folder', children: [
+                                { id: '2', name: 'index.ts', type: 'file' },
+                                { id: '3', name: 'App.tsx', type: 'file' },
+                            ]
+                        },
                         { id: '4', name: 'package.json', type: 'file' },
                     ]}
                 />
@@ -3568,7 +3569,7 @@ toast("Action completed", "success");`,
             <div className="relative w-80 h-48 overflow-hidden rounded-xl">
                 <GlassFilePreview
                     file={{ id: '1', name: 'example.tsx', type: 'file' }}
-                    onClose={() => {}}
+                    onClose={() => { }}
                     content={`import React from 'react';
 
 export const Example = () => {
@@ -3617,7 +3618,7 @@ export const Example = () => {
                         <GlassChatMessage role="user">Hello!</GlassChatMessage>
                         <GlassChatMessage role="assistant">Hi there! How can I help?</GlassChatMessage>
                     </div>
-                    <GlassChatInput onSend={() => {}} />
+                    <GlassChatInput onSend={() => { }} />
                 </GlassChatContainer>
             </div>
         ),
@@ -3643,7 +3644,7 @@ export const Example = () => {
                         { id: '2', role: 'user', content: 'Can you explain glassmorphism?' },
                         { id: '3', role: 'assistant', content: 'Glassmorphism is a design trend featuring frosted glass effects with blur, transparency, and subtle borders.' },
                     ]}
-                    onSend={() => {}}
+                    onSend={() => { }}
                 />
             </div>
         ),
@@ -3768,58 +3769,6 @@ export const Example = () => {
         code: `<GlassSmartChart data={rawData} />`,
     },
     // ========================================
-    // TRADING COMPONENTS
-    // ========================================
-    {
-        id: 'market-ticker',
-        name: 'Market Ticker',
-        description: 'Live market price ticker',
-        category: 'data',
-        subcategory: 'Trading',
-        tags: ['ticker', 'market', 'price', 'trading'],
-        component: (
-            <GlassMarketTicker
-                items={[
-                    { symbol: 'BTC', price: 42150.00, change: 2.5 },
-                    { symbol: 'ETH', price: 2280.00, change: -1.2 },
-                    { symbol: 'SOL', price: 98.50, change: 5.8 },
-                ]}
-            />
-        ),
-        code: `<GlassMarketTicker items={marketData} />`,
-    },
-    {
-        id: 'order-entry',
-        name: 'Order Entry',
-        description: 'Trading order form',
-        category: 'forms',
-        subcategory: 'Trading',
-        tags: ['order', 'trading', 'buy', 'sell'],
-        component: (
-            <div className="w-64">
-                <GlassOrderEntry symbol="BTC/USD" onOrder={() => {}} />
-            </div>
-        ),
-        code: `<GlassOrderEntry symbol="BTC/USD" onSubmit={handleOrder} />`,
-    },
-    {
-        id: 'positions-list',
-        name: 'Positions List',
-        description: 'Open trading positions',
-        category: 'data',
-        subcategory: 'Trading',
-        tags: ['positions', 'trading', 'portfolio'],
-        component: (
-            <GlassPositionsList
-                positions={[
-                    { id: '1', symbol: 'BTC', side: 'long', size: 0.5, entryPrice: 40000, markPrice: 42150, pnl: 1075, pnlPercent: 5.37, leverage: 2, margin: 10750 },
-                    { id: '2', symbol: 'ETH', side: 'long', size: 2.0, entryPrice: 2300, markPrice: 2280, pnl: -40, pnlPercent: -1.74, leverage: 1, margin: 4600 },
-                ]}
-            />
-        ),
-        code: `<GlassPositionsList positions={positions} />`,
-    },
-    // ========================================
     // COMPOUND COMPONENTS
     // ========================================
     {
@@ -3833,10 +3782,10 @@ export const Example = () => {
         component: (
             <GlassSplitButton
                 label="Save"
-                onMainAction={() => {}}
+                onMainAction={() => { }}
                 options={[
-                    { label: 'Save as Draft', onClick: () => {} },
-                    { label: 'Save & Publish', onClick: () => {} },
+                    { label: 'Save as Draft', onClick: () => { } },
+                    { label: 'Save & Publish', onClick: () => { } },
                 ]}
             />
         ),
@@ -3857,8 +3806,8 @@ export const Example = () => {
             <GlassButtonDropdown
                 label="Actions"
                 options={[
-                    { label: 'Edit', icon: Settings, onClick: () => {} },
-                    { label: 'Delete', icon: X, onClick: () => {} },
+                    { label: 'Edit', icon: Settings, onClick: () => { } },
+                    { label: 'Delete', icon: X, onClick: () => { } },
                 ]}
             />
         ),

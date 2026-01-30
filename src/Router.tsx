@@ -14,9 +14,6 @@ import { LiquidOSLayout } from './layouts/LiquidOSLayout';
 // Lazy-loaded pages
 const Home = lazy(() => import('./pages/Home').then(mod => ({ default: mod.Home })));
 
-// iBird Public Booking Page
-const BookingPage = lazy(() => import('./pages/book/BookingPage'));
-
 // Loading fallback component
 function PageLoader() {
     return (
@@ -84,10 +81,6 @@ export const AppRouter = () => {
                                     <Route path="/" element={<Navigate to="/os" replace />} />
                                     <Route path="/os" element={<Home />} />
                                 </Route>
-
-                                {/* iBird Public Booking Page */}
-                                <Route path="/book/:username" element={<BookingPage />} />
-                                <Route path="/book/:username/:eventType" element={<BookingPage />} />
 
                                 {/* Legacy Redirects */}
                                 <Route path="/terminal/*" element={<Navigate to="/os" replace />} />

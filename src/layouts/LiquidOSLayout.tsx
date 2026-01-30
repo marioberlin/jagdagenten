@@ -15,8 +15,6 @@ import { useAppComponent } from '@/system/app-store/AppLoader';
 import { resolveIconComponent } from '@/system/app-store/iconResolver';
 import type { InstalledApp } from '@/system/app-store/types';
 import { useAgentChatStore, selectFocusedAgent, type AgentConnectionStatus } from '@/stores/agentChatStore';
-import { useAlexaAppStore } from '@/applications/alexa/store';
-import { Cloud, Sun, CloudSun, CloudRain, Snowflake } from 'lucide-react';
 
 /**
  * LiquidOSLayout
@@ -303,52 +301,8 @@ function DynamicAppPanel({ appId, manifest, panelVariants, panelTransition, onCl
         ];
     }, [appId, focusedAgentId, focusedAgent]);
 
-    // Build headerRight for Alexa app - use primitive selectors to avoid infinite re-renders
-    const alexaTemp = useAlexaAppStore(s => s.temperature);
-    const alexaCondition = useAlexaAppStore(s => s.condition);
-    const [alexaTime, setAlexaTime] = useState(new Date());
-
-    useEffect(() => {
-        if (appId !== 'alexa') return;
-        const interval = setInterval(() => setAlexaTime(new Date()), 1000);
-        return () => clearInterval(interval);
-    }, [appId]);
-
-    const getWeatherIcon = (condition: string | null, size: number) => {
-        switch (condition) {
-            case 'clear': return <Sun size={size} className="text-yellow-400" />;
-            case 'partly_cloudy': return <CloudSun size={size} className="text-gray-300" />;
-            case 'cloudy':
-            case 'overcast': return <Cloud size={size} className="text-gray-400" />;
-            case 'rain':
-            case 'drizzle':
-            case 'heavy_rain':
-            case 'thunderstorm': return <CloudRain size={size} className="text-blue-400" />;
-            case 'snow':
-            case 'heavy_snow':
-            case 'sleet':
-            case 'hail': return <Snowflake size={size} className="text-blue-200" />;
-            default: return <Cloud size={size} className="text-white/40" />;
-        }
-    };
-
-    const headerRight = appId === 'alexa' ? (
-        <div className="flex items-center gap-4">
-            {/* Weather */}
-            <div className="flex items-center gap-1.5 text-white/80 text-sm">
-                {getWeatherIcon(alexaCondition, 16)}
-                <span>{alexaTemp !== null ? `${Math.round(alexaTemp)}°` : '--°'}</span>
-            </div>
-            {/* Time */}
-            <span className="text-white font-medium text-sm">
-                {alexaTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            {/* Glass Avatar */}
-            <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/90 font-medium text-xs">
-                M
-            </div>
-        </div>
-    ) : undefined;
+    // No app-specific headerRight by default
+    const headerRight = undefined;
 
     if (!AppComponent) {
         return (

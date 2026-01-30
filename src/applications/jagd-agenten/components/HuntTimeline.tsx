@@ -59,15 +59,6 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
 function elapsedLabel(start: string): string {
   const ms = Date.now() - new Date(start).getTime();
   const mins = Math.floor(ms / 60000);
@@ -153,7 +144,7 @@ function StartSessionPanel({
 }
 
 function AddEventForm({
-  sessionId,
+  sessionId: _sessionId,
   onSubmit,
   loading,
 }: {

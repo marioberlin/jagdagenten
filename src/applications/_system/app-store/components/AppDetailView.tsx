@@ -18,7 +18,6 @@ export function AppDetailView() {
   // Quick App store access
   const quickAppInstallations = useQuickAppStore((s) => s.installations);
   const quickAppInstallation = selectedAppId ? quickAppInstallations[selectedAppId] : null;
-  const openQuickApp = useQuickAppStore((s) => s.openQuickApp);
   const uninstallQuickApp = useQuickAppStore((s) => s.uninstall);
 
   if (!selectedAppId) return null;
@@ -39,8 +38,8 @@ export function AppDetailView() {
       {/* Header */}
       <div className="flex items-start gap-5">
         <div className={`relative w-20 h-20 rounded-2xl border flex items-center justify-center flex-shrink-0 ${isQuickApp
-            ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/20'
-            : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-white/10'
+          ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/20'
+          : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-white/10'
           }`}>
           {IconComponent && <IconComponent size={36} className={isQuickApp ? 'text-amber-400' : 'text-blue-400'} />}
           {isQuickApp && (
@@ -69,10 +68,10 @@ export function AppDetailView() {
           {isInstalled ? (
             <>
               <button
-                onClick={() => isQuickApp ? openQuickApp(selectedAppId) : openApp(selectedAppId)}
+                onClick={() => openApp(selectedAppId)}
                 className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${isQuickApp
-                    ? 'bg-amber-500 hover:bg-amber-600'
-                    : 'bg-blue-500 hover:bg-blue-600'
+                  ? 'bg-amber-500 hover:bg-amber-600'
+                  : 'bg-blue-500 hover:bg-blue-600'
                   }`}
               >
                 Open
@@ -82,7 +81,7 @@ export function AppDetailView() {
                   onClick={() => {
                     if (isQuickApp) {
                       uninstallQuickApp(selectedAppId);
-                      navigateTo('discover');
+                      navigateTo('home');
                     } else {
                       showUninstallConfirm(selectedAppId);
                     }

@@ -111,7 +111,7 @@ const initialState: HuntTimelineState = {
 // Store
 // ============================================================================
 
-export const useHuntTimelineStore = create<HuntTimelineStore>()((set, get) => ({
+export const useHuntTimelineStore = create<HuntTimelineStore>()((set) => ({
   ...initialState,
 
   startSession: async (params) => {
