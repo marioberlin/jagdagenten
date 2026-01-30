@@ -9,9 +9,9 @@
  */
 
 // Re-export SDK namespaces for convenience
-export { v1, a2ui } from '@liquidcrypto/a2a-sdk';
-import { v1 as v1Module } from '@liquidcrypto/a2a-sdk';
-import type { a2ui as a2uiTypes, v1 as v1Types } from '@liquidcrypto/a2a-sdk';
+export { v1, a2ui } from '@jagdagenten/a2a-sdk';
+import { v1 as v1Module } from '@jagdagenten/a2a-sdk';
+import type { a2ui as a2uiTypes, v1 as v1Types } from '@jagdagenten/a2a-sdk';
 
 // ============================================================================
 // Core A2A Types (re-exported from SDK v1)

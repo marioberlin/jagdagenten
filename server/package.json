@@ -1,7 +1,7 @@
 {
-    "name": "liquid-glass-server",
+    "name": "jagd-agenten-server",
     "version": "0.1.0",
-    "description": "Backend proxy for Liquid Glass UI - Bun + Elysia",
+    "description": "Backend for Jagd-Agenten hunting companion - Bun + Elysia",
     "type": "module",
     "main": "src/index.ts",
     "scripts": {
@@ -17,7 +17,7 @@
         "@google/generative-ai": "^0.24.1",
         "@grpc/grpc-js": "^1.14.3",
         "@grpc/proto-loader": "^0.8.0",
-        "@liquidcrypto/a2a-sdk": "workspace:*",
+        "@jagdagenten/a2a-sdk": "workspace:*",
         "@opentelemetry/api": "1.9.0",
         "@opentelemetry/exporter-trace-otlp-http": "0.52.0",
         "@opentelemetry/resources": "1.25.0",

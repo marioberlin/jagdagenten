@@ -285,7 +285,7 @@ export const ConnectedA2UIRenderer: React.FC<ConnectedA2UIRendererProps> = ({
             setError(null);
 
             try {
-                const { createA2AClient, a2ui } = await import('@liquidcrypto/a2a-sdk');
+                const { createA2AClient, a2ui } = await import('@jagdagenten/a2a-sdk');
                 const client = createA2AClient({
                     baseUrl: agentUrl,
                     authToken,

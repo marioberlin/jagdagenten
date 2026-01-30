@@ -6,7 +6,7 @@ import { describe, test, expect, beforeEach, mock, afterAll } from 'bun:test';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { rm } from 'fs/promises';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import { VideoRenderExecutor, getVideoRenderAgentCard } from '../executors/video-render.js';
 import type { VideoRenderServiceConfig } from '../executors/video-render-service.js';
 

@@ -26,7 +26,7 @@ import {
     createA2AClient,
     v1,
     a2ui,
-} from '@liquidcrypto/a2a-sdk';
+} from '@jagdagenten/a2a-sdk';
 import { useAgentChatStore, selectFocusedAgent } from '@/stores/agentChatStore';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
 import { generateContextualUI, type GeneratedUI } from '@/components/agents/contextualUIGenerator';

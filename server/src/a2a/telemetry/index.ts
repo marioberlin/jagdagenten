@@ -7,7 +7,7 @@
 
 import { trace, context, SpanStatusCode, SpanKind, type Span } from '@opentelemetry/api';
 import { getTracer, createSpan, withSpan } from '../../telemetry.js';
-import type { v1 } from '@liquidcrypto/a2a-sdk';
+import type { v1 } from '@jagdagenten/a2a-sdk';
 import type { TaskStore, PushNotificationStore } from '../adapter/elysia-adapter.js';
 
 // ============================================================================

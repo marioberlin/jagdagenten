@@ -1,12 +1,12 @@
 /**
  * Elysia A2A Adapter (v1.0 Only)
  *
- * Bridges the @liquidcrypto/a2a-sdk to Elysia HTTP framework.
+ * Bridges the @jagdagenten/a2a-sdk to Elysia HTTP framework.
  * Implements A2A Protocol v1.0 Draft Specification.
  */
 
 import { randomUUID } from 'crypto';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import type { ArtifactStore, MessageStore, SessionStore } from './postgres-store.js';
 
 // ============================================================================

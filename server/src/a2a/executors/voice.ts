@@ -6,7 +6,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import { GoogleGenAI, LiveServerMessage, Modality, Session } from '@google/genai';
 import { BaseA2UIExecutor, type AgentExecutionContext, type AgentExecutionResult } from './base.js';
 import type { EventQueue } from '../adapter/elysia-adapter.js';

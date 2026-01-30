@@ -5,7 +5,7 @@
  * registered executor based on skill/intent matching or explicit targeting.
  */
 
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import type { AgentExecutor, AgentExecutionContext, AgentExecutionResult } from '../adapter/index.js';
 
 interface RegisteredExecutor {

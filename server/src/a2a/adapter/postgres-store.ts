@@ -6,7 +6,7 @@
  */
 
 import { Pool, PoolConfig } from 'pg';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import type { TaskStore, PushNotificationStore } from './elysia-adapter.js';
 
 // ============================================================================

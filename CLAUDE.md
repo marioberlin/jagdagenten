@@ -269,7 +269,7 @@ When implementing new A2A executors:
 ```typescript
 // Example: New executor
 import { BaseA2UIExecutor, type AgentExecutionContext, type AgentExecutionResult } from './base.js';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 
 export class MyExecutor extends BaseA2UIExecutor {
   async execute(message: v1.Message, context: AgentExecutionContext): Promise<AgentExecutionResult> {
@@ -299,7 +299,7 @@ export function getMyAgentCard(baseUrl: string): v1.AgentCard {
 | `server/src/a2a/executors/base.ts` | Base executor class |
 | `server/src/a2a/executors/router.ts` | Multi-executor routing |
 | `server/src/a2a/elysia-plugin.ts` | Elysia integration |
-| `@liquidcrypto/a2a-sdk` | SDK with v1 types |
+| `@jagdagenten/a2a-sdk` | SDK with v1 types |
 
 ---
 

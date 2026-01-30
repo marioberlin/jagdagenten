@@ -5,7 +5,7 @@
  * Allows external agents to submit PRDs and receive orchestrated results.
  */
 
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import { BaseA2UIExecutor, type ExecutorA2UIMessage, type AgentExecutionContext, type AgentExecutionResult } from './base.js';
 import {
   createSession,

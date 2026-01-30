@@ -17,10 +17,10 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['icons/*.png', 'favicon.ico'],
             manifest: {
-                name: 'LiquidCrypto',
-                short_name: 'LiquidCrypto',
-                description: 'Cryptocurrency trading with AI assistance',
-                theme_color: '#007AFF',
+                name: 'Jagd-Agenten',
+                short_name: 'Jagd-Agenten',
+                description: 'AI-powered hunting companion for DACH hunters',
+                theme_color: '#2D5016',
                 background_color: '#0a0a0a',
                 display: 'standalone',
                 orientation: 'portrait-primary',
@@ -89,7 +89,7 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "./src"),
             "@apps": path.resolve(__dirname, "./src/applications"),
-            "@liquidcrypto/a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
+            "@jagdagenten/a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
             "a2a-sdk": path.resolve(__dirname, "./packages/a2a-sdk/dist/browser.js"),
         },
     },
@@ -99,7 +99,7 @@ export default defineConfig({
         'process.browser': true,
     },
     optimizeDeps: {
-        exclude: ['@liquidcrypto/a2a-sdk', 'a2a-sdk', 'esbuild-wasm'],
+        exclude: ['@jagdagenten/a2a-sdk', 'a2a-sdk', 'esbuild-wasm'],
     },
     server: {
         host: true,

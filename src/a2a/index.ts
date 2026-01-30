@@ -19,10 +19,10 @@ export {
     type A2AClient,
     type A2AClientConfig,
     type StreamEvent as TaskStreamEvent,
-} from '@liquidcrypto/a2a-sdk';
+} from '@jagdagenten/a2a-sdk';
 
 // Event types from SDK
-export type { TaskStatusUpdateEvent, TaskArtifactUpdateEvent } from '@liquidcrypto/a2a-sdk';
+export type { TaskStatusUpdateEvent, TaskArtifactUpdateEvent } from '@jagdagenten/a2a-sdk';
 
 // Custom event type for backward compatibility
 export type TaskMessageEvent = {

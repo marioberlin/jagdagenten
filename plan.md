@@ -25,7 +25,7 @@ This phase transforms the LiquidCrypto fork into a clean Jagd-Agenten codebase.
 | `package.json` | `"name": "liquid-glass-ui"` | `"name": "jagd-agenten"` |
 | `package.json` exports | `liquid-glass.js`, `liquid-glass.umd.cjs` | `jagd-agenten.js`, `jagd-agenten.umd.cjs` |
 | `server/package.json` | `"name": "liquid-glass-server"` | `"name": "jagd-agenten-server"` |
-| `packages/a2a-sdk/package.json` | `"@liquidcrypto/a2a-sdk"` | `"@jagdagenten/a2a-sdk"` |
+| `packages/a2a-sdk/package.json` | `"@jagdagenten/a2a-sdk"` | `"@jagdagenten/a2a-sdk"` |
  
 **Docker & infra:**
  
@@ -38,7 +38,7 @@ This phase transforms the LiquidCrypto fork into a clean Jagd-Agenten codebase.
 | `DATABASE_URL` | `liquidcrypto:liquidcrypto_dev@.../liquidcrypto` → `jagdagenten:jagdagenten_dev@.../jagdagenten` |
  
 **Import paths (project-wide):**
-- `@liquidcrypto/a2a-sdk` → `@jagdagenten/a2a-sdk` (all files that import the SDK)
+- `@jagdagenten/a2a-sdk` → `@jagdagenten/a2a-sdk` (all files that import the SDK)
  
 **Documentation:**
 - `README.md` — rewrite for Jagd-Agenten product

@@ -1,5 +1,5 @@
 {
-  "name": "liquid-glass-ui",
+  "name": "jagd-agenten",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,14 +9,14 @@
     "packages/ui",
     "server"
   ],
-  "main": "./dist/liquid-glass.umd.cjs",
-  "module": "./dist/liquid-glass.js",
+  "main": "./dist/jagd-agenten.umd.cjs",
+  "module": "./dist/jagd-agenten.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/liquid-glass.js",
-      "require": "./dist/liquid-glass.umd.cjs"
+      "import": "./dist/jagd-agenten.js",
+      "require": "./dist/jagd-agenten.umd.cjs"
     },
     "./primitives": {
       "types": "./dist/primitives/index.d.ts",
@@ -77,7 +77,7 @@
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
-    "@liquidcrypto/a2a-sdk": "./packages/a2a-sdk",
+    "@jagdagenten/a2a-sdk": "./packages/a2a-sdk",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-google-maps/api": "^2.20.8",
     "@react-pdf/renderer": "^4.3.2",

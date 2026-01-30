@@ -20,7 +20,7 @@ function PageLoader() {
         <div className="flex items-center justify-center h-screen w-full bg-black/20 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--glass-accent)]"></div>
-                <p className="text-[var(--text-secondary)]">Initializing Liquid OS...</p>
+                <p className="text-[var(--text-secondary)]">Initializing Jagd-Agenten...</p>
             </div>
         </div>
     );
@@ -63,12 +63,12 @@ export const AppRouter = () => {
                             <div className="min-h-screen flex items-center justify-center p-4 bg-black text-white">
                                 <div className="text-center p-8 border border-white/10 rounded-2xl bg-white/5 backdrop-blur-xl">
                                     <h1 className="text-2xl font-bold text-red-400 mb-2">System Critical Error</h1>
-                                    <p className="text-gray-400">The Liquid OS encountered a fatal exception.</p>
+                                    <p className="text-gray-400">Jagd-Agenten encountered a fatal exception.</p>
                                     <button
                                         onClick={() => window.location.reload()}
                                         className="mt-6 px-6 py-2 bg-[var(--glass-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
                                     >
-                                        Reboot System
+                                        Restart
                                     </button>
                                 </div>
                             </div>

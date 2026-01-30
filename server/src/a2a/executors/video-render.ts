@@ -11,7 +11,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import {
   BaseA2UIExecutor,
   type AgentExecutionContext,

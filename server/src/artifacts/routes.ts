@@ -164,8 +164,8 @@ export function createArtifactRoutes() {
             artifactId: artifact.artifactId,
             name: artifact.name,
             description: artifact.description,
-            parts: artifact.parts as import('@liquidcrypto/a2a-sdk').v1.Part[],
-            metadata: artifact.metadata as Record<string, import('@liquidcrypto/a2a-sdk').v1.JSONValue> | undefined,
+            parts: artifact.parts as import('@jagdagenten/a2a-sdk').v1.Part[],
+            metadata: artifact.metadata as Record<string, import('@jagdagenten/a2a-sdk').v1.JSONValue> | undefined,
             extensions: artifact.extensions,
           },
           taskId,
@@ -193,10 +193,10 @@ export function createArtifactRoutes() {
 
       try {
         const artifact = await store.update(params.id, {
-          parts: updates.parts as import('@liquidcrypto/a2a-sdk').v1.Part[] | undefined,
+          parts: updates.parts as import('@jagdagenten/a2a-sdk').v1.Part[] | undefined,
           name: updates.name,
           description: updates.description,
-          metadata: updates.metadata as Record<string, import('@liquidcrypto/a2a-sdk').v1.JSONValue> | undefined,
+          metadata: updates.metadata as Record<string, import('@jagdagenten/a2a-sdk').v1.JSONValue> | undefined,
         });
 
         return { artifact };
@@ -497,8 +497,8 @@ export function createArtifactRoutes() {
           artifactId: artifact.artifactId,
           name: artifact.name,
           description: artifact.description,
-          parts: (artifact.parts ?? []) as import('@liquidcrypto/a2a-sdk').v1.Part[],
-          metadata: artifact.metadata as Record<string, import('@liquidcrypto/a2a-sdk').v1.JSONValue> | undefined,
+          parts: (artifact.parts ?? []) as import('@jagdagenten/a2a-sdk').v1.Part[],
+          metadata: artifact.metadata as Record<string, import('@jagdagenten/a2a-sdk').v1.JSONValue> | undefined,
         },
         taskId,
         contextId
@@ -524,7 +524,7 @@ export function createArtifactRoutes() {
       try {
         await store.appendChunk(
           params.id,
-          parts as import('@liquidcrypto/a2a-sdk').v1.Part[],
+          parts as import('@jagdagenten/a2a-sdk').v1.Part[],
           isLast ?? false
         );
         return { success: true };

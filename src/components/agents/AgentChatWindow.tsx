@@ -16,7 +16,7 @@ import {
     createA2AClient,
     v1,
     a2ui,
-} from '@liquidcrypto/a2a-sdk';
+} from '@jagdagenten/a2a-sdk';
 import type { CuratedAgent } from '@/services/agents/registry';
 import { generateContextualUI, type GeneratedUI } from './contextualUIGenerator';
 import { useAgentUXConfig, type SuggestionStrategy } from '@/applications/agent-chat/ux';

@@ -1,5 +1,5 @@
 
-import { createA2AClient } from '@liquidcrypto/a2a-sdk';
+import { createA2AClient } from '@jagdagenten/a2a-sdk';
 
 async function testConnection() {
     console.log('Testing A2A Connection...');

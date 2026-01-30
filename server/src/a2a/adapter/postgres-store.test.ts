@@ -13,7 +13,7 @@ import {
   createPostgresStoresFromEnv,
   type PostgresTaskStoreConfig,
 } from './postgres-store.js';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 
 // Mock Pool for unit tests (no actual DB connection)
 const mockPool = {

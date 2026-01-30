@@ -461,7 +461,7 @@ export async function scaffoldApp(appId: string, plan: ArchitecturePlan, request
       ` * A2A executor for the ${appId} application.`,
       ` */`,
       '',
-      `import { v1 } from '@liquidcrypto/a2a-sdk';`,
+      `import { v1 } from '@jagdagenten/a2a-sdk';`,
       `import type { AgentExecutor, AgentExecutionContext, AgentExecutionResult } from '../adapter/index.js';`,
       '',
       `export function get${appName}AgentCard(baseUrl: string): v1.AgentCard {`,

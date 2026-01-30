@@ -6,7 +6,7 @@
  */
 
 import { Elysia, t } from 'elysia';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import { GoogleGenAI, Modality, Session } from '@google/genai';
 import { randomUUID } from 'crypto';
 

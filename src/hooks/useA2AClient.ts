@@ -19,7 +19,7 @@ import {
   type StreamEvent,
   v1,
   a2ui,
-} from '@liquidcrypto/a2a-sdk';
+} from '@jagdagenten/a2a-sdk';
 
 // ============================================================================
 // Types

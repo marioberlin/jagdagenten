@@ -5,7 +5,7 @@
  * versioning, search, and rich metadata for AI-generated outputs.
  */
 
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 
 // ============================================================================
 // Core Types

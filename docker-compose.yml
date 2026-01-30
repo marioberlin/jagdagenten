@@ -1,4 +1,4 @@
-# Docker Compose for LiquidCrypto Development Services
+# Docker Compose for Jagd-Agenten Development Services
 #
 # Usage:
 #   Start services:   docker compose up -d
@@ -9,21 +9,21 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: liquidcrypto-postgres
+    container_name: jagdagenten-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: liquidcrypto
-      POSTGRES_PASSWORD: liquidcrypto_dev
-      POSTGRES_DB: liquidcrypto
+      POSTGRES_USER: jagdagenten
+      POSTGRES_PASSWORD: jagdagenten_dev
+      POSTGRES_DB: jagdagenten
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/sql:/docker-entrypoint-initdb.d:ro
     networks:
-      - liquid-network
+      - jagd-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U liquidcrypto -d liquidcrypto" ]
+      test: [ "CMD-SHELL", "pg_isready -U jagdagenten -d jagdagenten" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,14 +31,14 @@ services:
   # Optional: Redis for distributed features (WebSocket scaling, caching)
   redis:
     image: redis:7-alpine
-    container_name: liquidcrypto-redis
+    container_name: jagdagenten-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - liquid-network
+      - jagd-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -47,28 +47,28 @@ services:
 
   # AI Agent Runtime Container
   # Pre-warmed container for executing AI agents in isolated environments
-  liquid-runtime:
+  jagd-runtime:
     build:
       context: ./server/container
       dockerfile: Dockerfile
-    container_name: liquidcrypto-runtime
+    container_name: jagdagenten-runtime
     restart: unless-stopped
     volumes:
       # Mount sandbox directory for file operations
-      - liquid_sandboxes:/sandboxes:rw
+      - jagd_sandboxes:/sandboxes:rw
       # Mount /tmp for local development fallback
-      - /tmp/liquid-sandboxes:/tmp/liquid-sandboxes:rw
+      - /tmp/jagd-sandboxes:/tmp/jagd-sandboxes:rw
     environment:
-      LIQUID_RUNTIME_MODE: pool
-      LIQUID_RUNTIME_PORT: 8080
-      LIQUID_MAX_EXECUTION_TIME: 300000
-      LIQUID_MAX_MEMORY_MB: 512
-      LIQUID_LOG_LEVEL: info
+      JAGD_RUNTIME_MODE: pool
+      JAGD_RUNTIME_PORT: 8080
+      JAGD_MAX_EXECUTION_TIME: 300000
+      JAGD_MAX_MEMORY_MB: 512
+      JAGD_LOG_LEVEL: info
       VITE_REQUIRE_AUTH: "true"
     ports:
       - "8081:8080" # Expose runtime API
     networks:
-      - liquid-network
+      - jagd-network
     deploy:
       resources:
         limits:
@@ -84,16 +84,14 @@ services:
       start_period: 10s
       retries: 3
 
-  # A2A Video: Remotion-compatible Video Rendering Server
-  # FFmpeg-based video processing for AI agents
+  # Video Rendering Server (optional)
   video-runtime:
     build:
       context: ./server/container
       dockerfile: Dockerfile.video
-    container_name: liquidcrypto-video
+    container_name: jagdagenten-video
     restart: unless-stopped
     volumes:
-      # Video outputs and assets
       - video_renders:/data/renders:rw
       - video_assets:/data/assets:rw
       - video_temp:/data/temp:rw
@@ -107,13 +105,13 @@ services:
       VIDEO_DEFAULT_CRF: 18
       VIDEO_MAX_DURATION: 3600
       VIDEO_LOG_LEVEL: info
-      DATABASE_URL: postgresql://liquidcrypto:liquidcrypto_dev@postgres:5432/liquidcrypto
+      DATABASE_URL: postgresql://jagdagenten:jagdagenten_dev@postgres:5432/jagdagenten
       REDIS_URL: redis://redis:6379
       NATS_URL: nats://nats:4222
     ports:
-      - "8082:8082" # Video API
+      - "8082:8082"
     networks:
-      - liquid-network
+      - jagd-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -134,20 +132,19 @@ services:
       start_period: 15s
       retries: 3
 
-  # NATS: High-performance messaging for A2A agents and real-time events
-  # Enables pub/sub with wildcards, work queues, and back-pressure support
+  # NATS: High-performance messaging for A2A agents
   nats:
     image: nats:2.10-alpine
-    container_name: liquidcrypto-nats
+    container_name: jagdagenten-nats
     command: [ "--js", "--sd", "/data", "-m", "8222" ]
     restart: unless-stopped
     ports:
-      - "4222:4222" # Client connections
-      - "8222:8222" # HTTP monitoring UI
+      - "4222:4222"
+      - "8222:8222"
     volumes:
       - nats_data:/data
     networks:
-      - liquid-network
+      - jagd-network
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz" ]
       interval: 5s
@@ -155,7 +152,7 @@ services:
       retries: 3
 
 networks:
-  liquid-network:
+  jagd-network:
     driver: bridge
 
 volumes:
@@ -165,7 +162,7 @@ volumes:
     driver: local
   nats_data:
     driver: local
-  liquid_sandboxes:
+  jagd_sandboxes:
     driver: local
   video_renders:
     driver: local

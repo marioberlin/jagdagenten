@@ -1,5 +1,5 @@
 {
-    "name": "@liquidcrypto/a2a-sdk",
+    "name": "@jagdagenten/a2a-sdk",
     "version": "1.0.0",
     "type": "module",
     "main": "./dist/index.js",

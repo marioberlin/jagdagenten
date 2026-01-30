@@ -15,7 +15,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll, mock } from 'bun:test';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import { ElysiaA2AAdapter, type ElysiaAdapterConfig, type AgentExecutor } from './adapter/elysia-adapter.js';
 import { InMemoryTaskStore, InMemoryPushNotificationStore } from './adapter/index.js';
 

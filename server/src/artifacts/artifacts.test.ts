@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll, mock } from 'bun:test';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 import type { StoredArtifact, ArtifactCategory } from './types.js';
 
 // Mock pool for testing without actual database

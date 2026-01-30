@@ -8,7 +8,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { resolve } from 'path';
-import type { v1 } from '@liquidcrypto/a2a-sdk';
+import type { v1 } from '@jagdagenten/a2a-sdk';
 import type { TaskStore, PushNotificationStore } from '../adapter/elysia-adapter.js';
 import { LiquidCryptoExecutor, getLiquidCryptoAgentCard } from '../executors/index.js';
 import { createPostgresStoresFromEnv } from '../adapter/index.js';

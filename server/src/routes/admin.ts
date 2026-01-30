@@ -18,7 +18,7 @@ import {
     type A2ASession,
 } from '../a2a/adapter/postgres-store.js';
 import { broadcastTaskRetried, broadcastTaskCanceled } from '../admin/events.js';
-import type { v1 } from '@liquidcrypto/a2a-sdk';
+import type { v1 } from '@jagdagenten/a2a-sdk';
 
 // Database configuration
 const DB_CONFIG = {

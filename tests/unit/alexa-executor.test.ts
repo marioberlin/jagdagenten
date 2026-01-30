@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { AlexaExecutor, getAlexaAgentCard } from '../../server/src/a2a/executors/alexa.js';
-import { v1 } from '@liquidcrypto/a2a-sdk';
+import { v1 } from '@jagdagenten/a2a-sdk';
 
 describe('AlexaExecutor', () => {
     let executor: AlexaExecutor;
