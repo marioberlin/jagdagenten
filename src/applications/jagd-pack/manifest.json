@@ -1,0 +1,37 @@
+{
+    "id": "jagd-pack",
+    "name": "Rudel",
+    "version": "1.0.0",
+    "description": "Jagdgruppe und Teamkoordination",
+    "author": "Jagd-Agenten",
+    "category": "productivity",
+    "keywords": [
+        "hunting",
+        "jagd",
+        "pack",
+        "team",
+        "group"
+    ],
+    "icon": "Users",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Rudel",
+        "defaultSize": {
+            "width": 1000,
+            "height": 700
+        },
+        "minWidth": 400,
+        "minHeight": 500,
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 5
+        }
+    },
+    "capabilities": [
+        "network:http"
+    ]
+}

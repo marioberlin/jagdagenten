@@ -2,33 +2,25 @@
   {
     "hash": "1dd03ece3798608e",
     "count": 1,
-    "firstSeen": "2026-01-21T22:58:09.066Z",
-    "lastSeen": "2026-01-21T22:58:09.066Z",
+    "firstSeen": "2026-01-30T14:32:55.044Z",
+    "lastSeen": "2026-01-30T14:32:55.044Z",
     "healingInProgress": true,
-    "lastHealingAttempt": "2026-01-21T22:58:09.066Z"
+    "lastHealingAttempt": "2026-01-30T14:32:55.044Z"
   },
   {
     "hash": "11814ccbdb33d4d4",
     "count": 1,
-    "firstSeen": "2026-01-21T22:58:09.068Z",
-    "lastSeen": "2026-01-21T22:58:09.068Z",
+    "firstSeen": "2026-01-30T14:32:55.046Z",
+    "lastSeen": "2026-01-30T14:32:55.046Z",
     "healingInProgress": true,
-    "lastHealingAttempt": "2026-01-21T22:58:09.068Z"
+    "lastHealingAttempt": "2026-01-30T14:32:55.046Z"
   },
   {
     "hash": "541513f65a5b812e",
     "count": 1,
-    "firstSeen": "2026-01-21T22:58:09.069Z",
-    "lastSeen": "2026-01-21T22:58:09.069Z",
+    "firstSeen": "2026-01-30T14:32:55.047Z",
+    "lastSeen": "2026-01-30T14:32:55.047Z",
     "healingInProgress": true,
-    "lastHealingAttempt": "2026-01-21T22:58:09.069Z"
-  },
-  {
-    "hash": "4b606b3696fbd28b",
-    "count": 1,
-    "firstSeen": "2026-01-22T21:36:25.593Z",
-    "lastSeen": "2026-01-22T21:36:25.593Z",
-    "healingInProgress": true,
-    "lastHealingAttempt": "2026-01-22T21:36:25.593Z"
+    "lastHealingAttempt": "2026-01-30T14:32:55.047Z"
   }
 ]

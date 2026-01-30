@@ -1,0 +1,38 @@
+{
+    "id": "jagd-cockpit",
+    "name": "Cockpit",
+    "version": "1.0.0",
+    "description": "Tägliche Jagdbedingungen und Empfehlungen",
+    "author": "Jagd-Agenten",
+    "category": "productivity",
+    "keywords": [
+        "hunting",
+        "jagd",
+        "cockpit",
+        "weather",
+        "conditions"
+    ],
+    "icon": "Gauge",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Cockpit",
+        "defaultSize": {
+            "width": 1000,
+            "height": 700
+        },
+        "minWidth": 375,
+        "minHeight": 500,
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 1
+        }
+    },
+    "capabilities": [
+        "network:http",
+        "geolocation"
+    ]
+}

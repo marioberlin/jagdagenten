@@ -1,0 +1,37 @@
+{
+    "id": "jagd-verwaltung",
+    "name": "Verwaltung",
+    "version": "1.0.0",
+    "description": "Revier- und Benutzerverwaltung",
+    "author": "Jagd-Agenten",
+    "category": "productivity",
+    "keywords": [
+        "hunting",
+        "jagd",
+        "admin",
+        "settings",
+        "management"
+    ],
+    "icon": "Settings",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Verwaltung",
+        "defaultSize": {
+            "width": 1000,
+            "height": 700
+        },
+        "minWidth": 500,
+        "minHeight": 500,
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 7
+        }
+    },
+    "capabilities": [
+        "network:http"
+    ]
+}

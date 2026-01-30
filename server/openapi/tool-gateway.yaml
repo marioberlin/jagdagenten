@@ -1,0 +1,299 @@
+openapi: 3.1.1
+info:
+  title: Jagd-Agenten Tool Gateway API
+  version: 0.1.0
+  description: |
+    Executes audited tool calls for Jagd-Agenten agents.
+    Tools: timeline, scout, bureaucracy, gear, pack, feed, news, moderation.
+    Designed for function calling + structured outputs.
+
+servers:
+  - url: https://api.jagd-agenten.example/v1
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    GeoScope:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [none, coarse_grid, precise]
+        gridId:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        blurMeters:
+          type: integer
+          minimum: 0
+      required: [mode]
+
+    ToolStatus:
+      type: string
+      enum: [ok, needs_user_confirm, blocked, error, pending]
+
+    ToolAudit:
+      type: object
+      properties:
+        reasonCodes:
+          type: array
+          items:
+            type: string
+        redactions:
+          type: array
+          items:
+            type: string
+        privacyApplied:
+          type: array
+          items:
+            type: string
+        traceId:
+          type: string
+        durationMs:
+          type: integer
+
+    ToolError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required: [code, message]
+
+    ToolEnvelope:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ToolStatus"
+        result:
+          type: object
+          additionalProperties: true
+        audit:
+          $ref: "#/components/schemas/ToolAudit"
+        error:
+          $ref: "#/components/schemas/ToolError"
+        confirmToken:
+          type: string
+        preview:
+          type: object
+          additionalProperties: true
+      required: [status]
+
+    ToolInvokeRequest:
+      type: object
+      properties:
+        params:
+          type: object
+          additionalProperties: true
+        userId:
+          type: string
+        sessionId:
+          type: string
+        confirmToken:
+          type: string
+      required: [params, userId, sessionId]
+
+    ConfirmRequest:
+      type: object
+      properties:
+        confirmToken:
+          type: string
+        userId:
+          type: string
+        sessionId:
+          type: string
+      required: [confirmToken, userId, sessionId]
+
+    SessionType:
+      type: string
+      enum: [ansitz, pirsch, drueckjagd, other]
+
+    PrivacyMode:
+      type: string
+      enum: [private, team_event_only, public_blurred]
+
+    TimelineStartSessionArgs:
+      type: object
+      properties:
+        sessionType:
+          $ref: "#/components/schemas/SessionType"
+        startTime:
+          type: string
+          format: date-time
+        geo:
+          $ref: "#/components/schemas/GeoScope"
+        participants:
+          type: array
+          items:
+            type: string
+        privacyMode:
+          $ref: "#/components/schemas/PrivacyMode"
+      required: [sessionType, startTime, geo, privacyMode]
+
+    ToolSchemaInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 3
+        requiresConfirmation:
+          type: boolean
+      required: [name, description, tier, requiresConfirmation]
+
+paths:
+  /tools/{toolName}:
+    post:
+      operationId: invokeTool
+      summary: Invoke a tool by name
+      tags:
+        - Tools
+      parameters:
+        - name: toolName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Tool name, e.g. timeline.start_session"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToolInvokeRequest"
+      responses:
+        "200":
+          description: Tool result envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolEnvelope"
+        "400":
+          description: Invalid tool or args
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolEnvelope"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden by permission/guardrail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolEnvelope"
+
+  /tools/{toolName}/confirm:
+    post:
+      operationId: confirmTool
+      summary: Confirm a Tier 2/3 tool action
+      tags:
+        - Tools
+      parameters:
+        - name: toolName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmRequest"
+      responses:
+        "200":
+          description: Confirmed tool result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolEnvelope"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /tools/schemas:
+    get:
+      operationId: listToolSchemas
+      summary: List all tool schemas
+      tags:
+        - Tools
+      responses:
+        "200":
+          description: Tool schema list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToolSchemaInfo"
+
+  /tools/schemas/{toolName}:
+    get:
+      operationId: getToolSchema
+      summary: Get schema for a specific tool
+      tags:
+        - Tools
+      parameters:
+        - name: toolName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tool JSON Schema
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Unknown tool
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /health:
+    get:
+      operationId: health
+      summary: Health check
+      tags:
+        - System
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  version:
+                    type: string
+                required: [ok]

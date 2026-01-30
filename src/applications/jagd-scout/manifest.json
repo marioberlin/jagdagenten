@@ -1,0 +1,38 @@
+{
+    "id": "jagd-scout",
+    "name": "Scout",
+    "version": "1.0.0",
+    "description": "Revierkarte und Wildbeobachtungen",
+    "author": "Jagd-Agenten",
+    "category": "productivity",
+    "keywords": [
+        "hunting",
+        "jagd",
+        "map",
+        "scout",
+        "wildlife"
+    ],
+    "icon": "Map",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Scout",
+        "defaultSize": {
+            "width": 1200,
+            "height": 800
+        },
+        "minWidth": 500,
+        "minHeight": 400,
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 2
+        }
+    },
+    "capabilities": [
+        "network:http",
+        "geolocation"
+    ]
+}

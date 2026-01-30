@@ -1,0 +1,210 @@
+/**
+ * Red Light Mode Theme
+ * 
+ * Preserves night vision by using only red wavelengths.
+ * Essential for night hunting to maintain natural vision adaptation.
+ * 
+ * Usage: Add class "red-light-mode" to html or body element.
+ */
+
+/* Base theme variables in red light mode */
+.red-light-mode {
+    /* All colors converted to red spectrum */
+    --glass-bg-primary: rgba(30, 5, 5, 0.9);
+    --glass-bg-secondary: rgba(40, 8, 8, 0.85);
+    --glass-surface: rgba(50, 10, 10, 0.8);
+    --glass-border: rgba(100, 20, 20, 0.4);
+    --glass-shadow: rgba(20, 0, 0, 0.6);
+
+    /* Accent becomes darker red */
+    --glass-accent: #990000;
+    --glass-accent-secondary: #660000;
+
+    /* Text colors in red spectrum */
+    --text-primary: #ff3333;
+    --text-secondary: #aa2222;
+    --text-tertiary: #772222;
+    --text-muted: #551111;
+
+    /* Status colors all become red variants */
+    --status-success: #aa3333;
+    --status-warning: #993333;
+    --status-error: #cc3333;
+    --status-info: #883333;
+
+    /* Force all colors to red channel only */
+    --color-green: #aa3333;
+    --color-blue: #993333;
+    --color-yellow: #bb4444;
+    --color-orange: #cc5555;
+    --color-purple: #882222;
+    --color-cyan: #993333;
+
+    /* Backgrounds */
+    background-color: #0a0000 !important;
+    color: #cc3333 !important;
+}
+
+/* Override all interactive elements */
+.red-light-mode a,
+.red-light-mode button,
+.red-light-mode input,
+.red-light-mode select,
+.red-light-mode textarea {
+    color: #dd3333 !important;
+    border-color: rgba(100, 20, 20, 0.5) !important;
+}
+
+.red-light-mode button:hover,
+.red-light-mode a:hover {
+    background-color: rgba(80, 15, 15, 0.5) !important;
+}
+
+/* Force all images/icons to red filter */
+.red-light-mode img:not(.preserve-color),
+.red-light-mode svg:not(.preserve-color) {
+    filter: grayscale(100%) sepia(100%) saturate(300%) hue-rotate(-50deg) brightness(0.7);
+}
+
+/* Override Lucide icons */
+.red-light-mode [class*="lucide"] {
+    color: #cc3333 !important;
+}
+
+/* Map elements */
+.red-light-mode .maplibregl-canvas,
+.red-light-mode [class*="pigeon-"] {
+    filter: grayscale(100%) sepia(100%) saturate(200%) hue-rotate(-50deg) brightness(0.6);
+}
+
+/* Charts and data visualizations */
+.red-light-mode .recharts-wrapper,
+.red-light-mode canvas {
+    filter: grayscale(100%) sepia(100%) saturate(300%) hue-rotate(-50deg) brightness(0.7);
+}
+
+/* Glass effects in red */
+.red-light-mode .glass-container,
+.red-light-mode [class*="GlassContainer"],
+.red-light-mode [class*="glass-"] {
+    background: rgba(30, 5, 5, 0.85) !important;
+    border-color: rgba(100, 20, 20, 0.4) !important;
+    box-shadow: 0 4px 20px rgba(20, 0, 0, 0.4) !important;
+}
+
+/* Scrollbars */
+.red-light-mode ::-webkit-scrollbar {
+    background: #0a0000;
+}
+
+.red-light-mode ::-webkit-scrollbar-thumb {
+    background: #330000;
+    border: 1px solid #550000;
+}
+
+.red-light-mode ::-webkit-scrollbar-thumb:hover {
+    background: #440000;
+}
+
+/* Selection highlight */
+.red-light-mode ::selection {
+    background: #550000;
+    color: #ff3333;
+}
+
+/* Focus states */
+.red-light-mode *:focus {
+    outline-color: #880000 !important;
+    box-shadow: 0 0 0 2px rgba(100, 0, 0, 0.4) !important;
+}
+
+/* Specific component overrides */
+
+/* Calendar moon phases */
+.red-light-mode [title*="Vollmond"],
+.red-light-mode [title*="Neumond"] {
+    filter: none !important;
+    opacity: 0.8;
+}
+
+/* Score gauges */
+.red-light-mode .huntability-gauge circle,
+.red-light-mode [class*="ScoreCard"] circle {
+    stroke: #990000 !important;
+}
+
+/* Wind compass */
+.red-light-mode .wind-compass line,
+.red-light-mode [class*="WindCompass"] line {
+    stroke: #cc3333 !important;
+}
+
+/* Buttons */
+.red-light-mode .btn-primary,
+.red-light-mode [class*="primary"] {
+    background-color: #660000 !important;
+    color: #ff3333 !important;
+}
+
+.red-light-mode .btn-secondary,
+.red-light-mode [class*="secondary"] {
+    background-color: rgba(50, 10, 10, 0.8) !important;
+    color: #bb3333 !important;
+}
+
+/* Modal overlays */
+.red-light-mode .modal-backdrop,
+.red-light-mode [class*="overlay"] {
+    background: rgba(10, 0, 0, 0.9) !important;
+}
+
+/* Toast notifications */
+.red-light-mode .toast,
+.red-light-mode [class*="notification"] {
+    background: rgba(40, 8, 8, 0.95) !important;
+    border-color: rgba(100, 20, 20, 0.5) !important;
+}
+
+/* Tables */
+.red-light-mode table {
+    border-color: rgba(80, 15, 15, 0.4) !important;
+}
+
+.red-light-mode th {
+    background: rgba(50, 10, 10, 0.8) !important;
+    color: #cc3333 !important;
+}
+
+.red-light-mode td {
+    border-color: rgba(60, 12, 12, 0.3) !important;
+}
+
+.red-light-mode tr:nth-child(even) {
+    background: rgba(30, 5, 5, 0.5) !important;
+}
+
+/* Code blocks */
+.red-light-mode pre,
+.red-light-mode code {
+    background: rgba(20, 3, 3, 0.9) !important;
+    color: #bb3333 !important;
+}
+
+/* Loading spinners */
+.red-light-mode .spinner,
+.red-light-mode [class*="loading"],
+.red-light-mode .animate-spin {
+    border-color: rgba(80, 15, 15, 0.3) !important;
+    border-top-color: #990000 !important;
+}
+
+/* Preserve specific elements that need to stay visible */
+.red-light-mode .preserve-color {
+    filter: none !important;
+}
+
+/* Transition for smooth mode switching */
+html.transitioning-theme,
+html.transitioning-theme * {
+    transition: background-color 0.5s ease, color 0.3s ease, border-color 0.3s ease, filter 0.5s ease !important;
+}

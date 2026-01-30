@@ -1,17 +1,70 @@
 {
   "id": "jagd-agenten",
   "name": "Jagd-Agenten",
-  "description": "AI-powered hunting companion for the DACH region",
-  "icon": "crosshair",
-  "category": "productivity",
   "version": "1.0.0",
+  "description": "AI-powered hunting companion for the DACH region",
   "author": "Jagd-Agenten",
-  "dock": { "enabled": true, "order": 1 },
+  "category": "productivity",
+  "keywords": [
+    "hunting",
+    "jagd",
+    "wildlife",
+    "revier",
+    "dach"
+  ],
+  "icon": "Crosshair",
+  "entry": "./App.tsx",
   "window": {
-    "defaultWidth": 1200,
-    "defaultHeight": 800,
+    "mode": "floating",
+    "title": "Jagd-Agenten",
+    "defaultSize": {
+      "width": 1200,
+      "height": 800
+    },
     "minWidth": 375,
     "minHeight": 600,
     "resizable": true
-  }
+  },
+  "integrations": {
+    "dock": {
+      "enabled": false
+    },
+    "commandPalette": {
+      "commands": [
+        {
+          "id": "start-hunt",
+          "label": "Jagd starten",
+          "keywords": [
+            "hunt",
+            "start",
+            "jagd"
+          ]
+        },
+        {
+          "id": "view-cockpit",
+          "label": "Tages-Cockpit",
+          "keywords": [
+            "dashboard",
+            "cockpit",
+            "heute"
+          ]
+        },
+        {
+          "id": "view-map",
+          "label": "Revierkarte",
+          "keywords": [
+            "map",
+            "karte",
+            "revier"
+          ]
+        }
+      ]
+    }
+  },
+  "capabilities": [
+    "network:http",
+    "a2a:connect",
+    "ai:agent",
+    "geolocation"
+  ]
 }

@@ -6,7 +6,7 @@
  * recent sessions, and action buttons.
  */
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Compass,
   Thermometer,
@@ -22,6 +22,12 @@ import {
 import { useCockpitStore } from '@/stores/useCockpitStore';
 import type { ConditionsSnapshot, HuntWindow, RecentSession } from '@/stores/useCockpitStore';
 import CockpitChatPanel from './CockpitChatPanel';
+import { BuechsenlichtCountdown } from './BuechsenlichtCountdown';
+import { StartHuntModal } from './StartHuntModal';
+import { HuntModeView } from './HuntModeView';
+import { EndHuntSummary } from './EndHuntSummary';
+import { useHuntSessionStore, selectActiveSession, selectIsHunting } from '../stores/useHuntSessionStore';
+import type { SessionType, StandReference, WeatherSnapshot, HuntSession } from '../types/HuntSession';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -392,6 +398,60 @@ export default function DailyCockpit() {
     fetchDashboard,
   } = useCockpitStore();
 
+  // Hunt session state
+  const activeSession = useHuntSessionStore(selectActiveSession);
+  const isHunting = useHuntSessionStore(selectIsHunting);
+  const { startSession, endSession } = useHuntSessionStore();
+
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [showEndSummary, setShowEndSummary] = useState(false);
+  const [completedSession, setCompletedSession] = useState<{ session: HuntSession; summary: any } | null>(null);
+
+  // Get personalized greeting
+  const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    const name = 'Jäger'; // TODO: Get from user profile
+    if (hour < 12) return `Guten Morgen, ${name}`;
+    if (hour < 18) return `Guten Tag, ${name}`;
+    return `Guten Abend, ${name}`;
+  };
+
+  // Get wind summary for greeting
+  const getWindSummary = (): string => {
+    if (!conditions) return '';
+    const dir = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'][Math.round(conditions.wind.direction / 45) % 8];
+    return `Wind stabil aus ${dir} mit ${conditions.wind.speed} km/h`;
+  };
+
+  // Handle starting a hunt
+  const handleStartHunt = async (type: SessionType, stand?: StandReference) => {
+    // Convert conditions to WeatherSnapshot
+    const weather: WeatherSnapshot | undefined = conditions ? {
+      temperature: conditions.temperature,
+      feelsLike: conditions.temperature - 2, // Approximate
+      humidity: conditions.humidity,
+      windSpeed: conditions.wind.speed,
+      windDirection: conditions.wind.direction,
+      pressure: conditions.pressure,
+      visibility: 10000,
+      cloudCover: conditions.cloudCover,
+      precipitation: conditions.precipitation,
+      moonPhase: conditions.moonPhase,
+      capturedAt: new Date().toISOString(),
+    } : undefined;
+
+    await startSession(type, stand, weather);
+    setShowStartModal(false);
+  };
+
+  // Handle ending a hunt
+  const handleEndHunt = async () => {
+    if (!activeSession) return;
+    const summary = await endSession();
+    setCompletedSession({ session: activeSession, summary });
+    setShowEndSummary(true);
+  };
+
   useEffect(() => {
     // Request browser geolocation, fallback to central Germany
     if ('geolocation' in navigator) {
@@ -410,60 +470,110 @@ export default function DailyCockpit() {
   }, [fetchDashboard]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Tages-Cockpit</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Jagdbarkeit, beste Zeitfenster, Wind & Witterung - alles auf einen Blick.
-          </p>
+    <>
+      {/* Hunt Mode View (full screen when active) */}
+      {isHunting && (
+        <HuntModeView onEnd={handleEndHunt} />
+      )}
+
+      {/* Start Hunt Modal */}
+      <StartHuntModal
+        isOpen={showStartModal}
+        onClose={() => setShowStartModal(false)}
+        onStart={handleStartHunt}
+        stands={[]} // TODO: Load from user's stands
+        currentWeather={conditions ? {
+          temperature: conditions.temperature,
+          feelsLike: conditions.temperature - 2,
+          humidity: conditions.humidity,
+          windSpeed: conditions.wind.speed,
+          windDirection: conditions.wind.direction,
+          pressure: conditions.pressure,
+          visibility: 10000,
+          cloudCover: conditions.cloudCover,
+          precipitation: conditions.precipitation,
+          moonPhase: conditions.moonPhase,
+          capturedAt: new Date().toISOString(),
+        } : undefined}
+      />
+
+      {/* End Hunt Summary */}
+      {showEndSummary && completedSession && (
+        <EndHuntSummary
+          session={completedSession.session}
+          summary={completedSession.summary}
+          onClose={() => {
+            setShowEndSummary(false);
+            setCompletedSession(null);
+          }}
+          onSaveToJournal={() => {
+            // TODO: Save to journal
+            console.log('Saving to journal...');
+          }}
+        />
+      )}
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+              {getGreeting()}
+            </h1>
+            <p className="text-sm text-[var(--text-secondary)]">
+              {getWindSummary() || 'Jagdbarkeit, beste Zeitfenster, Wind & Witterung - alles auf einen Blick.'}
+            </p>
+          </div>
         </div>
+
+        {error && (
+          <div className="px-4 py-3 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm text-[var(--text-secondary)]">
+            Fehler beim Laden: {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <div
+                className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: 'var(--glass-accent)', borderTopColor: 'transparent' }}
+              />
+              <span className="text-sm text-[var(--text-secondary)]">Daten werden geladen...</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Main dashboard grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <HuntabilityScoreCard score={huntabilityScore} />
+              <BuechsenlichtCountdown twilight={conditions?.twilight ?? null} />
+              <BestWindowsCard windows={bestWindows} />
+              <ConditionsCard conditions={conditions} />
+            </div>
+
+            {/* Recent sessions */}
+            <RecentSessionsCard sessions={recentSessions} />
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowStartModal(true)}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--glass-accent)] text-white font-semibold text-lg transition-opacity hover:opacity-90"
+              >
+                <Play size={20} />
+                Jagd starten
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-primary)] font-semibold text-lg transition-opacity hover:opacity-90">
+                <ClipboardList size={20} />
+                Checkliste
+              </button>
+            </div>
+
+            {/* AI Chat Panel */}
+            <CockpitChatPanel />
+          </>
+        )}
       </div>
-
-      {error && (
-        <div className="px-4 py-3 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm text-[var(--text-secondary)]">
-          Fehler beim Laden: {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <div
-              className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--glass-accent)', borderTopColor: 'transparent' }}
-            />
-            <span className="text-sm text-[var(--text-secondary)]">Daten werden geladen...</span>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Main dashboard grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <HuntabilityScoreCard score={huntabilityScore} />
-            <BestWindowsCard windows={bestWindows} />
-            <ConditionsCard conditions={conditions} />
-          </div>
-
-          {/* Recent sessions */}
-          <RecentSessionsCard sessions={recentSessions} />
-
-          {/* Action buttons */}
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--glass-accent)] text-white font-semibold text-lg transition-opacity hover:opacity-90">
-              <Play size={20} />
-              Jagd starten
-            </button>
-            <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-primary)] font-semibold text-lg transition-opacity hover:opacity-90">
-              <ClipboardList size={20} />
-              Checkliste
-            </button>
-          </div>
-
-          {/* AI Chat Panel */}
-          <CockpitChatPanel />
-        </>
-      )}
-    </div>
+    </>
   );
 }

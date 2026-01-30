@@ -254,7 +254,214 @@ export function createJagdScoutRoutes() {
           return { error: 'Failed to compute conditions' };
         }
       },
+    )
+
+    // -----------------------------------------------------------------------
+    // Stand Recommendations (AI-powered)
+    // -----------------------------------------------------------------------
+    .get(
+      '/recommend',
+      async ({ query: qs, set }) => {
+        const lat = Number(qs.lat ?? 52.52);
+        const lon = Number(qs.lon ?? 13.405);
+        const windDirection = Number(qs.windDir ?? 270);
+        const limit = Number(qs.limit ?? 3);
+
+        try {
+          // Get user's stands from DB
+          const standsResult = await query(
+            `SELECT id, name, stand_type, geo_lat, geo_lon, notes,
+                    wind_history, performance_stats
+             FROM hunt_stands WHERE user_id = $1`,
+            [DEMO_USER_ID],
+          );
+
+          if (standsResult.rows.length === 0) {
+            return {
+              recommendations: [],
+              message: 'Keine Stände konfiguriert. Fügen Sie zuerst Stände hinzu.',
+            };
+          }
+
+          // Convert DB rows to recommendation format
+          const stands = standsResult.rows.map((row) => ({
+            id: row.id as string,
+            name: row.name as string,
+            lat: row.geo_lat as number,
+            lon: row.geo_lon as number,
+            facing: estimateFacingFromHistory(row.wind_history as Array<{ direction: number }> | null),
+            type: (row.stand_type as 'hochsitz' | 'kanzel' | 'ansitz' | 'drückjagd') || 'hochsitz',
+            lastSat: (row.performance_stats as { lastSat?: string } | null)?.lastSat,
+            recentSightings: (row.performance_stats as { recentSightings?: number } | null)?.recentSightings || 0,
+            species: (row.performance_stats as { species?: string[] } | null)?.species || [],
+          }));
+
+          // Calculate current conditions (use real data if available)
+          const now = new Date();
+          const sunTimes = SunCalc.getTimes(now, lat, lon);
+          const moonIllum = SunCalc.getMoonIllumination(now);
+
+          const conditions = {
+            wind: {
+              direction: windDirection,
+              speed: 12,
+              gustSpeed: 18,
+            },
+            temperature: 8,
+            humidity: 75,
+            pressure: 1015,
+            moonPhase: getMoonPhaseName(moonIllum.phase),
+            twilight: {
+              civilDawn: sunTimes.dawn?.toISOString().slice(11, 16) ?? '06:30',
+              sunrise: sunTimes.sunrise?.toISOString().slice(11, 16) ?? '07:00',
+              sunset: sunTimes.sunset?.toISOString().slice(11, 16) ?? '17:00',
+              civilDusk: sunTimes.dusk?.toISOString().slice(11, 16) ?? '17:30',
+            },
+            precipitation: 0,
+            cloudCover: 40,
+          };
+
+          // Calculate huntability score (simplified)
+          const huntabilityScore = calculateSimpleHuntability(conditions);
+
+          // Generate recommendations
+          const recommendations = stands
+            .map((stand) => {
+              const windScore = calculateWindScore(stand.facing, windDirection);
+              const sightingScore = Math.min(100, 20 + (stand.recentSightings * 8));
+              const freshnessScore = calculateFreshnessScore(stand.lastSat);
+
+              const totalScore = Math.round(
+                windScore * 0.35 +
+                sightingScore * 0.25 +
+                freshnessScore * 0.20 +
+                huntabilityScore * 0.20
+              );
+
+              const reason = generateReason(windScore, sightingScore, freshnessScore, stand);
+
+              return {
+                stand: {
+                  id: stand.id,
+                  name: stand.name,
+                  lat: stand.lat,
+                  lon: stand.lon,
+                  type: stand.type,
+                },
+                score: totalScore,
+                reason,
+                factors: {
+                  wind: windScore,
+                  sightings: sightingScore,
+                  freshness: freshnessScore,
+                  huntability: huntabilityScore,
+                },
+                approach: {
+                  approachFrom: getCardinalDirection((windDirection + 180) % 360),
+                  estimatedDistance: 300,
+                },
+              };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit);
+
+          return {
+            recommendations,
+            conditions: {
+              windDirection,
+              huntabilityScore,
+            },
+          };
+        } catch (err) {
+          logger.error({ error: err }, 'Failed to generate recommendations');
+          set.status = 500;
+          return { error: 'Failed to generate recommendations' };
+        }
+      },
+      {
+        query: t.Object({
+          lat: t.Optional(t.String()),
+          lon: t.Optional(t.String()),
+          windDir: t.Optional(t.String()),
+          limit: t.Optional(t.String()),
+        }),
+      },
     );
+}
+
+// ============================================================================
+// Recommendation Helpers
+// ============================================================================
+
+function estimateFacingFromHistory(windHistory: Array<{ direction: number }> | null): number {
+  if (!windHistory || windHistory.length === 0) return 180; // Default: faces south
+  // Assume stand faces opposite to average successful wind direction
+  const avgDir = windHistory.reduce((sum, w) => sum + w.direction, 0) / windHistory.length;
+  return (avgDir + 180) % 360;
+}
+
+function calculateWindScore(standFacing: number, windDirection: number): number {
+  const idealWind = (standFacing + 180) % 360;
+  const diff = Math.abs(windDirection - idealWind);
+  const normalizedDiff = diff > 180 ? 360 - diff : diff;
+  return Math.round(100 - (normalizedDiff / 180) * 100);
+}
+
+function calculateFreshnessScore(lastSat?: string): number {
+  if (!lastSat) return 80;
+  const daysSince = Math.floor((Date.now() - new Date(lastSat).getTime()) / (1000 * 60 * 60 * 24));
+  return Math.min(100, 20 + (daysSince * 12));
+}
+
+function calculateSimpleHuntability(conditions: { wind: { speed: number }; precipitation: number }): number {
+  let score = 70;
+  if (conditions.wind.speed < 15) score += 10;
+  if (conditions.wind.speed > 25) score -= 20;
+  if (conditions.precipitation > 0) score -= 15;
+  return Math.max(0, Math.min(100, score));
+}
+
+function getCardinalDirection(degrees: number): string {
+  const directions = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
+  return directions[Math.round(degrees / 45) % 8];
+}
+
+function getMoonPhaseName(phase: number): string {
+  if (phase < 0.125) return 'Neumond';
+  if (phase < 0.25) return 'Zunehmend (Sichel)';
+  if (phase < 0.375) return 'Erstes Viertel';
+  if (phase < 0.5) return 'Zunehmend (Dreiviertel)';
+  if (phase < 0.625) return 'Vollmond';
+  if (phase < 0.75) return 'Abnehmend (Dreiviertel)';
+  if (phase < 0.875) return 'Letztes Viertel';
+  return 'Abnehmend (Sichel)';
+}
+
+function generateReason(
+  windScore: number,
+  sightingScore: number,
+  freshnessScore: number,
+  stand: { recentSightings: number; lastSat?: string; species: string[] }
+): string {
+  const parts: string[] = [];
+
+  if (windScore >= 80) parts.push('Wind optimal');
+  else if (windScore >= 60) parts.push('Wind günstig');
+
+  if (sightingScore >= 80 && stand.recentSightings > 0) {
+    parts.push(`${stand.recentSightings} Sichtungen kürzlich`);
+  }
+
+  if (freshnessScore >= 80 && stand.lastSat) {
+    const days = Math.floor((Date.now() - new Date(stand.lastSat).getTime()) / (1000 * 60 * 60 * 24));
+    if (days > 0) parts.push(`${days} Tage unbesetzt`);
+  }
+
+  if (stand.species.length > 0) {
+    parts.push(`bekannt für ${stand.species[0]}`);
+  }
+
+  return parts.length > 0 ? parts.join(', ') : 'Gute Gesamtbedingungen';
 }
 
 export default createJagdScoutRoutes;

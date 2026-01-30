@@ -60,6 +60,27 @@ import { CommerceExecutor } from './a2a/executors/commerce.js';
 import { templateService } from './services/google/TemplateService.js';
 import { runMigrations } from './migrations.js';
 import { createPostgresStoresFromEnv, type PostgresTaskStore } from './a2a/index.js';
+
+// Jagd-Agenten Routes
+import { createJagdChatRoutes } from './routes/jagd-chat.js';
+import { createJagdCockpitRoutes } from './routes/jagd-cockpit.js';
+import { createJagdJournalRoutes } from './routes/jagd-journal.js';
+import { createJagdScoutRoutes } from './routes/jagd-scout.js';
+import { createJagdTimelineRoutes } from './routes/jagd-timeline.js';
+import { createJagdBureaucracyRoutes } from './routes/jagd-bureaucracy.js';
+import { createJagdQuartermasterRoutes } from './routes/jagd-quartermaster.js';
+import { createJagdFeedRoutes } from './routes/jagd-feed.js';
+import { createJagdPackRoutes } from './routes/jagd-pack.js';
+import { createJagdAdminRoutes } from './routes/jagd-admin.js';
+import { createJagdRevierAdminRoutes } from './routes/jagd-revier-admin.js';
+import { createStreckenlisteRoutes } from './routes/jagd-streckenliste.js';
+import { createVenisonRoutes } from './routes/jagd-venison.js';
+import { createTrailCamRoutes } from './routes/jagd-trailcam.js';
+import { createSessionRoutes } from './routes/jagd-session.js';
+import { createDrueckjagdRoutes } from './routes/jagd-drueckjagd.js';
+import { createAIRespondRoutes } from './routes/ai-respond.js';
+import { createToolGatewayRoutes } from './routes/tool-gateway.js';
+import { createDemoRoutes } from './routes/demo.js';
 import type { RateLimitTier, RateLimitResult, TieredRateLimitConfig } from './types.js';
 import {
     logger,
@@ -708,6 +729,29 @@ async function startServer() {
 
         // UCP Merchant Discovery Crawler API
         .use(ucpDiscoveryApi)
+
+        // ===========================================
+        // Jagd-Agenten Routes
+        // ===========================================
+        .use(createJagdChatRoutes())
+        .use(createJagdCockpitRoutes())
+        .use(createJagdJournalRoutes())
+        .use(createJagdScoutRoutes())
+        .use(createJagdTimelineRoutes())
+        .use(createJagdBureaucracyRoutes())
+        .use(createJagdQuartermasterRoutes())
+        .use(createJagdFeedRoutes())
+        .use(createJagdPackRoutes())
+        .use(createJagdAdminRoutes())
+        .use(createJagdRevierAdminRoutes())
+        .use(createStreckenlisteRoutes())
+        .use(createVenisonRoutes())
+        .use(createTrailCamRoutes())
+        .use(createSessionRoutes())
+        .use(createDrueckjagdRoutes())
+        .use(createAIRespondRoutes())     // AI Agent orchestration endpoint
+        .use(createToolGatewayRoutes())   // Tool execution gateway
+        .use(createDemoRoutes())          // Demo data seeding
 
         // A2A Protocol Endpoints
         // Agent Card (well-known endpoint for discovery)

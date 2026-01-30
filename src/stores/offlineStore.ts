@@ -26,7 +26,7 @@ interface JagdDB extends DBSchema {
             createdAt: string;
             updatedAt: string;
         };
-        indexes: { 'by-synced': 'synced'; 'by-date': 'startTime' };
+        indexes: { 'by-synced': number; 'by-date': string };
     };
     events: {
         key: string;
@@ -38,7 +38,7 @@ interface JagdDB extends DBSchema {
             data: Record<string, unknown>;
             synced: boolean;
         };
-        indexes: { 'by-session': 'sessionId'; 'by-synced': 'synced' };
+        indexes: { 'by-session': string; 'by-synced': number };
     };
     journal: {
         key: string;
@@ -52,7 +52,7 @@ interface JagdDB extends DBSchema {
             createdAt: string;
             updatedAt: string;
         };
-        indexes: { 'by-date': 'date'; 'by-synced': 'synced' };
+        indexes: { 'by-date': string; 'by-synced': number };
     };
     syncQueue: {
         key: string;
@@ -207,7 +207,7 @@ export const useOfflineStore = create<OfflineStore>()((set, get) => ({
 
     getSessionEvents: async (sessionId) => {
         const db = await getDB();
-        return db.getAllFromIndex('events', 'by-session', IDBKeyRange.only(sessionId));
+        return db.getAllFromIndex('events', 'by-session', sessionId);
     },
 
     // Journal

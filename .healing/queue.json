@@ -1,6 +1,6 @@
 [
   {
-    "id": "heal_1769036289066_28d9y1",
+    "id": "heal_1769783575044_4x643e",
     "errorReport": {
       "type": "client_error",
       "message": "Error 1",
@@ -12,16 +12,16 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-21T22:58:07.652Z"
+      "timestamp": "2026-01-30T14:32:53.841Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-21T22:58:09.066Z",
-    "updatedAt": "2026-01-21T22:58:09.066Z"
+    "createdAt": "2026-01-30T14:32:55.044Z",
+    "updatedAt": "2026-01-30T14:32:55.044Z"
   },
   {
-    "id": "heal_1769036289068_ofndcg",
+    "id": "heal_1769783575046_p3m53t",
     "errorReport": {
       "type": "client_error",
       "message": "Error 2",
@@ -33,16 +33,16 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-21T22:58:07.652Z"
+      "timestamp": "2026-01-30T14:32:53.841Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-21T22:58:09.068Z",
-    "updatedAt": "2026-01-21T22:58:09.068Z"
+    "createdAt": "2026-01-30T14:32:55.046Z",
+    "updatedAt": "2026-01-30T14:32:55.046Z"
   },
   {
-    "id": "heal_1769036289069_li1up5",
+    "id": "heal_1769783575047_7lt2rg",
     "errorReport": {
       "type": "client_error",
       "message": "Error 3",
@@ -54,29 +54,12 @@
         "level": "component",
         "errorCount": 3
       },
-      "timestamp": "2026-01-21T22:58:07.652Z"
+      "timestamp": "2026-01-30T14:32:53.841Z"
     },
     "status": "queued",
     "attempts": 0,
     "maxAttempts": 3,
-    "createdAt": "2026-01-21T22:58:09.069Z",
-    "updatedAt": "2026-01-21T22:58:09.069Z"
-  },
-  {
-    "id": "heal_1769117785593_zxxupa",
-    "errorReport": {
-      "type": "client_error",
-      "message": "Test error message",
-      "context": {
-        "componentName": "TestComponent",
-        "url": "/test"
-      },
-      "timestamp": "2026-01-22T21:36:25.589Z"
-    },
-    "status": "queued",
-    "attempts": 0,
-    "maxAttempts": 3,
-    "createdAt": "2026-01-22T21:36:25.593Z",
-    "updatedAt": "2026-01-22T21:36:25.593Z"
+    "createdAt": "2026-01-30T14:32:55.047Z",
+    "updatedAt": "2026-01-30T14:32:55.047Z"
   }
 ]

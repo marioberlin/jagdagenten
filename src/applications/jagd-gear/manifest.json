@@ -1,0 +1,37 @@
+{
+    "id": "jagd-gear",
+    "name": "Ausrüstung",
+    "version": "1.0.0",
+    "description": "Jagdausrüstung und Inventar",
+    "author": "Jagd-Agenten",
+    "category": "productivity",
+    "keywords": [
+        "hunting",
+        "jagd",
+        "gear",
+        "equipment",
+        "inventory"
+    ],
+    "icon": "Backpack",
+    "entry": "./App.tsx",
+    "window": {
+        "mode": "floating",
+        "title": "Ausrüstung",
+        "defaultSize": {
+            "width": 900,
+            "height": 700
+        },
+        "minWidth": 400,
+        "minHeight": 500,
+        "resizable": true
+    },
+    "integrations": {
+        "dock": {
+            "enabled": true,
+            "position": 6
+        }
+    },
+    "capabilities": [
+        "network:http"
+    ]
+}

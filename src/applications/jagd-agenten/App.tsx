@@ -4,8 +4,15 @@ import ScoutView from './components/ScoutView';
 import HuntTimeline from './components/HuntTimeline';
 import ChatView from './components/ChatView';
 import JournalView from './components/JournalView';
+import { DocumentVault } from './components/DocumentVault';
+import { ExportPackGenerator } from './components/ExportPackGenerator';
+import { EquipmentInventory } from './components/EquipmentInventory';
+import { WaidmannFeed } from './components/WaidmannFeed';
+import { WeeklyExplore } from './components/WeeklyExplore';
+import { PackDashboard } from './components/PackDashboard';
+import { GlobalAdminDashboard } from './components/admin';
 
-type JagdView = 'cockpit' | 'scout' | 'timeline' | 'journal' | 'bureaucracy' | 'gear' | 'pack' | 'feed' | 'chat' | 'settings';
+type JagdView = 'cockpit' | 'scout' | 'timeline' | 'journal' | 'bureaucracy' | 'exports' | 'gear' | 'pack' | 'feed' | 'explore' | 'admin' | 'chat' | 'settings';
 
 export default function JagdAgentenApp() {
   const [view, setView] = useState<JagdView>('cockpit');
@@ -19,20 +26,22 @@ export default function JagdAgentenApp() {
           { id: 'scout', label: 'Scout' },
           { id: 'timeline', label: 'Timeline' },
           { id: 'journal', label: 'Journal' },
-          { id: 'bureaucracy', label: 'Buerokratie' },
-          { id: 'gear', label: 'Quartiermeister' },
+          { id: 'bureaucracy', label: 'Dokumente' },
+          { id: 'exports', label: 'Exporte' },
+          { id: 'gear', label: 'Ausrüstung' },
           { id: 'pack', label: 'Rudel' },
           { id: 'feed', label: 'Feed' },
+          { id: 'explore', label: 'Übersicht' },
+          { id: 'admin', label: 'Verwaltung' },
           { id: 'chat', label: 'Chat' },
         ] as const).map((item) => (
           <button
             key={item.id}
             onClick={() => setView(item.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              view === item.id
-                ? 'bg-[var(--glass-accent)] text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${view === item.id
+              ? 'bg-[var(--glass-accent)] text-white'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
+              }`}
           >
             {item.label}
           </button>
@@ -40,28 +49,20 @@ export default function JagdAgentenApp() {
       </nav>
 
       {/* View Content */}
-      <main className={`flex-1 overflow-auto ${view === 'chat' ? '' : 'p-4'}`}>
+      <main className={`flex-1 overflow-auto ${view === 'chat' ? '' : ''}`}>
         {view === 'cockpit' && <DailyCockpit />}
         {view === 'scout' && <ScoutView />}
         {view === 'timeline' && <HuntTimeline />}
         {view === 'journal' && <JournalView />}
-        {view === 'bureaucracy' && <PlaceholderView name="Buerokratie" />}
-        {view === 'gear' && <PlaceholderView name="Quartiermeister" />}
-        {view === 'pack' && <PlaceholderView name="Rudel" />}
-        {view === 'feed' && <PlaceholderView name="Waidmann-Feed" />}
+        {view === 'bureaucracy' && <DocumentVault />}
+        {view === 'exports' && <ExportPackGenerator />}
+        {view === 'gear' && <EquipmentInventory />}
+        {view === 'pack' && <PackDashboard />}
+        {view === 'feed' && <WaidmannFeed />}
+        {view === 'explore' && <WeeklyExplore />}
+        {view === 'admin' && <GlobalAdminDashboard />}
         {view === 'chat' && <ChatView />}
       </main>
-    </div>
-  );
-}
-
-function PlaceholderView({ name }: { name: string }) {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center p-8 rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
-        <h2 className="text-xl font-bold mb-2">{name}</h2>
-        <p className="text-[var(--text-secondary)]">Wird implementiert...</p>
-      </div>
     </div>
   );
 }
