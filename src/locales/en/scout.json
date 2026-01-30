@@ -1,0 +1,16 @@
+{
+  "title": "Scout",
+  "map": "Map",
+  "stands": "Stands",
+  "wind_compass": "Wind Compass",
+  "scent_corridor": "Scent Corridor",
+  "boundary": "Boundary",
+  "import_boundary": "Import Boundary",
+  "recommended": "Recommended",
+  "approach": "Approach",
+  "hochsitz": "Raised Hide",
+  "kanzel": "Enclosed Hide",
+  "druckjagdstand": "Driven Hunt Stand",
+  "conditions_snapshot": "Conditions Snapshot",
+  "recommend_plan": "Recommend Plan"
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Rudel",
+  "event": "Veranstaltung",
+  "create_event": "Veranstaltung erstellen",
+  "drueckjagd": "Drueckjagd",
+  "ansitz_group": "Gemeinschaftsansitz",
+  "work_day": "Arbeitstag",
+  "dog_training": "Hundeausbildung",
+  "role_stand": "Schuetze (Stand)",
+  "role_treiber": "Treiber",
+  "role_hundefuehrer": "Hundefuehrer",
+  "role_jagdleiter": "Jagdleiter",
+  "role_guest": "Gast",
+  "check_in": "Einchecken",
+  "check_out": "Auschecken",
+  "safety_dashboard": "Sicherheits-Dashboard",
+  "emergency": "Notfall",
+  "inactive_warning": "Inaktivitaetswarnung"
+}

@@ -1,0 +1,18 @@
+{
+  "app_name": "Jagd-Agenten",
+  "loading": "Loading...",
+  "error": "Error",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "confirm": "Confirm",
+  "back": "Back",
+  "next": "Next",
+  "search": "Search",
+  "settings": "Settings",
+  "offline": "Offline",
+  "online": "Online",
+  "syncing": "Syncing...",
+  "sync_complete": "Synced",
+  "waidmannsheil": "Waidmannsheil!"
+}

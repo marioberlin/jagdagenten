@@ -1,0 +1,18 @@
+{
+  "app_name": "Jagd-Agenten",
+  "loading": "Wird geladen...",
+  "error": "Fehler",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "delete": "Loeschen",
+  "confirm": "Bestaetigen",
+  "back": "Zurueck",
+  "next": "Weiter",
+  "search": "Suchen",
+  "settings": "Einstellungen",
+  "offline": "Offline",
+  "online": "Online",
+  "syncing": "Synchronisiere...",
+  "sync_complete": "Synchronisiert",
+  "waidmannsheil": "Waidmannsheil!"
+}

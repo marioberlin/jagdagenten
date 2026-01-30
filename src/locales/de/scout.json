@@ -1,0 +1,16 @@
+{
+  "title": "Scout",
+  "map": "Karte",
+  "stands": "Ansitze",
+  "wind_compass": "Windrose",
+  "scent_corridor": "Witterungskorridor",
+  "boundary": "Reviergrenze",
+  "import_boundary": "Grenze importieren",
+  "recommended": "Empfohlen",
+  "approach": "Angang",
+  "hochsitz": "Hochsitz",
+  "kanzel": "Kanzel",
+  "druckjagdstand": "Drueckjagdstand",
+  "conditions_snapshot": "Bedingungsueberblick",
+  "recommend_plan": "Plan empfehlen"
+}
