@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useCockpitStore } from '@/stores/useCockpitStore';
 import type { ConditionsSnapshot, HuntWindow, RecentSession } from '@/stores/useCockpitStore';
+import CockpitChatPanel from './CockpitChatPanel';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -458,6 +459,9 @@ export default function DailyCockpit() {
               Checkliste
             </button>
           </div>
+
+          {/* AI Chat Panel */}
+          <CockpitChatPanel />
         </>
       )}
     </div>

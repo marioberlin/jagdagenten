@@ -1,0 +1,114 @@
+/**
+ * Hunt Mode Theme
+ *
+ * Red-tint night vision theme optimized for field conditions.
+ * Applied when [data-hunt-mode="true"] is set on the document body.
+ */
+
+/* Hunt Mode Override */
+[data-hunt-mode="true"] {
+  /* Primary accent shifts to muted red */
+  --glass-accent: #8B2500;
+  --glass-accent-rgb: 139, 37, 0;
+  
+  /* Surfaces become darker */
+  --glass-surface: rgba(20, 5, 5, 0.85);
+  --glass-bg-primary: rgba(30, 10, 10, 0.6);
+  --glass-bg-secondary: rgba(15, 5, 5, 0.4);
+  
+  /* Borders become more subtle */
+  --glass-border: rgba(139, 37, 0, 0.25);
+  
+  /* Text adjusts for red-light readability */
+  --text-primary: #FFB4A0;
+  --text-secondary: #CC8070;
+  
+  /* Status colors shift to red-compatible spectrum */
+  --status-success: #804000;
+  --status-warning: #8B4500;
+  --status-error: #8B0000;
+  
+  /* Reduce overall brightness */
+  filter: brightness(0.85);
+}
+
+/* Specific element overrides for Hunt Mode */
+[data-hunt-mode="true"] button {
+  /* Buttons get red tint */
+  background-color: rgba(139, 37, 0, 0.4);
+  border-color: rgba(139, 37, 0, 0.5);
+}
+
+[data-hunt-mode="true"] button:hover {
+  background-color: rgba(139, 37, 0, 0.6);
+}
+
+/* Primary action buttons stay visible */
+[data-hunt-mode="true"] button.bg-\[var\(--glass-accent\)\] {
+  background-color: var(--glass-accent);
+  filter: brightness(1.1);
+}
+
+/* Reduce glow effects */
+[data-hunt-mode="true"] .shadow-lg,
+[data-hunt-mode="true"] .shadow-xl {
+  box-shadow: none;
+}
+
+/* Input fields */
+[data-hunt-mode="true"] input,
+[data-hunt-mode="true"] textarea,
+[data-hunt-mode="true"] select {
+  background-color: rgba(30, 10, 10, 0.8);
+  border-color: rgba(139, 37, 0, 0.4);
+  color: var(--text-primary);
+}
+
+/* Scrollbars */
+[data-hunt-mode="true"] ::-webkit-scrollbar-track {
+  background: rgba(20, 5, 5, 0.5);
+}
+
+[data-hunt-mode="true"] ::-webkit-scrollbar-thumb {
+  background: rgba(139, 37, 0, 0.5);
+}
+
+/* Icons - ensure visibility */
+[data-hunt-mode="true"] svg {
+  opacity: 0.9;
+}
+
+/* Charts and graphs - reduce intensity */
+[data-hunt-mode="true"] canvas {
+  filter: brightness(0.7) saturate(0.5);
+}
+
+/* Links */
+[data-hunt-mode="true"] a {
+  color: #CC6040;
+}
+
+[data-hunt-mode="true"] a:hover {
+  color: #FFB4A0;
+}
+
+/* Focus rings */
+[data-hunt-mode="true"] *:focus-visible {
+  outline-color: rgba(139, 37, 0, 0.8);
+}
+
+/* Badge overrides */
+[data-hunt-mode="true"] .bg-green-500,
+[data-hunt-mode="true"] .bg-emerald-500 {
+  background-color: #804000;
+}
+
+[data-hunt-mode="true"] .bg-blue-500,
+[data-hunt-mode="true"] .bg-sky-500 {
+  background-color: #6B3000;
+}
+
+[data-hunt-mode="true"] .bg-yellow-500,
+[data-hunt-mode="true"] .bg-amber-500 {
+  background-color: #8B4500;
+}

@@ -48,6 +48,10 @@ export interface SettingsState {
     // Per-page Agent Config
     pageConfigs: Record<string, PageConfig>;
 
+    // Hunt Mode
+    huntModeEnabled: boolean;
+    huntModeAutoActivate: boolean;
+
     // Hydration flag
     _hydrated: boolean;
 }
@@ -72,6 +76,10 @@ export interface SettingsActions {
     setPageConfig: (path: string, config: Partial<PageConfig>) => void;
     clearPageConfig: (path: string) => void;
 
+    // Hunt Mode
+    setHuntMode: (enabled: boolean) => void;
+    setHuntModeAutoActivate: (enabled: boolean) => void;
+
     // Reset
     resetToDefaults: () => void;
 }
@@ -95,6 +103,8 @@ const DEFAULT_STATE: SettingsState = {
     claudeApiKey: '',
     securityBlacklist: [],
     pageConfigs: {},
+    huntModeEnabled: false,
+    huntModeAutoActivate: false,
     _hydrated: false,
 };
 
@@ -186,6 +196,23 @@ export const useSettingsStore = create<SettingsStore>()(
                     });
                 },
 
+                // Hunt Mode
+                setHuntMode: (enabled) => {
+                    set((state) => {
+                        state.huntModeEnabled = enabled;
+                    });
+                    // Apply to DOM immediately
+                    if (typeof document !== 'undefined') {
+                        document.body.setAttribute('data-hunt-mode', enabled.toString());
+                    }
+                },
+
+                setHuntModeAutoActivate: (enabled) => {
+                    set((state) => {
+                        state.huntModeAutoActivate = enabled;
+                    });
+                },
+
                 // Reset
                 resetToDefaults: () => {
                     set(() => DEFAULT_STATE);
@@ -202,6 +229,8 @@ export const useSettingsStore = create<SettingsStore>()(
                     claudeApiKey: state.claudeApiKey,
                     securityBlacklist: state.securityBlacklist,
                     pageConfigs: state.pageConfigs,
+                    huntModeEnabled: state.huntModeEnabled,
+                    huntModeAutoActivate: state.huntModeAutoActivate,
                 }),
                 onRehydrateStorage: () => (state) => {
                     if (state) {

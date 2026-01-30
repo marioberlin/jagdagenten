@@ -8,6 +8,8 @@ import { GlassWindow, type WindowMenuItem } from '@/components/containers/GlassW
 import { PortalFrame } from '@/components/layout/PortalFrame';
 import { LiquidMenuBar } from '@/components/menu-bar/LiquidMenuBar';
 import { Command, Copy } from 'lucide-react';
+import { useSettingsStore } from '@/stores/settingsStore';
+import '@/styles/hunt-mode.css';
 
 import { AuthGate } from '@/components/auth/AuthGate';
 import { useAppStoreStore } from '@/system/app-store/appStoreStore';
@@ -25,6 +27,15 @@ import { useAgentChatStore, selectFocusedAgent, type AgentConnectionStatus } fro
 export const LiquidOSLayout: React.FC = () => {
     const navigate = useNavigate();
     const [dockVisible, setDockVisible] = useState(true);
+    const huntModeEnabled = useSettingsStore((s) => s.huntModeEnabled);
+
+    // Apply Hunt Mode attribute to body
+    useEffect(() => {
+        document.body.setAttribute('data-hunt-mode', huntModeEnabled.toString());
+        return () => {
+            document.body.removeAttribute('data-hunt-mode');
+        };
+    }, [huntModeEnabled]);
 
     // Dynamic app state from appStoreStore
     const activeAppId = useAppStoreStore((s) => s.activeAppId);
