@@ -16,7 +16,7 @@ This project is a **fork of the LiquidCrypto/Liquid Glass platform**. We keep th
  
 This phase transforms the LiquidCrypto fork into a clean Jagd-Agenten codebase.
  
-### 0.1 — Global Rename (LiquidCrypto → Jagd-Agenten)
+### 0.1 — Global Rename (LiquidCrypto → Jagd-Agenten) ✅ DONE
  
 **Package names:**
  
@@ -146,7 +146,7 @@ server/src/routes/ibird/
 - Run `bun install` to verify no broken imports ✅
 - Run `bun run build` to verify clean compile ✅
  
-### 0.3 — New Home Experience
+### 0.3 — New Home Experience ✅ DONE
  
 Replace the old LiquidOS desktop with a Jagd-Agenten home:
  
@@ -272,15 +272,15 @@ TODO: Field mode, night vision theme, vibration cues.
  
 ```
 Phase 0: Rename + Strip + Scaffold
-├── 0.1 Global rename (LiquidCrypto → Jagd-Agenten)
+├── 0.1 Global rename (LiquidCrypto → Jagd-Agenten) ✅
 ├── 0.2 Strip domain-specific code (delete 13 apps, 15 agents, executors, routes)
-├── 0.3 New home experience (JagdHome → cockpit)
+├── 0.3 New home experience (JagdHome → cockpit) ✅
 ├── 0.4 Database migration ✅
 ├── 0.5 Shared types package ✅
 ├── 0.6 JSON Schemas ✅
 ├── 0.7 New dependencies ✅
 ├── 0.8 i18n setup ✅
-└── 0.9 Verify clean build
+└── 0.9 Verify clean build ✅
 
 Phase 1: MVP
 ├── 1.1 Hunt Timeline ✅ partial
