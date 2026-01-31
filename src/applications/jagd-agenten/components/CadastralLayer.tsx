@@ -35,6 +35,9 @@ interface CadastralLayerProps {
     showLabels?: boolean;
     onParcelClick?: (parcel: CadastralParcel) => void;
     highlightedParcelId?: string;
+    /** Pigeon-maps injects mapState, latLngToPixel, etc. via cloneElement */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +179,8 @@ export function CadastralLayer({
     showLabels = false,
     onParcelClick,
     highlightedParcelId,
+    // Pigeon-maps injects these via cloneElement – forward to GeoJson/Overlay
+    ...pigeonProps
 }: CadastralLayerProps) {
     const [selectedParcel, setSelectedParcel] = useState<CadastralParcel | null>(null);
 
@@ -198,10 +203,10 @@ export function CadastralLayer({
 
     // Style callback for individual parcels
     const styleCallback = (feature: GeoJSON.Feature) => {
-        const props = feature.properties;
-        if (!props) return PARCEL_STYLES.default;
+        const featureProps = feature.properties;
+        if (!featureProps) return PARCEL_STYLES.default;
 
-        const parcel = parcels.find((p) => p.id === props.id);
+        const parcel = parcels.find((p) => p.id === featureProps.id);
         if (!parcel) return PARCEL_STYLES.default;
 
         const isHighlighted = parcel.id === highlightedParcelId || parcel.id === selectedParcel?.id;
@@ -221,7 +226,8 @@ export function CadastralLayer({
             <GeoJson
                 data={geoJsonData}
                 styleCallback={styleCallback}
-                onClick={({ payload }) => handleClick(payload)}
+                onClick={({ payload }: { payload: GeoJSON.Feature }) => handleClick(payload)}
+                {...pigeonProps}
             />
 
             {/* Parcel labels */}
@@ -246,6 +252,7 @@ export function CadastralLayer({
                                 key={parcel.id}
                                 anchor={[center[1], center[0]]}
                                 offset={[0, 0]}
+                                {...pigeonProps}
                             >
                                 <div className="px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-medium whitespace-nowrap pointer-events-none">
                                     {parcel.flurstueck}

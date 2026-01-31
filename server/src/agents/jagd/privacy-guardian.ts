@@ -7,7 +7,7 @@
 
 import type { GeoScope } from '@jagdagenten/types-jagd';
 import type { AgentContext, GuardrailResult } from './types.js';
-import { componentLoggers } from '../logger.js';
+import { componentLoggers } from '../../logger.js';
 
 const logger = componentLoggers.agents;
 

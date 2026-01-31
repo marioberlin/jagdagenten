@@ -9,7 +9,7 @@
  * Uses pigeon-maps for lightweight, offline-friendly mapping.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, type ReactNode } from 'react';
 import { Map, Marker, Overlay, GeoJson } from 'pigeon-maps';
 import { Crosshair, Wind, Layers, Plus, Navigation, Flame } from 'lucide-react';
 import { HeatmapLayer, type HarvestPoint } from './HeatmapLayer';
@@ -50,6 +50,8 @@ interface HuntingMapProps {
     onAddStand?: (lat: number, lon: number) => void;
     selectedStandId?: string;
     className?: string;
+    /** Extra map layers rendered inside the pigeon-maps <Map> (e.g. CadastralLayer) */
+    children?: ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -314,6 +316,7 @@ export function HuntingMap({
     onAddStand,
     selectedStandId,
     className = '',
+    children,
 }: HuntingMapProps) {
     const [mapCenter, setMapCenter] = useState<[number, number]>(center);
     const [mapZoom, setMapZoom] = useState(zoom);
@@ -323,6 +326,14 @@ export function HuntingMap({
         ne: [number, number];
         sw: [number, number];
     } | null>(null);
+
+    // Sync center/zoom from props (e.g. when selecting a stand)
+    useEffect(() => {
+        setMapCenter(center);
+    }, [center[0], center[1]]);
+    useEffect(() => {
+        setMapZoom(zoom);
+    }, [zoom]);
 
     const handleBoundsChange = useCallback(({ center, zoom, bounds }: {
         center: [number, number];
@@ -413,6 +424,9 @@ export function HuntingMap({
                         />
                     </Marker>
                 ))}
+
+                {/* Extra layers (CadastralLayer, etc.) */}
+                {children}
             </Map>
 
             {/* Wind Indicator */}

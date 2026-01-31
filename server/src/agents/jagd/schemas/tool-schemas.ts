@@ -555,7 +555,13 @@ export function resolveSchema(schema: any): any {
 
     if (schema.$ref) {
         const refName = schema.$ref.replace('#/$defs/', '');
-        return DEFINITIONS[refName as keyof typeof DEFINITIONS] || schema;
+        const def = DEFINITIONS[refName as keyof typeof DEFINITIONS];
+        if (def) {
+            // Strip $id to avoid AJV duplicate reference errors when inlining
+            const { $id, ...rest } = def as any;
+            return rest;
+        }
+        return schema;
     }
 
     const resolved: any = {};

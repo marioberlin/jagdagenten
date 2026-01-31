@@ -140,7 +140,7 @@ export class MigrationRunner {
 export async function runMigrations(connectionString?: string): Promise<void> {
     const connString = connectionString ||
         process.env.DATABASE_URL ||
-        'postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto';
+        'postgresql://jagdagenten:jagdagenten_dev@localhost:5432/jagdagenten';
 
     const runner = new MigrationRunner(connString);
 

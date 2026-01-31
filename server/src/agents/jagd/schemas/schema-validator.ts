@@ -24,10 +24,7 @@ const ajv = new Ajv({
 // Add format validators (date, date-time, etc.)
 addFormats(ajv);
 
-// Register shared definitions
-ajv.addSchema(GEO_SCOPE_SCHEMA, 'GeoScope');
-
-// Pre-compile all tool parameter schemas
+// Pre-compile all tool parameter schemas (GeoScope is inlined by resolveSchema)
 const compiledValidators = new Map<ToolName, ReturnType<typeof ajv.compile>>();
 
 for (const [name, schema] of Object.entries(TOOL_SCHEMAS)) {

@@ -22,7 +22,7 @@ import type { v1 } from '@jagdagenten/a2a-sdk';
 
 // Database configuration
 const DB_CONFIG = {
-    connectionString: process.env.DATABASE_URL || 'postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto',
+    connectionString: process.env.DATABASE_URL || 'postgresql://jagdagenten:jagdagenten_dev@localhost:5432/jagdagenten',
 };
 
 // Initialize stores (singleton instances)

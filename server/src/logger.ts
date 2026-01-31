@@ -71,7 +71,9 @@ export const componentLoggers = {
     security: logger.child({ component: 'security' }),
     http: logger.child({ component: 'http' }),
     graphql: logger.child({ component: 'graphql' }),
-    db: logger.child({ component: 'db' })
+    db: logger.child({ component: 'db' }),
+    agents: logger.child({ component: 'agents' }),
+    nats: logger.child({ component: 'nats' })
 };
 
 /**

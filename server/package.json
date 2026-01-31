@@ -25,6 +25,8 @@
         "@opentelemetry/semantic-conventions": "1.25.0",
         "@types/dockerode": "^4.0.0",
         "@types/ssh2": "^1.15.5",
+        "ajv": "^8.17.1",
+        "ajv-formats": "^3.0.1",
         "dockerode": "^4.0.9",
         "duck-duck-scrape": "^2.2.7",
         "elysia": "^1.0.0",
@@ -33,9 +35,9 @@
         "ioredis": "^5.4.1",
         "pg": "^8.17.1",
         "pino": "^10.1.1",
+        "sharp": "^0.33.5",
         "ssh2": "^1.17.0",
-        "zod": "3.24.2",
-        "sharp": "^0.33.5"
+        "zod": "3.24.2"
     },
     "optionalDependencies": {
         "canvas": "^2.11.2",

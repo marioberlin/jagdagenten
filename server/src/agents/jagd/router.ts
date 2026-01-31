@@ -16,11 +16,11 @@ import type {
     ActionChip,
 } from './types.js';
 import { ROUTER_SYSTEM_PROMPT, getAgentPrompt } from './prompts/index.js';
-import { TOOL_SCHEMAS } from '../schemas/index.js';
-import { componentLoggers } from '../logger.js';
+import { TOOL_SCHEMAS } from './schemas/index.js';
+import { componentLoggers } from '../../logger.js';
 
 const logger = componentLoggers.agents;
-const MODEL = 'gemini-2.5-flash-preview-05-20';
+const MODEL = 'gemini-2.0-flash';
 
 // ============================================================================
 // Intent Classification

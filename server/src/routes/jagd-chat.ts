@@ -17,7 +17,7 @@ const SYSTEM_PROMPT =
   'Du hilfst bei Fragen zu Jagdrecht, Wildbiologie, Reviermanagement, Waffenpflege und Jagdpraxis. ' +
   'Antworte immer auf Deutsch und verwende korrekte jagdliche Fachbegriffe.';
 
-const MODEL = 'gemini-2.5-flash-preview-05-20';
+const MODEL = 'gemini-2.0-flash';
 
 // ============================================================================
 // Route Factory

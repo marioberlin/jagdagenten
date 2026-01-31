@@ -13,6 +13,119 @@ import { componentLoggers } from '../logger.js';
 const logger = componentLoggers.http;
 
 // ============================================================================
+// Geodata Layer Definitions (Diepholz ArcGIS REST)
+// ============================================================================
+
+interface GeoLayerDef {
+  id: string;
+  label: string;
+  layerIndex: number;
+  color: string;
+  strokeColor: string;
+  nameField: string;
+  areaField: string;
+  type: 'polygon' | 'point';
+}
+
+const DIEPHOLZ_BASE = 'https://geo.diepholz.de/arcgis/rest/services/Jagdreviere/MapServer';
+
+const GEO_LAYERS: Record<string, GeoLayerDef> = {
+  eigenjagd: {
+    id: 'eigenjagd',
+    label: 'Eigenjagd',
+    layerIndex: 6,
+    color: 'rgba(255,190,190,0.35)',
+    strokeColor: '#730000',
+    nameField: 'Eigenjagd',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  gemeinschaftsjagd: {
+    id: 'gemeinschaftsjagd',
+    label: 'Gemeinschaftsjagd',
+    layerIndex: 7,
+    color: 'rgba(190,232,255,0.3)',
+    strokeColor: '#004da8',
+    nameField: 'Gemeinschaftsjagd',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  hegeringe: {
+    id: 'hegeringe',
+    label: 'Hegeringe',
+    layerIndex: 8,
+    color: 'rgba(230,0,0,0.08)',
+    strokeColor: '#e60000',
+    nameField: 'Name',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  jagdgenossenschaften: {
+    id: 'jagdgenossenschaften',
+    label: 'Jagdgenossenschaften',
+    layerIndex: 4,
+    color: 'rgba(255,235,175,0.3)',
+    strokeColor: '#a87000',
+    nameField: 'JG_Name',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  damwild: {
+    id: 'damwild',
+    label: 'Damwildhegegemeinschaften',
+    layerIndex: 1,
+    color: 'rgba(163,255,115,0.25)',
+    strokeColor: '#38a800',
+    nameField: 'Name',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  forstreviere: {
+    id: 'forstreviere',
+    label: 'Forstreviere',
+    layerIndex: 5,
+    color: 'rgba(56,168,0,0.2)',
+    strokeColor: '#267300',
+    nameField: 'Name',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+  jagdfreie: {
+    id: 'jagdfreie',
+    label: 'Jagdfreie Sonderflächen',
+    layerIndex: 9,
+    color: 'rgba(255,0,0,0.15)',
+    strokeColor: '#ff0000',
+    nameField: 'Name',
+    areaField: 'Flae_ha',
+    type: 'polygon',
+  },
+};
+
+// In-memory cache: layer id → { data, fetchedAt }
+const geoCache = new Map<string, { data: unknown; fetchedAt: number }>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async function fetchGeoLayer(layerDef: GeoLayerDef): Promise<unknown> {
+  const cached = geoCache.get(layerDef.id);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const url = `${DIEPHOLZ_BASE}/${layerDef.layerIndex}/query?where=1%3D1&outFields=*&f=geojson&outSR=4326`;
+  logger.info({ layer: layerDef.id, url }, 'Fetching geodata from Diepholz');
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Geodata fetch failed: ${response.status} ${response.statusText}`);
+  }
+
+  const geojson = await response.json();
+  geoCache.set(layerDef.id, { data: geojson, fetchedAt: Date.now() });
+  return geojson;
+}
+
+// ============================================================================
 // Helpers
 // ============================================================================
 
@@ -205,6 +318,86 @@ export function createJagdScoutRoutes() {
         params: t.Object({ id: t.String() }),
       },
     )
+
+    // -----------------------------------------------------------------------
+    // Geodata: List available layers
+    // -----------------------------------------------------------------------
+    .get('/geodata/layers', () => {
+      return {
+        layers: Object.values(GEO_LAYERS).map((l) => ({
+          id: l.id,
+          label: l.label,
+          color: l.color,
+          strokeColor: l.strokeColor,
+          type: l.type,
+        })),
+      };
+    })
+
+    // -----------------------------------------------------------------------
+    // Geodata: Get GeoJSON for a specific layer
+    // -----------------------------------------------------------------------
+    .get(
+      '/geodata/:layer',
+      async ({ params, set }) => {
+        const layerDef = GEO_LAYERS[params.layer];
+        if (!layerDef) {
+          set.status = 404;
+          return { error: `Unknown layer: ${params.layer}. Available: ${Object.keys(GEO_LAYERS).join(', ')}` };
+        }
+
+        try {
+          const geojson = await fetchGeoLayer(layerDef);
+          return geojson;
+        } catch (err) {
+          logger.error({ error: err, layer: params.layer }, 'Failed to fetch geodata');
+          set.status = 502;
+          return { error: 'Failed to fetch geodata from upstream' };
+        }
+      },
+      {
+        params: t.Object({ layer: t.String() }),
+      },
+    )
+
+    // -----------------------------------------------------------------------
+    // Geodata: Get all layers at once (for initial load)
+    // -----------------------------------------------------------------------
+    .get('/geodata/bundle/all', async ({ set }) => {
+      try {
+        const results: Record<string, unknown> = {};
+        const layerKeys = Object.keys(GEO_LAYERS);
+
+        // Fetch all layers in parallel
+        const fetched = await Promise.allSettled(
+          layerKeys.map((key) => fetchGeoLayer(GEO_LAYERS[key]))
+        );
+
+        for (let i = 0; i < layerKeys.length; i++) {
+          const result = fetched[i];
+          if (result.status === 'fulfilled') {
+            results[layerKeys[i]] = result.value;
+          } else {
+            logger.error({ layer: layerKeys[i], error: result.reason }, 'Failed to fetch layer in bundle');
+            results[layerKeys[i]] = null;
+          }
+        }
+
+        return {
+          layers: Object.values(GEO_LAYERS).map((l) => ({
+            id: l.id,
+            label: l.label,
+            color: l.color,
+            strokeColor: l.strokeColor,
+          })),
+          geojson: results,
+        };
+      } catch (err) {
+        logger.error({ error: err }, 'Failed to fetch geodata bundle');
+        set.status = 500;
+        return { error: 'Failed to fetch geodata bundle' };
+      }
+    })
 
     // -----------------------------------------------------------------------
     // Conditions snapshot (suncalc twilight + mock weather)

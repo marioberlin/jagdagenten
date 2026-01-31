@@ -1,14 +1,24 @@
 /**
  * ScoutView
  *
- * Manages hunt stands and displays conditions data (wind compass, twilight
- * times, weather). Responsive layout: stacked on mobile, side-by-side on
- * desktop.
+ * Full-featured hunting territory view with interactive map, stand management,
+ * wind compass, twilight times, weather, and cadastral parcel overlay.
+ * Layout: left sidebar (stands) | center map | right panel (details).
  */
 
-import { useEffect, useState } from 'react';
-import { MapPin, Wind, Plus, Trash2, Edit, Navigation, X, Check, Crosshair } from 'lucide-react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { MapPin, Wind, Plus, Trash2, Edit, Navigation, X, Check, Crosshair, Map as MapIcon, Layers, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useScoutStore, type HuntStand } from '@/stores/useScoutStore';
+import { HuntingMap, type HuntStand as MapHuntStand, type WindData } from './HuntingMap';
+import { JagdrevierLayers } from './JagdrevierLayers';
+import { RevierSearchBar } from './RevierSearchBar';
+import { useGeoLayerStore } from '@/stores/useGeoLayerStore';
+
+// ============================================================================
+// Diepholz center coordinates (Landkreis Diepholz, Niedersachsen)
+// ============================================================================
+
+const DIEPHOLZ_CENTER: [number, number] = [52.6064, 8.7018];
 
 // ============================================================================
 // Stand type options
@@ -446,20 +456,80 @@ function StandDetail({ stand }: { stand: HuntStand }) {
 // ============================================================================
 
 export default function ScoutView() {
-  const { stands, selectedStand, loading, error, fetchStands, selectStand, deleteStand } = useScoutStore();
+  const { stands, selectedStand, conditions, loading, error, fetchStands, selectStand, deleteStand } = useScoutStore();
+  const { layers: geoLayers, visibleLayers, loading: geoLoading, toggleLayer, fetchLayers: fetchGeoLayers } = useGeoLayerStore();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDetailPanel, setShowDetailPanel] = useState(true);
+  const [showLayerPanel, setShowLayerPanel] = useState(true);
+
+  // Search-driven navigation: overrides normal center/zoom when set
+  const [searchCenter, setSearchCenter] = useState<[number, number] | null>(null);
+  const [searchZoom, setSearchZoom] = useState<number | null>(null);
 
   useEffect(() => {
     fetchStands();
-  }, [fetchStands]);
+    fetchGeoLayers();
+  }, [fetchStands, fetchGeoLayers]);
+
+  // Called by RevierSearchBar when the user picks a revier
+  const handleSearchNavigate = useCallback(
+    (center: [number, number], zoom: number, _layerId: string) => {
+      setSearchCenter(center);
+      setSearchZoom(zoom);
+    },
+    [],
+  );
+
+  // Bridge store HuntStand → HuntingMap's HuntStand type
+  const mapStands: MapHuntStand[] = useMemo(
+    () =>
+      stands.map((s) => ({
+        id: s.id,
+        name: s.name,
+        type: (s.standType === 'hochsitz' || s.standType === 'kanzel' || s.standType === 'ansitz')
+          ? s.standType as 'hochsitz' | 'kanzel' | 'ansitz'
+          : 'other' as const,
+        lat: s.geoLat,
+        lon: s.geoLon,
+        notes: s.notes,
+      })),
+    [stands],
+  );
+
+  // Wind data for the map
+  const mapWind: WindData | undefined = useMemo(() => {
+    if (conditions?.wind) return conditions.wind;
+    return undefined;
+  }, [conditions]);
+
+  // Compute center: search override > selected stand > average > Diepholz default
+  const mapCenter: [number, number] = useMemo(() => {
+    if (searchCenter) return searchCenter;
+    if (selectedStand) return [selectedStand.geoLat, selectedStand.geoLon];
+    if (stands.length > 0) {
+      const avgLat = stands.reduce((s, st) => s + st.geoLat, 0) / stands.length;
+      const avgLon = stands.reduce((s, st) => s + st.geoLon, 0) / stands.length;
+      return [avgLat, avgLon];
+    }
+    return DIEPHOLZ_CENTER; // Landkreis Diepholz default
+  }, [searchCenter, selectedStand, stands]);
+
+  // Zoom: search override > stand-based
+  const mapZoom = useMemo(() => {
+    if (searchZoom) return searchZoom;
+    return selectedStand ? 15 : stands.length > 0 ? 14 : 11;
+  }, [searchZoom, selectedStand, stands]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full">
-      {/* Left sidebar: Stand list */}
-      <div className="lg:w-80 flex-shrink-0 space-y-3">
+    <div className="flex flex-col lg:flex-row h-full gap-0">
+      {/* ── Left sidebar: Stand list ── */}
+      <div className="lg:w-72 flex-shrink-0 p-3 space-y-3 overflow-y-auto border-r border-[var(--glass-border)] bg-[var(--glass-surface)]/40 backdrop-blur-sm">
         {/* Header with Add button */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--text-primary)]">Ansitze</h2>
+          <div className="flex items-center gap-2">
+            <MapIcon size={18} className="text-[var(--glass-accent)]" />
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">Ansitze</h2>
+          </div>
           <button
             onClick={() => setShowAddForm((v) => !v)}
             className="p-2 rounded-lg bg-[var(--glass-accent)] text-white hover:opacity-90 transition-opacity"
@@ -468,6 +538,57 @@ export default function ScoutView() {
             <Plus size={16} />
           </button>
         </div>
+
+        {/* Layer control panel toggle */}
+        <button
+          onClick={() => setShowLayerPanel((v) => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors border bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+        >
+          <div className="flex items-center gap-2">
+            <Layers size={14} />
+            Kartenebenen
+            {visibleLayers.size > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-[var(--glass-accent)]/20 text-[var(--glass-accent)] text-[10px] font-bold">
+                {visibleLayers.size}
+              </span>
+            )}
+          </div>
+          {showLayerPanel ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+
+        {/* Geo layer toggles */}
+        {showLayerPanel && geoLayers.length > 0 && (
+          <div className="space-y-1.5 px-1">
+            {geoLayers.map((layer) => {
+              const isActive = visibleLayers.has(layer.id);
+              const isLoading = geoLoading[layer.id];
+              return (
+                <button
+                  key={layer.id}
+                  onClick={() => toggleLayer(layer.id)}
+                  disabled={isLoading}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                    isActive
+                      ? 'border-opacity-50 bg-opacity-15'
+                      : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
+                  }`}
+                  style={isActive ? {
+                    backgroundColor: layer.color,
+                    borderColor: layer.strokeColor,
+                    color: layer.strokeColor,
+                  } : undefined}
+                >
+                  <div
+                    className="w-3 h-3 rounded-sm border-2 flex-shrink-0"
+                    style={{ borderColor: layer.strokeColor, backgroundColor: isActive ? layer.strokeColor : 'transparent' }}
+                  />
+                  <span className="truncate">{layer.label}</span>
+                  {isLoading && <Loader2 size={12} className="animate-spin ml-auto flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Add form (collapsible) */}
         {showAddForm && <AddStandForm onClose={() => setShowAddForm(false)} />}
@@ -495,35 +616,65 @@ export default function ScoutView() {
         )}
 
         {/* Stand list */}
-        <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-16rem)] lg:max-h-[calc(100vh-12rem)]">
+        <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-20rem)]">
           {stands.map((stand) => (
             <StandListItem
               key={stand.id}
               stand={stand}
               isSelected={selectedStand?.id === stand.id}
-              onSelect={() => selectStand(stand.id)}
+              onSelect={() => {
+                selectStand(stand.id);
+                setShowDetailPanel(true);
+              }}
               onDelete={() => deleteStand(stand.id)}
             />
           ))}
         </div>
       </div>
 
-      {/* Right panel: Stand detail */}
-      <div className="flex-1 min-w-0">
-        {selectedStand ? (
-          <StandDetail stand={selectedStand} />
-        ) : (
-          <div className="flex items-center justify-center h-full min-h-[300px]">
-            <div className="text-center p-8 rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
-              <Crosshair size={40} className="mx-auto mb-3 text-[var(--text-tertiary)]" />
-              <h3 className="font-semibold text-[var(--text-primary)] mb-1">Kein Stand ausgewaehlt</h3>
-              <p className="text-sm text-[var(--text-secondary)]">
-                Waehle einen Stand aus der Liste, um Details und Bedingungen anzuzeigen.
-              </p>
-            </div>
-          </div>
-        )}
+      {/* ── Center: Interactive Map ── */}
+      <div className="flex-1 min-w-0 relative">
+        <HuntingMap
+          stands={mapStands}
+          wind={mapWind}
+          center={mapCenter}
+          zoom={mapZoom}
+          selectedStandId={selectedStand?.id}
+          onStandClick={(stand) => {
+            selectStand(stand.id);
+            setShowDetailPanel(true);
+            // Clear search override so stand selection works normally
+            setSearchCenter(null);
+            setSearchZoom(null);
+          }}
+          onAddStand={(_lat, _lon) => {
+            // Pre-fill the add form with map-click coordinates
+            setShowAddForm(true);
+          }}
+        >
+          {/* Jagdrevier layers from Diepholz ArcGIS */}
+          <JagdrevierLayers />
+        </HuntingMap>
+
+        {/* ── Floating Revier Search Bar ── */}
+        <RevierSearchBar onNavigate={handleSearchNavigate} />
       </div>
+
+      {/* ── Right panel: Stand detail (collapsible) ── */}
+      {selectedStand && showDetailPanel && (
+        <div className="lg:w-80 flex-shrink-0 p-4 overflow-y-auto border-l border-[var(--glass-border)] bg-[var(--glass-surface)]/40 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Details</h3>
+            <button
+              onClick={() => setShowDetailPanel(false)}
+              className="p-1 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <StandDetail stand={selectedStand} />
+        </div>
+      )}
     </div>
   );
 }

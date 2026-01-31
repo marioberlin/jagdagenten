@@ -9,7 +9,7 @@
  */
 
 import Elysia, { t } from 'elysia';
-import { db } from '../../db/index.js';
+import { db } from '../db/index.js';
 import {
     validateToolParams,
     createToolEnvelope,
@@ -410,5 +410,7 @@ export const toolGatewayPlugin = new Elysia({ prefix: '/tools' })
         }
         return schema;
     });
+
+export const createToolGatewayRoutes = () => toolGatewayPlugin;
 
 export default toolGatewayPlugin;

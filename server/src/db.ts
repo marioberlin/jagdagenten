@@ -2,7 +2,7 @@ import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { componentLoggers } from './logger';
 
 export const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://liquidcrypto:liquidcrypto_dev@localhost:5432/liquidcrypto',
+    connectionString: process.env.DATABASE_URL || 'postgresql://jagdagenten:jagdagenten_dev@localhost:5432/jagdagenten',
     max: 20,
     idleTimeoutMillis: 30000,
 });
