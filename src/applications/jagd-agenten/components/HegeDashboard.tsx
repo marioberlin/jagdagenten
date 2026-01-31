@@ -55,7 +55,7 @@ export function HegeDashboard() {
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">
                     Hege & Pflege
                 </h2>
                 <button
@@ -68,7 +68,7 @@ export function HegeDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex gap-2 border-b border-[var(--glass-border)]">
                 {[
                     { id: 'projects', label: 'Aktionen' },
                     { id: 'activities', label: 'Aktivitäten' },
@@ -78,7 +78,7 @@ export function HegeDashboard() {
                         onClick={() => setActiveTab(id as typeof activeTab)}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === id
                             ? 'border-green-600 text-green-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                            : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                             }`}
                     >
                         {label}
@@ -94,28 +94,28 @@ export function HegeDashboard() {
                         return (
                             <div
                                 key={project.id}
-                                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+                                className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4"
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className={`p-2 rounded-lg bg-${typeInfo.color}-100 dark:bg-${typeInfo.color}-900/30 text-${typeInfo.color}-600 dark:text-${typeInfo.color}-400`}>
+                                    <div className={`p-2 rounded-lg bg-${typeInfo.color}-500/15 text-${typeInfo.color}-400`}>
                                         {typeInfo.icon}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                                            <h3 className="font-medium text-[var(--text-primary)] truncate">
                                                 {project.title}
                                             </h3>
                                             <StatusBadge status={project.status} />
                                         </div>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                        <p className="text-sm text-[var(--text-tertiary)] mb-2">
                                             {typeInfo.label} • {new Date(project.date).toLocaleDateString('de-DE')}
                                         </p>
                                         <div className="flex items-center gap-4 text-sm">
-                                            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                            <span className="flex items-center gap-1 text-[var(--text-secondary)]">
                                                 <CheckCircle className="w-4 h-4" />
                                                 {project.tasksCompleted}/{project.tasksTotal}
                                             </span>
-                                            <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                            <div className="flex-1 h-2 bg-[var(--glass-surface)] rounded-full">
                                                 <div
                                                     className="h-full bg-green-500 rounded-full"
                                                     style={{
@@ -138,23 +138,23 @@ export function HegeDashboard() {
                     {mockActivities.map((activity) => (
                         <div
                             key={activity.id}
-                            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3"
+                            className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4 flex items-center gap-3"
                         >
-                            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+                            <div className="p-2 bg-green-500/15 rounded-lg text-green-400">
                                 <Leaf className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
-                                <p className="font-medium text-gray-900 dark:text-white capitalize">
+                                <p className="font-medium text-[var(--text-primary)] capitalize">
                                     {activity.type}
                                 </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-[var(--text-tertiary)]">
                                     {activity.location} • {new Date(activity.time).toLocaleDateString('de-DE')}
                                 </p>
                             </div>
                         </div>
                     ))}
 
-                    <button className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-green-500 hover:text-green-600 transition-colors">
+                    <button className="w-full py-3 border-2 border-dashed border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:border-green-500 hover:text-green-600 transition-colors">
                         + Aktivität loggen
                     </button>
                 </div>
@@ -170,9 +170,9 @@ export function HegeDashboard() {
 
 function StatusBadge({ status }: { status: 'planned' | 'active' | 'completed' }) {
     const config = {
-        planned: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', label: 'Geplant' },
-        active: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', label: 'Aktiv' },
-        completed: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', label: 'Erledigt' },
+        planned: { bg: 'bg-blue-500/15', text: 'text-blue-400', label: 'Geplant' },
+        active: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Aktiv' },
+        completed: { bg: 'bg-green-500/15', text: 'text-green-400', label: 'Erledigt' },
     };
     const c = config[status];
     return <span className={`px-2 py-0.5 ${c.bg} ${c.text} rounded text-xs font-medium`}>{c.label}</span>;
@@ -185,11 +185,11 @@ function CreateProjectForm({ onCancel }: { onCancel: () => void }) {
 
     return (
         <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white">Neue Aktion erstellen</h3>
+            <h3 className="font-semibold text-[var(--text-primary)]">Neue Aktion erstellen</h3>
 
             {/* Type selection */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Art der Aktion
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -199,12 +199,12 @@ function CreateProjectForm({ onCancel }: { onCancel: () => void }) {
                                 key={key}
                                 onClick={() => setType(key)}
                                 className={`p-3 rounded-lg text-left transition-all ${type === key
-                                    ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500'
-                                    : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
+                                    ? 'bg-green-500/15 border-2 border-green-500'
+                                    : 'bg-[var(--glass-surface)] border border-[var(--glass-border)]'
                                     }`}
                             >
-                                <div className="text-gray-600 dark:text-gray-400 mb-1">{icon}</div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
+                                <div className="text-[var(--text-secondary)] mb-1">{icon}</div>
+                                <p className="text-sm font-medium text-[var(--text-primary)]">{label}</p>
                             </button>
                         )
                     )}
@@ -213,7 +213,7 @@ function CreateProjectForm({ onCancel }: { onCancel: () => void }) {
 
             {/* Title */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Titel
                 </label>
                 <input
@@ -221,20 +221,20 @@ function CreateProjectForm({ onCancel }: { onCancel: () => void }) {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="z.B. Revierarbeit Samstag"
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                    className="w-full px-4 py-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg"
                 />
             </div>
 
             {/* Date */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Datum
                 </label>
                 <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                    className="w-full px-4 py-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg"
                 />
             </div>
 
@@ -242,7 +242,7 @@ function CreateProjectForm({ onCancel }: { onCancel: () => void }) {
             <div className="flex gap-3">
                 <button
                     onClick={onCancel}
-                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium"
+                    className="flex-1 py-3 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-xl font-medium"
                 >
                     Abbrechen
                 </button>

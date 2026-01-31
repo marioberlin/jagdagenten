@@ -78,6 +78,14 @@ import { createVenisonRoutes } from './routes/jagd-venison.js';
 import { createTrailCamRoutes } from './routes/jagd-trailcam.js';
 import { createSessionRoutes } from './routes/jagd-session.js';
 import { createDrueckjagdRoutes } from './routes/jagd-drueckjagd.js';
+import { createSightingRoutes } from './routes/jagd-sightings.js';
+import { createStoryRoutes } from './routes/jagd-stories.js';
+import { createInviteRoutes } from './routes/jagd-invites.js';
+import { createJagdHegeRoutes } from './routes/jagd-hege.js';
+import { createJagdWildunfallRoutes } from './routes/jagd-wildunfall.js';
+import { createJagdNachsucheRoutes } from './routes/jagd-nachsuche.js';
+import { createJagdChallengesRoutes } from './routes/jagd-challenges.js';
+import { createJagdObservabilityRoutes } from './routes/jagd-observability.js';
 import { createAIRespondRoutes } from './routes/ai-respond.js';
 import { createToolGatewayRoutes } from './routes/tool-gateway.js';
 import { createDemoRoutes } from './routes/demo.js';
@@ -749,6 +757,14 @@ async function startServer() {
         .use(createTrailCamRoutes())
         .use(createSessionRoutes())
         .use(createDrueckjagdRoutes())
+        .use(createSightingRoutes())
+        .use(createStoryRoutes())
+        .use(createInviteRoutes())
+        .use(createJagdHegeRoutes())
+        .use(createJagdWildunfallRoutes())
+        .use(createJagdNachsucheRoutes())
+        .use(createJagdChallengesRoutes())
+        .use(createJagdObservabilityRoutes())
         .use(createAIRespondRoutes())     // AI Agent orchestration endpoint
         .use(createToolGatewayRoutes())   // Tool execution gateway
         .use(createDemoRoutes())          // Demo data seeding

@@ -114,17 +114,17 @@ function FilterBar({
                     display: flex;
                     gap: 12px;
                     padding: 12px 16px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border-bottom: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border-bottom: 1px solid var(--glass-border);
                 }
                 .filter-group {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     padding: 8px 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     position: relative;
                 }
                 .filter-group select {
@@ -140,7 +140,7 @@ function FilterBar({
                     position: absolute;
                     right: 10px;
                     pointer-events: none;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -205,8 +205,8 @@ function GridCellPopup({ cell }: { cell: HeatmapCell }) {
 
             <style>{`
                 .cell-popup {
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
                     padding: 12px;
                     min-width: 200px;
@@ -216,13 +216,13 @@ function GridCellPopup({ cell }: { cell: HeatmapCell }) {
                     align-items: center;
                     gap: 8px;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin-bottom: 10px;
                 }
                 .popup-intensity {
                     position: relative;
                     height: 6px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 3px;
                     margin-bottom: 10px;
                     overflow: hidden;
@@ -237,7 +237,7 @@ function GridCellPopup({ cell }: { cell: HeatmapCell }) {
                     right: 0;
                     top: 10px;
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .popup-species {
                     display: flex;
@@ -257,7 +257,7 @@ function GridCellPopup({ cell }: { cell: HeatmapCell }) {
                     align-items: center;
                     gap: 6px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -396,13 +396,13 @@ export default function WaidmannHeatmap() {
                     justify-content: center;
                     gap: 12px;
                     height: 300px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .heatmap-container {
                     flex: 1;
                     position: relative;
                     min-height: 400px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                 }
                 .map-placeholder {
                     display: flex;
@@ -410,12 +410,12 @@ export default function WaidmannHeatmap() {
                     align-items: center;
                     justify-content: center;
                     height: 100%;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     gap: 12px;
                 }
                 .map-placeholder .hint {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .cells-list {
                     position: absolute;
@@ -433,10 +433,10 @@ export default function WaidmannHeatmap() {
                     justify-content: space-between;
                     gap: 12px;
                     padding: 8px 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.8rem;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -472,9 +472,9 @@ export default function WaidmannHeatmap() {
                     gap: 8px;
                     padding: 12px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
-                    background: var(--bg-secondary, #1a1a2e);
-                    border-top: 1px solid var(--border-color, #333);
+                    color: var(--text-tertiary);
+                    background: var(--glass-bg-regular);
+                    border-top: 1px solid var(--glass-border);
                 }
             `}</style>
         </div>

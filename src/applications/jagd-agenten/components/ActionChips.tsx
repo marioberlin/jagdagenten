@@ -97,7 +97,7 @@ export function ActionChips({
                         <HelpCircle size={14} />
                         <span>So habe ich das gemacht:</span>
                     </div>
-                    <ul className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
+                    <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
                         {explain.map((item, idx) => (
                             <li key={idx} className="flex items-start gap-2">
                                 <span className="text-blue-500">•</span>

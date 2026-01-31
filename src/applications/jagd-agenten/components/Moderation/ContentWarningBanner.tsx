@@ -115,7 +115,7 @@ export default function ContentWarningBanner({
 
             <style>{`
                 .content-warning-banner {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-left: 3px solid;
                     border-radius: 8px;
                     padding: 14px;
@@ -133,13 +133,13 @@ export default function ContentWarningBanner({
                 .warning-text h4 {
                     margin: 0 0 4px;
                     font-size: 0.9rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .warning-text p {
                     margin: 0;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .report-count {
@@ -148,7 +148,7 @@ export default function ContentWarningBanner({
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     display: inline-block;
                 }
 
@@ -161,7 +161,7 @@ export default function ContentWarningBanner({
                     background: rgba(255, 255, 255, 0.08);
                     border: none;
                     border-radius: 6px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     font-size: 0.8rem;
                     cursor: pointer;
                     transition: background 0.2s;

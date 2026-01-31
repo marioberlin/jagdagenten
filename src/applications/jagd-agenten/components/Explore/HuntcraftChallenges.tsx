@@ -160,7 +160,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
         <div className={`challenge-card ${challenge.completed ? 'completed' : ''}`}>
             <div className="challenge-icon">
                 {challenge.completed ? (
-                    <CheckCircle className="w-6 h-6" style={{ color: '#10b981' }} />
+                    <CheckCircle className="w-6 h-6" style={{ color: 'var(--glass-accent, #10b981)' }} />
                 ) : (
                     <Icon className="w-6 h-6" />
                 )}
@@ -179,7 +179,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                         className="progress-fill"
                         style={{
                             width: `${progressPercent}%`,
-                            background: challenge.completed ? '#10b981' : '#3b82f6',
+                            background: challenge.completed ? 'var(--glass-accent, #10b981)' : '#3b82f6',
                         }}
                     />
                 </div>
@@ -202,8 +202,8 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                     display: flex;
                     gap: 14px;
                     padding: 14px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 12px;
                 }
                 .challenge-card.completed {
@@ -211,7 +211,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                     border-color: rgba(16, 185, 129, 0.3);
                 }
                 .challenge-icon {
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .challenge-content {
                     flex: 1;
@@ -225,7 +225,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                 .challenge-title {
                     font-size: 0.95rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .xp-reward {
@@ -235,12 +235,12 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                 }
                 .challenge-desc {
                     font-size: 0.8rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin: 0 0 10px;
                 }
                 .progress-bar {
                     height: 6px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 3px;
                     overflow: hidden;
                     margin-bottom: 8px;
@@ -257,14 +257,14 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                 }
                 .progress-text {
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .expires {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -292,7 +292,7 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
                     align-items: center;
                     gap: 12px;
                     padding: 10px 12px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border: 1px solid;
                     border-radius: 10px;
                 }
@@ -303,11 +303,11 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
                     display: block;
                     font-size: 0.85rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .badge-desc {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -355,7 +355,7 @@ function LevelProgress({ level, xp, xpToNext }: { level: number; xp: number; xpT
                 }
                 .xp-bar {
                     height: 8px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 4px;
                     overflow: hidden;
                     margin-bottom: 6px;
@@ -367,7 +367,7 @@ function LevelProgress({ level, xp, xpToNext }: { level: number; xp: number; xpT
                 }
                 .xp-text {
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
             `}</style>
         </div>
@@ -434,7 +434,7 @@ export default function HuntcraftChallenges() {
             {completedChallenges.length > 0 && (
                 <section className="section">
                     <h3 className="section-title">
-                        <CheckCircle className="w-4 h-4" style={{ color: '#10b981' }} />
+                        <CheckCircle className="w-4 h-4" style={{ color: 'var(--glass-accent, #10b981)' }} />
                         Abgeschlossen ({completedChallenges.length})
                     </h3>
                     <div className="challenges-list">
@@ -479,7 +479,7 @@ export default function HuntcraftChallenges() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .challenges-header {
                     display: flex;
@@ -495,12 +495,12 @@ export default function HuntcraftChallenges() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .week-progress {
                     font-size: 0.8rem;
-                    color: #10b981;
+                    color: var(--glass-accent, #10b981);
                 }
                 .section {
                     margin-top: 20px;
@@ -511,7 +511,7 @@ export default function HuntcraftChallenges() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .challenges-list, .achievements-list {
@@ -522,14 +522,14 @@ export default function HuntcraftChallenges() {
                 .philosophy-note {
                     margin-top: 24px;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 10px;
                     text-align: center;
                 }
                 .philosophy-note p {
                     margin: 0;
                     font-size: 0.8rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     font-style: italic;
                 }
             `}</style>

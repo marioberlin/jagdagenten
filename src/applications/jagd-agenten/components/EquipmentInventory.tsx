@@ -63,7 +63,7 @@ function GearCard({ item, onDelete, onEdit }: GearCardProps) {
     const status = STATUS_CONFIG[item.status];
 
     return (
-        <div className="relative bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 hover:border-white/20 transition-all group">
+        <div className="relative bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4 hover:border-[var(--glass-surface-active)] transition-all group">
             {/* Status badge */}
             {item.status !== 'ready' && (
                 <div className={`absolute -top-2 -right-2 rounded-full p-1.5 ${status.color.split(' ')[1]}`}>
@@ -76,8 +76,8 @@ function GearCard({ item, onDelete, onEdit }: GearCardProps) {
                 <div className="flex items-center gap-3">
                     {ITEM_TYPE_ICONS[item.itemType]}
                     <div>
-                        <h3 className="font-medium text-white">{item.name}</h3>
-                        <p className="text-xs text-white/60">{ITEM_TYPE_LABELS[item.itemType]}</p>
+                        <h3 className="font-medium text-[var(--text-primary)]">{item.name}</h3>
+                        <p className="text-xs text-[var(--text-secondary)]">{ITEM_TYPE_LABELS[item.itemType]}</p>
                     </div>
                 </div>
 
@@ -85,9 +85,9 @@ function GearCard({ item, onDelete, onEdit }: GearCardProps) {
                     {onEdit && (
                         <button
                             onClick={() => onEdit(item.id)}
-                            className="p-1.5 rounded-lg hover:bg-white/10"
+                            className="p-1.5 rounded-lg hover:bg-[var(--glass-surface)]"
                         >
-                            <Settings className="w-4 h-4 text-white/60" />
+                            <Settings className="w-4 h-4 text-[var(--text-secondary)]" />
                         </button>
                     )}
                     <button
@@ -102,13 +102,13 @@ function GearCard({ item, onDelete, onEdit }: GearCardProps) {
             {/* Details */}
             <div className="space-y-1 text-sm">
                 {item.caliber && (
-                    <p className="text-white/70">
-                        <span className="text-white/40">Kaliber:</span> {item.caliber}
+                    <p className="text-[var(--text-secondary)]">
+                        <span className="text-[var(--text-tertiary)]">Kaliber:</span> {item.caliber}
                     </p>
                 )}
                 {item.optic && (
-                    <p className="text-white/70">
-                        <span className="text-white/40">Optik:</span> {item.optic}
+                    <p className="text-[var(--text-secondary)]">
+                        <span className="text-[var(--text-tertiary)]">Optik:</span> {item.optic}
                     </p>
                 )}
             </div>
@@ -163,28 +163,28 @@ function AddGearModal({ isOpen, onClose, onSubmit }: AddGearModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-neutral-900 rounded-2xl border border-white/10 p-6 w-full max-w-md mx-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Ausrüstung hinzufügen</h2>
+            <div className="bg-[var(--glass-bg-thick)] backdrop-blur-xl rounded-2xl border border-[var(--glass-border)] p-6 w-full max-w-md mx-4">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Ausrüstung hinzufügen</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Bezeichnung</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Bezeichnung</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                             placeholder="z.B. Sauer 404"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Typ</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Typ</label>
                         <select
                             value={itemType}
                             onChange={(e) => setItemType(e.target.value as GearItem['itemType'])}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                         >
                             {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
@@ -195,23 +195,23 @@ function AddGearModal({ isOpen, onClose, onSubmit }: AddGearModalProps) {
                     {itemType === 'weapon' && (
                         <>
                             <div>
-                                <label className="block text-sm text-white/70 mb-1">Kaliber</label>
+                                <label className="block text-sm text-[var(--text-secondary)] mb-1">Kaliber</label>
                                 <input
                                     type="text"
                                     value={caliber}
                                     onChange={(e) => setCaliber(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                                     placeholder="z.B. .308 Win"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm text-white/70 mb-1">Optik (optional)</label>
+                                <label className="block text-sm text-[var(--text-secondary)] mb-1">Optik (optional)</label>
                                 <input
                                     type="text"
                                     value={optic}
                                     onChange={(e) => setOptic(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                                     placeholder="z.B. Zeiss V8 2.8-20x56"
                                 />
                             </div>
@@ -222,7 +222,7 @@ function AddGearModal({ isOpen, onClose, onSubmit }: AddGearModalProps) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                            className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface)] transition-all"
                         >
                             Abbrechen
                         </button>
@@ -264,8 +264,8 @@ export function EquipmentInventory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Ausrüstung</h1>
-                    <p className="text-sm text-white/60">Inventar und Wartungsstatus Ihrer Jagdausrüstung</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Ausrüstung</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">Inventar und Wartungsstatus Ihrer Jagdausrüstung</p>
                 </div>
 
                 <button
@@ -292,8 +292,8 @@ export function EquipmentInventory() {
                 <button
                     onClick={() => setFilterType('all')}
                     className={`px-4 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all ${filterType === 'all'
-                        ? 'bg-white/10 text-white'
-                        : 'text-white/50 hover:text-white hover:bg-white/5'
+                        ? 'bg-[var(--glass-surface-active)] text-[var(--text-primary)]'
+                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface)]'
                         }`}
                 >
                     Alle ({gear.length})
@@ -306,8 +306,8 @@ export function EquipmentInventory() {
                             key={value}
                             onClick={() => setFilterType(value as GearItem['itemType'])}
                             className={`px-4 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all ${filterType === value
-                                ? 'bg-white/10 text-white'
-                                : 'text-white/50 hover:text-white hover:bg-white/5'
+                                ? 'bg-[var(--glass-surface-active)] text-[var(--text-primary)]'
+                                : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface)]'
                                 }`}
                         >
                             {label} ({count})
@@ -332,7 +332,7 @@ export function EquipmentInventory() {
 
             {/* Empty State */}
             {!gearLoading && filteredGear.length === 0 && (
-                <div className="text-center py-12 text-white/50">
+                <div className="text-center py-12 text-[var(--text-tertiary)]">
                     <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Keine Ausrüstung gefunden</p>
                     <p className="text-sm mt-1">Fügen Sie Ihre Waffen, Optiken und Zubehör hinzu.</p>

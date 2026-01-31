@@ -126,7 +126,7 @@ export default function PrivateHuntModeToggle({
 
             <style>{`
                 .private-hunt-toggle {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     padding: 14px;
                 }
@@ -144,7 +144,7 @@ export default function PrivateHuntModeToggle({
                     gap: 12px;
                     padding: 10px;
                     background: transparent;
-                    border: 1px solid var(--border-color, #333);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -152,7 +152,7 @@ export default function PrivateHuntModeToggle({
                 }
 
                 .toggle-btn:hover {
-                    border-color: var(--color-primary, #10b981);
+                    border-color: var(--glass-accent, #10b981);
                 }
 
                 .toggle-btn.active {
@@ -166,9 +166,9 @@ export default function PrivateHuntModeToggle({
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 8px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .toggle-btn.active .toggle-icon {
@@ -186,12 +186,12 @@ export default function PrivateHuntModeToggle({
                 .toggle-label {
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .toggle-desc {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .toggle-switch {
@@ -201,7 +201,7 @@ export default function PrivateHuntModeToggle({
                 .switch-track {
                     width: 44px;
                     height: 24px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 12px;
                     position: relative;
                     transition: background 0.2s;
@@ -228,24 +228,24 @@ export default function PrivateHuntModeToggle({
 
                 .info-btn {
                     padding: 10px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border: none;
                     border-radius: 8px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     cursor: pointer;
                 }
 
                 .info-panel {
                     margin-top: 14px;
                     padding: 14px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 10px;
                 }
 
                 .info-panel h4 {
                     margin: 0 0 12px;
                     font-size: 0.9rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .comparison {
@@ -292,7 +292,7 @@ export default function PrivateHuntModeToggle({
 
                 .mode-col li {
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     margin-bottom: 4px;
                 }
 

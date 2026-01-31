@@ -156,8 +156,8 @@ function DayCard({ day, isToday }: { day: DayForecast; isToday: boolean }) {
                     align-items: center;
                     gap: 8px;
                     padding: 12px 10px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 12px;
                     min-width: 85px;
                 }
@@ -171,12 +171,12 @@ function DayCard({ day, isToday }: { day: DayForecast; isToday: boolean }) {
                 .weekday {
                     display: block;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .date {
                     font-size: 1.1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .moon-section {
                     display: flex;
@@ -186,7 +186,7 @@ function DayCard({ day, isToday }: { day: DayForecast; isToday: boolean }) {
                 }
                 .illumination {
                     font-size: 0.6rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .times-section {
                     display: flex;
@@ -198,7 +198,7 @@ function DayCard({ day, isToday }: { day: DayForecast; isToday: boolean }) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .buechsenlicht {
                     text-align: center;
@@ -206,7 +206,7 @@ function DayCard({ day, isToday }: { day: DayForecast; isToday: boolean }) {
                 .bl-label {
                     display: block;
                     font-size: 0.55rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     text-transform: uppercase;
                 }
                 .bl-times {
@@ -258,8 +258,8 @@ function EducationTile() {
 
             <style>{`
                 .education-tile {
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 12px;
                     overflow: hidden;
                 }
@@ -271,7 +271,7 @@ function EducationTile() {
                     padding: 14px;
                     background: transparent;
                     border: none;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.9rem;
                     cursor: pointer;
                     text-align: left;
@@ -286,7 +286,7 @@ function EducationTile() {
                 .education-content {
                     padding: 0 14px 14px;
                     font-size: 0.85rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.5;
                 }
                 .education-content p {
@@ -406,7 +406,7 @@ export default function BuechsenlichtMoon() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .bl-header {
                     display: flex;
@@ -422,12 +422,12 @@ export default function BuechsenlichtMoon() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .location {
                     font-size: 0.8rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .today-highlight {
                     display: flex;
@@ -448,13 +448,13 @@ export default function BuechsenlichtMoon() {
                 .today-section .label {
                     display: block;
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .today-section .value {
                     display: block;
                     font-size: 1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .today-divider {
                     width: 1px;
@@ -470,7 +470,7 @@ export default function BuechsenlichtMoon() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .forecast-scroll {
@@ -493,13 +493,13 @@ export default function BuechsenlichtMoon() {
                 .bw-label {
                     display: block;
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .bw-value {
                     display: block;
                     font-size: 1.1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
             `}</style>
         </div>

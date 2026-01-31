@@ -139,7 +139,7 @@ export default function TrendCard({ trend, onClick }: TrendCardProps) {
 
             <style>{`
                 .trend-card {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     padding: 14px;
                     transition: transform 0.2s;
@@ -162,7 +162,7 @@ export default function TrendCard({ trend, onClick }: TrendCardProps) {
                     gap: 8px;
                     font-size: 1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .species-emoji {
@@ -194,12 +194,12 @@ export default function TrendCard({ trend, onClick }: TrendCardProps) {
                 .stat-value {
                     font-size: 1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .stat-label {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .trend-location {
@@ -207,7 +207,7 @@ export default function TrendCard({ trend, onClick }: TrendCardProps) {
                     align-items: center;
                     gap: 5px;
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     margin-bottom: 8px;
                 }
 
@@ -228,7 +228,7 @@ export default function TrendCard({ trend, onClick }: TrendCardProps) {
                     align-items: center;
                     gap: 5px;
                     font-size: 0.65rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     padding-top: 8px;
                     border-top: 1px solid rgba(255, 255, 255, 0.05);
                 }

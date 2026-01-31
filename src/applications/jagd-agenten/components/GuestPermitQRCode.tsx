@@ -160,7 +160,7 @@ export function GuestPermitQRCode({
                     />
                 ) : (
                     <div
-                        className="flex items-center justify-center bg-gray-800 rounded-lg"
+                        className="flex items-center justify-center bg-[var(--glass-surface)] rounded-lg"
                         style={{ width: size, height: size }}
                     >
                         <QrCode size={48} className="text-gray-600" />

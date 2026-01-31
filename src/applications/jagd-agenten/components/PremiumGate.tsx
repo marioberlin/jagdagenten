@@ -72,7 +72,7 @@ export function UpgradePrompt({ feature, compact = false }: UpgradePromptProps) 
 
     if (compact) {
         return (
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-amber-400">
                 <Lock className="w-4 h-4" />
                 <span className="text-sm">{plan.nameDE} erforderlich</span>
             </div>
@@ -80,23 +80,23 @@ export function UpgradePrompt({ feature, compact = false }: UpgradePromptProps) 
     }
 
     return (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-800 rounded-xl p-6">
             <div className="flex items-start gap-4">
-                <div className="p-3 bg-amber-100 dark:bg-amber-800/40 rounded-lg">
-                    <Crown className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                <div className="p-3 bg-amber-800/40 rounded-lg">
+                    <Crown className="w-6 h-6 text-amber-400" />
                 </div>
                 <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    <h3 className="font-semibold text-[var(--text-primary)] mb-1">
                         {featureLabels[feature]}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-[var(--text-secondary)] mb-4">
                         Diese Funktion ist Teil des <strong>{plan.nameDE}</strong>-Abonnements.
                     </p>
                     <button className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors">
                         Upgrade auf {plan.nameDE}
                         <ArrowRight className="w-4 h-4" />
                     </button>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                    <p className="text-xs text-[var(--text-secondary)] mt-2">
                         {plan.price > 0 ? `€${plan.price}/Jahr` : 'Kostenlos'}
                     </p>
                 </div>
@@ -110,7 +110,7 @@ export function UpgradePrompt({ feature, compact = false }: UpgradePromptProps) 
  */
 export function PremiumBadge({ tier = 'paechter' }: { tier?: 'paechter' | 'forst' }) {
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-900/30 text-amber-400 rounded text-xs font-medium">
             <Crown className="w-3 h-3" />
             {tier === 'forst' ? 'Forst' : 'Premium'}
         </span>

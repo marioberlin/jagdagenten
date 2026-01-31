@@ -12,6 +12,9 @@ import { useScoutStore, type HuntStand } from '@/stores/useScoutStore';
 import { HuntingMap, type HuntStand as MapHuntStand, type WindData } from './HuntingMap';
 import { JagdrevierLayers } from './JagdrevierLayers';
 import { RevierSearchBar } from './RevierSearchBar';
+import { DistanceRingsOverlay } from './DistanceRingsOverlay';
+import { NoGoZoneOverlay } from './NoGoZoneOverlay';
+import { BoundaryImport } from './BoundaryImport';
 import { useGeoLayerStore } from '@/stores/useGeoLayerStore';
 
 // ============================================================================
@@ -461,6 +464,7 @@ export default function ScoutView() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showDetailPanel, setShowDetailPanel] = useState(true);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
+  const [showBoundaryImport, setShowBoundaryImport] = useState(false);
 
   // Search-driven navigation: overrides normal center/zoom when set
   const [searchCenter, setSearchCenter] = useState<[number, number] | null>(null);
@@ -630,6 +634,24 @@ export default function ScoutView() {
             />
           ))}
         </div>
+
+        {/* Boundary Import toggle */}
+        <button
+          onClick={() => setShowBoundaryImport((v) => !v)}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+        >
+          <MapIcon size={14} />
+          Grenze importieren (GPX/KML)
+        </button>
+        {showBoundaryImport && (
+          <BoundaryImport
+            onImport={(boundary) => {
+              console.log('Imported boundary:', boundary.name, boundary.type);
+              setShowBoundaryImport(false);
+            }}
+            onClose={() => setShowBoundaryImport(false)}
+          />
+        )}
       </div>
 
       {/* ── Center: Interactive Map ── */}
@@ -654,6 +676,11 @@ export default function ScoutView() {
         >
           {/* Jagdrevier layers from Diepholz ArcGIS */}
           <JagdrevierLayers />
+          {/* Distance rings around selected stand (pigeon-maps injects mapWidth/mapHeight/zoom/latLngToPixel) */}
+          {/* @ts-expect-error pigeon-maps injects props via cloneElement */}
+          {selectedStand && <DistanceRingsOverlay center={[selectedStand.geoLat, selectedStand.geoLon]} />}
+          {/* @ts-expect-error pigeon-maps injects props via cloneElement */}
+          <NoGoZoneOverlay zones={[]} />
         </HuntingMap>
 
         {/* ── Floating Revier Search Bar ── */}

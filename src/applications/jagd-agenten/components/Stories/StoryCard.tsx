@@ -133,7 +133,7 @@ export default function StoryCard({ story, onClick }: StoryCardProps) {
 
             <style>{`
                 .story-card {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     overflow: hidden;
                     cursor: pointer;
@@ -186,7 +186,7 @@ export default function StoryCard({ story, onClick }: StoryCardProps) {
                 .title {
                     margin: 0;
                     font-size: 1rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     flex: 1;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -205,13 +205,13 @@ export default function StoryCard({ story, onClick }: StoryCardProps) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .summary {
                     margin: 0 0 10px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                     display: -webkit-box;
                     -webkit-line-clamp: 2;
@@ -247,12 +247,12 @@ export default function StoryCard({ story, onClick }: StoryCardProps) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .timestamp {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>

@@ -117,8 +117,8 @@ function WeaponCard({ weapon }: { weapon: Weapon }) {
                     align-items: center;
                     justify-content: space-between;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-left: 3px solid;
                     border-radius: 10px;
                 }
@@ -130,14 +130,14 @@ function WeaponCard({ weapon }: { weapon: Weapon }) {
                 .weapon-name {
                     display: block;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .last-check {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .status-badge {
                     padding: 4px 10px;
@@ -179,8 +179,8 @@ function AmmoCard({ ammo }: { ammo: AmmoStats }) {
             <style>{`
                 .ammo-card {
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
                 }
                 .ammo-card.low {
@@ -194,7 +194,7 @@ function AmmoCard({ ammo }: { ammo: AmmoStats }) {
                 }
                 .caliber {
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .ammo-stats {
                     display: flex;
@@ -207,14 +207,14 @@ function AmmoCard({ ammo }: { ammo: AmmoStats }) {
                     display: block;
                     font-size: 1.1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .stat-value.warning {
                     color: #f59e0b;
                 }
                 .stat-label {
                     font-size: 0.65rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -257,8 +257,8 @@ function TaskItem({
                     align-items: center;
                     gap: 12px;
                     padding: 10px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
                 }
                 .task-item.completed {
@@ -282,15 +282,15 @@ function TaskItem({
                 .task-name {
                     display: block;
                     font-size: 0.9rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .task-weapon {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .task-due {
                     font-size: 0.75rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
             `}</style>
         </div>
@@ -415,7 +415,7 @@ export default function GearHealth() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .gear-header {
                     display: flex;
@@ -431,7 +431,7 @@ export default function GearHealth() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .health-score {
@@ -459,7 +459,7 @@ export default function GearHealth() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .weapons-list, .tasks-list {

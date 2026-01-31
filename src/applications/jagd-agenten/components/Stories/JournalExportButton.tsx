@@ -135,18 +135,18 @@ export default function JournalExportButton({
                     align-items: center;
                     gap: 6px;
                     padding: 8px 14px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.85rem;
                     cursor: pointer;
                     transition: all 0.2s;
                 }
 
                 .export-trigger:hover:not(:disabled) {
-                    background: var(--bg-secondary, #1a1a2e);
-                    border-color: var(--color-primary, #10b981);
+                    background: var(--glass-bg-regular);
+                    border-color: var(--glass-accent, #10b981);
                 }
 
                 .export-trigger:disabled {
@@ -159,8 +159,8 @@ export default function JournalExportButton({
                     top: calc(100% + 8px);
                     right: 0;
                     min-width: 200px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
                     padding: 6px;
                     z-index: 100;
@@ -176,14 +176,14 @@ export default function JournalExportButton({
                     background: transparent;
                     border: none;
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     cursor: pointer;
                     text-align: left;
                     transition: background 0.2s;
                 }
 
                 .export-option:hover:not(:disabled) {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                 }
 
                 .export-option:disabled {
@@ -204,7 +204,7 @@ export default function JournalExportButton({
 
                 .option-desc {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .export-error {

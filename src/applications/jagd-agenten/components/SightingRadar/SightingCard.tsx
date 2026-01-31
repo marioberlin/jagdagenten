@@ -126,7 +126,7 @@ export default function SightingCard({ sighting, onClick }: SightingCardProps) {
 
             <style>{`
                 .sighting-card {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     padding: 14px;
                     cursor: pointer;
@@ -157,7 +157,7 @@ export default function SightingCard({ sighting, onClick }: SightingCardProps) {
 
                 .species-name {
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .protected-badge {
@@ -186,11 +186,11 @@ export default function SightingCard({ sighting, onClick }: SightingCardProps) {
                     height: 6px;
                     flex: 1;
                     border-radius: 3px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                 }
 
                 .bar-segment.filled {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                 }
 
                 .confidence-label {
@@ -201,7 +201,7 @@ export default function SightingCard({ sighting, onClick }: SightingCardProps) {
                 .card-description {
                     margin: 0 0 10px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                 }
 
@@ -239,7 +239,7 @@ export default function SightingCard({ sighting, onClick }: SightingCardProps) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>

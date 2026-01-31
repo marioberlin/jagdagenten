@@ -146,12 +146,12 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
 
             <style>{`
                 .invite-card {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     padding: 14px;
                     cursor: pointer;
                     transition: transform 0.2s, box-shadow 0.2s;
-                    border-left: 4px solid var(--color-primary, #10b981);
+                    border-left: 4px solid var(--glass-accent, #10b981);
                 }
 
                 .invite-card:hover {
@@ -161,7 +161,7 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
 
                 .invite-card.full {
                     opacity: 0.6;
-                    border-left-color: var(--text-tertiary, #666);
+                    border-left-color: var(--text-tertiary);
                 }
 
                 .type-badge {
@@ -181,19 +181,19 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
                 .type-label {
                     font-size: 0.75rem;
                     font-weight: 500;
-                    color: var(--color-primary, #10b981);
+                    color: var(--glass-accent, #10b981);
                 }
 
                 .title {
                     margin: 0 0 8px;
                     font-size: 1rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .description {
                     margin: 0 0 10px;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                 }
 
@@ -209,7 +209,7 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .roles {
@@ -218,7 +218,7 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
 
                 .roles-label {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin-right: 8px;
                 }
 
@@ -230,10 +230,10 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
 
                 .role-tag {
                     padding: 2px 8px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .card-footer {
@@ -247,7 +247,7 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.8rem;
-                    color: var(--color-primary, #10b981);
+                    color: var(--glass-accent, #10b981);
                 }
 
                 .spots.urgent {
@@ -255,7 +255,7 @@ export default function InviteCard({ invite, onClick }: InviteCardProps) {
                 }
 
                 .spots.full {
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .safety-badge {

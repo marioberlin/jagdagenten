@@ -86,7 +86,7 @@ function FeedItemCard({ item, onRead, onBookmark }: FeedItemCardProps) {
     return (
         <div
             onClick={handleClick}
-            className={`bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 hover:border-white/20 transition-all cursor-pointer ${item.isRead ? 'opacity-70' : ''
+            className={`bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4 hover:border-[var(--glass-surface-active)] transition-all cursor-pointer ${item.isRead ? 'opacity-70' : ''
                 }`}
         >
             {/* Header */}
@@ -103,7 +103,7 @@ function FeedItemCard({ item, onRead, onBookmark }: FeedItemCardProps) {
                     }}
                     className={`p-1.5 rounded-lg transition-all ${item.isBookmarked
                             ? 'text-yellow-400 bg-yellow-500/10'
-                            : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'
                         }`}
                 >
                     {item.isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
@@ -111,15 +111,15 @@ function FeedItemCard({ item, onRead, onBookmark }: FeedItemCardProps) {
             </div>
 
             {/* Title */}
-            <h3 className={`font-semibold text-white mb-2 ${item.isRead ? '' : 'text-lg'}`}>
+            <h3 className={`font-semibold text-[var(--text-primary)] mb-2 ${item.isRead ? '' : 'text-lg'}`}>
                 {item.title}
             </h3>
 
             {/* Summary */}
-            <p className="text-sm text-white/70 mb-3 line-clamp-2">{item.summary}</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">{item.summary}</p>
 
             {/* Footer */}
-            <div className="flex items-center justify-between text-xs text-white/50">
+            <div className="flex items-center justify-between text-xs text-[var(--text-tertiary)]">
                 <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -145,7 +145,7 @@ function FeedItemCard({ item, onRead, onBookmark }: FeedItemCardProps) {
                     {item.tags.slice(0, 4).map((tag) => (
                         <span
                             key={tag}
-                            className="px-2 py-0.5 rounded-full bg-white/5 text-white/50 text-xs"
+                            className="px-2 py-0.5 rounded-full bg-[var(--glass-surface)] text-[var(--text-tertiary)] text-xs"
                         >
                             #{tag}
                         </span>
@@ -213,8 +213,8 @@ export function WaidmannFeed() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Waidmann-Feed</h1>
-                    <p className="text-sm text-white/60">
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Waidmann-Feed</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">
                         {unreadCount > 0 ? `${unreadCount} ungelesene Beiträge` : 'Alle Beiträge gelesen'}
                     </p>
                 </div>
@@ -222,7 +222,7 @@ export function WaidmannFeed() {
                 <button
                     onClick={handleRefresh}
                     disabled={feedLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-active)] text-[var(--text-primary)] transition-all disabled:opacity-50"
                 >
                     <RefreshCw className={`w-4 h-4 ${feedLoading ? 'animate-spin' : ''}`} />
                     <span>Aktualisieren</span>
@@ -231,14 +231,14 @@ export function WaidmannFeed() {
 
             {/* Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                <Filter className="w-4 h-4 text-white/50 flex-shrink-0" />
+                <Filter className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
                 {FILTER_TYPES.map((filter) => (
                     <button
                         key={filter}
                         onClick={() => handleFilterChange(filter)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeFilter === filter
                                 ? 'bg-green-600 text-white'
-                                : 'bg-white/5 text-white/70 hover:bg-white/10'
+                                : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-active)]'
                             }`}
                     >
                         {filter === 'all' ? 'Alle' : FEED_TYPE_CONFIG[filter].label}
@@ -262,7 +262,7 @@ export function WaidmannFeed() {
 
             {/* Empty State */}
             {!feedLoading && displayedItems.length === 0 && (
-                <div className="text-center py-12 text-white/50">
+                <div className="text-center py-12 text-[var(--text-tertiary)]">
                     <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Keine Beiträge gefunden</p>
                     <p className="text-sm mt-1">Versuchen Sie einen anderen Filter.</p>

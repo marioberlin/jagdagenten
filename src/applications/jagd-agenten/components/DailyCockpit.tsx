@@ -28,6 +28,7 @@ import { HuntModeView } from './HuntModeView';
 import { EndHuntSummary } from './EndHuntSummary';
 import { useHuntSessionStore, selectActiveSession, selectIsHunting } from '../stores/useHuntSessionStore';
 import type { SessionType, StandReference, WeatherSnapshot, HuntSession } from '../types/HuntSession';
+import { ExpirationAlerts } from './ExpirationAlerts';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -524,6 +525,9 @@ export default function DailyCockpit() {
             </p>
           </div>
         </div>
+
+        {/* Document Expiration Alerts */}
+        <ExpirationAlerts onViewDocument={(id) => console.log('View document', id)} />
 
         {error && (
           <div className="px-4 py-3 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm text-[var(--text-secondary)]">

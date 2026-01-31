@@ -342,7 +342,7 @@ export default function InviteEditor({
                 }
 
                 .invite-editor {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 16px;
                     width: 100%;
                     max-width: 600px;
@@ -355,7 +355,7 @@ export default function InviteEditor({
                     justify-content: space-between;
                     align-items: center;
                     padding: 16px 20px;
-                    border-bottom: 1px solid var(--border-color, #333);
+                    border-bottom: 1px solid var(--glass-border);
                 }
 
                 .editor-header h3 {
@@ -363,13 +363,13 @@ export default function InviteEditor({
                     align-items: center;
                     gap: 8px;
                     margin: 0;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .close-btn {
                     background: none;
                     border: none;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     cursor: pointer;
                 }
 
@@ -383,7 +383,7 @@ export default function InviteEditor({
                     gap: 6px;
                     margin-bottom: 6px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .form-group input,
@@ -391,10 +391,10 @@ export default function InviteEditor({
                 .form-group textarea {
                     width: 100%;
                     padding: 10px 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.9rem;
                 }
 
@@ -413,27 +413,27 @@ export default function InviteEditor({
                     align-items: center;
                     gap: 6px;
                     padding: 8px 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border: 1px solid transparent;
                     border-radius: 8px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     cursor: pointer;
                 }
 
                 .type-btn.active {
                     background: rgba(16, 185, 129, 0.15);
-                    border-color: var(--color-primary, #10b981);
-                    color: var(--color-primary, #10b981);
+                    border-color: var(--glass-accent, #10b981);
+                    color: var(--glass-accent, #10b981);
                 }
 
                 .role-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
                 .role-chip {
                     padding: 6px 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border: 1px solid transparent;
                     border-radius: 16px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     font-size: 0.85rem;
                     cursor: pointer;
                 }
@@ -491,12 +491,12 @@ export default function InviteEditor({
                 }
 
                 .cancel-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .save-btn {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 

@@ -154,7 +154,7 @@ function OfficialCard({ sighting }: { sighting: OfficialSighting }) {
 
             <style>{`
                 .official-card {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border: 1px solid rgba(59, 130, 246, 0.3);
                     border-left: 3px solid #3b82f6;
                     border-radius: 10px;
@@ -181,26 +181,26 @@ function OfficialCard({ sighting }: { sighting: OfficialSighting }) {
                 }
                 .evidence-badge {
                     padding: 2px 8px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 8px;
                     font-size: 0.65rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .territory-name {
                     margin: 0 0 4px;
                     font-size: 1rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .bundesland {
                     margin: 0 0 10px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .description {
                     margin: 0 0 12px;
                     font-size: 0.85rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                 }
                 .card-footer {
@@ -213,7 +213,7 @@ function OfficialCard({ sighting }: { sighting: OfficialSighting }) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .source-link {
                     display: flex;
@@ -268,7 +268,7 @@ function CommunityCard({ sighting }: { sighting: CommunitySighting }) {
 
             <style>{`
                 .community-card {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border: 1px solid rgba(245, 158, 11, 0.3);
                     border-left: 3px solid #f59e0b;
                     border-radius: 10px;
@@ -280,13 +280,13 @@ function CommunityCard({ sighting }: { sighting: CommunitySighting }) {
                 }
                 .confidence {
                     font-size: 0.7rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .grid-location {
                     display: flex;
                     align-items: center;
                     gap: 6px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-weight: 500;
                     margin-bottom: 8px;
                 }
@@ -295,7 +295,7 @@ function CommunityCard({ sighting }: { sighting: CommunitySighting }) {
                     align-items: center;
                     gap: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -399,7 +399,7 @@ export default function WolfWatch() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .wolf-header {
                     display: flex;
@@ -415,7 +415,7 @@ export default function WolfWatch() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .territory-count {
@@ -446,16 +446,16 @@ export default function WolfWatch() {
                     justify-content: center;
                     gap: 8px;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     font-size: 0.85rem;
                     cursor: pointer;
                     transition: all 0.2s;
                 }
                 .lane-tab:hover {
-                    border-color: var(--text-tertiary, #666);
+                    border-color: var(--text-tertiary);
                 }
                 .lane-tab.active.official {
                     background: rgba(59, 130, 246, 0.1);
@@ -478,7 +478,7 @@ export default function WolfWatch() {
                     align-items: center;
                     justify-content: space-between;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .wolf-footer a {
                     display: flex;
