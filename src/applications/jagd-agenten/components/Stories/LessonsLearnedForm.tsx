@@ -187,7 +187,7 @@ export default function LessonsLearnedForm({
                 .form-subtitle {
                     margin: 0 0 16px;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .form-group {
@@ -200,7 +200,7 @@ export default function LessonsLearnedForm({
                     gap: 6px;
                     margin-bottom: 6px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .form-group input,
@@ -208,10 +208,10 @@ export default function LessonsLearnedForm({
                 .form-group textarea {
                     width: 100%;
                     padding: 10px 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.9rem;
                 }
 
@@ -236,8 +236,8 @@ export default function LessonsLearnedForm({
                 }
 
                 .cancel-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .save-btn {

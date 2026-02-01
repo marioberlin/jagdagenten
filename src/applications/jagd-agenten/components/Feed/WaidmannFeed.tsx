@@ -308,7 +308,7 @@ export default function WaidmannFeed({
 
             <style>{`
                 .waidmann-feed {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 16px;
                     padding: 20px;
                     position: relative;
@@ -324,7 +324,7 @@ export default function WaidmannFeed({
                 .feed-header h2 {
                     margin: 0;
                     font-size: 1.5rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .header-actions {
@@ -344,12 +344,12 @@ export default function WaidmannFeed({
                 }
 
                 .refresh-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .create-btn {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 
@@ -361,7 +361,7 @@ export default function WaidmannFeed({
                     background: rgba(16, 185, 129, 0.1);
                     border-radius: 8px;
                     font-size: 0.75rem;
-                    color: var(--color-primary, #10b981);
+                    color: var(--glass-accent, #10b981);
                     margin-bottom: 16px;
                 }
 
@@ -386,13 +386,13 @@ export default function WaidmannFeed({
                     justify-content: center;
                     gap: 10px;
                     padding: 40px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .cta-btn, .retry-btn {
                     margin-top: 8px;
                     padding: 10px 18px;
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                     border: none;
                     border-radius: 8px;
@@ -402,13 +402,13 @@ export default function WaidmannFeed({
                 .trends-sidebar {
                     margin-top: 24px;
                     padding-top: 20px;
-                    border-top: 1px solid var(--border-color, #333);
+                    border-top: 1px solid var(--glass-border);
                 }
 
                 .trends-sidebar h3 {
                     margin: 0 0 12px;
                     font-size: 1rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .trends-sidebar > div {
@@ -441,7 +441,7 @@ export default function WaidmannFeed({
                         margin-top: 0;
                         padding-top: 0;
                         border-top: none;
-                        border-left: 1px solid var(--border-color, #333);
+                        border-left: 1px solid var(--glass-border);
                         padding-left: 20px;
                     }
                 }

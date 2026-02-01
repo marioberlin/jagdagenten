@@ -113,15 +113,15 @@ export function WeeklyExplore() {
                     display: flex;
                     flex-direction: column;
                     height: 100%;
-                    background: var(--bg-primary, #0f0f1a);
+                    background: var(--glass-bg-thick);
                 }
 
                 .explore-tabs {
                     display: flex;
                     gap: 4px;
                     padding: 12px 16px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border-bottom: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border-bottom: 1px solid var(--glass-border);
                     overflow-x: auto;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
@@ -139,7 +139,7 @@ export function WeeklyExplore() {
                     background: transparent;
                     border: 1px solid transparent;
                     border-radius: 10px;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     cursor: pointer;
                     transition: all 0.2s ease;
                     min-width: 64px;
@@ -147,8 +147,8 @@ export function WeeklyExplore() {
                 }
 
                 .tab-btn:hover {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .tab-btn.active {

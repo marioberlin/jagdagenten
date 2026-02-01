@@ -173,7 +173,7 @@ function FeaturedStoryCard({ story }: { story: Story }) {
                 .story-title {
                     font-size: 1.15rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 10px;
                     line-height: 1.3;
                 }
@@ -182,7 +182,7 @@ function FeaturedStoryCard({ story }: { story: Story }) {
                     align-items: center;
                     gap: 6px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin-bottom: 12px;
                 }
                 .author {
@@ -190,7 +190,7 @@ function FeaturedStoryCard({ story }: { story: Story }) {
                 }
                 .story-excerpt {
                     font-size: 0.9rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.5;
                     margin: 0 0 16px;
                 }
@@ -204,10 +204,10 @@ function FeaturedStoryCard({ story }: { story: Story }) {
                     align-items: center;
                     gap: 6px;
                     padding: 6px 10px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     font-size: 0.8rem;
                     cursor: pointer;
                 }
@@ -252,8 +252,8 @@ function CommunityStoryCard({ story }: { story: Story }) {
             <style>{`
                 .community-story {
                     padding: 14px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 12px;
                 }
                 .community-badge {
@@ -308,18 +308,18 @@ function LessonCard({ lesson }: { lesson: WeeklyLesson }) {
                 .lesson-title {
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 6px;
                 }
                 .lesson-insight {
                     font-size: 0.85rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                     margin: 0 0 8px;
                 }
                 .lesson-source {
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -415,7 +415,7 @@ export default function StoryOfWeek() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .story-header {
                     display: flex;
@@ -431,7 +431,7 @@ export default function StoryOfWeek() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .week-label {
@@ -439,7 +439,7 @@ export default function StoryOfWeek() {
                     align-items: center;
                     gap: 6px;
                     font-size: 0.8rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .section {
                     margin-top: 20px;
@@ -450,7 +450,7 @@ export default function StoryOfWeek() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .lessons-list {
@@ -468,10 +468,10 @@ export default function StoryOfWeek() {
                     align-items: center;
                     gap: 12px;
                     padding: 10px 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     text-align: left;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -481,7 +481,7 @@ export default function StoryOfWeek() {
                 }
                 .archive-date {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     min-width: 60px;
                 }
                 .archive-title {
@@ -489,7 +489,7 @@ export default function StoryOfWeek() {
                     font-size: 0.85rem;
                 }
                 .archive-item svg {
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>

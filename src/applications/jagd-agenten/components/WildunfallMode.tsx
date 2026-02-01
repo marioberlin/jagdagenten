@@ -47,12 +47,12 @@ export function WildunfallMode() {
     // Idle state - show start button
     if (status === 'idle') {
         return (
-            <div className="min-h-[400px] flex flex-col items-center justify-center p-6 bg-red-50 dark:bg-red-900/20 rounded-2xl">
-                <AlertTriangle className="w-16 h-16 text-red-600 dark:text-red-400 mb-6" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="min-h-[400px] flex flex-col items-center justify-center p-6 bg-red-500/10 rounded-2xl">
+                <AlertTriangle className="w-16 h-16 text-red-400 mb-6" />
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
                     Wildunfall melden
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
+                <p className="text-[var(--text-secondary)] text-center mb-6">
                     Schnell dokumentieren und Bereitschaft alarmieren
                 </p>
 
@@ -64,7 +64,7 @@ export function WildunfallMode() {
                             onClick={() => setSpecies(s)}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${species === s
                                 ? 'bg-red-600 text-white'
-                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
+                                : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]'
                                 }`}
                         >
                             {s}
@@ -86,22 +86,22 @@ export function WildunfallMode() {
     return (
         <div className="space-y-4">
             {/* Status header */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${status === 'resolved' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+                        <div className={`p-2 rounded-lg ${status === 'resolved' ? 'bg-green-500/15' : 'bg-red-500/15'
                             }`}>
                             {status === 'resolved' ? (
-                                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                <CheckCircle className="w-6 h-6 text-green-400" />
                             ) : (
-                                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                <AlertTriangle className="w-6 h-6 text-red-400" />
                             )}
                         </div>
                         <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                            <h3 className="font-semibold text-[var(--text-primary)]">
                                 Wildunfall #{incident?.id.slice(-6)}
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-sm text-[var(--text-tertiary)]">
                                 {incident?.species || 'Unbekannt'} • {new Date(incident?.time || '').toLocaleTimeString('de-DE')}
                             </p>
                         </div>
@@ -187,7 +187,7 @@ export function WildunfallMode() {
                         setIncident(null);
                         setSpecies('');
                     }}
-                    className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium"
+                    className="w-full py-3 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-xl font-medium"
                 >
                     Neuer Vorfall
                 </button>
@@ -198,12 +198,12 @@ export function WildunfallMode() {
 
 function StatusBadge({ status }: { status: IncidentStatus }) {
     const config: Record<IncidentStatus, { bg: string; text: string; label: string }> = {
-        idle: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Bereit' },
-        creating: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Wird erstellt...' },
-        open: { bg: 'bg-red-100', text: 'text-red-700', label: 'Offen' },
-        accepted: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Angenommen' },
-        arrived: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Vor Ort' },
-        resolved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Erledigt' },
+        idle: { bg: 'bg-[var(--glass-surface)]', text: 'text-[var(--text-secondary)]', label: 'Bereit' },
+        creating: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', label: 'Wird erstellt...' },
+        open: { bg: 'bg-red-500/15', text: 'text-red-400', label: 'Offen' },
+        accepted: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Angenommen' },
+        arrived: { bg: 'bg-blue-500/15', text: 'text-blue-400', label: 'Vor Ort' },
+        resolved: { bg: 'bg-green-500/15', text: 'text-green-400', label: 'Erledigt' },
     };
     const c = config[status];
     return (
@@ -216,16 +216,16 @@ function StatusBadge({ status }: { status: IncidentStatus }) {
 function Step({ active, completed, label }: { active: boolean; completed: boolean; label: string }) {
     return (
         <div className="flex flex-col items-center">
-            <div className={`w-3 h-3 rounded-full ${completed ? 'bg-green-500' : active ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+            <div className={`w-3 h-3 rounded-full ${completed ? 'bg-green-500' : active ? 'bg-amber-500' : 'bg-[var(--glass-border)]'
                 }`} />
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</span>
+            <span className="text-xs text-[var(--text-tertiary)] mt-1">{label}</span>
         </div>
     );
 }
 
 function StepLine({ completed }: { completed: boolean }) {
     return (
-        <div className={`flex-1 h-0.5 ${completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+        <div className={`flex-1 h-0.5 ${completed ? 'bg-green-500' : 'bg-[var(--glass-border)]'}`} />
     );
 }
 
@@ -241,10 +241,10 @@ function ActionButton({
     color: 'blue' | 'green' | 'orange' | 'gray';
 }) {
     const colors = {
-        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-        orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
-        gray: 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+        blue: 'bg-blue-500/10 text-blue-400',
+        green: 'bg-green-500/10 text-green-400',
+        orange: 'bg-orange-500/10 text-orange-400',
+        gray: 'bg-[var(--glass-surface)] text-[var(--text-secondary)]',
     };
 
     return (

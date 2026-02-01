@@ -167,7 +167,7 @@ export default function RulesAcknowledgement({
 
             <style>{`
                 .rules-form {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 16px;
                     padding: 20px;
                     max-width: 500px;
@@ -184,13 +184,13 @@ export default function RulesAcknowledgement({
                 .form-header h3 {
                     margin: 0;
                     font-size: 1.25rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .event-info {
                     margin: 4px 0 0;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .warning-box {
@@ -212,7 +212,7 @@ export default function RulesAcknowledgement({
                     gap: 6px;
                     margin: 0 0 12px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .rule-item {
@@ -220,7 +220,7 @@ export default function RulesAcknowledgement({
                     align-items: flex-start;
                     gap: 10px;
                     padding: 10px 0;
-                    border-bottom: 1px solid var(--border-color, #333);
+                    border-bottom: 1px solid var(--glass-border);
                     cursor: pointer;
                 }
 
@@ -235,7 +235,7 @@ export default function RulesAcknowledgement({
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 2px solid var(--border-color, #555);
+                    border: 2px solid var(--glass-border);
                     border-radius: 4px;
                     transition: all 0.2s;
                 }
@@ -248,7 +248,7 @@ export default function RulesAcknowledgement({
 
                 .rule-text {
                     font-size: 0.875rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     line-height: 1.4;
                 }
 
@@ -262,16 +262,16 @@ export default function RulesAcknowledgement({
                     gap: 6px;
                     margin-bottom: 8px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .emergency-section input {
                     width: 100%;
                     padding: 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 1rem;
                 }
 
@@ -279,7 +279,7 @@ export default function RulesAcknowledgement({
                     display: block;
                     margin-top: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .error-box {
@@ -316,8 +316,8 @@ export default function RulesAcknowledgement({
                 }
 
                 .cancel-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .confirm-btn {

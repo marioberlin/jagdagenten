@@ -90,14 +90,14 @@ function ExportPackCard({ pack }: ExportPackCardProps) {
     const status = STATUS_CONFIG[pack.status];
 
     return (
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 hover:border-white/20 transition-all">
+        <div className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4 hover:border-[var(--glass-surface-active)] transition-all">
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                     {config.icon}
                     <div>
-                        <h3 className="font-medium text-white">{config.label}</h3>
-                        <p className="text-xs text-white/60">{pack.bundesland || 'Alle Bundesländer'}</p>
+                        <h3 className="font-medium text-[var(--text-primary)]">{config.label}</h3>
+                        <p className="text-xs text-[var(--text-secondary)]">{pack.bundesland || 'Alle Bundesländer'}</p>
                     </div>
                 </div>
 
@@ -108,7 +108,7 @@ function ExportPackCard({ pack }: ExportPackCardProps) {
             </div>
 
             {/* Date */}
-            <div className="flex items-center gap-2 text-sm text-white/60 mb-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] mb-3">
                 <Calendar className="w-4 h-4" />
                 <span>Erstellt am {new Date(pack.createdAt).toLocaleDateString('de-DE')}</span>
             </div>
@@ -136,7 +136,7 @@ function ExportPackCard({ pack }: ExportPackCardProps) {
                     </a>
                 )}
                 {!pack.pdfUrl && !pack.csvUrl && (
-                    <span className="text-sm text-white/40">Keine Downloads verfügbar</span>
+                    <span className="text-sm text-[var(--text-tertiary)]">Keine Downloads verfügbar</span>
                 )}
             </div>
         </div>
@@ -186,13 +186,13 @@ function GenerateModal({ isOpen, onClose, onSubmit, isLoading }: GenerateModalPr
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-neutral-900 rounded-2xl border border-white/10 p-6 w-full max-w-lg mx-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Export generieren</h2>
+            <div className="bg-[var(--glass-bg-thick)] backdrop-blur-xl rounded-2xl border border-[var(--glass-border)] p-6 w-full max-w-lg mx-4">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Export generieren</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Pack Type */}
                     <div>
-                        <label className="block text-sm text-white/70 mb-2">Exporttyp</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-2">Exporttyp</label>
                         <div className="grid grid-cols-2 gap-2">
                             {Object.entries(PACK_TYPE_CONFIG).map(([value, config]) => (
                                 <button
@@ -201,11 +201,11 @@ function GenerateModal({ isOpen, onClose, onSubmit, isLoading }: GenerateModalPr
                                     onClick={() => setPackType(value as ExportPack['packType'])}
                                     className={`flex items-center gap-2 p-3 rounded-lg border transition-all ${packType === value
                                         ? 'border-green-500 bg-green-500/10'
-                                        : 'border-white/10 hover:border-white/20'
+                                        : 'border-[var(--glass-border)] hover:border-[var(--glass-surface-active)]'
                                         }`}
                                 >
                                     {config.icon}
-                                    <span className="text-sm text-white">{config.label}</span>
+                                    <span className="text-sm text-[var(--text-primary)]">{config.label}</span>
                                 </button>
                             ))}
                         </div>
@@ -213,11 +213,11 @@ function GenerateModal({ isOpen, onClose, onSubmit, isLoading }: GenerateModalPr
 
                     {/* Bundesland */}
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Bundesland</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Bundesland</label>
                         <select
                             value={bundesland}
                             onChange={(e) => setBundesland(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                         >
                             {BUNDESLAENDER.map((bl) => (
                                 <option key={bl} value={bl}>{bl}</option>
@@ -228,23 +228,23 @@ function GenerateModal({ isOpen, onClose, onSubmit, isLoading }: GenerateModalPr
                     {/* Date Range */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm text-white/70 mb-1">Von</label>
+                            <label className="block text-sm text-[var(--text-secondary)] mb-1">Von</label>
                             <input
                                 type="date"
                                 value={dateFrom}
                                 onChange={(e) => setDateFrom(e.target.value)}
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm text-white/70 mb-1">Bis</label>
+                            <label className="block text-sm text-[var(--text-secondary)] mb-1">Bis</label>
                             <input
                                 type="date"
                                 value={dateTo}
                                 onChange={(e) => setDateTo(e.target.value)}
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                             />
                         </div>
                     </div>
@@ -263,7 +263,7 @@ function GenerateModal({ isOpen, onClose, onSubmit, isLoading }: GenerateModalPr
                             type="button"
                             onClick={onClose}
                             disabled={isLoading}
-                            className="px-4 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all disabled:opacity-50"
+                            className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface)] transition-all disabled:opacity-50"
                         >
                             Abbrechen
                         </button>
@@ -323,8 +323,8 @@ export function ExportPackGenerator() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Export-Pakete</h1>
-                    <p className="text-sm text-white/60">Streckenlisten, Abschussmeldungen und Statistiken generieren</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Export-Pakete</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">Streckenlisten, Abschussmeldungen und Statistiken generieren</p>
                 </div>
 
                 <button
@@ -352,7 +352,7 @@ export function ExportPackGenerator() {
 
             {/* Empty State */}
             {!exportPacksLoading && exportPacks.length === 0 && (
-                <div className="text-center py-12 text-white/50">
+                <div className="text-center py-12 text-[var(--text-tertiary)]">
                     <FileDown className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Noch keine Exporte erstellt</p>
                     <p className="text-sm mt-1">Generieren Sie Ihre erste Streckenliste oder Abschussmeldung.</p>
@@ -362,7 +362,7 @@ export function ExportPackGenerator() {
             {/* Generated Packs */}
             {generatedPacks.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold text-white mb-3">Fertige Exporte</h2>
+                    <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Fertige Exporte</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {generatedPacks.map((pack) => (
                             <ExportPackCard key={pack.id} pack={pack} />
@@ -374,7 +374,7 @@ export function ExportPackGenerator() {
             {/* Draft Packs */}
             {draftPacks.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold text-white mb-3">Entwürfe</h2>
+                    <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Entwürfe</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {draftPacks.map((pack) => (
                             <ExportPackCard key={pack.id} pack={pack} />

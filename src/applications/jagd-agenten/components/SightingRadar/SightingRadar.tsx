@@ -283,7 +283,7 @@ export default function SightingRadar({
 
             <style>{`
                 .sighting-radar {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 12px;
                     padding: 16px;
                 }
@@ -304,7 +304,7 @@ export default function SightingRadar({
                 .header-title h2 {
                     margin: 0;
                     font-size: 1.25rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .header-actions {
@@ -325,12 +325,12 @@ export default function SightingRadar({
                 }
 
                 .refresh-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .create-btn {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 
@@ -342,7 +342,7 @@ export default function SightingRadar({
                     background: rgba(16, 185, 129, 0.1);
                     border-radius: 8px;
                     font-size: 0.75rem;
-                    color: var(--color-primary, #10b981);
+                    color: var(--glass-accent, #10b981);
                     margin-bottom: 12px;
                 }
 
@@ -358,15 +358,15 @@ export default function SightingRadar({
                     gap: 6px;
                     padding: 8px 16px;
                     border: none;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                     border-radius: 8px;
                     cursor: pointer;
                     font-size: 0.875rem;
                 }
 
                 .tab.active {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 
@@ -379,10 +379,10 @@ export default function SightingRadar({
 
                 .radar-filters select {
                     padding: 6px 10px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 6px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.875rem;
                 }
 
@@ -406,13 +406,13 @@ export default function SightingRadar({
                     justify-content: center;
                     gap: 8px;
                     padding: 32px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .cta-btn {
                     margin-top: 8px;
                     padding: 8px 16px;
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                     border: none;
                     border-radius: 8px;

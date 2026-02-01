@@ -187,8 +187,8 @@ function SeasonCard({ entry }: { entry: SeasonEntry }) {
                     align-items: center;
                     gap: 12px;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-left: 3px solid;
                     border-radius: 10px;
                 }
@@ -200,11 +200,11 @@ function SeasonCard({ entry }: { entry: SeasonEntry }) {
                 }
                 .species-name {
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .season-dates {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .season-status {
                     text-align: right;
@@ -219,7 +219,7 @@ function SeasonCard({ entry }: { entry: SeasonEntry }) {
                 .days-until {
                     display: block;
                     font-size: 0.65rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin-top: 4px;
                 }
             `}</style>
@@ -261,8 +261,8 @@ function DeadlineCard({ deadline }: { deadline: AdminDeadline }) {
                     align-items: center;
                     gap: 12px;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 10px;
                 }
                 .deadline-card.urgent {
@@ -273,7 +273,7 @@ function DeadlineCard({ deadline }: { deadline: AdminDeadline }) {
                     opacity: 0.6;
                 }
                 .deadline-icon {
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .deadline-card.urgent .deadline-icon {
                     color: #ef4444;
@@ -286,22 +286,22 @@ function DeadlineCard({ deadline }: { deadline: AdminDeadline }) {
                 }
                 .deadline-title {
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .deadline-due {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
                 .days-left {
                     padding: 4px 10px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 10px;
                     font-size: 0.75rem;
                     font-weight: 500;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .deadline-card.urgent .days-left {
                     background: rgba(239, 68, 68, 0.2);
@@ -413,7 +413,7 @@ export default function SeasonRules() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .season-header {
                     display: flex;
@@ -429,7 +429,7 @@ export default function SeasonRules() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .region-select {
@@ -437,10 +437,10 @@ export default function SeasonRules() {
                     align-items: center;
                     gap: 8px;
                     padding: 8px 12px;
-                    background: var(--bg-secondary, #1a1a2e);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-bg-regular);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     position: relative;
                 }
                 .region-select select {
@@ -461,7 +461,7 @@ export default function SeasonRules() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .seasons-list, .deadlines-list {

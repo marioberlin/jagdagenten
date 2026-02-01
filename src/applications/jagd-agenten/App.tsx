@@ -11,8 +11,17 @@ import { WaidmannFeed } from './components/WaidmannFeed';
 import { WeeklyExplore } from './components/WeeklyExplore';
 import { PackDashboard } from './components/PackDashboard';
 import { GlobalAdminDashboard } from './components/admin';
+import { HegeDashboard } from './components/HegeDashboard';
+import { WildunfallMode } from './components/WildunfallMode';
+import { NachsucheFlow } from './components/NachsucheFlow';
+import { SightingRadar } from './components/SightingRadar';
+import { TrailCameraFeed } from './components/TrailCameraFeed';
 
-type JagdView = 'cockpit' | 'scout' | 'timeline' | 'journal' | 'bureaucracy' | 'exports' | 'gear' | 'pack' | 'feed' | 'explore' | 'admin' | 'chat' | 'settings';
+type JagdView =
+  | 'cockpit' | 'scout' | 'timeline' | 'journal' | 'bureaucracy'
+  | 'exports' | 'gear' | 'pack' | 'feed' | 'explore'
+  | 'admin' | 'chat' | 'settings'
+  | 'hege' | 'wildunfall' | 'nachsuche' | 'sightings' | 'trailcam';
 
 export default function JagdAgentenApp() {
   const [view, setView] = useState<JagdView>('cockpit');
@@ -26,6 +35,11 @@ export default function JagdAgentenApp() {
           { id: 'scout', label: 'Scout' },
           { id: 'timeline', label: 'Timeline' },
           { id: 'journal', label: 'Journal' },
+          { id: 'hege', label: 'Hege' },
+          { id: 'wildunfall', label: 'Wildunfall' },
+          { id: 'nachsuche', label: 'Nachsuche' },
+          { id: 'sightings', label: 'Sichtungen' },
+          { id: 'trailcam', label: 'Wildkameras' },
           { id: 'bureaucracy', label: 'Dokumente' },
           { id: 'exports', label: 'Exporte' },
           { id: 'gear', label: 'Ausrüstung' },
@@ -54,6 +68,11 @@ export default function JagdAgentenApp() {
         {view === 'scout' && <ScoutView />}
         {view === 'timeline' && <HuntTimeline />}
         {view === 'journal' && <JournalView />}
+        {view === 'hege' && <HegeDashboard />}
+        {view === 'wildunfall' && <WildunfallMode />}
+        {view === 'nachsuche' && <NachsucheFlow />}
+        {view === 'sightings' && <SightingRadar />}
+        {view === 'trailcam' && <TrailCameraFeed />}
         {view === 'bureaucracy' && <DocumentVault />}
         {view === 'exports' && <ExportPackGenerator />}
         {view === 'gear' && <EquipmentInventory />}

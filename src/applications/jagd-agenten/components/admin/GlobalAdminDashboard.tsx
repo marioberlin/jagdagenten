@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAdminStore, type Jagdrevier } from '@/stores/useAdminStore';
 import { BackgroundSelector } from './BackgroundSelector';
+import { ObservabilityDashboard } from './ObservabilityDashboard';
 
 // ============================================================================
 // Bundesland Options
@@ -497,6 +498,11 @@ export function GlobalAdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <BackgroundSelector />
                 </div>
+            </div>
+
+            {/* Observability Section */}
+            <div className="pt-6 border-t border-[var(--glass-border)]">
+                <ObservabilityDashboard />
             </div>
         </div>
     );

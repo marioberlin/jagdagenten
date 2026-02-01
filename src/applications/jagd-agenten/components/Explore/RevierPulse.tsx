@@ -113,10 +113,10 @@ function SpeciesCard({ data }: { data: SpeciesActivity }) {
 
             <style>{`
                 .species-card {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 12px;
                     padding: 14px;
-                    border: 1px solid var(--border-color, #333);
+                    border: 1px solid var(--glass-border);
                 }
                 .species-header {
                     display: flex;
@@ -129,7 +129,7 @@ function SpeciesCard({ data }: { data: SpeciesActivity }) {
                 }
                 .species-name {
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .species-stats {
                     display: flex;
@@ -140,20 +140,20 @@ function SpeciesCard({ data }: { data: SpeciesActivity }) {
                 .species-count {
                     font-size: 1.75rem;
                     font-weight: 700;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .species-trend {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .species-trend.up { color: #10b981; }
                 .species-trend.down { color: #ef4444; }
                 .species-last {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -186,10 +186,10 @@ function WindChart({ data }: { data: WindStability[] }) {
 
             <style>{`
                 .wind-chart {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 12px;
                     padding: 14px;
-                    border: 1px solid var(--border-color, #333);
+                    border: 1px solid var(--glass-border);
                 }
                 .chart-header {
                     display: flex;
@@ -198,7 +198,7 @@ function WindChart({ data }: { data: WindStability[] }) {
                     margin-bottom: 16px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .chart-bars {
                     display: flex;
@@ -221,7 +221,7 @@ function WindChart({ data }: { data: WindStability[] }) {
                 }
                 .bar-label {
                     font-size: 0.65rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin-top: 6px;
                 }
             `}</style>
@@ -253,9 +253,9 @@ function StandCard({ data, rank }: { data: TopStand; rank: number }) {
                     align-items: center;
                     gap: 12px;
                     padding: 12px;
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 10px;
-                    border: 1px solid var(--border-color, #333);
+                    border: 1px solid var(--glass-border);
                 }
                 .stand-rank {
                     width: 28px;
@@ -263,7 +263,7 @@ function StandCard({ data, rank }: { data: TopStand; rank: number }) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                     font-size: 0.75rem;
                     font-weight: 600;
@@ -277,11 +277,11 @@ function StandCard({ data, rank }: { data: TopStand; rank: number }) {
                     align-items: center;
                     gap: 6px;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
                 .stand-meta {
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     margin-top: 2px;
                 }
                 .stand-rate {
@@ -295,7 +295,7 @@ function StandCard({ data, rank }: { data: TopStand; rank: number }) {
                 }
                 .rate-label {
                     font-size: 0.65rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
             `}</style>
         </div>
@@ -398,7 +398,7 @@ export default function RevierPulse() {
                     justify-content: center;
                     gap: 12px;
                     padding: 60px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .pulse-header {
                     display: flex;
@@ -414,12 +414,12 @@ export default function RevierPulse() {
                 .header-title h2 {
                     font-size: 1.25rem;
                     font-weight: 600;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0;
                 }
                 .header-badge {
                     padding: 4px 10px;
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                     font-size: 0.7rem;
                     font-weight: 500;
@@ -447,7 +447,7 @@ export default function RevierPulse() {
                 }
                 .stat-label {
                     font-size: 0.85rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
                 .summary-change {
                     display: flex;
@@ -466,7 +466,7 @@ export default function RevierPulse() {
                     gap: 8px;
                     font-size: 0.9rem;
                     font-weight: 500;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     margin: 0 0 12px;
                 }
                 .species-grid {

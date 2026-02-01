@@ -45,7 +45,7 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="bg-[var(--glass-bg-thick)] rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
                 {/* Header */}
                 <div
                     className={`px-6 py-4 flex items-center gap-3 ${isTier3 ? 'bg-red-500' : 'bg-amber-500'
@@ -62,26 +62,26 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
 
                 {/* Content */}
                 <div className="px-6 py-4 space-y-4">
-                    <p className="text-slate-700 dark:text-slate-300">{request.summary}</p>
+                    <p className="text-[var(--text-secondary)]">{request.summary}</p>
 
                     {/* Preview Details */}
-                    <div className="space-y-2 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
-                        <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    <div className="space-y-2 p-3 bg-[var(--glass-surface)] rounded-lg">
+                        <div className="text-sm font-medium text-[var(--text-secondary)] mb-2">
                             Wird angewendet:
                         </div>
 
                         {/* Scope */}
                         <div className="flex items-center gap-2 text-sm">
-                            <Shield size={14} className="text-slate-500" />
-                            <span className="text-slate-600 dark:text-slate-300">
+                            <Shield size={14} className="text-[var(--text-secondary)]" />
+                            <span className="text-[var(--text-secondary)]">
                                 Sichtbarkeit: <strong>{SCOPE_LABELS[request.preview.scope]}</strong>
                             </span>
                         </div>
 
                         {/* Geo */}
                         <div className="flex items-center gap-2 text-sm">
-                            <MapPin size={14} className="text-slate-500" />
-                            <span className="text-slate-600 dark:text-slate-300">
+                            <MapPin size={14} className="text-[var(--text-secondary)]" />
+                            <span className="text-[var(--text-secondary)]">
                                 Standort: <strong>{GEO_LABELS[request.preview.geoMode]}</strong>
                             </span>
                         </div>
@@ -89,8 +89,8 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
                         {/* Time Delay */}
                         {request.preview.timeDelay && request.preview.timeDelay > 0 && (
                             <div className="flex items-center gap-2 text-sm">
-                                <Clock size={14} className="text-slate-500" />
-                                <span className="text-slate-600 dark:text-slate-300">
+                                <Clock size={14} className="text-[var(--text-secondary)]" />
+                                <span className="text-[var(--text-secondary)]">
                                     Verzögerung: <strong>{request.preview.timeDelay}h</strong>
                                 </span>
                             </div>
@@ -99,8 +99,8 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
                         {/* Participants */}
                         {request.preview.participants && request.preview.participants.length > 0 && (
                             <div className="flex items-center gap-2 text-sm">
-                                <Users size={14} className="text-slate-500" />
-                                <span className="text-slate-600 dark:text-slate-300">
+                                <Users size={14} className="text-[var(--text-secondary)]" />
+                                <span className="text-[var(--text-secondary)]">
                                     Teilnehmer: <strong>{request.preview.participants.length}</strong>
                                 </span>
                             </div>
@@ -109,8 +109,8 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
 
                     {/* Tier 3 Warning */}
                     {isTier3 && (
-                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p className="text-sm text-red-700 dark:text-red-300">
+                        <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg">
+                            <p className="text-sm text-red-400">
                                 <strong>Achtung:</strong> Diese Aktion kann nicht rückgängig gemacht werden und
                                 hat rechtliche Auswirkungen.
                             </p>
@@ -119,10 +119,10 @@ export function ConfirmationModal({ request, onConfirm, onCancel }: Confirmation
                 </div>
 
                 {/* Actions */}
-                <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex gap-3">
+                <div className="px-6 py-4 border-t border-[var(--glass-border)] flex gap-3">
                     <button
                         onClick={onCancel}
-                        className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="flex-1 px-4 py-2 rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] font-medium hover:bg-[var(--glass-surface)] transition-colors"
                     >
                         Abbrechen
                     </button>

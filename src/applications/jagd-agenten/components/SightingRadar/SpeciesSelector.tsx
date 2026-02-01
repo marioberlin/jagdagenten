@@ -70,10 +70,10 @@ export default function SpeciesSelector({ value, onChange }: SpeciesSelectorProp
                 .select-wrapper select {
                     width: 100%;
                     padding: 12px 14px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 1rem;
                     cursor: pointer;
                 }

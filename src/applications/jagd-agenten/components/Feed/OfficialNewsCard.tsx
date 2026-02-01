@@ -112,7 +112,7 @@ export default function OfficialNewsCard({ item }: OfficialNewsCardProps) {
 
             <style>{`
                 .official-news-card {
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 10px;
                     border-left: 3px solid;
                     padding: 14px;
@@ -150,14 +150,14 @@ export default function OfficialNewsCard({ item }: OfficialNewsCardProps) {
                 .card-title {
                     margin: 0 0 8px;
                     font-size: 0.95rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     line-height: 1.3;
                 }
 
                 .card-summary {
                     margin: 0 0 10px;
                     font-size: 0.8rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     line-height: 1.4;
                     display: -webkit-box;
                     -webkit-line-clamp: 2;
@@ -174,10 +174,10 @@ export default function OfficialNewsCard({ item }: OfficialNewsCardProps) {
 
                 .tag {
                     padding: 2px 8px;
-                    background: rgba(255, 255, 255, 0.08);
+                    background: var(--glass-surface);
                     border-radius: 4px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #888);
+                    color: var(--text-tertiary);
                 }
 
                 .card-footer {
@@ -191,7 +191,7 @@ export default function OfficialNewsCard({ item }: OfficialNewsCardProps) {
                     align-items: center;
                     gap: 5px;
                     font-size: 0.7rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .divider {

@@ -137,13 +137,13 @@ export default function AggregateInsightCard({ aggregate }: AggregateInsightCard
                 .insight-title {
                     margin: 0 0 6px;
                     font-size: 1rem;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .insight-text {
                     margin: 0 0 10px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .trend-up {
@@ -164,14 +164,14 @@ export default function AggregateInsightCard({ aggregate }: AggregateInsightCard
                     align-items: center;
                     gap: 4px;
                     font-size: 0.75rem;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .privacy-tooltip {
                     position: absolute;
                     bottom: 12px;
                     right: 12px;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                     cursor: help;
                 }
             `}</style>

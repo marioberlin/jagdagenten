@@ -288,7 +288,7 @@ export default function StoryEditor({
                 }
 
                 .story-editor {
-                    background: var(--bg-secondary, #1a1a2e);
+                    background: var(--glass-bg-regular);
                     border-radius: 16px;
                     width: 100%;
                     max-width: 600px;
@@ -301,7 +301,7 @@ export default function StoryEditor({
                     justify-content: space-between;
                     align-items: center;
                     padding: 16px 20px;
-                    border-bottom: 1px solid var(--border-color, #333);
+                    border-bottom: 1px solid var(--glass-border);
                 }
 
                 .editor-header h3 {
@@ -309,13 +309,13 @@ export default function StoryEditor({
                     align-items: center;
                     gap: 8px;
                     margin: 0;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                 }
 
                 .close-btn {
                     background: none;
                     border: none;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     cursor: pointer;
                 }
 
@@ -333,7 +333,7 @@ export default function StoryEditor({
                     gap: 6px;
                     margin-bottom: 6px;
                     font-size: 0.875rem;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                 }
 
                 .form-group input,
@@ -341,10 +341,10 @@ export default function StoryEditor({
                 .form-group textarea {
                     width: 100%;
                     padding: 10px 12px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 1px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 1px solid var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-primary, #fff);
+                    color: var(--text-primary);
                     font-size: 0.9rem;
                 }
 
@@ -364,10 +364,10 @@ export default function StoryEditor({
                     justify-content: center;
                     gap: 8px;
                     padding: 24px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 2px dashed var(--border-color, #444);
+                    background: var(--glass-surface);
+                    border: 2px dashed var(--glass-border);
                     border-radius: 8px;
-                    color: var(--text-tertiary, #666);
+                    color: var(--text-tertiary);
                 }
 
                 .checkbox-label {
@@ -429,12 +429,12 @@ export default function StoryEditor({
                 }
 
                 .cancel-btn {
-                    background: var(--bg-tertiary, #2a2a4a);
-                    color: var(--text-secondary, #aaa);
+                    background: var(--glass-surface);
+                    color: var(--text-secondary);
                 }
 
                 .save-btn {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 

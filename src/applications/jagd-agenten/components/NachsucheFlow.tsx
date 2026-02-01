@@ -70,17 +70,17 @@ export function NachsucheFlow() {
     if (step === 'initial') {
         return (
             <div className="space-y-6">
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 flex items-center gap-3">
-                    <Target className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                <div className="bg-amber-500/10 rounded-xl p-4 flex items-center gap-3">
+                    <Target className="w-6 h-6 text-amber-400" />
                     <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">Schuss dokumentiert</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Nachsuche vorbereiten</p>
+                        <h3 className="font-semibold text-[var(--text-primary)]">Schuss dokumentiert</h3>
+                        <p className="text-sm text-[var(--text-tertiary)]">Nachsuche vorbereiten</p>
                     </div>
                 </div>
 
                 {/* Confidence slider */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                         Treffersicherheit
                     </label>
                     <input
@@ -89,19 +89,19 @@ export function NachsucheFlow() {
                         max="100"
                         value={confidence}
                         onChange={(e) => setConfidence(parseInt(e.target.value))}
-                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-2 bg-[var(--glass-surface)] rounded-lg appearance-none cursor-pointer"
                     />
                     <div className="flex justify-between text-sm mt-1">
-                        <span className="text-gray-500">Unsicher</span>
+                        <span className="text-[var(--text-tertiary)]">Unsicher</span>
                         <span className={`font-bold ${confidence >= 80 ? 'text-green-600' : confidence >= 50 ? 'text-amber-600' : 'text-red-600'
                             }`}>{confidence}%</span>
-                        <span className="text-gray-500">Sicher</span>
+                        <span className="text-[var(--text-tertiary)]">Sicher</span>
                     </div>
                 </div>
 
                 {/* Flight direction */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                         Fluchtrichtung
                     </label>
                     <div className="grid grid-cols-4 gap-2">
@@ -111,7 +111,7 @@ export function NachsucheFlow() {
                                 onClick={() => setDirection(dir)}
                                 className={`py-2 rounded-lg text-sm font-medium transition-colors ${direction === dir
                                     ? 'bg-amber-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    : 'bg-[var(--glass-surface)] text-[var(--text-secondary)]'
                                     }`}
                             >
                                 {dir}
@@ -122,7 +122,7 @@ export function NachsucheFlow() {
 
                 {/* Signs */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                         Pirschzeichen
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -143,7 +143,7 @@ export function NachsucheFlow() {
                                 }}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${signs.includes(sign.id)
                                     ? 'bg-amber-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    : 'bg-[var(--glass-surface)] text-[var(--text-secondary)]'
                                     }`}
                             >
                                 {sign.emoji} {sign.label}
@@ -153,11 +153,11 @@ export function NachsucheFlow() {
                 </div>
 
                 {/* Wait time recommendation */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 flex items-center gap-3">
-                    <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="bg-blue-500/10 rounded-xl p-4 flex items-center gap-3">
+                    <Clock className="w-6 h-6 text-blue-400" />
                     <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Empfohlene Wartezeit</p>
-                        <p className="font-bold text-blue-700 dark:text-blue-300">
+                        <p className="text-sm text-[var(--text-tertiary)]">Empfohlene Wartezeit</p>
+                        <p className="font-bold text-blue-400">
                             {confidence >= 80 ? '15 Minuten' : confidence >= 50 ? '30 Minuten' : '60+ Minuten'}
                         </p>
                     </div>
@@ -177,7 +177,7 @@ export function NachsucheFlow() {
     if (step === 'team') {
         return (
             <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Team zuweisen</h3>
+                <h3 className="font-semibold text-[var(--text-primary)]">Team zuweisen</h3>
 
                 {[
                     { role: 'shooter', label: 'Schütze', icon: <Target className="w-5 h-5" /> },
@@ -185,17 +185,17 @@ export function NachsucheFlow() {
                     { role: 'driver', label: 'Begleitung', icon: <Car className="w-5 h-5" /> },
                     { role: 'safety_contact', label: 'Sicherheit', icon: <Shield className="w-5 h-5" /> },
                 ].map(({ role, label, icon }) => (
-                    <div key={role} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div key={role} className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
+                            <div className="p-2 bg-[var(--glass-surface)] rounded-lg text-[var(--text-tertiary)]">
                                 {icon}
                             </div>
                             <div className="flex-1">
-                                <p className="font-medium text-gray-900 dark:text-white">{label}</p>
+                                <p className="font-medium text-[var(--text-primary)]">{label}</p>
                                 <input
                                     type="text"
                                     placeholder="Name eingeben..."
-                                    className="mt-1 w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg text-sm"
                                     onChange={(e) => handleAssignRole(role, e.target.value)}
                                 />
                             </div>
@@ -217,12 +217,12 @@ export function NachsucheFlow() {
     if (step === 'tracking') {
         return (
             <div className="space-y-4">
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-amber-500/10 rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Dog className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                        <Dog className="w-6 h-6 text-amber-400" />
                         <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">Nachsuche läuft</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Fall #{caseData?.id.slice(-6)}</p>
+                            <h3 className="font-semibold text-[var(--text-primary)]">Nachsuche läuft</h3>
+                            <p className="text-sm text-[var(--text-tertiary)]">Fall #{caseData?.id.slice(-6)}</p>
                         </div>
                     </div>
                     <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
@@ -233,9 +233,9 @@ export function NachsucheFlow() {
                 {/* Team display */}
                 <div className="grid grid-cols-2 gap-2">
                     {caseData?.roles.map(({ role, person }) => (
-                        <div key={role} className="bg-white dark:bg-gray-800 rounded-lg p-3 text-sm">
-                            <p className="text-gray-500 dark:text-gray-400 capitalize">{role}</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{person || '-'}</p>
+                        <div key={role} className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-lg p-3 text-sm">
+                            <p className="text-[var(--text-tertiary)] capitalize">{role}</p>
+                            <p className="font-medium text-[var(--text-primary)]">{person || '-'}</p>
                         </div>
                     ))}
                 </div>
@@ -265,30 +265,30 @@ export function NachsucheFlow() {
     return (
         <div className="space-y-4">
             <div className={`rounded-xl p-6 text-center ${caseData?.status === 'recovered'
-                ? 'bg-green-50 dark:bg-green-900/20'
-                : 'bg-gray-50 dark:bg-gray-800'
+                ? 'bg-green-500/10'
+                : 'bg-[var(--glass-surface)]'
                 }`}>
                 {caseData?.status === 'recovered' ? (
-                    <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" />
+                    <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
                 ) : (
-                    <AlertCircle className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-3" />
+                    <AlertCircle className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-3" />
                 )}
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
                     {caseData?.status === 'recovered' ? 'Wild gefunden' : 'Nachsuche beendet'}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-[var(--text-tertiary)]">
                     Fall #{caseData?.id.slice(-6)} abgeschlossen
                 </p>
             </div>
 
             {/* Lessons learned prompt */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     💡 Was hast du gelernt?
                 </label>
                 <textarea
                     placeholder="Notizen für das nächste Mal..."
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg text-sm"
                     rows={3}
                 />
             </div>
@@ -301,7 +301,7 @@ export function NachsucheFlow() {
                     setSigns([]);
                     setDirection('');
                 }}
-                className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium"
+                className="w-full py-3 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-xl font-medium"
             >
                 Fertig
             </button>

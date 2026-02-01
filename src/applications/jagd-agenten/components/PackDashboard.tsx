@@ -48,18 +48,18 @@ function MemberCard({ member }: { member: PackMember }) {
     };
 
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-lg bg-white/5 ${!member.isActive ? 'opacity-50' : ''}`}>
+        <div className={`flex items-center gap-3 p-3 rounded-lg bg-[var(--glass-surface)] ${!member.isActive ? 'opacity-50' : ''}`}>
             <div className="w-10 h-10 rounded-full bg-green-600/30 flex items-center justify-center text-green-400 font-bold">
                 {member.name.charAt(0)}
             </div>
             <div className="flex-1">
-                <p className="font-medium text-white">{member.name}</p>
-                <p className="text-xs text-white/50">{roleLabels[member.role]}</p>
+                <p className="font-medium text-[var(--text-primary)]">{member.name}</p>
+                <p className="text-xs text-[var(--text-tertiary)]">{roleLabels[member.role]}</p>
             </div>
             {member.phone && (
                 <a
                     href={`tel:${member.phone}`}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white"
+                    className="p-2 rounded-lg bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-active)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                 >
                     <Phone className="w-4 h-4" />
                 </a>
@@ -76,19 +76,19 @@ function EventCard({ event, onClick }: { event: PackEvent; onClick: () => void }
     return (
         <div
             onClick={onClick}
-            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+            className="p-4 rounded-xl bg-[var(--glass-bg-regular)] border border-[var(--glass-border)] hover:border-[var(--glass-surface-active)] transition-all cursor-pointer"
         >
             <div className="flex items-start justify-between mb-2">
                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${typeConfig.color}`}>
                     {typeConfig.icon}
                     <span>{typeConfig.label}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/30" />
+                <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />
             </div>
 
-            <h3 className="font-semibold text-white mb-1">{event.title}</h3>
+            <h3 className="font-semibold text-[var(--text-primary)] mb-1">{event.title}</h3>
 
-            <div className="flex items-center gap-4 text-sm text-white/60 mb-3">
+            <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)] mb-3">
                 <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
                     {new Date(event.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
@@ -116,9 +116,9 @@ function EventCard({ event, onClick }: { event: PackEvent; onClick: () => void }
 function SafetyStatusCard({ event }: { event: PackEvent | null }) {
     if (!event || event.status !== 'active') {
         return (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
-                <Shield className="w-8 h-8 mx-auto mb-2 text-white/30" />
-                <p className="text-white/50 text-sm">Keine aktive Veranstaltung</p>
+            <div className="p-4 rounded-xl bg-[var(--glass-bg-regular)] border border-[var(--glass-border)] text-center">
+                <Shield className="w-8 h-8 mx-auto mb-2 text-[var(--text-tertiary)]" />
+                <p className="text-[var(--text-tertiary)] text-sm">Keine aktive Veranstaltung</p>
             </div>
         );
     }
@@ -136,27 +136,27 @@ function SafetyStatusCard({ event }: { event: PackEvent | null }) {
                 ) : (
                     <Shield className="w-5 h-5 text-yellow-400" />
                 )}
-                <span className="font-semibold text-white">Sicherheitsstatus</span>
+                <span className="font-semibold text-[var(--text-primary)]">Sicherheitsstatus</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2 rounded-lg bg-white/5">
+                <div className="p-2 rounded-lg bg-[var(--glass-surface)]">
                     <p className="text-lg font-bold text-blue-400">{checkedIn}</p>
-                    <p className="text-xs text-white/50">Aktiv</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Aktiv</p>
                 </div>
-                <div className="p-2 rounded-lg bg-white/5">
+                <div className="p-2 rounded-lg bg-[var(--glass-surface)]">
                     <p className="text-lg font-bold text-green-400">{checkedOut}</p>
-                    <p className="text-xs text-white/50">Ausgecheckt</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Ausgecheckt</p>
                 </div>
-                <div className="p-2 rounded-lg bg-white/5">
-                    <p className="text-lg font-bold text-white/70">{total - checkedIn - checkedOut}</p>
-                    <p className="text-xs text-white/50">Ausstehend</p>
+                <div className="p-2 rounded-lg bg-[var(--glass-surface)]">
+                    <p className="text-lg font-bold text-[var(--text-secondary)]">{total - checkedIn - checkedOut}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Ausstehend</p>
                 </div>
             </div>
 
             {!allSafe && event.participants.filter((p) => p.checkedIn && !p.checkedOut).length > 0 && (
-                <div className="mt-3 p-2 rounded-lg bg-white/5">
-                    <p className="text-xs text-white/60 mb-2">Noch im Feld:</p>
+                <div className="mt-3 p-2 rounded-lg bg-[var(--glass-surface)]">
+                    <p className="text-xs text-[var(--text-secondary)] mb-2">Noch im Feld:</p>
                     <div className="flex flex-wrap gap-1">
                         {event.participants
                             .filter((p) => p.checkedIn && !p.checkedOut)
@@ -225,9 +225,9 @@ export function PackDashboard() {
     if (packs.length === 0) {
         return (
             <div className="p-6 text-center">
-                <Users className="w-16 h-16 mx-auto mb-4 text-white/30" />
-                <h2 className="text-xl font-bold text-white mb-2">Kein Rudel vorhanden</h2>
-                <p className="text-white/60 mb-6">Erstellen Sie ein Rudel, um mit der Gruppenkoordination zu beginnen.</p>
+                <Users className="w-16 h-16 mx-auto mb-4 text-[var(--text-tertiary)]" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Kein Rudel vorhanden</h2>
+                <p className="text-[var(--text-secondary)] mb-6">Erstellen Sie ein Rudel, um mit der Gruppenkoordination zu beginnen.</p>
                 <button className="flex items-center gap-2 px-6 py-3 mx-auto rounded-xl bg-green-600 hover:bg-green-500 text-white font-medium transition-all">
                     <Plus className="w-5 h-5" />
                     Rudel erstellen
@@ -241,8 +241,8 @@ export function PackDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">{currentPack?.name || 'Rudel'}</h1>
-                    <p className="text-sm text-white/60">
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">{currentPack?.name || 'Rudel'}</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">
                         {currentPack?.revier && `Revier ${currentPack.revier}`}
                         {currentPack?.bundesland && ` · ${currentPack.bundesland}`}
                     </p>
@@ -252,7 +252,7 @@ export function PackDashboard() {
                     <select
                         value={selectedPackId || ''}
                         onChange={(e) => setSelectedPackId(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                        className="px-3 py-2 rounded-lg bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
                     >
                         {packs.map((pack) => (
                             <option key={pack.id} value={pack.id} className="bg-gray-900">
@@ -271,8 +271,8 @@ export function PackDashboard() {
                         <span className="font-semibold">Aktive Warnungen</span>
                     </div>
                     {alerts.slice(0, 2).map((alert) => (
-                        <div key={alert.id} className="p-2 rounded-lg bg-white/5 mb-2">
-                            <p className="text-white font-medium">{alert.message}</p>
+                        <div key={alert.id} className="p-2 rounded-lg bg-[var(--glass-surface)] mb-2">
+                            <p className="text-[var(--text-primary)] font-medium">{alert.message}</p>
                             <p className="text-xs text-red-300">
                                 Von {alert.senderName} · {new Date(alert.createdAt).toLocaleTimeString('de-DE')}
                             </p>
@@ -283,13 +283,13 @@ export function PackDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column: Members */}
-                <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
+                <div className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
                             <Users className="w-5 h-5 text-green-400" />
                             Mitglieder
                         </h2>
-                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white">
+                        <button className="p-2 rounded-lg bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-active)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
                             <UserPlus className="w-4 h-4" />
                         </button>
                     </div>
@@ -302,19 +302,19 @@ export function PackDashboard() {
                             ))}
                     </div>
 
-                    <p className="text-xs text-white/40 mt-3">
+                    <p className="text-xs text-[var(--text-tertiary)] mt-3">
                         {currentPack?.members.filter((m) => m.isActive).length} aktive Mitglieder
                     </p>
                 </div>
 
                 {/* Middle Column: Events */}
-                <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
+                <div className="bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-blue-400" />
                             Veranstaltungen
                         </h2>
-                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white">
+                        <button className="p-2 rounded-lg bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-active)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -334,7 +334,7 @@ export function PackDashboard() {
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-8 text-white/50">
+                        <div className="text-center py-8 text-[var(--text-tertiary)]">
                             <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">Keine anstehenden Veranstaltungen</p>
                         </div>
@@ -349,28 +349,28 @@ export function PackDashboard() {
                         <div className="flex items-center gap-3">
                             <AlertTriangle className="w-6 h-6 text-red-400" />
                             <div>
-                                <p className="font-semibold text-white">Notfall melden</p>
+                                <p className="font-semibold text-[var(--text-primary)]">Notfall melden</p>
                                 <p className="text-xs text-red-300">Alle Mitglieder benachrichtigen</p>
                             </div>
                         </div>
                     </button>
 
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                        <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
+                    <div className="p-4 rounded-xl bg-[var(--glass-bg-regular)] border border-[var(--glass-border)]">
+                        <h3 className="font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
                             <Phone className="w-4 h-4 text-green-400" />
                             Notfallkontakte
                         </h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-white/60">Notruf</span>
+                                <span className="text-[var(--text-secondary)]">Notruf</span>
                                 <a href="tel:112" className="text-green-400">112</a>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-white/60">Polizei</span>
+                                <span className="text-[var(--text-secondary)]">Polizei</span>
                                 <a href="tel:110" className="text-green-400">110</a>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-white/60">Revierleiter</span>
+                                <span className="text-[var(--text-secondary)]">Revierleiter</span>
                                 <a href="tel:+4917012345" className="text-green-400">Anrufen</a>
                             </div>
                         </div>

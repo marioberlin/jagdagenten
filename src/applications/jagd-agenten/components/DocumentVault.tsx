@@ -17,6 +17,7 @@ import {
     Plus,
 } from 'lucide-react';
 import { useBureaucracyStore, type VaultDocument } from '@/stores/useBureaucracyStore';
+import { GuestPermitQRCode } from './GuestPermitQRCode';
 
 // ============================================================================
 // Document Type Icons
@@ -74,7 +75,7 @@ function DocumentCard({ doc, onDelete }: DocumentCardProps) {
     const expiry = getExpiryStatus(doc.expiresAt);
 
     return (
-        <div className="relative bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 hover:border-white/20 transition-all group">
+        <div className="relative bg-[var(--glass-bg-regular)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] p-4 hover:border-[var(--glass-surface-active)] transition-all group">
             {/* Urgent badge */}
             {expiry.urgent && (
                 <div className="absolute -top-2 -right-2 bg-orange-500 rounded-full p-1 animate-pulse">
@@ -87,8 +88,8 @@ function DocumentCard({ doc, onDelete }: DocumentCardProps) {
                 <div className="flex items-center gap-3">
                     {DOC_TYPE_ICONS[doc.docType]}
                     <div>
-                        <h3 className="font-medium text-white">{doc.name}</h3>
-                        <p className="text-xs text-white/60">{DOC_TYPE_LABELS[doc.docType]}</p>
+                        <h3 className="font-medium text-[var(--text-primary)]">{doc.name}</h3>
+                        <p className="text-xs text-[var(--text-secondary)]">{DOC_TYPE_LABELS[doc.docType]}</p>
                     </div>
                 </div>
 
@@ -107,7 +108,7 @@ function DocumentCard({ doc, onDelete }: DocumentCardProps) {
             </div>
 
             {/* Created date */}
-            <p className="text-xs text-white/40 mt-2">
+            <p className="text-xs text-[var(--text-tertiary)] mt-2">
                 Hochgeladen am {new Date(doc.createdAt).toLocaleDateString('de-DE')}
             </p>
         </div>
@@ -147,28 +148,28 @@ function UploadModal({ isOpen, onClose, onSubmit }: UploadModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-neutral-900 rounded-2xl border border-white/10 p-6 w-full max-w-md mx-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Dokument hochladen</h2>
+            <div className="bg-[var(--glass-bg-thick)] backdrop-blur-xl rounded-2xl border border-[var(--glass-border)] p-6 w-full max-w-md mx-4">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Dokument hochladen</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Name</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Name</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                             placeholder="z.B. Jagdschein Bayern 2024"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Dokumenttyp</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Dokumenttyp</label>
                         <select
                             value={docType}
                             onChange={(e) => setDocType(e.target.value as VaultDocument['docType'])}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                         >
                             {Object.entries(DOC_TYPE_LABELS).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
@@ -177,12 +178,12 @@ function UploadModal({ isOpen, onClose, onSubmit }: UploadModalProps) {
                     </div>
 
                     <div>
-                        <label className="block text-sm text-white/70 mb-1">Ablaufdatum (optional)</label>
+                        <label className="block text-sm text-[var(--text-secondary)] mb-1">Ablaufdatum (optional)</label>
                         <input
                             type="date"
                             value={expiresAt}
                             onChange={(e) => setExpiresAt(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                         />
                     </div>
 
@@ -190,7 +191,7 @@ function UploadModal({ isOpen, onClose, onSubmit }: UploadModalProps) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                            className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface)] transition-all"
                         >
                             Abbrechen
                         </button>
@@ -234,8 +235,8 @@ export function DocumentVault() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Dokumenten-Tresor</h1>
-                    <p className="text-sm text-white/60">Verwalten Sie Ihre Jagddokumente sicher und zentral</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dokumenten-Tresor</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">Verwalten Sie Ihre Jagddokumente sicher und zentral</p>
                 </div>
 
                 <button
@@ -273,7 +274,7 @@ export function DocumentVault() {
 
             {/* Documents Grid */}
             {!documentsLoading && documents.length === 0 && (
-                <div className="text-center py-12 text-white/50">
+                <div className="text-center py-12 text-[var(--text-tertiary)]">
                     <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Noch keine Dokumente hochgeladen</p>
                     <p className="text-sm mt-1">Laden Sie Ihren Jagdschein, WBK oder andere Dokumente hoch.</p>
@@ -285,6 +286,31 @@ export function DocumentVault() {
                     <DocumentCard key={doc.id} doc={doc} onDelete={deleteDocument} />
                 ))}
             </div>
+
+            {/* Guest Permit QR Section */}
+            {documents.filter((d) => d.docType === 'permit').length > 0 && (
+                <div className="pt-6 border-t border-[var(--glass-border)]">
+                    <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Begehungsscheine (QR)</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {documents
+                            .filter((d) => d.docType === 'permit')
+                            .map((d) => (
+                                <GuestPermitQRCode
+                                    key={d.id}
+                                    permit={{
+                                        id: d.id,
+                                        guestName: d.name,
+                                        revier: 'Revier',
+                                        validFrom: d.createdAt,
+                                        validUntil: d.expiresAt ?? new Date(Date.now() + 90 * 86400000).toISOString(),
+                                    }}
+                                    size={180}
+                                    showActions
+                                />
+                            ))}
+                    </div>
+                </div>
+            )}
 
             {/* Upload Modal */}
             <UploadModal

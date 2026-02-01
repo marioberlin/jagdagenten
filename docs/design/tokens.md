@@ -15,6 +15,33 @@ Design tokens serve as the single source of truth for visual design decisions. I
 
 ## Token Categories
 
+### Glass System
+
+The glass design system tokens provide the foundation for all glassmorphism UI. These are the **authoritative** tokens; see [ADR-003](../reference/adr/ADR-003-glass-design-system.md) for usage patterns.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--glass-bg-regular` | `rgba(0,0,0,0.35)` | Card backgrounds, panels |
+| `--glass-bg-thick` | `rgba(0,0,0,0.50)` | Modals, overlays, thick glass |
+| `--glass-surface` | `rgba(255,255,255,0.05)` | Inputs, table rows, subtle surfaces |
+| `--glass-surface-active` | `rgba(255,255,255,0.10)` | Active/pressed surface states |
+| `--glass-surface-hover` | `rgba(255,255,255,0.08)` | Hover surface states |
+| `--glass-border` | `rgba(255,255,255,0.18)` | Borders on glass elements |
+| `--glass-accent` | `#10b981` | Primary accent (emerald green) |
+| `--text-primary` | `rgba(255,255,255,0.95)` | Headings, primary content |
+| `--text-secondary` | `rgba(255,255,255,0.65)` | Descriptions, labels |
+| `--text-tertiary` | `rgba(255,255,255,0.40)` | Metadata, timestamps, muted text |
+
+**Tailwind usage:**
+```tsx
+<div className="bg-[var(--glass-bg-regular)] backdrop-blur-md border border-[var(--glass-border)]">
+  <h3 className="text-[var(--text-primary)]">Title</h3>
+  <p className="text-[var(--text-secondary)]">Description</p>
+</div>
+```
+
+---
+
 ### Typography
 
 Typography tokens define font sizes, line heights, weights, and letter spacing.

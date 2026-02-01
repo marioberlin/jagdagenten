@@ -74,8 +74,8 @@ export default function ConfidenceSlider({ value, onChange }: ConfidenceSliderPr
                     align-items: center;
                     justify-content: center;
                     padding: 12px 8px;
-                    background: var(--bg-tertiary, #2a2a4a);
-                    border: 2px solid var(--border-color, #333);
+                    background: var(--glass-surface);
+                    border: 2px solid var(--glass-border);
                     border-radius: 8px;
                     cursor: pointer;
                     transition: all 0.2s;

@@ -56,7 +56,7 @@ export default function FeedFilterTabs({ activeTab, onChange, counts }: FeedFilt
                     display: flex;
                     gap: 4px;
                     padding: 4px;
-                    background: var(--bg-tertiary, #2a2a4a);
+                    background: var(--glass-surface);
                     border-radius: 12px;
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
@@ -70,7 +70,7 @@ export default function FeedFilterTabs({ activeTab, onChange, counts }: FeedFilt
                     border: none;
                     background: transparent;
                     border-radius: 8px;
-                    color: var(--text-secondary, #aaa);
+                    color: var(--text-secondary);
                     font-size: 0.85rem;
                     white-space: nowrap;
                     cursor: pointer;
@@ -78,11 +78,11 @@ export default function FeedFilterTabs({ activeTab, onChange, counts }: FeedFilt
                 }
 
                 .tab-btn:hover {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: var(--glass-surface);
                 }
 
                 .tab-btn.active {
-                    background: var(--color-primary, #10b981);
+                    background: var(--glass-accent, #10b981);
                     color: white;
                 }
 

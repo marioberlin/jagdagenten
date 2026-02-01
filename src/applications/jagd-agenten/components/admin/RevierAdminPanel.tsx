@@ -70,7 +70,7 @@ function MemberRow({ member, onEdit, onRemove, canManage }: MemberRowProps) {
     const [showMenu, setShowMenu] = useState(false);
 
     return (
-        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors">
+        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-[var(--glass-surface)] transition-colors">
             <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                 <span className="text-green-400 font-medium">
                     {member.userName?.charAt(0).toUpperCase() || 'U'}
@@ -143,7 +143,7 @@ function InvitationRow({ invitation, onCancel, onCopyLink }: InvitationRowProps)
     const isExpired = new Date(invitation.expiresAt) < new Date();
 
     return (
-        <div className={`flex items-center gap-4 p-3 rounded-lg ${isExpired ? 'opacity-50' : 'hover:bg-white/5'} transition-colors`}>
+        <div className={`flex items-center gap-4 p-3 rounded-lg ${isExpired ? 'opacity-50' : 'hover:bg-[var(--glass-surface)]'} transition-colors`}>
             <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                 <Mail className="w-5 h-5 text-blue-400" />
             </div>
